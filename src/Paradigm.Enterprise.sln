@@ -36,6 +36,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02.Services", "02.Services", "{7A13C21A-9719-4A3E-BC5F-1D9AC8E85FA7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paradigm.Enterprise.WebApi", "Paradigm.Enterprise.WebApi\Paradigm.Enterprise.WebApi.csproj", "{57D8E7DE-2B92-4949-B99F-43F45BCD909A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{9AD40006-400C-4655-88F6-3546646580F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AD40006-400C-4655-88F6-3546646580F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AD40006-400C-4655-88F6-3546646580F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57D8E7DE-2B92-4949-B99F-43F45BCD909A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57D8E7DE-2B92-4949-B99F-43F45BCD909A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57D8E7DE-2B92-4949-B99F-43F45BCD909A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57D8E7DE-2B92-4949-B99F-43F45BCD909A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,5 +93,6 @@ Global
 		{B6182AFA-7C9D-4494-B372-82D2DCC80A65} = {D264342C-FB8B-4A65-8045-CE61CFECBEAC}
 		{873652CC-733C-4443-AEF8-E80EDC4B428B} = {7A13C21A-9719-4A3E-BC5F-1D9AC8E85FA7}
 		{9AD40006-400C-4655-88F6-3546646580F5} = {7A13C21A-9719-4A3E-BC5F-1D9AC8E85FA7}
+		{57D8E7DE-2B92-4949-B99F-43F45BCD909A} = {3FE133C2-4C58-46C8-9578-78033EEFE19C}
 	EndGlobalSection
 EndGlobal

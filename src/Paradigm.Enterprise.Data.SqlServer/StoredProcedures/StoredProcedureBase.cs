@@ -1,5 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.DemoManagementSystem.Data.Core.Extensions;
+using Paradigm.Enterprise.Data.Extensions;
 using Paradigm.Enterprise.Domain.Uow;
 using System.Data;
 using System.Data.Common;

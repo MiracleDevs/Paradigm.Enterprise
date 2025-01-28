@@ -100,7 +100,6 @@ public class CacheService : ICacheService, IDisposable
             // If the data is not found, it waits for the semaphore to ensure only one thread can proceed to fetch and cache the data.
             await _semaphore.WaitAsync();
 
-
             try
             {
                 // Double-check if the data was added to the cache while waiting for the semaphore
