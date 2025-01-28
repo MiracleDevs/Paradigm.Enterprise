@@ -4,10 +4,28 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <Authors>Miracle Devs</Authors>
+    <Company>Miracle Devs</Company>
+    <Product>Paradigm Enterprise</Product>
+    <Copyright>Miracle Devs</Copyright>
+    <PackageProjectUrl>https://www.paradigm.net.co/</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description></Description>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

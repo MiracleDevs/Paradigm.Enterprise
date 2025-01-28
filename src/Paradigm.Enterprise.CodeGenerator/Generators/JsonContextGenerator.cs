@@ -1,0 +1,289 @@
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Paradigm.Enterprise.CodeGenerator.Configuration;
+using System.Reflection;
+
+namespace Paradigm.Enterprise.CodeGenerator.Generators;
+
+internal class JsonContextGenerator
+{
+    #region Properties
+
+    /// <summary>
+    /// The configuration
+    /// </summary>
+    private readonly JsonContextGeneratorConfiguration _configuration;
+
+    /// <summary>
+    /// The providers assembly path
+    /// </summary>
+    private readonly string? _providersAssemblyPath;
+
+    /// <summary>
+    /// The project name
+    /// </summary>
+    private readonly string? _projectName;
+
+    /// <summary>
+    /// The logger
+    /// </summary>
+    private readonly ILogger _logger;
+
+    /// <summary>
+    /// The ignored types
+    /// </summary>
+    private string[]? _ignoredTypes;
+
+    #endregion
+
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonContextGenerator" /> class.
+    /// </summary>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="logger">The logger.</param>
+    public JsonContextGenerator(IConfiguration configuration, ILogger<JsonContextGenerator> logger)
+    {
+        _configuration = new JsonContextGeneratorConfiguration();
+        configuration.Bind("jsonContextGenerator", _configuration);
+        _providersAssemblyPath = configuration.GetValue<string>("ProvidersAssemblyPath");
+        _projectName = configuration.GetValue<string>("ProjectName");
+        _logger = logger;
+    }
+
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// Generates the code.
+    /// </summary>
+    /// <exception cref="ArgumentNullException">outputPath</exception>
+    public void GenerateCode()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_providersAssemblyPath))
+                throw new ArgumentNullException("ProvidersAssemblyPath");
+
+            if (string.IsNullOrWhiteSpace(_projectName))
+                throw new ArgumentNullException("ProjectName");
+
+            _logger.LogInformation("Starting JSON serializer contexts generation.");
+
+            var outputPath = Path.Combine(_providersAssemblyPath, "JsonSerializerContexts");
+
+            if (!Directory.Exists(outputPath))
+            {
+                var directory = Directory.CreateDirectory(outputPath);
+                _logger.LogInformation($"Created directory '{directory.FullName}'.");
+            }
+
+            _ignoredTypes = _configuration.IgnoredTypes ?? Array.Empty<string>();
+
+            foreach (var namespaceGroup in GetProvidersByNamespace())
+            {
+                var inputOutputTypes = new HashSet<string>();
+
+                foreach (var provider in namespaceGroup.Value)
+                {
+                    var methods = provider.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+                    foreach (var method in methods)
+                    {
+                        var parameters = method.GetParameters();
+                        foreach (var parameter in parameters)
+                        {
+                            var parameterType = parameter.ParameterType;
+                            if (parameterType.IsClass && !IsNativeType(parameterType))
+                                AddInputOutputType(inputOutputTypes, parameterType);
+                        }
+
+                        var returnType = method.ReturnType;
+                        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+                        {
+                            var innerType = returnType.GetGenericArguments().FirstOrDefault();
+                            if (innerType is not null && innerType.IsClass && !IsNativeType(innerType))
+                                AddInputOutputType(inputOutputTypes, innerType);
+                        }
+                        else if (returnType.IsClass && !IsNativeType(returnType))
+                            AddInputOutputType(inputOutputTypes, returnType);
+                    }
+
+                    AddBaseClassMethodsAndTypes(provider, inputOutputTypes);
+                }
+
+                if (!inputOutputTypes.Any())
+                {
+                    _logger.LogInformation($"Couldn't find JsonSerializable types for '{namespaceGroup.Key}'.");
+                    continue;
+                }
+
+                List<string> usings = new() { "System.Text.Json.Serialization" };
+                if (inputOutputTypes.Any(x => x.Contains("PaginatedResultDto", StringComparison.OrdinalIgnoreCase)))
+                    usings.Add("{_projectName}.Domain.Core.Dtos");
+
+                var jsonSerializableAttributes = inputOutputTypes.Select(type => $"[JsonSerializable(typeof({type}))]").ToList();
+                var jsonContextClassName = $"{namespaceGroup.Key}JsonContext";
+                var sourceCode = $@"// <auto-generated/>
+{string.Join("\n", usings.Select(x => $"using {x};"))}
+
+namespace {_projectName}.Providers.JsonSerializerContexts;
+
+{string.Join("\n", jsonSerializableAttributes)}
+public partial class {jsonContextClassName} : JsonSerializerContext
+{{
+}}";
+                var fileName = $"{jsonContextClassName}.cs";
+                File.WriteAllText(Path.Combine(outputPath, fileName), sourceCode);
+                _logger.LogInformation($"Generated '{fileName}'.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+        }
+        finally
+        {
+            _logger.LogInformation("Finished JSON serializer contexts generation.");
+            _logger.LogInformation("---------------------------------------------");
+        }
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    private Dictionary<string, List<Type>> GetProvidersByNamespace()
+    {
+        if (string.IsNullOrWhiteSpace(_providersAssemblyPath)) return new();
+
+        var providerTypes = Assembly.LoadFrom(_providersAssemblyPath).GetTypes().Where(IsProviderClass);
+        var providersByNamespace = new Dictionary<string, List<Type>>();
+
+        foreach (var provider in providerTypes)
+        {
+            var namespaceName = GetNamespace(provider);
+
+            if (!providersByNamespace.ContainsKey(namespaceName))
+                providersByNamespace[namespaceName] = new List<Type>();
+
+            providersByNamespace[namespaceName].Add(provider);
+        }
+
+        return providersByNamespace;
+    }
+
+    private bool IsProviderClass(Type type) => type.IsClass && !type.IsAbstract && type.BaseType is not null && type.BaseType.Name.Contains("ProviderBase");
+
+    private string GetNamespace(Type type)
+    {
+        var namespaceName = type.Namespace?.Replace($"{_projectName}.Providers.", string.Empty);
+        return namespaceName ?? string.Empty;
+    }
+
+    private void AddBaseClassMethodsAndTypes(Type type, HashSet<string> inputOutputTypes)
+    {
+        var baseType = type.BaseType;
+
+        while (baseType is not null && baseType != typeof(object))
+        {
+            var methods = baseType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
+            foreach (var method in methods)
+            {
+                var parameters = method.GetParameters();
+
+                foreach (var parameter in parameters)
+                {
+                    var parameterType = parameter.ParameterType;
+                    if (!IsNativeType(parameterType))
+                        AddInputOutputType(inputOutputTypes, parameterType);
+                }
+
+                var returnType = method.ReturnType;
+
+                if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+                {
+                    var innerType = returnType.GetGenericArguments().FirstOrDefault();
+                    if (innerType is not null && !IsNativeType(innerType))
+                        AddInputOutputType(inputOutputTypes, innerType);
+                }
+                else if (!IsNativeType(returnType))
+                    AddInputOutputType(inputOutputTypes, returnType);
+            }
+
+            baseType = baseType.BaseType;
+        }
+    }
+
+    private void AddInputOutputType(HashSet<string> inputOutputTypes, Type type)
+    {
+        if (type.IsGenericType)
+        {
+            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericArguments = type.GetGenericArguments();
+
+            foreach (var arg in genericArguments)
+                if (!IsNativeType(arg))
+                    AddInputOutputType(inputOutputTypes, arg);
+
+            var displayString = GetFriendlyTypeName(type);
+            if (_ignoredTypes is not null && _ignoredTypes.Any(x => x.Equals(displayString, StringComparison.OrdinalIgnoreCase))) return;
+            inputOutputTypes.Add(displayString);
+        }
+        else
+        {
+            var displayString = GetFriendlyTypeName(type);
+            if (!IsNativeType(type))
+            {
+                if (_ignoredTypes is not null && _ignoredTypes.Any(x => x.Equals(displayString, StringComparison.OrdinalIgnoreCase))) return;
+                inputOutputTypes.Add(displayString);
+            }
+        }
+    }
+
+    private string GetFriendlyTypeName(Type type)
+    {
+        if (type.IsGenericType)
+        {
+            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericArguments = type.GetGenericArguments();
+            var genericArgumentsString = string.Join(", ", genericArguments.Select(GetFriendlyTypeName));
+            return $"{genericTypeDefinition.Name.Split('`')[0]}<{genericArgumentsString}>";
+        }
+        return type.FullName ?? type.Name;
+    }
+
+    private bool IsNativeType(Type type)
+    {
+        if (type.IsGenericType)
+        {
+            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (genericTypeDefinition == typeof(IEnumerable<>) || genericTypeDefinition == typeof(List<>))
+                return false;
+        }
+
+        return type == typeof(string) ||
+               type == typeof(object) ||
+               type == typeof(bool) ||
+               type == typeof(char) ||
+               type == typeof(sbyte) ||
+               type == typeof(byte) ||
+               type == typeof(short) ||
+               type == typeof(ushort) ||
+               type == typeof(int) ||
+               type == typeof(uint) ||
+               type == typeof(long) ||
+               type == typeof(ulong) ||
+               type == typeof(decimal) ||
+               type == typeof(float) ||
+               type == typeof(double) ||
+               type == typeof(nint) ||
+               type == typeof(nuint);
+    }
+
+    #endregion
+}
