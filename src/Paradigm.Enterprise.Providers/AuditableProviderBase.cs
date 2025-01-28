@@ -8,7 +8,7 @@ namespace Paradigm.Enterprise.Providers;
 
 public abstract class AuditableProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository> : EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository>, IAuditableProvider<TView>
     where TInterface : Interfaces.IEntity
-    where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, IAuditableEntity, new()
+    where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, Interfaces.IAuditableEntity, new()
     where TView : EntityBase, TInterface, new()
     where TRepository : IEditRepository<TEntity>
     where TViewRepository : IReadRepository<TView>

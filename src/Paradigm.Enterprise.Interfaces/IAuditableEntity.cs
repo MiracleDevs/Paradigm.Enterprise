@@ -1,9 +1,8 @@
-﻿using Paradigm.Enterprise.Domain.Attributes;
-using System.ComponentModel.DataAnnotations;
+﻿using System;
 
-namespace Paradigm.Enterprise.Domain.Entities
+namespace Paradigm.Enterprise.Interfaces
 {
-    public interface IAuditableEntity : Interfaces.IEntity
+    public interface IAuditableEntity : IEntity
     {
         /// <summary>
         /// Gets or sets the creation user identifier.
@@ -11,8 +10,6 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// <value>
         /// The creation user identifier.
         /// </value>
-        [Required]
-        [NotEmpty]
         int? CreatedByUserId { get; set; }
 
         /// <summary>
@@ -21,8 +18,6 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// <value>
         /// The creation date.
         /// </value>
-        [Required]
-        [NotEmpty]
         DateTimeOffset CreationDate { get; set; }
 
         /// <summary>
@@ -31,7 +26,6 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// <value>
         /// The modified by user identifier.
         /// </value>
-        [NotEmpty]
         int? ModifiedByUserId { get; set; }
 
         /// <summary>

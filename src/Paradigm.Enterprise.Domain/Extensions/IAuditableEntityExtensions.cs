@@ -1,4 +1,4 @@
-﻿using Paradigm.Enterprise.Domain.Entities;
+﻿using Paradigm.Enterprise.Interfaces;
 
 namespace Paradigm.Enterprise.Domain.Extensions;
 
