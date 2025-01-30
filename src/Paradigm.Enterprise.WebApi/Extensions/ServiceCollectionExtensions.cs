@@ -3,7 +3,7 @@ using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Mappers;
 using Paradigm.Enterprise.Domain.Repositories;
 using Paradigm.Enterprise.Providers;
-using Paradigm.Enterprise.Providers.Services;
+using Paradigm.Enterprise.Services.Core;
 using System.Reflection;
 
 namespace Paradigm.Enterprise.WebApi.Extensions

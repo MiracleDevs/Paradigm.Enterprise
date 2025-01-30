@@ -1,8 +1,9 @@
-﻿using System.Text.Json.Serialization.Metadata;
+﻿using Paradigm.Enterprise.Services.Core;
+using System.Text.Json.Serialization.Metadata;
 
-namespace Paradigm.Enterprise.Providers.Cache;
+namespace Paradigm.Enterprise.Services.Cache;
 
-public interface ICacheService
+public interface ICacheService : IService
 {
     /// <summary>
     /// Gets the value from the cache or creates it.

@@ -2,10 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Paradigm.Enterprise.Providers.Cache.Configuration;
+using Paradigm.Enterprise.Services.Cache.Configuration;
 using System.Text.Json.Serialization.Metadata;
 
-namespace Paradigm.Enterprise.Providers.Cache;
+namespace Paradigm.Enterprise.Services.Cache;
 
 public class CacheService : ICacheService, IDisposable
 {

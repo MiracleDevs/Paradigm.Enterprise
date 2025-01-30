@@ -1,4 +1,4 @@
-﻿namespace Paradigm.Enterprise.Providers.Email.Configuration;
+﻿namespace Paradigm.Enterprise.Services.Email.Configuration;
 
 internal class EmailConfiguration
 {

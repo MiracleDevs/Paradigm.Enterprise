@@ -2,10 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Paradigm.Enterprise.Providers.Email.Configuration;
-using Paradigm.Enterprise.Providers.Email.Models;
+using Paradigm.Enterprise.Services.Email.Configuration;
+using Paradigm.Enterprise.Services.Email.Models;
 
-namespace Paradigm.Enterprise.Providers.Email;
+namespace Paradigm.Enterprise.Services.Email;
 public class EmailService : IEmailService
 {
     #region Properties

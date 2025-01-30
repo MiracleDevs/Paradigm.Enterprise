@@ -1,7 +1,8 @@
-﻿using Paradigm.Enterprise.Providers.Email.Models;
+﻿using Paradigm.Enterprise.Services.Core;
+using Paradigm.Enterprise.Services.Email.Models;
 
-namespace Paradigm.Enterprise.Providers.Email;
-public interface IEmailService
+namespace Paradigm.Enterprise.Services.Email;
+public interface IEmailService : IService
 {
     /// <summary>
     /// Sends the e-mails.

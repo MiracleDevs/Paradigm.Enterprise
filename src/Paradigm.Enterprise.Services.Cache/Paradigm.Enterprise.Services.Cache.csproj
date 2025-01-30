@@ -28,5 +28,9 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+	
+  <ItemGroup>
+    <ProjectReference Include="..\Paradigm.Enterprise.Services.Core\Paradigm.Enterprise.Services.Core.csproj" />
+  </ItemGroup>
 
 </Project>

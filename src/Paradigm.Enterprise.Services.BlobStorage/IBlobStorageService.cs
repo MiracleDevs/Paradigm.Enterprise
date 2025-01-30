@@ -1,9 +1,10 @@
 ﻿using Azure.Storage.Blobs.Models;
 using Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage;
+using Paradigm.Enterprise.Services.Core;
 
 namespace Paradigm.Enterprise.Services.BlobStorage;
 
-public interface IBlobStorageService
+public interface IBlobStorageService : IService
 {
     /// <summary>
     /// Creates the BLOB storage container.

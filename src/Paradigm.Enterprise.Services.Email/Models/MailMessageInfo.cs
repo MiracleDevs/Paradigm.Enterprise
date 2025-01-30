@@ -1,4 +1,4 @@
-﻿namespace Paradigm.Enterprise.Providers.Email.Models;
+﻿namespace Paradigm.Enterprise.Services.Email.Models;
 public class MailMessageInfo
 {
     #region Properties
