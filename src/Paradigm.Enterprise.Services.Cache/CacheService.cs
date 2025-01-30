@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Services.Cache.Configuration;
 using System.Text.Json.Serialization.Metadata;
@@ -53,16 +52,6 @@ public class CacheService : ICacheService, IDisposable
     #endregion
 
     #region Public Methods
-
-    /// <summary>
-    /// Registers the specified services.
-    /// </summary>
-    /// <param name="services">The services.</param>
-    public static void Register(IServiceCollection services)
-    {
-        services.AddSingleton(typeof(CacheService));
-        services.AddSingleton(typeof(ICacheService), typeof(CacheService));
-    }
 
     /// <summary>
     /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.

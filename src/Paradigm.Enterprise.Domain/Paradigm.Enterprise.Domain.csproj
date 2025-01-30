@@ -14,7 +14,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Description></Description>
+    <Description>Provides base classes to manage domain entities and their operations.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Interfaces\Paradigm.Enterprise.Interfaces.csproj" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <None Include="icon.png">
       <Pack>True</Pack>

@@ -14,7 +14,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Description></Description>
+    <Description>Provides classes and interfaces to connect to a Postgre SQL database using Entity Framework.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,7 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <None Include="icon.png">
       <Pack>True</Pack>

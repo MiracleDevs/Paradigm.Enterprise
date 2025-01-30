@@ -14,7 +14,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Description></Description>
+    <Description>Provides classes and interfaces to connect to a SQL Server database using Entity Framework.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +26,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <None Include="icon.png">
       <Pack>True</Pack>

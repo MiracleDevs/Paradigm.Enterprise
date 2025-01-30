@@ -1,6 +1,5 @@
 ﻿using Azure.Communication.Email;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Services.Email.Configuration;
 using Paradigm.Enterprise.Services.Email.Models;
@@ -39,16 +38,6 @@ public class EmailService : IEmailService
     #endregion
 
     #region Public Methods
-
-    /// <summary>
-    /// Registers the specified services.
-    /// </summary>
-    /// <param name="services">The services.</param>
-    public static void Register(IServiceCollection services)
-    {
-        services.AddSingleton(typeof(EmailService));
-        services.AddSingleton(typeof(IEmailService), typeof(EmailService));
-    }
 
     /// <summary>
     /// Sends the e-mail.

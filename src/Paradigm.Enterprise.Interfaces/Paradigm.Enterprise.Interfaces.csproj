@@ -15,9 +15,9 @@
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Description></Description>
+    <Description>Provides domain entities interfaces consumed by Paradigm.Enterprise packages.</Description>
   </PropertyGroup>
-	
+
   <ItemGroup>
     <None Include="icon.png">
       <Pack>True</Pack>

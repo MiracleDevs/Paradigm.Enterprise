@@ -15,12 +15,13 @@
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Description></Description>
+    <Description>Provides core classes and interfaces to support the providers layer operations.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <None Include="icon.png">
       <Pack>True</Pack>

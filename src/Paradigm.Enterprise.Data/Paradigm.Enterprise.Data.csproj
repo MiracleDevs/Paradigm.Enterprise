@@ -14,7 +14,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Description></Description>
+    <Description>Provides core classes and interfaces to handle Entity Framework operations.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Domain\Paradigm.Enterprise.Domain.csproj" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <None Include="icon.png">
       <Pack>True</Pack>
