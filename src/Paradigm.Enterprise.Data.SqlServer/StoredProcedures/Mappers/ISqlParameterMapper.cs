@@ -2,7 +2,7 @@
 
 namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures.Mappers;
 
-internal interface ISqlParameterMapper : IDisposable
+public interface ISqlParameterMapper : IDisposable
 {
     /// <summary>
     /// Maps the specified parameters.

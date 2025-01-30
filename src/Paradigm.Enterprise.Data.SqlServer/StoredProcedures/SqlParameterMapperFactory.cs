@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 
 namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
-internal static class SqlParameterMapperFactory
+public static class SqlParameterMapperFactory
 {
     private static readonly ConcurrentDictionary<Type, ISqlParameterMapper> Mappers = new ConcurrentDictionary<Type, ISqlParameterMapper>();
 
