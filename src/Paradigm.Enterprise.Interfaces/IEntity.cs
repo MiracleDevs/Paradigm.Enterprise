@@ -1,9 +1,7 @@
-﻿namespace Paradigm.Enterprise.Interfaces
+﻿namespace Paradigm.Enterprise.Interfaces;
+public interface IEntity
 {
-    public interface IEntity
-    {
-        int Id { get; }
+    int Id { get; }
 
-        bool IsNew();
-    }
+    bool IsNew();
 }

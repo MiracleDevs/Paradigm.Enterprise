@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Paradigm.Enterprise.Providers.Services;
 
 namespace Paradigm.Enterprise.Providers;
 
@@ -40,16 +39,6 @@ public abstract class ProviderBase : IProvider
     protected virtual TProvider GetProvider<TProvider>() where TProvider : IProvider
     {
         return ServiceProvider.GetRequiredService<TProvider>();
-    }
-
-    /// <summary>
-    /// Gets the service.
-    /// </summary>
-    /// <typeparam name="TService">The service type.</typeparam>
-    /// <returns></returns>
-    protected virtual TService GetService<TService>() where TService : IService
-    {
-        return ServiceProvider.GetRequiredService<TService>();
     }
 
     #endregion

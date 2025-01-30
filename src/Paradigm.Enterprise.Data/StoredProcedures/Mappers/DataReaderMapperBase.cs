@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 
-internal abstract class DataReaderMapperBase : IDataReaderMapper
+public abstract class DataReaderMapperBase : IDataReaderMapper
 {
     #region Properties
 

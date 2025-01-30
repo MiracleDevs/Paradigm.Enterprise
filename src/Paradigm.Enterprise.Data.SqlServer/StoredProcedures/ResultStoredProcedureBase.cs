@@ -3,7 +3,7 @@ using System.Data.Common;
 
 namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -17,7 +17,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult> : Stored
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -30,7 +30,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -43,7 +43,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -56,7 +56,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -69,7 +69,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -82,7 +82,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -95,7 +95,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -108,7 +108,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -121,7 +121,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -134,7 +134,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -147,7 +147,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -160,7 +160,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -173,7 +173,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -186,7 +186,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult15> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult15> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -199,7 +199,7 @@ internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult
     }
 }
 
-internal abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult15, TResult16> : StoredProcedureBase
+public abstract class ResultStoredProcedureBase<TParameters, TResult1, TResult2, TResult3, TResult4, TResult5, TResult6, TResult7, TResult8, TResult9, TResult10, TResult11, TResult12, TResult13, TResult14, TResult15, TResult16> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.

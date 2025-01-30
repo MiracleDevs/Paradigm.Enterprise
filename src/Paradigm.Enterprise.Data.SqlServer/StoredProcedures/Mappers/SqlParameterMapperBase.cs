@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures.Mappers;
 
-internal abstract class SqlParameterMapperBase : ISqlParameterMapper
+public abstract class SqlParameterMapperBase : ISqlParameterMapper
 {
     #region Properties
 

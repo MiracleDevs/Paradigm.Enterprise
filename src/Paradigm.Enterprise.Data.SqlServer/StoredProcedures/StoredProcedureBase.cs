@@ -6,7 +6,7 @@ using System.Data.Common;
 
 namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
-internal abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
+public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 {
     /// <summary>
     /// Executes the stored procedure.
@@ -19,7 +19,7 @@ internal abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
     }
 }
 
-internal abstract class StoredProcedureBase
+public abstract class StoredProcedureBase
 {
     #region Properties
 
