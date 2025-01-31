@@ -13,12 +13,20 @@ public interface ICacheService : IService
     /// <param name="factory">The factory.</param>
     /// <param name="jsonTypeInfo">The json type information.</param>
     /// <param name="expiration">The cache expiration.</param>
+    /// <param name="tags">The tags.</param>
     /// <returns></returns>
-    Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null);
+    Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null, IEnumerable<string>? tags = null);
 
     /// <summary>
     /// Removes the specified key from cache.
     /// </summary>
     /// <param name="key">The key.</param>
     Task RemoveAsync(string key);
+
+    /// <summary>
+    /// Removes the by tag asynchronous.
+    /// </summary>
+    /// <param name="tag">The tag.</param>
+    /// <returns></returns>
+    Task RemoveByTagAsync(string tag);
 }
