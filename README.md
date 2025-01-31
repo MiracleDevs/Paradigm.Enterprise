@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.2`
+- Fixed ParameterMapperFactory bug in `Data.SqlServer` and `Data.PostgreSql` packages.
+
 Version `1.0.1`
 - Implemented `ZiggyCreatures.FusionCache` library in `Services.Cache`. Implemented `Data.PostgreSql` package.
 

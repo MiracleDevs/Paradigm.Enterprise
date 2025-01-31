@@ -5,11 +5,11 @@ namespace Paradigm.Enterprise.Data.PostgreSql.StoredProcedures;
 
 public static class NpgsqlParameterMapperFactory
 {
-    private static readonly ConcurrentDictionary<Type, INpgsqlParameterMapper> Mappers = new ConcurrentDictionary<Type, INpgsqlParameterMapper>();
+    private static readonly ConcurrentDictionary<Type, Func<INpgsqlParameterMapper>> MapperFactories = new ConcurrentDictionary<Type, Func<INpgsqlParameterMapper>>();
 
-    public static void RegisterMapper<T>(INpgsqlParameterMapper mapper)
+    public static void RegisterMapper<T>(Func<INpgsqlParameterMapper> mapperFactory)
     {
-        Mappers.TryAdd(typeof(T), mapper);
+        MapperFactories.TryAdd(typeof(T), mapperFactory);
     }
 
     public static INpgsqlParameterMapper GetMapper<T>()
@@ -19,14 +19,14 @@ public static class NpgsqlParameterMapperFactory
 
     public static INpgsqlParameterMapper GetMapper(Type type)
     {
-        if (Mappers.TryGetValue(type, out var mapper))
-            return mapper;
+        if (MapperFactories.TryGetValue(type, out var mapperFactory))
+            return mapperFactory();
 
-        throw new InvalidOperationException($"No NpgsqlParameterMapper registered for type {type}");
+        throw new InvalidOperationException($"No SqlParameterMapper registered for type {type}");
     }
 
-    public static void AddCustomMapper<T>(INpgsqlParameterMapper customMapper)
+    public static void AddCustomMapper<T>(Func<INpgsqlParameterMapper> customMapperFactory)
     {
-        Mappers.TryAdd(typeof(T), customMapper);
+        MapperFactories.TryAdd(typeof(T), customMapperFactory);
     }
 }

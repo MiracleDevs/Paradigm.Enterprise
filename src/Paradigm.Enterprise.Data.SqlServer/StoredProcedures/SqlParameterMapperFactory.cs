@@ -5,11 +5,11 @@ namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
 public static class SqlParameterMapperFactory
 {
-    private static readonly ConcurrentDictionary<Type, ISqlParameterMapper> Mappers = new ConcurrentDictionary<Type, ISqlParameterMapper>();
+    private static readonly ConcurrentDictionary<Type, Func<ISqlParameterMapper>> MapperFactories = new ConcurrentDictionary<Type, Func<ISqlParameterMapper>>();
 
-    public static void RegisterMapper<T>(ISqlParameterMapper mapper)
+    public static void RegisterMapper<T>(Func<ISqlParameterMapper> mapperFactory)
     {
-        Mappers.TryAdd(typeof(T), mapper);
+        MapperFactories.TryAdd(typeof(T), mapperFactory);
     }
 
     public static ISqlParameterMapper GetMapper<T>()
@@ -19,14 +19,14 @@ public static class SqlParameterMapperFactory
 
     public static ISqlParameterMapper GetMapper(Type type)
     {
-        if (Mappers.TryGetValue(type, out var mapper))
-            return mapper;
+        if (MapperFactories.TryGetValue(type, out var mapperFactory))
+            return mapperFactory();
 
         throw new InvalidOperationException($"No SqlParameterMapper registered for type {type}");
     }
 
-    public static void AddCustomMapper<T>(ISqlParameterMapper customMapper)
+    public static void AddCustomMapper<T>(Func<ISqlParameterMapper> customMapperFactory)
     {
-        Mappers.TryAdd(typeof(T), customMapper);
+        MapperFactories.TryAdd(typeof(T), customMapperFactory);
     }
 }
