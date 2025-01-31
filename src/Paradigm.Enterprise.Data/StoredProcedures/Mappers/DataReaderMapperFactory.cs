@@ -3,11 +3,11 @@
 namespace Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 public static class DataReaderMapperFactory
 {
-    private static readonly ConcurrentDictionary<Type, IDataReaderMapper> Mappers = new ConcurrentDictionary<Type, IDataReaderMapper>();
+    private static readonly ConcurrentDictionary<Type, Func<IDataReaderMapper>> MapperFactories = new ConcurrentDictionary<Type, Func<IDataReaderMapper>>();
 
-    public static void RegisterMapper<T>(IDataReaderMapper mapper)
+    public static void RegisterMapper<T>(Func<IDataReaderMapper> mapperFactory)
     {
-        Mappers.TryAdd(typeof(T), mapper);
+        MapperFactories.TryAdd(typeof(T), mapperFactory);
     }
 
     public static IDataReaderMapper GetMapper<T>()
@@ -17,8 +17,8 @@ public static class DataReaderMapperFactory
 
     public static IDataReaderMapper GetMapper(Type type)
     {
-        if (Mappers.TryGetValue(type, out var mapper))
-            return mapper;
+        if (MapperFactories.TryGetValue(type, out var mapperFactory))
+            return mapperFactory();
 
         throw new InvalidOperationException($"No DataReaderMapper registered for type {type}");
     }
