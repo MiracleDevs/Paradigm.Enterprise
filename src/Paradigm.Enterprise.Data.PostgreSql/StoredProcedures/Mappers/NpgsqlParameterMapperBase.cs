@@ -8,6 +8,14 @@ public abstract class NpgsqlParameterMapperBase : INpgsqlParameterMapper
     #region Properties
 
     /// <summary>
+    /// Gets the parameter prefix.
+    /// </summary>
+    /// <value>
+    /// The parameter prefix.
+    /// </value>
+    protected abstract string ParameterPrefix { get; }
+
+    /// <summary>
     /// The SQL parameters
     /// </summary>
     private readonly List<NpgsqlParameter> _sqlParameters = new();
@@ -48,7 +56,7 @@ public abstract class NpgsqlParameterMapperBase : INpgsqlParameterMapper
     /// <param name="name">The name.</param>
     /// <param name="value">The value.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void AddNpgsqlParameter(string name, object? value) => _sqlParameters.Add(new NpgsqlParameter(name, value ?? DBNull.Value));
+    protected void AddNpgsqlParameter(string name, object? value) => _sqlParameters.Add(new NpgsqlParameter($"{ParameterPrefix}{name}", value ?? DBNull.Value));
 
     #endregion
 }
