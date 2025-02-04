@@ -1,21 +1,9 @@
 ﻿using Paradigm.Enterprise.Services.Core;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Paradigm.Enterprise.Services.Cache;
 
 public interface ICacheService : IService
 {
-    /// <summary>
-    /// Gets a value from the cache.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <param name="expiration"></param>
-    /// <param name="tags"></param>
-    /// <returns></returns>
-    Task<T> GetAsync<T>(string key, T value, TimeSpan? expiration = null, IEnumerable<string>? tags = null)
-
     /// <summary>
     /// Gets the value from the cache or creates it.
     /// </summary>
@@ -26,7 +14,25 @@ public interface ICacheService : IService
     /// <param name="expiration">The cache expiration.</param>
     /// <param name="tags">The tags.</param>
     /// <returns></returns>
-    Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null, IEnumerable<string>? tags = null);
+    Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, IEnumerable<string>? tags = null);
+
+    /// <summary>
+    /// Gets a value from the cache.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="key">The key.</param>
+    /// <returns></returns>
+    Task<T?> GetAsync<T>(string key);
+
+    /// <summary>
+    /// Sets the value in the cache.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="key">The key.</param>
+    /// <param name="value">The value.</param>
+    /// <param name="expiration">The expiration.</param>
+    /// <param name="tags">The tags.</param>
+    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, IEnumerable<string>? tags = null);
 
     /// <summary>
     /// Removes the specified key from cache.
