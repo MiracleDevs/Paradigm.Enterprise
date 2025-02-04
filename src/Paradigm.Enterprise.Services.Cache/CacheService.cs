@@ -49,6 +49,23 @@ public class CacheService : ICacheService
     #region Public Methods
 
     /// <summary>
+    /// Gets a value from the cache.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <param name="expiration"></param>
+    /// <param name="tags"></param>
+    /// <returns></returns>
+    public async Task<T> GetAsync<T>(string key, T value, TimeSpan? expiration = null, IEnumerable<string>? tags = null)
+    {
+        return await _hybridCache.GetOrCreateAsync(key, async _ => await Task.FromResult(value), new HybridCacheEntryOptions
+        { 
+            Expiration = expiration ?? TimeSpan.FromMinutes(_cacheConfiguration.GetItemExpirationTime ?? 10) 
+        }, tags);
+    }
+
+    /// <summary>
     /// Gets the value from the cache or creates it.
     /// </summary>
     /// <typeparam name="T"></typeparam>
