@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.3`
+- Fixed DataReaderMapperFactory bug in `Data` package. Added new methods in `Services.Cache` package.
+
 Version `1.0.2`
 - Fixed ParameterMapperFactory bug in `Data.SqlServer` and `Data.PostgreSql` packages.
 
