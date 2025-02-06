@@ -6,7 +6,9 @@
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.3</Version>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Version>1.0.4</Version>
     <Authors>Miracle Devs</Authors>
     <Company>Miracle Devs</Company>
     <Product>Paradigm Enterprise</Product>

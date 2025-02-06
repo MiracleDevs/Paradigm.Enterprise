@@ -83,7 +83,17 @@ public class CacheService : ICacheService
     public async Task<T?> GetAsync<T>(string key)
     {
         if (_cacheConfiguration.Disabled) return default;
-        return await _fusionCache.TryGetAsync<T>(key);
+
+        try
+        {
+            var result = await _fusionCache.TryGetAsync<T>(key);
+            return result.HasValue ? result.Value : default;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return default;
+        }
     }
 
     /// <summary>

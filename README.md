@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.4`
+- Fixed issue in `Services.Cache` package. Included packages debug symbols.
+
 Version `1.0.3`
 - Fixed DataReaderMapperFactory bug in `Data` package. Added new methods in `Services.Cache` package.
 

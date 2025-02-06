@@ -8,7 +8,7 @@ index=$1
 noclsArg=$2
 srcDir=../src/
 nugetDir=../.nuget/
-nugetExt=*.nupkg
+nugetExt=*.*nupkg
 
 if [[ "$noclsArg" == "" ]]; then clear; fi
 if [[ "$index" == "" ]]; 	then index="1"; fi
