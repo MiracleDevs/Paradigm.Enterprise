@@ -1,11 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Services.Cache.Configuration;
-using ZiggyCreatures.Caching.Fusion;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Paradigm.Enterprise.Services.Cache;
 
-public class CacheService : ICacheService
+public class CacheService : ICacheService, IDisposable
 {
     #region Properties
 
@@ -15,31 +16,36 @@ public class CacheService : ICacheService
     private readonly RedisCacheConfiguration _cacheConfiguration;
 
     /// <summary>
-    /// The fusion cache
+    /// The distributed cache
     /// </summary>
-    private readonly IFusionCache _fusionCache;
+    private readonly IDistributedCache _distributedCache;
 
     /// <summary>
     /// The logger
     /// </summary>
     private readonly ILogger _logger;
 
+    /// <summary>
+    /// The semaphore
+    /// </summary>
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+
     #endregion
 
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CacheService" /> class.
+    /// Initializes a new instance of the <see cref="CacheService"/> class.
     /// </summary>
-    /// <param name="configuration">The configuration.</param>
-    /// <param name="fusionCache">The fusion cache.</param>
-    /// <param name="logger">The logger.</param>
-    public CacheService(IConfiguration configuration, IFusionCache fusionCache, ILogger<CacheService> logger)
+    /// <param name="cache">The cache.</param>
+    public CacheService(IConfiguration configuration, IDistributedCache cache, ILogger<CacheService> logger)
     {
         _cacheConfiguration = new();
         configuration.Bind("RedisCacheConfiguration", _cacheConfiguration);
 
-        _fusionCache = fusionCache;
+        // TODO: replace with Microsoft.Extensions.Caching.Hybrid when stable version is released, it prevents cache stampedes
+        // by default and semaphore implementation won't be needed anymore. It also allows to tag the cached items to easily remove them by category if needed.
+        _distributedCache = cache;
         _logger = logger;
     }
 
@@ -48,15 +54,23 @@ public class CacheService : ICacheService
     #region Public Methods
 
     /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
+    public void Dispose()
+    {
+        _semaphore.Dispose();
+    }
+
+    /// <summary>
     /// Gets the value from the cache or creates it.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="key">The cache key.</param>
     /// <param name="factory">The factory.</param>
+    /// <param name="jsonTypeInfo">The json type information.</param>
     /// <param name="expiration">The cache expiration.</param>
-    /// <param name="tags">The tags.</param>
     /// <returns></returns>
-    public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null, IEnumerable<string>? tags = null)
+    public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null)
     {
         if (_cacheConfiguration.Disabled) return await factory();
 
@@ -64,8 +78,42 @@ public class CacheService : ICacheService
 
         try
         {
-            var entryOptions = new FusionCacheEntryOptions(expiration ?? TimeSpan.FromMinutes(_cacheConfiguration.ExpirationInMinutes ?? 10));
-            return await _fusionCache.GetOrSetAsync(key, async _ => await factory(), entryOptions, tags);
+            var cachedData = await _distributedCache.GetStringAsync(key);
+            if (!string.IsNullOrWhiteSpace(cachedData))
+            {
+                var deserializedCachedData = System.Text.Json.JsonSerializer.Deserialize(cachedData, jsonTypeInfo);
+                if (deserializedCachedData is not null)
+                    return deserializedCachedData;
+            }
+
+            // If the data is not found, it waits for the semaphore to ensure only one thread can proceed to fetch and cache the data.
+            await _semaphore.WaitAsync();
+
+            try
+            {
+                // Double-check if the data was added to the cache while waiting for the semaphore
+                cachedData = await _distributedCache.GetStringAsync(key);
+                if (!string.IsNullOrWhiteSpace(cachedData))
+                {
+                    var deserializedCachedData = System.Text.Json.JsonSerializer.Deserialize(cachedData, jsonTypeInfo);
+                    if (deserializedCachedData is not null)
+                        return deserializedCachedData;
+                }
+
+                data = await factory();
+                var serializedData = System.Text.Json.JsonSerializer.Serialize(data, jsonTypeInfo);
+
+                if (expiration is null)
+                    expiration = TimeSpan.FromMinutes(_cacheConfiguration.ExpirationInMinutes ?? 60);
+
+                await _distributedCache.SetStringAsync(key, serializedData, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expiration });
+
+                return data;
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
         catch (Exception ex)
         {
@@ -79,21 +127,22 @@ public class CacheService : ICacheService
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="key">The key.</param>
+    /// <param name="jsonTypeInfo"></param>
     /// <returns></returns>
-    public async Task<T?> GetAsync<T>(string key)
+    public async Task<T?> GetAsync<T>(string key, JsonTypeInfo<T> jsonTypeInfo)
     {
         if (_cacheConfiguration.Disabled) return default;
 
-        try
+        var cachedData = await _distributedCache.GetStringAsync(key);
+        
+        if (!string.IsNullOrWhiteSpace(cachedData))
         {
-            var result = await _fusionCache.TryGetAsync<T>(key);
-            return result.HasValue ? result.Value : default;
+            var deserializedCachedData = System.Text.Json.JsonSerializer.Deserialize(cachedData, jsonTypeInfo);
+            if (deserializedCachedData is not null)
+                return deserializedCachedData;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex.Message);
-            return default;
-        }
+
+        return default;
     }
 
     /// <summary>
@@ -102,16 +151,20 @@ public class CacheService : ICacheService
     /// <typeparam name="T"></typeparam>
     /// <param name="key">The key.</param>
     /// <param name="value">The value.</param>
+    /// <param name="jsonTypeInfo"></param>
     /// <param name="expiration">The expiration.</param>
-    /// <param name="tags">The tags.</param>
-    public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, IEnumerable<string>? tags = null)
+    public async Task SetAsync<T>(string key, T value, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null)
     {
         if (_cacheConfiguration.Disabled) return;
 
         try
         {
-            var entryOptions = new FusionCacheEntryOptions(expiration ?? TimeSpan.FromMinutes(_cacheConfiguration.ExpirationInMinutes ?? 10));
-            await _fusionCache.SetAsync(key, value, entryOptions, tags);
+            var serializedData = System.Text.Json.JsonSerializer.Serialize(value, jsonTypeInfo);
+
+            if (expiration is null)
+                expiration = TimeSpan.FromMinutes(_cacheConfiguration.ExpirationInMinutes ?? 60);
+
+            await _distributedCache.SetStringAsync(key, serializedData, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expiration });
         }
         catch (Exception ex)
         {
@@ -129,25 +182,7 @@ public class CacheService : ICacheService
 
         try
         {
-            await _fusionCache.RemoveAsync(key);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// Removes the cache entries by tag.
-    /// </summary>
-    /// <param name="tag">The tag.</param>
-    public async Task RemoveByTagAsync(string tag)
-    {
-        if (_cacheConfiguration.Disabled) return;
-
-        try
-        {
-            await _fusionCache.RemoveByTagAsync(tag);
+            await _distributedCache.RemoveAsync(key);
         }
         catch (Exception ex)
         {
