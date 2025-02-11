@@ -83,7 +83,7 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
         builder.Append(tabs);
         builder.AppendLine(exception.Message);
 
-        if (Environment.GetEnvironmentVariable("DMS_EXPAND_EXCEPTIONS") == "true")
+        if (Environment.GetEnvironmentVariable("PARADIGM_EXPAND_EXCEPTIONS") == "true")
             if (exception is AggregateException aggregateException)
                 foreach (var innerException in aggregateException.InnerExceptions)
                     builder.AppendLine(GetErrorMessage(innerException, tabs + "    "));
