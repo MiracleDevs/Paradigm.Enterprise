@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.6`
+- `IAuditableEntity` interface refactor to support `DateTime` or `DateTimeOffset` types.
+
 Version `1.0.5`
 - Removed `ZiggyCreatures.FusionCache` library from `Services.Cache`.
 
