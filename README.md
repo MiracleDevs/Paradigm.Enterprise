@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.5`
+- Removed `ZiggyCreatures.FusionCache` library from `Services.Cache`.
+
 Version `1.0.4`
 - Fixed issue in `Services.Cache` package. Included packages debug symbols.
 
