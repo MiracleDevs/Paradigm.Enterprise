@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.7`
+- Added GetArray method to read values from database array fields.
+
 Version `1.0.6`
 - `IAuditableEntity` interface refactor to support `DateTime` or `DateTimeOffset` types.
 
