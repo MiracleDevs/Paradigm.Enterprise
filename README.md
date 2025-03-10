@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.8`
+- Added new methods in `EditProviderBase` to execute on save before the view is mapped to an entity
+
 Version `1.0.7`
 - Added GetArray method to read values from database array fields.
 

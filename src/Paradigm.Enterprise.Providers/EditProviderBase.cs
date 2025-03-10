@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 using Paradigm.Enterprise.Domain.Uow;
@@ -56,9 +56,11 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// <returns></returns>
     public virtual async Task<TView> AddAsync(TView view)
     {
+        await BeforeAddAsync(view);
+        await BeforeSaveAsync(view);
+
         var entity = ServiceProvider.GetRequiredService<TEntity>();
         entity.MapFrom(ServiceProvider, view);
-
         entity.Validate();
 
         await BeforeAddAsync(entity);
@@ -84,6 +86,9 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
 
         foreach (var view in views)
         {
+            await BeforeAddAsync(view);
+            await BeforeSaveAsync(view);
+
             var entity = ServiceProvider.GetRequiredService<TEntity>();
             entity.MapFrom(ServiceProvider, view);
             entity.Validate();
@@ -116,6 +121,9 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
         var entity = await Repository.GetByIdAsync(view.Id)
             ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
 
+        await BeforeUpdateAsync(view);
+        await BeforeSaveAsync(view);
+
         entity.MapFrom(ServiceProvider, view);
         entity.Validate();
 
@@ -144,6 +152,9 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
         {
             var entity = await Repository.GetByIdAsync(view.Id)
                 ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
+
+            await BeforeUpdateAsync(view);
+            await BeforeSaveAsync(view);
 
             entity.MapFrom(ServiceProvider, view);
             entity.Validate();
@@ -268,7 +279,16 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     #region Protected Methods
 
     /// <summary>
-    /// Executes before an entity is added.
+    /// Executed on add operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// </summary>
+    /// <param name="view">The view.</param>
+    protected virtual async Task BeforeAddAsync(TView view)
+    {
+        await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Executed on update operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task BeforeAddAsync(TEntity entity)
@@ -277,7 +297,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executes after an entity has been added.
+    /// Executed on add operation after an entity has been added.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task AfterAddAsync(TEntity entity)
@@ -286,7 +306,16 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executes before an entity is updated.
+    /// Executed on update operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// </summary>
+    /// <param name="view">The view.</param>
+    protected virtual async Task BeforeUpdateAsync(TView view)
+    {
+        await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Executed on update operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task BeforeUpdateAsync(TEntity entity)
@@ -295,7 +324,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executes after an entity has been updated.
+    /// Executed on update operation after an entity has been updated.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task AfterUpdateAsync(TEntity entity)
@@ -304,7 +333,16 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executes before an entity is saved.
+    /// Executed on save operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// </summary>
+    /// <param name="view">The view.</param>
+    protected virtual async Task BeforeSaveAsync(TView view)
+    {
+        await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Executed on save operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task BeforeSaveAsync(TEntity entity)
@@ -313,7 +351,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executes after an entity has been saved.
+    /// Executed on save operation after an entity has been saved.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task AfterSaveAsync(TEntity entity)
