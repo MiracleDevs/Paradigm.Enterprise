@@ -91,16 +91,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// </summary>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    protected virtual Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters)
-    {
-        Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> getData = async (parameters) =>
-        {
-            await Task.CompletedTask;
-            return (new PaginationInfo() { ItemsCount = 0, PageNumber = 1, TotalPages = 1 }, []);
-        };
-
-        return getData;
-    }
+    protected abstract Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters);
 
     /// <summary>
     /// Gets the method to be executed for filter entities.

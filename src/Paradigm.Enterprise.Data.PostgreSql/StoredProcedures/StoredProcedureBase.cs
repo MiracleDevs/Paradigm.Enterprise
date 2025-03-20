@@ -155,8 +155,13 @@ public abstract class StoredProcedureBase
         if (connection.State == ConnectionState.Closed)
             await connection.OpenAsync();
 
-        if (unitOfWork is null || !unitOfWork.HasActiveTransaction)
-            throw new InvalidOperationException("A transaction must be opened");
+        if (unitOfWork is null)
+            throw new ArgumentNullException(nameof(unitOfWork));
+
+        ITransaction? localTransaction = null;
+
+        if (!unitOfWork.HasActiveTransaction)
+            localTransaction = unitOfWork.CreateTransaction();
 
         T result;
 
@@ -185,6 +190,8 @@ public abstract class StoredProcedureBase
         result = await cursorAction(set.ToList());
 
         command.Parameters.Clear();
+
+        localTransaction?.Dispose();
 
         return result;
     }
