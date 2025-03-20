@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.10`
+- Adjusted GetSearchPaginatedFunction in ReadRepositoryBase.
+
 Version `1.0.9`
 - Modified `Data.PostgreSql` to automatically create a transaction when execute a stored procedure.
 

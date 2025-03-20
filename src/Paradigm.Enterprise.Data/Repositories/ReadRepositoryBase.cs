@@ -28,20 +28,14 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// Gets all the entities.
     /// </summary>
     /// <returns></returns>
-    public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
-    {
-        return await AsQueryable().ToListAsync();
-    }
+    public virtual async Task<IEnumerable<TEntity>> GetAllAsync() => await AsQueryable().ToListAsync();
 
     /// <summary>
     /// Gets the entity by identifier.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <returns></returns>
-    public virtual async Task<TEntity?> GetByIdAsync(int id)
-    {
-        return await AsQueryable().FirstOrDefaultAsync(x => x.Id == id);
-    }
+    public virtual async Task<TEntity?> GetByIdAsync(int id) => await AsQueryable().FirstOrDefaultAsync(x => x.Id == id);
 
     /// <summary>
     /// Gets the entities by their identifiers.
@@ -65,17 +59,6 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
         return new PaginatedResultDto<TEntity>(paginationInfo, entities);
     }
 
-    /// <summary>
-    /// Execute the search function for entities that implements the method.
-    /// </summary>
-    /// <param name="parametersBase"></param>
-    /// <returns></returns>
-    public async Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase, int userId)
-    {
-        var (paginationInfo, entities) = await GetSearchPaginatedFunction(parametersBase, userId).Invoke(parametersBase);
-        return new PaginatedResultDto<TEntity>(paginationInfo, entities);
-    }
-
     #endregion
 
     #region Protected Methods
@@ -91,17 +74,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// </summary>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    protected abstract Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters);
-
-    /// <summary>
-    /// Gets the method to be executed for filter entities.
-    /// </summary>
-    /// <param name="parameters"></param>
-    /// <returns></returns>
-    protected virtual Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters, int userId)
-    {
-        return GetSearchPaginatedFunction(parameters);
-    }
+    protected virtual Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters) => throw new NotImplementedException();
 
     #endregion
 }
