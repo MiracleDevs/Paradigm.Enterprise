@@ -22,7 +22,7 @@ public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 /// <summary>
 /// 
 /// </summary>
-/// <seealso cref="Paradigm.Enterprise.Data.PostgreSql.StoredProcedures.StoredProcedureBase" />
+/// <seealso cref="StoredProcedureBase" />
 public abstract class StoredProcedureBase
 {
     #region Properties
@@ -34,6 +34,14 @@ public abstract class StoredProcedureBase
     /// The name of the stored procedure.
     /// </value>
     protected abstract string StoredProcedureName { get; }
+
+    /// <summary>
+    /// Gets the execution timeout in seconds.
+    /// </summary>
+    /// <value>
+    /// The execution timeout.
+    /// </value>
+    protected virtual int? ExecutionTimeout { get; }
 
     #endregion
 
@@ -83,6 +91,9 @@ public abstract class StoredProcedureBase
         command.CommandText = StoredProcedureName;
         command.CommandType = CommandType.StoredProcedure;
 
+        if (ExecutionTimeout.HasValue)
+            command.CommandTimeout = ExecutionTimeout.Value;
+
         if (hasActiveTransaction)
             unitOfWork?.UseTransaction(command);
 
@@ -118,6 +129,9 @@ public abstract class StoredProcedureBase
         using var command = connection.CreateCommand();
         command.CommandText = StoredProcedureName;
         command.CommandType = CommandType.StoredProcedure;
+
+        if (ExecutionTimeout.HasValue)
+            command.CommandTimeout = ExecutionTimeout.Value;
 
         if (hasActiveTransaction)
             unitOfWork?.UseTransaction(command);
@@ -168,6 +182,9 @@ public abstract class StoredProcedureBase
         using var command = connection.CreateCommand();
         command.CommandText = StoredProcedureName;
         command.CommandType = CommandType.StoredProcedure;
+
+        if (ExecutionTimeout.HasValue)
+            command.CommandTimeout = ExecutionTimeout.Value;
 
         unitOfWork.UseTransaction(command);
 
