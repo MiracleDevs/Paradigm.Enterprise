@@ -33,6 +33,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.11`
+- Modified `Data` to allow to set the command timeout when executing a stored procedure.
+
 Version `1.0.10`
 - Adjusted GetSearchPaginatedFunction in ReadRepositoryBase.
 
