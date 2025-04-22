@@ -34,8 +34,7 @@ public abstract class AuditableProviderBase<TInterface, TEntity, TView, TReposit
     /// <returns></returns>
     protected override Task BeforeSaveAsync(TEntity entity)
     {
-        var loggedUserManager = ServiceProvider.GetRequiredService<LoggedUserManager>();
-        Audit(entity, loggedUserManager.TryGetAuthenticatedUser<Interfaces.IEntity>()?.Id);
+        Audit(entity, LoggedUserManager.TryGetAuthenticatedUser<Interfaces.IEntity>()?.Id);
         return base.BeforeSaveAsync(entity);
     }
 
