@@ -1,15 +1,14 @@
 ﻿using Paradigm.Enterprise.Interfaces;
 
-namespace Paradigm.Enterprise.Domain.Entities;
-
-public static class LoggedUserManager
+namespace Paradigm.Enterprise.Domain.Services;
+internal class LoggedUserService : ILoggedUserService
 {
     #region Properties
 
     /// <summary>
     /// Gets the logged user.
     /// </summary>
-    private static IEntity? User { get; set; }
+    private IEntity? User { get; set; }
 
     #endregion
 
@@ -20,7 +19,7 @@ public static class LoggedUserManager
     /// </summary>
     /// <param name="version">The version.</param>
     /// <param name="user">The user.</param>
-    public static void Authenticate<TUser>(TUser? user) where TUser : IEntity
+    public void Authenticate<TUser>(TUser? user) where TUser : IEntity
     {
         User = user;
     }
@@ -30,7 +29,7 @@ public static class LoggedUserManager
     /// </summary>
     /// <typeparam name="TUser">The type of the user.</typeparam>
     /// <returns></returns>
-    public static TUser? TryGetAuthenticatedUser<TUser>() where TUser : IEntity => (TUser?)User;
+    public TUser? TryGetAuthenticatedUser<TUser>() where TUser : IEntity => (TUser?)User;
 
     /// <summary>
     /// Gets the authenticated user.
@@ -38,7 +37,7 @@ public static class LoggedUserManager
     /// <typeparam name="TUser">The type of the user.</typeparam>
     /// <returns></returns>
     /// <exception cref="NotAuthorizedException"></exception>
-    public static TUser GetAuthenticatedUser<TUser>() where TUser : IEntity => TryGetAuthenticatedUser<TUser>() ?? throw new UnauthorizedAccessException();
+    public TUser GetAuthenticatedUser<TUser>() where TUser : IEntity => TryGetAuthenticatedUser<TUser>() ?? throw new UnauthorizedAccessException();
 
     #endregion
 }

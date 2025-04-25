@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Data.Uow;
-using Paradigm.Enterprise.Domain.Entities;
+using Paradigm.Enterprise.Domain.Extensions;
+using Paradigm.Enterprise.Domain.Services;
 using Paradigm.Enterprise.Domain.Uow;
 using Paradigm.Enterprise.Interfaces;
 
@@ -8,18 +10,29 @@ namespace Paradigm.Enterprise.Data.Context
 {
     public class DbContextBase : DbContext, ICommiteable
     {
+        #region Properties
+
+        /// <summary>
+        /// The service provider
+        /// </summary>
+        protected readonly IServiceProvider _serviceProvider;
+
+        #endregion
+
         #region Constructor
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DbContextBase"/> class.
+        /// Initializes a new instance of the <see cref="DbContextBase" /> class.
         /// </summary>
+        /// <param name="serviceProvider">The service provider.</param>
         /// <param name="options">The options for this context.</param>
         /// <remarks>
         /// See <see href="https://aka.ms/efcore-docs-dbcontext">DbContext lifetime, configuration, and initialization</see> and
         /// <see href="https://aka.ms/efcore-docs-dbcontext-options">Using DbContextOptions</see> for more information and examples.
         /// </remarks>
-        public DbContextBase(DbContextOptions options) : base(options)
+        public DbContextBase(IServiceProvider serviceProvider, DbContextOptions options) : base(options)
         {
+            _serviceProvider = serviceProvider;
         }
 
         #endregion
@@ -67,20 +80,18 @@ namespace Paradigm.Enterprise.Data.Context
         /// </remarks>
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var loggedUser = LoggedUserManager.GetAuthenticatedUser<IEntity>();
+            IEntity? loggedUser = null;
 
             foreach (var entry in ChangeTracker.Entries<IAuditableEntity<DateTimeOffset>>())
             {
+                if (loggedUser is null)
+                    loggedUser = _serviceProvider.GetRequiredService<ILoggedUserService>().GetAuthenticatedUser<IEntity>();
+
                 switch (entry.State)
                 {
                     case EntityState.Added:
-                        entry.Entity.CreationDate = DateTime.UtcNow;
-                        entry.Entity.CreatedByUserId = loggedUser.Id;
-                        break;
-
                     case EntityState.Modified:
-                        entry.Entity.ModificationDate = DateTime.UtcNow;
-                        entry.Entity.ModifiedByUserId = loggedUser.Id;
+                        entry.Entity.Audit(loggedUser.Id);
                         break;
                 }
             }
