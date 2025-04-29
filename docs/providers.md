@@ -1,0 +1,136 @@
+# Paradigm.Enterprise.Providers
+
+The Providers project implements the Provider pattern, which acts as a facade over repositories and other services to simplify business logic implementation. Providers serve as an application service layer that orchestrates operations between repositories, domain services, and external services.
+
+## Key Components
+
+### IProvider
+
+The base provider interface that all provider interfaces should inherit from:
+
+```csharp
+public interface IProvider
+{
+}
+```
+
+### IReadProvider
+
+Interface for read operations on entities:
+
+```csharp
+public interface IReadProvider<TView> : IProvider
+    where TView : IEntity
+{
+    Task<TView?> GetByIdAsync(int id);
+    Task<IEnumerable<TView>> GetAllAsync();
+    Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters);
+}
+```
+
+### IEditProvider
+
+Interface for CRUD operations on entities:
+
+```csharp
+public interface IEditProvider<TView, TEdit> : IReadProvider<TView>
+    where TView : IEntity
+    where TEdit : IEntity
+{
+    Task<TView> CreateAsync(TEdit model);
+    Task<TView> UpdateAsync(TEdit model);
+    Task DeleteAsync(int id);
+}
+```
+
+### IAuditableProvider
+
+Interface for providers that work with auditable entities:
+
+```csharp
+public interface IAuditableProvider<TView, TEdit> : IEditProvider<TView, TEdit>
+    where TView : IEntity
+    where TEdit : IEntity
+{
+}
+```
+
+### Provider Base Classes
+
+The project includes several base provider implementations:
+
+- **ProviderBase** - Base implementation for simple providers
+- **ReadProviderBase<TView>** - Implementation of IReadProvider
+- **EditProviderBase<TView, TEdit>** - Implementation of IEditProvider
+- **AuditableProviderBase<TView, TEdit>** - Implementation for auditable entities
+
+## Usage Example
+
+```csharp
+// Define provider interface
+public interface IProductProvider : IEditProvider<ProductView, ProductEdit>
+{
+    Task<IEnumerable<ProductView>> GetProductsByCategory(int categoryId);
+}
+
+// Implement provider
+public class ProductProvider : EditProviderBase<ProductView, ProductEdit>, IProductProvider
+{
+    private readonly IRepository<Product> _repository;
+    
+    public ProductProvider(
+        IRepository<Product> repository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider)
+        : base(repository, unitOfWork, serviceProvider)
+    {
+        _repository = repository;
+    }
+    
+    public async Task<IEnumerable<ProductView>> GetProductsByCategory(int categoryId)
+    {
+        var products = await _repository.QueryAsync(p => p.CategoryId == categoryId);
+        return products.Select(p => p.MapTo(_serviceProvider));
+    }
+}
+
+// Register provider in ASP.NET Core
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddScoped<IProductProvider, ProductProvider>();
+}
+
+// Use provider in a controller
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ApiControllerBase<IProductProvider, ProductView, ProductSearchParameters>
+{
+    public ProductsController(
+        ILogger<ProductsController> logger,
+        IProductProvider provider)
+        : base(logger, provider)
+    {
+    }
+    
+    [HttpGet("by-category/{categoryId}")]
+    public async Task<IActionResult> GetByCategory(int categoryId)
+    {
+        var products = await Provider.GetProductsByCategory(categoryId);
+        return Ok(products);
+    }
+}
+```
+
+## Key Features
+
+1. **Simplified Business Logic** - Encapsulates complex operations into a clean API
+2. **Separation of Concerns** - Separates data access from business rules
+3. **Reusability** - Promotes code reuse across different UI layers
+4. **Testability** - Enables easier unit testing with mocks
+5. **Extensibility** - Easy to extend with additional business operations
+
+## NuGet Package
+
+```
+Install-Package Paradigm.Enterprise.Providers
+``` 
