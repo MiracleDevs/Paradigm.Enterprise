@@ -21,23 +21,29 @@ public interface IEntity
 
 ### IAuditableEntity
 
-The `IAuditableEntity` interface extends `IEntity` with auditing capabilities:
+The `IAuditableEntity` interface extends `IEntity` with auditing capabilities. In version 1.0.6, this interface was refactored to support both `DateTime` and `DateTimeOffset` types:
 
 ```csharp
 public interface IAuditableEntity : IEntity
 {
     int? CreatedByUserId { get; set; }
-    DateTimeOffset CreationDate { get; set; }
     int? ModifiedByUserId { get; set; }
-    DateTimeOffset? ModificationDate { get; set; }
+}
+
+public interface IAuditableEntity<TDate> : IAuditableEntity where TDate : struct
+{
+    TDate CreationDate { get; set; }
+    TDate? ModificationDate { get; set; }
 }
 ```
 
-This interface adds properties for tracking:
+This interface hierarchy adds properties for tracking:
 - Who created the entity
 - When it was created
 - Who last modified it
 - When it was last modified
+
+The generic type parameter `TDate` allows for using either `DateTime` or `DateTimeOffset` as the date type.
 
 ## Usage
 
@@ -54,15 +60,29 @@ public class Product : EntityBase, IEntity
     public bool IsNew() => Id == default;
 }
 
-// Example of an auditable entity
-public class Customer : EntityBase, IAuditableEntity
+// Example of an auditable entity with DateTime
+public class Customer : EntityBase, IAuditableEntity<DateTime>
 {
     public int Id { get; set; }
     public string Name { get; set; }
     
     public int? CreatedByUserId { get; set; }
-    public DateTimeOffset CreationDate { get; set; }
     public int? ModifiedByUserId { get; set; }
+    public DateTime CreationDate { get; set; }
+    public DateTime? ModificationDate { get; set; }
+    
+    public bool IsNew() => Id == default;
+}
+
+// Example of an auditable entity with DateTimeOffset
+public class Order : EntityBase, IAuditableEntity<DateTimeOffset>
+{
+    public int Id { get; set; }
+    public decimal Total { get; set; }
+    
+    public int? CreatedByUserId { get; set; }
+    public int? ModifiedByUserId { get; set; }
+    public DateTimeOffset CreationDate { get; set; }
     public DateTimeOffset? ModificationDate { get; set; }
     
     public bool IsNew() => Id == default;

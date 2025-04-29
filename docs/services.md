@@ -31,7 +31,7 @@ The Services.Cache package provides caching capabilities for improving applicati
 - **ICacheService** - Interface for cache operations
 - **MemoryCacheService** - In-memory cache implementation
 - **DistributedCacheService** - Distributed cache implementation
-- **FusionCacheService** - Implementation using ZiggyCreatures.FusionCache
+- **~~FusionCacheService~~** - Implementation using ZiggyCreatures.FusionCache (Removed in version 1.0.5)
 
 ### Usage Example
 

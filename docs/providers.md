@@ -61,7 +61,9 @@ The project includes several base provider implementations:
 
 - **ProviderBase** - Base implementation for simple providers
 - **ReadProviderBase<TView>** - Implementation of IReadProvider
+  - Updated in version 1.0.10: Improved `SearchPaginatedAsync` method for more optimized queries
 - **EditProviderBase<TView, TEdit>** - Implementation of IEditProvider
+  - Added in version 1.0.8: Methods for executing actions before the edit model is mapped to an entity
 - **AuditableProviderBase<TView, TEdit>** - Implementation for auditable entities
 
 ## Usage Example
@@ -91,6 +93,45 @@ public class ProductProvider : EditProviderBase<ProductView, ProductEdit>, IProd
     {
         var products = await _repository.QueryAsync(p => p.CategoryId == categoryId);
         return products.Select(p => p.MapTo(_serviceProvider));
+    }
+    
+    // Example of using pre-mapping hooks added in version 1.0.8
+    protected override async Task<TView> CreateWithPreMappingAsync(TEdit model, Func<Task> preMappingAction)
+    {
+        // Custom validation before mapping
+        if (string.IsNullOrEmpty(model.Name))
+        {
+            throw new ValidationException("Product name is required");
+        }
+        
+        // Execute pre-mapping action
+        await preMappingAction();
+        
+        // Continue with standard create process
+        return await base.CreateAsync(model);
+    }
+    
+    protected override async Task<TView> UpdateWithPreMappingAsync(TEdit model, Func<Task> preMappingAction)
+    {
+        // Custom logic before mapping to entity
+        if (model.Price < 0)
+        {
+            model.Price = 0; // Ensure price is not negative
+        }
+        
+        // Execute pre-mapping action
+        await preMappingAction();
+        
+        // Continue with standard update process
+        return await base.UpdateAsync(model);
+    }
+    
+    // Example of optimized search with improvements from version 1.0.10
+    public override async Task<PaginatedResultDto<ProductView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
+    {
+        // The optimized search method in ReadProviderBase now handles pagination,
+        // filtering, and sorting more efficiently
+        return await base.SearchPaginatedAsync(parameters);
     }
 }
 
@@ -128,6 +169,8 @@ public class ProductsController : ApiControllerBase<IProductProvider, ProductVie
 3. **Reusability** - Promotes code reuse across different UI layers
 4. **Testability** - Enables easier unit testing with mocks
 5. **Extensibility** - Easy to extend with additional business operations
+6. **Pre-Mapping Actions** - Added in version 1.0.8: Support for running actions before mapping edit models to entities
+7. **Optimized Queries** - Updated in version 1.0.10: Improved search pagination for better performance
 
 ## NuGet Package
 

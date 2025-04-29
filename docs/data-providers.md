@@ -50,6 +50,7 @@ The PostgreSQL provider is an implementation specific to PostgreSQL databases.
 - **PostgreSqlUnitOfWork** - Unit of work implementation for PostgreSQL
 - **PostgreSqlParameterMapper** - Maps .NET types to PostgreSQL parameter types
 - **PostgreSqlStoredProcedureExecutor** - Executes stored procedures on PostgreSQL
+  - Updated in version 1.0.9: Automatically creates a transaction when executing stored procedures to ensure data consistency
 
 ### Usage Example
 
@@ -67,6 +68,19 @@ public void ConfigureServices(IServiceCollection services)
     
     // Register repositories
     services.AddScoped<IRepository<Product>, PostgreSqlRepositoryBase<Product>>();
+}
+
+// Example of executing a stored procedure with automatic transaction (since v1.0.9)
+public async Task<List<Product>> GetProductsInCategoryAsync(int categoryId)
+{
+    var executor = new PostgreSqlStoredProcedureExecutor(_connection);
+    
+    // Transaction will be automatically created
+    var result = await executor.ExecuteReaderAsync<Product>(
+        "get_products_in_category",
+        new[] { new NpgsqlParameter("p_category_id", categoryId) });
+        
+    return result.ToList();
 }
 ```
 

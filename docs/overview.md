@@ -48,7 +48,7 @@ This will bring in all the necessary dependencies for a typical WebAPI project.
 
 ## Versioning and Compatibility
 
-The framework follows semantic versioning. The current version is 1.0.4.
+The framework follows semantic versioning. The current version is 1.0.11.
 
 ## License
 
