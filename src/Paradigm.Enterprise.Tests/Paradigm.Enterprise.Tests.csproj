@@ -10,6 +10,16 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="MSTest" Version="3.8.3" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Domain\Paradigm.Enterprise.Domain.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Interfaces\Paradigm.Enterprise.Interfaces.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Providers\Paradigm.Enterprise.Providers.csproj" />
   </ItemGroup>
 
   <ItemGroup>
