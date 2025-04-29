@@ -1,8 +1,8 @@
-# Paradigm.Enterprise Architecture
+# 1. Paradigm.Enterprise Architecture
 
 This document provides an architectural overview of the Paradigm.Enterprise framework, including its structure, design decisions, patterns, and how the various components interact.
 
-## Architectural Overview
+## 1.1. Architectural Overview
 
 The Paradigm.Enterprise framework is designed around clean architecture principles, with clear separation of concerns and dependencies flowing inward. The architecture consists of the following layers:
 
@@ -11,7 +11,7 @@ graph TD
     subgraph "External Systems"
         ext[External Services/APIs]
     end
-    
+
     subgraph "Core Architecture"
         webapi[Web API Layer]
         services[Services Layer]
@@ -20,7 +20,7 @@ graph TD
         domain[Domain Layer]
         interfaces[Interfaces Layer]
     end
-    
+
     webapi --> providers
     webapi --> services
     providers --> domain
@@ -28,13 +28,13 @@ graph TD
     domain --> interfaces
     data --> interfaces
     services --> ext
-    
+
     classDef core fill:#f9f,stroke:#333,stroke-width:2px;
     classDef external fill:#bbf,stroke:#333,stroke-width:1px;
-    
+
     class domain,interfaces,data,providers,services,webapi core;
     class ext external;
-    
+
     style webapi fill:#e6f7ff,stroke:#333
     style services fill:#fff2e6,stroke:#333
     style providers fill:#e6ffe6,stroke:#333
@@ -43,7 +43,7 @@ graph TD
     style interfaces fill:#ffffcc,stroke:#333
 ```
 
-### Core Layers
+### 1.1.1. Core Layers
 
 1. **Interfaces Layer** - Contains core interfaces that define contracts for the domain
 2. **Domain Layer** - Contains domain entities, value objects, and business logic
@@ -52,9 +52,9 @@ graph TD
 5. **Services Layer** - Provides abstractions for common application services
 6. **WebApi Layer** - Exposes REST endpoints and handles HTTP concerns
 
-### Project Dependencies
+### 1.1.2. Project Dependencies
 
-```
+```shell
 WebApi → Providers → Domain → Interfaces
    ↓          ↓         ↓
 Services      Data
@@ -62,34 +62,35 @@ Services      Data
 External Systems
 ```
 
-## Design Principles
+## 1.2. Design Principles
 
 The framework is built around several key design principles:
 
-### 1. Dependency Inversion
+### 1.2.1. Dependency Inversion
 
 The framework follows the Dependency Inversion Principle, with high-level modules not dependent on low-level modules, but both dependent on abstractions. This is achieved through extensive use of interfaces and dependency injection.
 
-### 2. Single Responsibility
+### 1.2.2. Single Responsibility
 
 Each component in the framework has a single responsibility. For example:
+
 - Repositories are responsible for data access
 - Providers are responsible for business logic
 - Controllers are responsible for HTTP concerns
 
-### 3. Composition Over Inheritance
+### 1.2.3. Composition Over Inheritance
 
 The framework favors composition over deep inheritance hierarchies, with base classes providing minimal functionality and most behavior added through composition.
 
-### 4. Convention Over Configuration
+### 1.2.4. Convention Over Configuration
 
 Common patterns are implemented through conventions, reducing the need for explicit configuration. This is particularly evident in the naming conventions and standard CRUD operations.
 
-## Key Design Patterns
+## 1.3. Key Design Patterns
 
 The framework implements several design patterns:
 
-### Repository Pattern
+### 1.3.1. Repository Pattern
 
 The Repository Pattern provides an abstraction over data access:
 
@@ -104,7 +105,7 @@ public interface IRepository<T> where T : IEntity
 }
 ```
 
-### Unit of Work Pattern
+### 1.3.2. Unit of Work Pattern
 
 The Unit of Work Pattern manages the atomic persistence of changes:
 
@@ -116,7 +117,7 @@ public interface IUnitOfWork
 }
 ```
 
-### Provider Pattern
+### 1.3.3. Provider Pattern
 
 The Provider Pattern acts as a facade over repositories and services:
 
@@ -131,7 +132,7 @@ public interface IEditProvider<TView, TEdit>
 }
 ```
 
-### Factory Pattern
+### 1.3.4. Factory Pattern
 
 The Factory Pattern is used to create instances of complex objects:
 
@@ -143,13 +144,13 @@ public interface IEntityFactory<T> where T : IEntity
 }
 ```
 
-### Mediator Pattern
+### 1.3.5. Mediator Pattern
 
 The Mediator Pattern is used for decoupling components and handling cross-cutting concerns.
 
-## Component Interactions
+## 1.4. Component Interactions
 
-### Typical Request Flow
+### 1.4.1. Typical Request Flow
 
 1. **HTTP Request** → WebApi Controller
 2. **Controller** → Provider (business logic)
@@ -159,11 +160,11 @@ The Mediator Pattern is used for decoupling components and handling cross-cuttin
 
 For example, a typical CRUD operation flow:
 
-```
+```shell
 [HTTP Request] → [ApiControllerCrudBase] → [EditProviderBase] → [RepositoryBase] → [EfDataContext] → [Database]
 ```
 
-## Extension Points
+## 1.5. Extension Points
 
 The framework provides several extension points:
 
@@ -173,9 +174,9 @@ The framework provides several extension points:
 4. **Custom Services** - Implement service interfaces with custom implementations
 5. **Middleware Extensions** - Add custom middleware to the pipeline
 
-## Cross-cutting Concerns
+## 1.6. Cross-cutting Concerns
 
-### Logging
+### 1.6.1. Logging
 
 Logging is implemented throughout the framework:
 
@@ -183,7 +184,7 @@ Logging is implemented throughout the framework:
 public class ApiControllerBase<TProvider>
 {
     protected readonly ILogger Logger;
-    
+
     public ApiControllerBase(ILogger logger, TProvider provider)
     {
         Logger = logger;
@@ -192,7 +193,7 @@ public class ApiControllerBase<TProvider>
 }
 ```
 
-### Exception Handling
+### 1.6.2. Exception Handling
 
 Centralized exception handling is provided through middleware:
 
@@ -213,7 +214,7 @@ public class ExceptionHandlingMiddleware
 }
 ```
 
-### Validation
+### 1.6.3. Validation
 
 Validation is implemented through model validation and explicit validation methods:
 
@@ -227,7 +228,7 @@ public abstract class EntityBase<TInterface, TEntity, TView>
 }
 ```
 
-### Caching
+### 1.6.4. Caching
 
 Caching is implemented through the `ICacheService`:
 
@@ -240,7 +241,7 @@ public interface ICacheService
 }
 ```
 
-## Performance Considerations
+## 1.7. Performance Considerations
 
 The framework is designed with performance in mind:
 
@@ -250,7 +251,7 @@ The framework is designed with performance in mind:
 4. **Connection Management** - Efficient database connection management
 5. **Pagination** - Support for pagination to handle large datasets
 
-## Security Considerations
+## 1.8. Security Considerations
 
 The framework includes several security features:
 
@@ -260,7 +261,7 @@ The framework includes several security features:
 4. **CSRF Protection** - Cross-Site Request Forgery protection
 5. **Secure Defaults** - Security-focused default settings
 
-## Testing Strategy
+## 1.9. Testing Strategy
 
 The framework is designed to be testable:
 
@@ -269,7 +270,7 @@ The framework is designed to be testable:
 3. **Mocking** - Interfaces allow for easy mocking
 4. **Test Fixtures** - Reusable test fixtures
 
-## Deployment Considerations
+## 1.10. Deployment Considerations
 
 The framework supports various deployment scenarios:
 
@@ -278,6 +279,6 @@ The framework supports various deployment scenarios:
 3. **Configuration** - Environment-specific configuration
 4. **Scaling** - Support for horizontal scaling
 
-## Conclusion
+## 1.11. Conclusion
 
-The Paradigm.Enterprise framework provides a comprehensive architecture for building enterprise web applications. By following clean architecture principles and implementing proven design patterns, it offers a solid foundation for developing maintainable and scalable applications. 
+The Paradigm.Enterprise framework provides a comprehensive architecture for building enterprise web applications. By following clean architecture principles and implementing proven design patterns, it offers a solid foundation for developing maintainable and scalable applications.

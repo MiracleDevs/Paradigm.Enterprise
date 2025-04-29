@@ -1,27 +1,27 @@
-# Sample Application with Paradigm.Enterprise
+# 1. Sample Application with Paradigm.Enterprise
 
 This guide demonstrates how to build a complete API using the Paradigm.Enterprise framework. We'll create a simple product catalog API with basic CRUD operations.
 
-## Project Setup
+## 1.1. Project Setup
 
 1. Create a new ASP.NET Core Web API project:
 
-```shell
-dotnet new webapi -n ProductCatalog.Api
-```
+    ```shell
+    dotnet new webapi -n ProductCatalog.Api
+    ```
 
 2. Add the required Paradigm.Enterprise NuGet packages:
 
-```shell
-dotnet add package Paradigm.Enterprise.WebApi
-dotnet add package Paradigm.Enterprise.Data.SqlServer
-```
+    ```shell
+    dotnet add package Paradigm.Enterprise.WebApi
+    dotnet add package Paradigm.Enterprise.Data.SqlServer
+    ```
 
-## Domain Layer
+## 1.2. Domain Layer
 
 First, let's define our domain entities:
 
-### Product.cs
+### 1.2.1. Product.cs
 
 ```csharp
 using Paradigm.Enterprise.Domain.Entities;
@@ -39,7 +39,7 @@ namespace ProductCatalog.Domain.Entities
 }
 ```
 
-### ProductCategory.cs
+### 1.2.2. ProductCategory.cs
 
 ```csharp
 using Paradigm.Enterprise.Domain.Entities;
@@ -54,11 +54,11 @@ namespace ProductCatalog.Domain.Entities
 }
 ```
 
-## Data Layer
+## 1.3. Data Layer
 
 Next, let's set up the data context:
 
-### AppDbContext.cs
+### 1.3.1. AppDbContext.cs
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -98,11 +98,11 @@ namespace ProductCatalog.Data
 }
 ```
 
-## DTOs (Data Transfer Objects)
+## 1.4. DTOs (Data Transfer Objects)
 
 Define the DTOs for our API:
 
-### ProductDto.cs
+### 1.4.1. ProductDto.cs
 
 ```csharp
 using Paradigm.Enterprise.Interfaces;
@@ -144,11 +144,11 @@ namespace ProductCatalog.Api.Dtos
 }
 ```
 
-## Repositories
+## 1.5. Repositories
 
 Let's create repositories for our entities:
 
-### ProductRepository.cs
+### 1.5.1. ProductRepository.cs
 
 ```csharp
 using Paradigm.Enterprise.Data.Repositories;
@@ -166,7 +166,7 @@ namespace ProductCatalog.Data.Repositories
 }
 ```
 
-### ProductCategoryRepository.cs
+### 1.5.2. ProductCategoryRepository.cs
 
 ```csharp
 using Paradigm.Enterprise.Data.Repositories;
@@ -184,11 +184,11 @@ namespace ProductCatalog.Data.Repositories
 }
 ```
 
-## Providers
+## 1.6. Providers
 
 Create providers for the business logic:
 
-### IProductProvider.cs
+### 1.6.1. IProductProvider.cs
 
 ```csharp
 using Paradigm.Enterprise.Providers;
@@ -203,7 +203,7 @@ namespace ProductCatalog.Api.Providers
 }
 ```
 
-### ProductProvider.cs
+### 1.6.2. ProductProvider.cs
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -258,41 +258,41 @@ namespace ProductCatalog.Api.Providers
         public override async Task<PaginatedResultDto<ProductViewDto>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
         {
             var searchParams = parameters as ProductSearchParameters;
-            
+
             var query = _context.Products.AsQueryable();
-            
+
             if (!string.IsNullOrEmpty(searchParams?.FilterText))
             {
-                query = query.Where(p => p.Name.Contains(searchParams.FilterText) || 
+                query = query.Where(p => p.Name.Contains(searchParams.FilterText) ||
                                         p.Description.Contains(searchParams.FilterText));
             }
-            
+
             if (searchParams?.CategoryId.HasValue == true)
             {
                 query = query.Where(p => p.CategoryId == searchParams.CategoryId.Value);
             }
-            
+
             if (searchParams?.MinPrice.HasValue == true)
             {
                 query = query.Where(p => p.Price >= searchParams.MinPrice.Value);
             }
-            
+
             if (searchParams?.MaxPrice.HasValue == true)
             {
                 query = query.Where(p => p.Price <= searchParams.MaxPrice.Value);
             }
-            
+
             if (searchParams?.IsActive.HasValue == true)
             {
                 query = query.Where(p => p.IsActive == searchParams.IsActive.Value);
             }
-            
+
             var totalItems = await query.CountAsync();
-            
+
             // Apply pagination
             query = query.Skip((searchParams?.PageNumber ?? 1 - 1) * (searchParams?.PageSize ?? 10))
                         .Take(searchParams?.PageSize ?? 10);
-                        
+
             // Join with categories
             var result = await query
                 .Join(_context.ProductCategories,
@@ -309,7 +309,7 @@ namespace ProductCatalog.Api.Providers
                         IsActive = p.IsActive
                     })
                 .ToListAsync();
-                
+
             return new PaginatedResultDto<ProductViewDto>
             {
                 Items = result,
@@ -318,11 +318,11 @@ namespace ProductCatalog.Api.Providers
                 PageSize = searchParams?.PageSize ?? 10
             };
         }
-        
+
         protected override ProductViewDto MapEntityToView(Product entity)
         {
             var category = _context.ProductCategories.FirstOrDefault(c => c.Id == entity.CategoryId);
-            
+
             return new ProductViewDto
             {
                 Id = entity.Id,
@@ -337,27 +337,27 @@ namespace ProductCatalog.Api.Providers
 
         protected override Product MapEditToEntity(ProductEditDto model)
         {
-            var entity = model.Id != default 
+            var entity = model.Id != default
                 ? _repository.GetByIdAsync(model.Id).Result
                 : new Product();
-                
+
             entity.Name = model.Name;
             entity.Description = model.Description;
             entity.Price = model.Price;
             entity.CategoryId = model.CategoryId;
             entity.IsActive = model.IsActive;
-            
+
             return entity;
         }
     }
 }
 ```
 
-## Controllers
+## 1.7. Controllers
 
 Finally, let's create the API controllers:
 
-### ProductsController.cs
+### 1.7.1. ProductsController.cs
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -377,7 +377,7 @@ namespace ProductCatalog.Api.Controllers
             : base(logger, provider)
         {
         }
-        
+
         [HttpGet("by-category/{categoryId}")]
         public async Task<IActionResult> GetByCategory(int categoryId)
         {
@@ -388,7 +388,7 @@ namespace ProductCatalog.Api.Controllers
 }
 ```
 
-## Program.cs
+## 1.8. Program.cs
 
 Set up the application in the Program.cs file:
 
@@ -436,7 +436,7 @@ app.MapControllers();
 app.Run();
 ```
 
-## appsettings.json
+## 1.9. appsettings.json
 
 Configure the connection string in appsettings.json:
 
@@ -455,23 +455,23 @@ Configure the connection string in appsettings.json:
 }
 ```
 
-## Running the Application
+## 1.10. Running the Application
 
 1. Create the database using Entity Framework migrations:
 
-```shell
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-```
+    ```shell
+    dotnet ef migrations add InitialCreate
+    dotnet ef database update
+    ```
 
 2. Run the application:
 
-```shell
-dotnet run
-```
+    ```shell
+    dotnet run
+    ```
 
-3. Access the Swagger UI at https://localhost:5001/swagger to test the API endpoints.
+3. Access the Swagger UI at <https://localhost:5001/swagger> to test the API endpoints.
 
-## Conclusion
+## 1.11. Conclusion
 
-This sample application demonstrates how to use the Paradigm.Enterprise framework to build a complete API with CRUD operations. The framework provides a solid foundation for implementing best practices like repository pattern, unit of work, and provider pattern, while reducing boilerplate code. 
+This sample application demonstrates how to use the Paradigm.Enterprise framework to build a complete API with CRUD operations. The framework provides a solid foundation for implementing best practices like repository pattern, unit of work, and provider pattern, while reducing boilerplate code.

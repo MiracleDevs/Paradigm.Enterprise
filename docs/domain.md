@@ -1,10 +1,10 @@
-# Paradigm.Enterprise.Domain
+# 1. Paradigm.Enterprise.Domain
 
 The Domain project provides the core building blocks for implementing domain entities, value objects, and business logic in the Paradigm.Enterprise framework. It contains base classes and utilities for creating a clean domain model following domain-driven design principles.
 
-## Key Components
+## 1.1. Key Components
 
-### EntityBase
+### 1.1.1. EntityBase
 
 `EntityBase` is the foundational class for all domain entities, implementing the `IEntity` interface:
 
@@ -34,40 +34,40 @@ public abstract class EntityBase<TInterface, TEntity, TView> : EntityBase
 }
 ```
 
-### Entities
+### 1.1.2. Entities
 
 The Domain project includes several ready-to-use entities:
 
 - **DomainTracker** - A specialized entity for tracking domain object changes
 
-### Repositories
+### 1.1.3. Repositories
 
 The Domain project defines repository interfaces for working with entities:
 
-- **IRepository<T>** - Base repository interface for CRUD operations
-- **IAuditableRepository<T>** - Repository interface for auditable entities
+- **IRepository\<T>** - Base repository interface for CRUD operations
+- **IAuditableRepository\<T>** - Repository interface for auditable entities
 
-### Unit of Work
+### 1.1.4. Unit of Work
 
 The unit of work pattern is implemented to manage transactions and persistence:
 
 - **IUnitOfWork** - Interface for transactions and commit operations
 - **UnitOfWorkBase** - Base implementation of the unit of work pattern
 
-### DTOs (Data Transfer Objects)
+### 1.1.5. DTOs (Data Transfer Objects)
 
 The project includes several DTOs for common use cases:
 
-- **PaginatedResultDto<T>** - For handling paginated results
+- **PaginatedResultDto\<T>** - For handling paginated results
 - **FilterTextPaginatedParameters** - For search operations with filtering and pagination
 
-### Mappers
+### 1.1.6. Mappers
 
 Mapping utilities for converting between entities, DTOs, and views:
 
 - **EntityMapper** - Maps between domain entities and DTOs
 
-## Usage Example
+## 1.2. Usage Example
 
 ```csharp
 // Example of creating a domain entity
@@ -91,13 +91,13 @@ public class ProductService
 {
     private readonly IRepository<Product> _repository;
     private readonly IUnitOfWork _unitOfWork;
-    
+
     public ProductService(IRepository<Product> repository, IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
     }
-    
+
     public async Task<Product> CreateProduct(string name, decimal price)
     {
         var product = new Product { Name = name, Price = price };
@@ -108,8 +108,8 @@ public class ProductService
 }
 ```
 
-## NuGet Package
+## 1.3. NuGet Package
 
-```
+```shell
 Install-Package Paradigm.Enterprise.Domain
-``` 
+```

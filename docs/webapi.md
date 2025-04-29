@@ -1,10 +1,10 @@
-# Paradigm.Enterprise.WebApi
+# 1. Paradigm.Enterprise.WebApi
 
 The WebApi project provides a comprehensive set of components for building RESTful APIs using ASP.NET Core. It includes base controllers, middleware, exception handling, and other utilities to accelerate API development while following best practices.
 
-## Key Components
+## 1.1. Key Components
 
-### Base Controllers
+### 1.1.1. Base Controllers
 
 The WebApi project includes base controllers to simplify API development:
 
@@ -19,7 +19,7 @@ public abstract class ApiControllerBase<TProvider> : ControllerBase
 {
     protected ILogger Logger { get; }
     protected TProvider Provider { get; }
-    
+
     public ApiControllerBase(ILogger<ApiControllerBase<TProvider>> logger, TProvider provider)
     {
         Logger = logger;
@@ -35,13 +35,13 @@ public abstract class ApiControllerBase<TProvider, TView, TParameters> : Control
 {
     protected ILogger Logger { get; }
     protected TProvider Provider { get; }
-    
+
     public ApiControllerBase(ILogger<ApiControllerBase<TProvider, TView, TParameters>> logger, TProvider provider)
     {
         Logger = logger;
         Provider = provider;
     }
-    
+
     [HttpPost("search")]
     public virtual async Task<PaginatedResultDto<TView>> SearchAsync([FromBody, Required] TParameters parameters)
     {
@@ -50,7 +50,7 @@ public abstract class ApiControllerBase<TProvider, TView, TParameters> : Control
 }
 ```
 
-### Middleware
+### 1.1.2. Middleware
 
 Custom middleware components for common API concerns:
 
@@ -58,7 +58,7 @@ Custom middleware components for common API concerns:
 - **RequestLoggingMiddleware** - Logs incoming requests and responses
 - **ApiKeyAuthenticationMiddleware** - Validates API keys for authentication
 
-### Filters
+### 1.1.3. Filters
 
 Action filters for cross-cutting concerns:
 
@@ -66,7 +66,7 @@ Action filters for cross-cutting concerns:
 - **LoggingActionFilter** - Logs action execution
 - **CacheFilter** - Enables response caching
 
-### Exception Handling
+### 1.1.4. Exception Handling
 
 Standardized exception handling and error responses:
 
@@ -75,14 +75,14 @@ Standardized exception handling and error responses:
 - **NotFoundException** - Exception for not found resources
 - **ForbiddenException** - Exception for authorization failures
 
-### Extensions
+### 1.1.5. Extensions
 
 Extension methods for ASP.NET Core integration:
 
 - **ApplicationBuilderExtensions** - Extensions for IApplicationBuilder
 - **ServiceCollectionExtensions** - Extensions for IServiceCollection
 
-## Usage Example
+## 1.2. Usage Example
 
 ```csharp
 // Sample API controller using the base classes
@@ -96,7 +96,7 @@ public class ProductsController : ApiControllerCrudBase<IProductProvider, Produc
         : base(logger, provider)
     {
     }
-    
+
     // Additional custom endpoints
     [HttpGet("featured")]
     public async Task<IActionResult> GetFeaturedProducts()
@@ -127,7 +127,7 @@ app.MapControllers();
 app.Run();
 ```
 
-## Key Features
+## 1.3. Key Features
 
 1. **Standardized API Structure** - Consistent API design with base controllers
 2. **Built-in CRUD Operations** - Ready-to-use CRUD endpoints
@@ -136,8 +136,8 @@ app.Run();
 5. **Logging** - Request and response logging
 6. **Performance** - Optimized JSON serialization
 
-## NuGet Package
+## 1.4. NuGet Package
 
-```
+```shell
 Install-Package Paradigm.Enterprise.WebApi
-``` 
+```

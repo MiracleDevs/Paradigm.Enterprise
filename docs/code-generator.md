@@ -1,10 +1,10 @@
-# Paradigm.Enterprise.CodeGenerator
+# 1. Paradigm.Enterprise.CodeGenerator
 
 The CodeGenerator project is a utility library that provides code generation capabilities for the Paradigm.Enterprise framework. It automates the creation of boilerplate code for entities, repositories, providers, controllers, and other components, increasing developer productivity and ensuring consistency across the codebase.
 
-## Key Components
+## 1.1. Key Components
 
-### Code Generators
+### 1.1.1. Code Generators
 
 The project includes various code generators for different aspects of the application:
 
@@ -14,7 +14,7 @@ The project includes various code generators for different aspects of the applic
 - **ControllerGenerator** - Creates API controllers with standard endpoints
 - **DtoGenerator** - Generates Data Transfer Objects for view and edit operations
 
-### Templates
+### 1.1.2. Templates
 
 The CodeGenerator uses a templating system to generate code:
 
@@ -22,7 +22,7 @@ The CodeGenerator uses a templating system to generate code:
 - **Handlebars Templates** - Logic-less templates for code generation
 - **Razor Templates** - Syntax for embedding C# in templates
 
-### Model Discovery
+### 1.1.3. Model Discovery
 
 The project includes utilities for discovering and analyzing existing code:
 
@@ -30,7 +30,7 @@ The project includes utilities for discovering and analyzing existing code:
 - **CodeAnalyzer** - Parses existing code for relationship discovery
 - **TypeScanner** - Scans assemblies for relevant types
 
-### Configuration
+### 1.1.4. Configuration
 
 Configuration options for code generation:
 
@@ -38,9 +38,9 @@ Configuration options for code generation:
 - **NamingConventions** - Rules for naming generated artifacts
 - **TemplateSettings** - Customization options for templates
 
-## Usage Example
+## 1.2. Usage Example
 
-### Command Line Interface
+### 1.2.1. Command Line Interface
 
 ```shell
 # Generate a complete set of components for an entity
@@ -50,7 +50,7 @@ dotnet run --project src/Paradigm.Enterprise.CodeGenerator -- generate entity Pr
 dotnet run --project src/Paradigm.Enterprise.CodeGenerator -- generate controller Product --namespace MyApp.Controllers --output ./src/MyApp.Api
 ```
 
-### Programmatic Usage
+### 1.2.2. Programmatic Usage
 
 ```csharp
 // Example of programmatic usage
@@ -93,11 +93,11 @@ var projectGenerator = new ProjectGenerator
 projectGenerator.Generate();
 ```
 
-## Generated Code Structure
+## 1.3. Generated Code Structure
 
 The CodeGenerator produces a consistent structure for generated code:
 
-```
+```shell
 MyApp/
 ├── Domain/
 │   └── Entities/
@@ -116,7 +116,7 @@ MyApp/
 │       └── ProductsController.cs
 ```
 
-## Customization
+## 1.4. Customization
 
 The CodeGenerator provides several ways to customize the generated code:
 
@@ -125,18 +125,18 @@ The CodeGenerator provides several ways to customize the generated code:
 3. **Extension Points** - Hooks for custom code generation logic
 4. **Post-Processors** - Custom processing of generated code
 
-## NuGet Package (Development Tool)
+## 1.5. NuGet Package (Development Tool)
 
 The CodeGenerator is typically used as a development tool rather than a runtime dependency:
 
-```
+```shell
 dotnet tool install --global Paradigm.Enterprise.CodeGenerator
 ```
 
-## Benefits
+## 1.6. Benefits
 
 1. **Consistency** - Ensures consistent implementation of design patterns
 2. **Productivity** - Reduces boilerplate code writing
 3. **Best Practices** - Enforces framework conventions and best practices
 4. **Maintainability** - Generated code follows consistent patterns
-5. **Flexibility** - Customizable templates for specific project needs 
+5. **Flexibility** - Customizable templates for specific project needs
