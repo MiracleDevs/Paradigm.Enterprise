@@ -32,6 +32,4 @@ public interface IReadRepository<TEntity> : IRepository
     /// <param name="parametersBase">The parameters base.</param>
     /// <returns></returns>
     Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase);
-
-    Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase, int userId);
 }

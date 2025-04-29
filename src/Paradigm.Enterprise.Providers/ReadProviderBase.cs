@@ -78,16 +78,5 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : Pro
         return await ViewRepository.SearchPaginatedAsync(parameters);
     }
 
-    /// <summary>
-    /// Gets the results paginated.
-    /// </summary>
-    /// <param name="parameters">The parameters.</param>
-    /// <param name="userId">The user identifier.</param>
-    /// <returns></returns>
-    public virtual async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters, int userId)
-    {
-        return await ViewRepository.SearchPaginatedAsync(parameters, userId);
-    }
-
     #endregion
 }

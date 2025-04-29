@@ -149,7 +149,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         private static IEnumerable<TypeInfo> GetTypes(Func<TypeInfo, bool> filter, params Assembly?[] assemblies)
         {
             if (assemblies is null || assemblies.Length == 0)
-                assemblies = new[] { Assembly.GetEntryAssembly() };
+                assemblies = [Assembly.GetEntryAssembly()];
 
             var assemblyNames = assemblies
                 .SelectMany(x => x?.GetReferencedAssemblies() ?? Array.Empty<AssemblyName>())
@@ -169,7 +169,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
                     // ignore assembles that can't be loaded.
                 }
 
-            return assemblyLookups.SelectMany(x => x.DefinedTypes).Where(filter).ToList();
+            return assemblyLookups.SelectMany(x => x.DefinedTypes).Where(filter).Distinct().ToList();
         }
 
         #endregion

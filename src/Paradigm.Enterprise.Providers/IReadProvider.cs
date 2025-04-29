@@ -30,12 +30,4 @@ public interface IReadProvider<TView> : IProvider
     /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
     Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters);
-
-    /// <summary>
-    /// Gets the results paginated.
-    /// </summary>
-    /// <param name="parameters">The parameters.</param>
-    /// <param name="userId">The user identifier.</param>
-    /// <returns></returns>
-    Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters, int userId);
 }

@@ -27,11 +27,23 @@ namespace Paradigm.Enterprise.Domain.Entities
         where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface
         where TView : EntityBase, TInterface, new()
     {
+        /// <summary>
+        /// Maps from.
+        /// </summary>
+        /// <param name="serviceProvider">The service provider.</param>
+        /// <param name="model">The model.</param>
+        /// <returns></returns>
         public virtual TEntity? MapFrom(IServiceProvider serviceProvider, TInterface model)
         {
             return default;
         }
 
+        /// <summary>
+        /// Maps to.
+        /// </summary>
+        /// <param name="serviceProvider">The service provider.</param>
+        /// <returns></returns>
+        /// <exception cref="System.NotImplementedException"></exception>
         public virtual TView MapTo(IServiceProvider serviceProvider)
         {
             throw new NotImplementedException();
@@ -50,8 +62,6 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// <summary>
         /// Validates this instance.
         /// </summary>
-        public virtual void Validate()
-        {
-        }
+        public virtual void Validate() { }
     }
 }

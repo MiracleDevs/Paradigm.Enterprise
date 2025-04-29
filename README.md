@@ -65,6 +65,27 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.11`
+- Modified `Data` to allow to set the command timeout when executing a stored procedure.
+
+Version `1.0.10`
+- Adjusted GetSearchPaginatedFunction in ReadRepositoryBase.
+
+Version `1.0.9`
+- Modified `Data.PostgreSql` to automatically create a transaction when execute a stored procedure.
+
+Version `1.0.8`
+- Added new methods in `EditProviderBase` to execute on save before the view is mapped to an entity.
+
+Version `1.0.7`
+- Added GetArray method to read values from database array fields.
+
+Version `1.0.6`
+- `IAuditableEntity` interface refactor to support `DateTime` or `DateTimeOffset` types.
+
+Version `1.0.5`
+- Removed `ZiggyCreatures.FusionCache` library from `Services.Cache`.
+
 Version `1.0.4`
 - Fixed issue in `Services.Cache` package. Included packages debug symbols.
 

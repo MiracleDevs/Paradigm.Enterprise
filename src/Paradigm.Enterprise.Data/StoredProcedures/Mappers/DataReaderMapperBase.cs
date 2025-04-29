@@ -191,6 +191,22 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
         return buffer;
     }
 
+    /// <summary>
+    /// Gets the array.
+    /// </summary>
+    /// <param name="reader">The reader.</param>
+    /// <param name="name">The name.</param>
+    /// <returns></returns>
+    protected T[]? GetArray<T>(IDataReader reader, string name)
+    {
+        var databaseValue = reader.GetValue(reader.GetOrdinal(name));
+
+        if (databaseValue is not null && databaseValue is T[] items)
+            return items;
+
+        return null;
+    }
+
     #endregion
 
     #region Private Methods

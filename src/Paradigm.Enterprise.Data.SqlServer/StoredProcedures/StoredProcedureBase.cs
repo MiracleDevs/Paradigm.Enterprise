@@ -31,6 +31,14 @@ public abstract class StoredProcedureBase
     /// </value>
     protected abstract string StoredProcedureName { get; }
 
+    /// <summary>
+    /// Gets the execution timeout in seconds.
+    /// </summary>
+    /// <value>
+    /// The execution timeout.
+    /// </value>
+    protected virtual int? ExecutionTimeout { get; }
+
     #endregion
 
     #region Public Methods
@@ -79,6 +87,9 @@ public abstract class StoredProcedureBase
         command.CommandText = StoredProcedureName;
         command.CommandType = CommandType.StoredProcedure;
 
+        if (ExecutionTimeout.HasValue)
+            command.CommandTimeout = ExecutionTimeout.Value;
+
         if (hasActiveTransaction)
             unitOfWork?.UseTransaction(command);
 
@@ -114,6 +125,9 @@ public abstract class StoredProcedureBase
         using var command = connection.CreateCommand();
         command.CommandText = StoredProcedureName;
         command.CommandType = CommandType.StoredProcedure;
+
+        if (ExecutionTimeout.HasValue)
+            command.CommandTimeout = ExecutionTimeout.Value;
 
         if (hasActiveTransaction)
             unitOfWork?.UseTransaction(command);

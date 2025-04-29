@@ -13,20 +13,23 @@ public interface IAuditableEntity : IEntity
     int? CreatedByUserId { get; set; }
 
     /// <summary>
-    /// Gets or sets the creation date.
-    /// </summary>
-    /// <value>
-    /// The creation date.
-    /// </value>
-    DateTimeOffset CreationDate { get; set; }
-
-    /// <summary>
     /// Gets or sets the modified by user identifier.
     /// </summary>
     /// <value>
     /// The modified by user identifier.
     /// </value>
     int? ModifiedByUserId { get; set; }
+}
+
+public interface IAuditableEntity<TDate> : IAuditableEntity where TDate : struct
+{
+    /// <summary>
+    /// Gets or sets the creation date.
+    /// </summary>
+    /// <value>
+    /// The creation date.
+    /// </value>
+    TDate CreationDate { get; set; }
 
     /// <summary>
     /// Gets or sets the modification date.
@@ -34,5 +37,5 @@ public interface IAuditableEntity : IEntity
     /// <value>
     /// The modification date.
     /// </value>
-    DateTimeOffset? ModificationDate { get; set; }
+    TDate? ModificationDate { get; set; }
 }
