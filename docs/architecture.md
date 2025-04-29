@@ -6,7 +6,42 @@ This document provides an architectural overview of the Paradigm.Enterprise fram
 
 The Paradigm.Enterprise framework is designed around clean architecture principles, with clear separation of concerns and dependencies flowing inward. The architecture consists of the following layers:
 
-![Architecture Diagram](https://i.imgur.com/4F8mPQK.png)
+```mermaid
+graph TD
+    subgraph "External Systems"
+        ext[External Services/APIs]
+    end
+    
+    subgraph "Core Architecture"
+        webapi[Web API Layer]
+        services[Services Layer]
+        providers[Providers Layer]
+        data[Data Layer]
+        domain[Domain Layer]
+        interfaces[Interfaces Layer]
+    end
+    
+    webapi --> providers
+    webapi --> services
+    providers --> domain
+    providers --> data
+    domain --> interfaces
+    data --> interfaces
+    services --> ext
+    
+    classDef core fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef external fill:#bbf,stroke:#333,stroke-width:1px;
+    
+    class domain,interfaces,data,providers,services,webapi core;
+    class ext external;
+    
+    style webapi fill:#e6f7ff,stroke:#333
+    style services fill:#fff2e6,stroke:#333
+    style providers fill:#e6ffe6,stroke:#333
+    style data fill:#ffe6e6,stroke:#333
+    style domain fill:#f0e6ff,stroke:#333
+    style interfaces fill:#ffffcc,stroke:#333
+```
 
 ### Core Layers
 
