@@ -27,9 +27,9 @@ public class ReadProviderBaseTests
         public TestProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
     }
 
-    private ServiceProvider _serviceProvider;
-    private Mock<ITestRepository> _mockRepository;
-    private TestProvider _provider;
+    private ServiceProvider? _serviceProvider;
+    private Mock<ITestRepository>? _mockRepository;
+    private TestProvider? _provider;
 
     [TestInitialize]
     public void Initialize()
@@ -46,7 +46,7 @@ public class ReadProviderBaseTests
     [TestCleanup]
     public void Cleanup()
     {
-        _serviceProvider.Dispose();
+        _serviceProvider?.Dispose();
     }
 
     [TestMethod]
@@ -54,10 +54,10 @@ public class ReadProviderBaseTests
     {
         // Arrange
         var entity = new TestEntity { Name = "Test Entity" };
-        _mockRepository.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
+        _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
         
         // Act
-        var result = await _provider.GetByIdAsync(1);
+        var result = await _provider!.GetByIdAsync(1);
         
         // Assert
         Assert.IsNotNull(result);
@@ -74,10 +74,10 @@ public class ReadProviderBaseTests
             new() { Name = "Entity 1" },
             new() { Name = "Entity 2" }
         };
-        _mockRepository.Setup(m => m.GetAllAsync()).ReturnsAsync(entities);
+        _mockRepository!.Setup(m => m.GetAllAsync()).ReturnsAsync(entities);
         
         // Act
-        var results = await _provider.GetAllAsync();
+        var results = await _provider!.GetAllAsync();
         
         // Assert
         Assert.IsNotNull(results);
@@ -110,10 +110,10 @@ public class ReadProviderBaseTests
         
         var result = new PaginatedResultDto<TestEntity>(pageInfo, entities);
         
-        _mockRepository.Setup(m => m.SearchPaginatedAsync(It.IsAny<FilterTextPaginatedParameters>())).ReturnsAsync(result);
+        _mockRepository!.Setup(m => m.SearchPaginatedAsync(It.IsAny<FilterTextPaginatedParameters>())).ReturnsAsync(result);
         
         // Act
-        var paginatedResult = await _provider.SearchPaginatedAsync(parameters);
+        var paginatedResult = await _provider!.SearchPaginatedAsync(parameters);
         
         // Assert
         Assert.IsNotNull(paginatedResult);

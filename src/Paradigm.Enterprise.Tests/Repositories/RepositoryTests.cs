@@ -72,10 +72,10 @@ public class RepositoryTests
         }
     }
 
-    private ServiceProvider _serviceProvider;
-    private Mock<IUnitOfWork> _mockUnitOfWork;
-    private TestRepository _repository;
-    private DbContextOptions<TestDbContext> _options;
+    private ServiceProvider? _serviceProvider;
+    private Mock<IUnitOfWork>? _mockUnitOfWork;
+    private TestRepository? _repository;
+    private DbContextOptions<TestDbContext>? _options;
 
     [TestInitialize]
     public void Initialize()
@@ -104,7 +104,7 @@ public class RepositoryTests
     [TestCleanup]
     public void Cleanup()
     {
-        _serviceProvider.Dispose();
+        _serviceProvider?.Dispose();
     }
 
     [TestMethod]
@@ -114,25 +114,25 @@ public class RepositoryTests
         var entity = new TestEntity { Name = "Test Entity" };
         
         // Act
-        var result = await _repository.AddAsync(entity);
+        var result = await _repository!.AddAsync(entity);
         
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual("Test Entity", result.Name);
-        _mockUnitOfWork.Verify(m => m.RegisterCommiteable(It.IsAny<TestDbContext>()), Times.Once);
+        _mockUnitOfWork!.Verify(m => m.RegisterCommiteable(It.IsAny<TestDbContext>()), Times.Once);
     }
 
     [TestMethod]
     public async Task GetByIdAsync_ShouldReturnEntity()
     {
         // Arrange
-        using var context = new TestDbContext(_options);
+        var context = _serviceProvider!.GetRequiredService<TestDbContext>();
         var entity = new TestEntity { Name = "Test Entity" };
         context.TestEntities.Add(entity);
         await context.SaveChangesAsync();
         
         // Act
-        var result = await _repository.GetByIdAsync(entity.Id);
+        var result = await _repository!.GetByIdAsync(entity.Id);
         
         // Assert
         Assert.IsNotNull(result);
@@ -143,13 +143,13 @@ public class RepositoryTests
     public async Task GetAllAsync_ShouldReturnAllEntities()
     {
         // Arrange
-        using var context = new TestDbContext(_options);
+        var context = _serviceProvider!.GetRequiredService<TestDbContext>();
         context.TestEntities.Add(new TestEntity { Name = "Entity 1" });
         context.TestEntities.Add(new TestEntity { Name = "Entity 2" });
         await context.SaveChangesAsync();
         
         // Act
-        var results = await _repository.GetAllAsync();
+        var results = await _repository!.GetAllAsync();
         
         // Assert
         Assert.IsNotNull(results);
@@ -160,7 +160,7 @@ public class RepositoryTests
     public async Task UpdateAsync_ShouldUpdateEntity()
     {
         // Arrange
-        var context = _serviceProvider.GetRequiredService<TestDbContext>();
+        var context = _serviceProvider!.GetRequiredService<TestDbContext>();
         var entity = new TestEntity { Name = "Test Entity" };
         context.TestEntities.Add(entity);
         await context.SaveChangesAsync();
@@ -172,7 +172,7 @@ public class RepositoryTests
         entity.Name = "Updated Entity";
         
         // Act
-        var result = await _repository.UpdateAsync(entity);
+        var result = await _repository!.UpdateAsync(entity);
         await context.SaveChangesAsync(); // Save changes directly
         
         // Assert
@@ -190,7 +190,7 @@ public class RepositoryTests
     public async Task DeleteAsync_ShouldRemoveEntity()
     {
         // Arrange
-        var context = _serviceProvider.GetRequiredService<TestDbContext>();
+        var context = _serviceProvider!.GetRequiredService<TestDbContext>();
         var entity = new TestEntity { Name = "Test Entity" };
         context.TestEntities.Add(entity);
         await context.SaveChangesAsync();
@@ -199,7 +199,7 @@ public class RepositoryTests
         var entityId = entity.Id;
         
         // Act
-        await _repository.DeleteAsync(entity);
+        await _repository!.DeleteAsync(entity);
         await context.SaveChangesAsync(); // Save changes directly
         
         // Assert
@@ -212,7 +212,7 @@ public class RepositoryTests
     public async Task SearchPaginatedAsync_ShouldReturnPaginatedResults()
     {
         // Arrange
-        using var context = new TestDbContext(_options);
+        var context = _serviceProvider!.GetRequiredService<TestDbContext>();
         for (int i = 1; i <= 20; i++)
         {
             context.TestEntities.Add(new TestEntity { Name = $"Entity {i}" });
@@ -226,7 +226,7 @@ public class RepositoryTests
         };
         
         // Act
-        var result = await _repository.SearchPaginatedAsync(parameters);
+        var result = await _repository!.SearchPaginatedAsync(parameters);
         
         // Assert
         Assert.IsNotNull(result);

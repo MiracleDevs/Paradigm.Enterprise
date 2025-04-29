@@ -40,7 +40,7 @@ public class EntityMapperTests
         }
     }
 
-    private TestEntityMapper _mapper;
+    private TestEntityMapper? _mapper;
 
     [TestInitialize]
     public void Initialize()
@@ -59,7 +59,7 @@ public class EntityMapperTests
         };
 
         // Act
-        var dto = _mapper.MapTo(entity, new TestEntityDto());
+        var dto = _mapper!.MapTo(entity, new TestEntityDto());
 
         // Assert
         Assert.IsNotNull(dto);
@@ -78,7 +78,7 @@ public class EntityMapperTests
         };
 
         // Act
-        var entity = _mapper.MapFrom(new TestEntity(), dto);
+        var entity = _mapper!.MapFrom(new TestEntity(), dto);
 
         // Assert
         Assert.IsNotNull(entity);

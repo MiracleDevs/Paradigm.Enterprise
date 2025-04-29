@@ -4,10 +4,10 @@ namespace Paradigm.Enterprise.Tests.UnitOfWork;
 [ExcludeFromCodeCoverage]
 public class UnitOfWorkTests
 {
-    private Mock<ICommiteable> _mockCommiteable1;
-    private Mock<ICommiteable> _mockCommiteable2;
-    private Mock<ITransaction> _mockTransaction;
-    private Data.Uow.UnitOfWork _unitOfWork;
+    private Mock<ICommiteable>? _mockCommiteable1;
+    private Mock<ICommiteable>? _mockCommiteable2;
+    private Mock<ITransaction>? _mockTransaction;
+    private Data.Uow.UnitOfWork? _unitOfWork;
 
     [TestInitialize]
     public void Initialize()
@@ -27,7 +27,7 @@ public class UnitOfWorkTests
         // Arrange
         
         // Act
-        _unitOfWork.RegisterCommiteable(_mockCommiteable1.Object);
+        _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         
         // Assert
         Assert.IsFalse(_unitOfWork.HasActiveTransaction);
@@ -37,7 +37,7 @@ public class UnitOfWorkTests
     public void CreateTransaction_ShouldCreateTransactionFromFirstCommiteable()
     {
         // Arrange
-        _unitOfWork.RegisterCommiteable(_mockCommiteable1.Object);
+        _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         
         // Act
         var transaction = _unitOfWork.CreateTransaction();
@@ -52,15 +52,15 @@ public class UnitOfWorkTests
     public void CreateTransaction_ShouldAddOtherCommiteables()
     {
         // Arrange
-        _unitOfWork.RegisterCommiteable(_mockCommiteable1.Object);
-        _unitOfWork.RegisterCommiteable(_mockCommiteable2.Object);
+        _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
+        _unitOfWork.RegisterCommiteable(_mockCommiteable2!.Object);
         
         // Act
         var transaction = _unitOfWork.CreateTransaction();
         
         // Assert
         Assert.IsNotNull(transaction);
-        _mockTransaction.Verify(m => m.AddCommiteable(_mockCommiteable2.Object), Times.Once);
+        _mockTransaction!.Verify(m => m.AddCommiteable(_mockCommiteable2.Object), Times.Once);
     }
 
     [TestMethod]
@@ -68,7 +68,7 @@ public class UnitOfWorkTests
     public void CreateTransaction_ShouldThrowIfNoCommiteables()
     {
         // Act
-        _unitOfWork.CreateTransaction();
+        _unitOfWork!.CreateTransaction();
     }
 
     [TestMethod]
@@ -76,7 +76,7 @@ public class UnitOfWorkTests
     public void CreateTransaction_ShouldThrowIfActiveTransaction()
     {
         // Arrange
-        _unitOfWork.RegisterCommiteable(_mockCommiteable1.Object);
+        _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.CreateTransaction();
         
         // Act
@@ -87,8 +87,8 @@ public class UnitOfWorkTests
     public async Task CommitChangesAsync_ShouldCallCommitOnAllCommiteables()
     {
         // Arrange
-        _unitOfWork.RegisterCommiteable(_mockCommiteable1.Object);
-        _unitOfWork.RegisterCommiteable(_mockCommiteable2.Object);
+        _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
+        _unitOfWork.RegisterCommiteable(_mockCommiteable2!.Object);
         
         // Act
         await _unitOfWork.CommitChangesAsync();
@@ -102,7 +102,7 @@ public class UnitOfWorkTests
     public void UseCurrentTransaction_ShouldReturnCurrentTransaction()
     {
         // Arrange
-        _unitOfWork.RegisterCommiteable(_mockCommiteable1.Object);
+        _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.CreateTransaction();
         
         // Act
@@ -110,7 +110,7 @@ public class UnitOfWorkTests
         
         // Assert
         Assert.IsNotNull(transaction);
-        Assert.AreEqual(_mockTransaction.Object, transaction);
+        Assert.AreEqual(_mockTransaction!.Object, transaction);
     }
 
     [TestMethod]
@@ -118,6 +118,6 @@ public class UnitOfWorkTests
     public void UseCurrentTransaction_ShouldThrowIfNoActiveTransaction()
     {
         // Act
-        _unitOfWork.UseCurrentTransaction();
+        _unitOfWork!.UseCurrentTransaction();
     }
 } 

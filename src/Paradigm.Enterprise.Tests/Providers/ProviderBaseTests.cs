@@ -26,9 +26,9 @@ public class ProviderBaseTests
         public TestDependencyProvider() { }
     }
 
-    private ServiceProvider _serviceProvider;
-    private TestProvider _provider;
-    private ITestDependencyProvider _dependencyProvider;
+    private ServiceProvider? _serviceProvider;
+    private TestProvider? _provider;
+    private ITestDependencyProvider? _dependencyProvider;
 
     [TestInitialize]
     public void Initialize()
@@ -45,14 +45,14 @@ public class ProviderBaseTests
     [TestCleanup]
     public void Cleanup()
     {
-        _serviceProvider.Dispose();
+        _serviceProvider?.Dispose();
     }
 
     [TestMethod]
     public void GetProvider_ShouldReturnRegisteredProvider()
     {
         // Act
-        var result = _provider.GetProviderTest<ITestDependencyProvider>();
+        var result = _provider!.GetProviderTest<ITestDependencyProvider>();
         
         // Assert
         Assert.IsNotNull(result);
