@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Paradigm.Enterprise.Interfaces;
+﻿namespace Paradigm.Enterprise.Interfaces;
 
 public interface IAuditableEntity : IEntity
 {
