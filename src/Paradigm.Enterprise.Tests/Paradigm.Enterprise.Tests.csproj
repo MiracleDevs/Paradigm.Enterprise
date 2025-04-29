@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Paradigm.Enterprise.Domain\Paradigm.Enterprise.Domain.csproj" />
     <ProjectReference Include="..\Paradigm.Enterprise.Interfaces\Paradigm.Enterprise.Interfaces.csproj" />
     <ProjectReference Include="..\Paradigm.Enterprise.Providers\Paradigm.Enterprise.Providers.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Services.Email\Paradigm.Enterprise.Services.Email.csproj" />
   </ItemGroup>
 
   <ItemGroup>
