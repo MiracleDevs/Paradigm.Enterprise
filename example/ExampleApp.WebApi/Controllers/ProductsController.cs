@@ -1,5 +1,5 @@
-using ExampleApp.Domain.Dtos;
-using ExampleApp.Providers;
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Providers.Inventory;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExampleApp.WebApi.Controllers;
@@ -48,7 +48,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ProductView>> Create(ProductView product)
+    public async Task<ActionResult<ProductView>> Create([FromBody]ProductView product)
     {
         var result = await _productProvider.AddAsync(product);
 
@@ -59,7 +59,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(ProductView product)
+    public async Task<IActionResult> Update([FromBody]ProductView product)
     {
         var result = await _productProvider.UpdateAsync(product);
         

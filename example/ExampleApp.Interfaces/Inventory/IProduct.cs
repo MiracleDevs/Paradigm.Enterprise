@@ -1,13 +1,12 @@
 using Paradigm.Enterprise.Interfaces;
 
-namespace ExampleApp.Interfaces;
+namespace ExampleApp.Interfaces.Inventory;
 
 /// <summary>
 /// Represents a product entity interface in our example application
 /// </summary>
-public interface IProduct: IEntity
+public interface IProduct : IEntity
 {
-    int Id { get; set; }
     DateTime CreatedDate { get; set; }
     DateTime ModifiedDate { get; set; }
     string Name { get; set; }

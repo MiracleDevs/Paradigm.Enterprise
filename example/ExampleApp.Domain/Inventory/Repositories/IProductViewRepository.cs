@@ -1,7 +1,7 @@
-﻿using ExampleApp.Domain.Dtos;
+﻿using ExampleApp.Domain.Inventory.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 
-namespace ExampleApp.Data.Repositories;
+namespace ExampleApp.Domain.Inventory.Repositories;
 
 public interface IProductViewRepository : IReadRepository<ProductView>
 {

@@ -1,9 +1,8 @@
-using ExampleApp.Domain.Dtos;
-using ExampleApp.Domain.Entities;
+using ExampleApp.Domain.Inventory.Entities;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
 
-namespace ExampleApp.Data.Contexts;
+namespace ExampleApp.Data.Inventory.Contexts;
 
 /// <summary>
 /// Database context for our example application
@@ -41,7 +40,7 @@ public class ApplicationDbContext : DbContextBase
         // Configure Product entity
         modelBuilder.Entity<ProductView>(entity =>
         {
-            entity.ToView("ProductView");
+            entity.ToView("ProductView");     
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Price).HasPrecision(18, 2);

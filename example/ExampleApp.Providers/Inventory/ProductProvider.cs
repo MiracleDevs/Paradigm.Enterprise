@@ -1,10 +1,9 @@
-using ExampleApp.Data.Repositories;
-using ExampleApp.Domain.Dtos;
-using ExampleApp.Domain.Entities;
-using ExampleApp.Interfaces;
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Domain.Inventory.Repositories;
+using ExampleApp.Interfaces.Inventory;
 using Paradigm.Enterprise.Providers;
 
-namespace ExampleApp.Providers;
+namespace ExampleApp.Providers.Inventory;
 
 /// <summary>
 /// Provider for product management operations
@@ -20,7 +19,7 @@ public class ProductProvider : EditProviderBase<IProduct, Product, ProductView, 
     /// </summary>
     public async Task<IEnumerable<ProductView>> GetByCategoryAsync(string category)
     {
-        return await this.ViewRepository.FindByCategoryAsync(category);
+        return await ViewRepository.FindByCategoryAsync(category);
     }
 
     /// <summary>
@@ -28,6 +27,6 @@ public class ProductProvider : EditProviderBase<IProduct, Product, ProductView, 
     /// </summary>
     public async Task<IEnumerable<ProductView>> GetAvailableProductsAsync()
     {
-        return await this.ViewRepository.GetAvailableProductsAsync();
+        return await ViewRepository.GetAvailableProductsAsync();
     }
 }

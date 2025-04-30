@@ -1,7 +1,7 @@
-﻿using ExampleApp.Domain.Dtos;
+﻿using ExampleApp.Domain.Inventory.Entities;
 using Paradigm.Enterprise.Providers;
 
-namespace ExampleApp.Providers;
+namespace ExampleApp.Providers.Inventory;
 
 /// <summary>
 /// Provider for product management operations

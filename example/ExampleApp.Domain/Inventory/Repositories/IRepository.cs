@@ -1,4 +1,4 @@
-namespace ExampleApp.Domain.Repositories;
+namespace ExampleApp.Domain.Inventory.Repositories;
 
 /// <summary>
 /// A repository interface adapted for our application
@@ -11,4 +11,4 @@ public interface IRepository<TEntity> where TEntity : class
     Task<TEntity> CreateAsync(TEntity entity);
     Task<TEntity> UpdateAsync(TEntity entity);
     Task DeleteAsync(TEntity entity);
-} 
+}

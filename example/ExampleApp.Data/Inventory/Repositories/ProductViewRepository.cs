@@ -1,9 +1,10 @@
-﻿using ExampleApp.Data.Contexts;
-using ExampleApp.Domain.Dtos;
+﻿using ExampleApp.Data.Inventory.Contexts;
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Domain.Inventory.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Repositories;
 
-namespace ExampleApp.Data.Repositories;
+namespace ExampleApp.Data.Inventory.Repositories;
 
 public class ProductViewRepository : ReadRepositoryBase<ProductView, ApplicationDbContext>, IProductViewRepository
 {
@@ -16,7 +17,7 @@ public class ProductViewRepository : ReadRepositoryBase<ProductView, Application
     /// </summary>
     public async Task<IEnumerable<ProductView>> FindByCategoryAsync(string category)
     {
-        return await this.EntityContext.ProductViews
+        return await EntityContext.ProductViews
             .Where(p => p.Category == category)
             .ToListAsync();
     }
@@ -26,7 +27,7 @@ public class ProductViewRepository : ReadRepositoryBase<ProductView, Application
     /// </summary>
     public async Task<IEnumerable<ProductView>> GetAvailableProductsAsync()
     {
-        return await this.EntityContext.ProductViews
+        return await EntityContext.ProductViews
             .Where(p => p.IsAvailable && p.StockQuantity > 0)
             .ToListAsync();
     }

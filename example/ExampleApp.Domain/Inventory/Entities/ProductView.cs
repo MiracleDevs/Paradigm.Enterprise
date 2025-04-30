@@ -1,14 +1,13 @@
-﻿using ExampleApp.Interfaces;
+﻿using ExampleApp.Interfaces.Inventory;
 using Paradigm.Enterprise.Domain.Entities;
 
-namespace ExampleApp.Domain.Dtos;
+namespace ExampleApp.Domain.Inventory.Entities;
 
 /// <summary>
 /// Data transfer object for product viewing
 /// </summary>
-public class ProductView: EntityBase, IProduct
+public class ProductView : EntityBase, IProduct
 {
-    public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -17,4 +16,4 @@ public class ProductView: EntityBase, IProduct
     public bool IsAvailable { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
-} 
+}
