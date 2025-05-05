@@ -82,21 +82,36 @@ namespace Paradigm.Enterprise.Data.Context
         {
             IEntity? loggedUser = null;
 
-            foreach (var entry in ChangeTracker.Entries<IAuditableEntity<DateTimeOffset>>())
+            foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
             {
-                if (loggedUser is null)
-                    loggedUser = _serviceProvider.GetRequiredService<ILoggedUserService>().GetAuthenticatedUser<IEntity>();
+                loggedUser = loggedUser ?? _serviceProvider.GetRequiredService<ILoggedUserService>().TryGetAuthenticatedUser<IEntity>();
+
+                if (loggedUser is null) continue;
 
                 switch (entry.State)
                 {
                     case EntityState.Added:
                     case EntityState.Modified:
-                        entry.Entity.Audit(loggedUser.Id);
+                        AuditEntity(entry.Entity, loggedUser.Id);
                         break;
                 }
             }
 
             return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// Audits the entity.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="loggedUserId">The logged user identifier.</param>
+        protected virtual void AuditEntity(IAuditableEntity entity, int loggedUserId)
+        {
+            entity.Audit(loggedUserId);
         }
 
         #endregion
