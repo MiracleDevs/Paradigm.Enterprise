@@ -1,428 +1,613 @@
-# 1. Sample Application with Paradigm.Enterprise
+# 🔥 Building Apps with Paradigm.Enterprise: The Ultimate Guide
 
-This guide demonstrates how to build a complete API using the Paradigm.Enterprise framework. We'll create a simple product catalog API with basic CRUD operations.
+Hey there, developer! Let's dive into how Paradigm.Enterprise can transform your development workflow with a clean, layered architecture. You can find the complete working example in our [example folder](../example/):
 
-## 1.1. Project Setup
+## 🚀 Getting Started in 60 Seconds
 
-1. Create a new ASP.NET Core Web API project:
+### Step 1: Create the Solution
 
-    ```shell
-    dotnet new webapi -n ProductCatalog.Api
-    ```
+```bash
+# Create a new solution
+dotnet new sln -n ExampleApp
 
-2. Add the required Paradigm.Enterprise NuGet packages:
+# Add projects for each layer
+dotnet new classlib -n ExampleApp.Interfaces
+dotnet new classlib -n ExampleApp.Domain
+dotnet new classlib -n ExampleApp.Data
+dotnet new classlib -n ExampleApp.Providers
+dotnet new webapi -n ExampleApp.WebApi
 
-    ```shell
-    dotnet add package Paradigm.Enterprise.WebApi
-    dotnet add package Paradigm.Enterprise.Data.SqlServer
-    ```
-
-## 1.2. Domain Layer
-
-First, let's define our domain entities:
-
-### 1.2.1. Product.cs
-
-```csharp
-using Paradigm.Enterprise.Domain.Entities;
-
-namespace ProductCatalog.Domain.Entities
-{
-    public class Product : EntityBase
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int CategoryId { get; set; }
-        public bool IsActive { get; set; } = true;
-    }
-}
+# Add projects to solution
+dotnet sln add ExampleApp.Interfaces
+dotnet sln add ExampleApp.Domain
+dotnet sln add ExampleApp.Data
+dotnet sln add ExampleApp.Providers
+dotnet sln add ExampleApp.WebApi
 ```
 
-### 1.2.2. ProductCategory.cs
+### Step 2: Install NuGet Packages
 
-```csharp
-using Paradigm.Enterprise.Domain.Entities;
+```bash
+# Install Paradigm.Enterprise packages in each project
+dotnet add ExampleApp.Interfaces package Paradigm.Enterprise.Interfaces
+dotnet add ExampleApp.Domain package Paradigm.Enterprise.Domain
+dotnet add ExampleApp.Data package Paradigm.Enterprise.Data
+dotnet add ExampleApp.Providers package Paradigm.Enterprise.Providers
+dotnet add ExampleApp.WebApi package Paradigm.Enterprise.WebApi
 
-namespace ProductCatalog.Domain.Entities
-{
-    public class ProductCategory : EntityBase
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-    }
-}
+# Add project references
+dotnet add ExampleApp.Domain reference ExampleApp.Interfaces
+dotnet add ExampleApp.Data reference ExampleApp.Domain
+dotnet add ExampleApp.Providers reference ExampleApp.Data
+dotnet add ExampleApp.WebApi reference ExampleApp.Providers
 ```
 
-## 1.3. Data Layer
+## 🏗️ Understanding the Architecture
 
-Next, let's set up the data context:
+The Paradigm.Enterprise framework is built around a clean, layered architecture that separates concerns and promotes maintainability. Here's a visual representation of the architecture:
 
-### 1.3.1. AppDbContext.cs
+```mermaid
+graph TD
+    A[Client] --> B[WebApi Controllers]
+    B --> C[Providers]
+    C --> D[Repositories]
+    D --> E[Data Context]
+    E --> F[Database]
 
-```csharp
-using Microsoft.EntityFrameworkCore;
-using Paradigm.Enterprise.Data.Context;
-using ProductCatalog.Domain.Entities;
+    G[Domain Entities] -.- D
+    H[DTOs/Views] -.- B
+    H -.- C
 
-namespace ProductCatalog.Data
-{
-    public class AppDbContext : EfDataContext
-    {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
-
-        public DbSet<Product> Products { get; set; }
-        public DbSet<ProductCategory> ProductCategories { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<Product>()
-                .Property(p => p.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            modelBuilder.Entity<Product>()
-                .Property(p => p.Price)
-                .HasPrecision(18, 2);
-
-            modelBuilder.Entity<ProductCategory>()
-                .Property(c => c.Name)
-                .IsRequired()
-                .HasMaxLength(50);
-        }
-    }
-}
+    style A fill:#f9f,stroke:#000,stroke-width:2px
+    style B fill:#bbf,stroke:#000,stroke-width:2px
+    style C fill:#bfb,stroke:#000,stroke-width:2px
+    style D fill:#fbf,stroke:#000,stroke-width:2px
+    style E fill:#fbb,stroke:#000,stroke-width:2px
+    style F fill:#bbb,stroke:#000,stroke-width:2px
+    style G fill:#afa,stroke:#000,stroke-width:2px
+    style H fill:#aaf,stroke:#000,stroke-width:2px
 ```
 
-## 1.4. DTOs (Data Transfer Objects)
+### Understanding Data Flow and Object Types
 
-Define the DTOs for our API:
+In the Paradigm.Enterprise framework, data flows through several distinct types of objects, each with a specific purpose:
 
-### 1.4.1. ProductDto.cs
+#### Object Types in the Architecture
+
+```mermaid
+classDiagram
+    class IEntity {
+        <<interface>>
+        +Guid Id
+        +DateTime CreatedDate
+        +DateTime ModifiedDate
+    }
+
+    class Domain Entity {
+        +Properties
+        +Business Logic
+        +Validation
+        +MapTo()
+        +MapFrom()
+    }
+
+    class EditDto {
+        +Editable Properties
+        +No Business Logic
+    }
+
+    class ViewDto {
+        +Read-only Properties
+        +Expanded Data
+        +Derived Properties
+    }
+
+    class DbView {
+        +Joined Tables
+        +Precalculated Fields
+        +Optimized for Reading
+    }
+
+    IEntity <|-- Domain Entity
+    Domain Entity ..> ViewDto : maps to
+    EditDto ..> Domain Entity : maps to
+    DbView ..> ViewDto : can populate
+```
+
+#### Data Flow During Create/Update Operation
+
+Here's how data flows through the system when creating or updating an entity:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller
+    participant Provider
+    participant Repository
+    participant Entity
+    participant Database
+
+    Client->>Controller: Submit EditDto
+    Controller->>Provider: Pass EditDto
+
+    alt New Entity
+        Provider->>Entity: Create new entity
+    else Existing Entity
+        Provider->>Repository: Get existing entity
+        Repository->>Database: Query by Id
+        Database->>Repository: Return entity
+        Repository->>Provider: Return entity
+    end
+
+    Provider->>Entity: Map EditDto to Entity
+    Entity->>Entity: Validate business rules
+
+    Provider->>Repository: Save Entity
+    Repository->>Database: Persist changes
+
+    Provider->>Entity: Convert to ViewDto
+    Provider->>Controller: Return ViewDto
+    Controller->>Client: Return response
+```
+
+#### Data Flow for Read Operations with Views
+
+A key optimization is using database views for complex read operations:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller
+    participant Provider
+    participant Repository
+    participant Database
+    participant DbView
+
+    Client->>Controller: Request data
+    Controller->>Provider: Get data
+    Provider->>Repository: Query view/data
+
+    Repository->>Database: Execute query
+    Database->>DbView: Join tables & compute fields
+    DbView->>Repository: Return rich data
+
+    Repository->>Provider: Return results
+    Provider->>Controller: Return ViewDtos
+    Controller->>Client: Return formatted response
+```
+
+## 🧩 The Role of Each Object Type
+
+Let's clarify the purpose of each type of object in the system:
+
+### Domain Entities
+
+- Core business objects with data and behavior
+- Implement business rules and validation logic
+- Protected from external manipulation
+- Enforce data integrity
+- Only accessible within the system's internal layers
+- Example: A `Product` with validation rules for price and inventory
+
+### Entity Interfaces
+
+- Define the contract for entities
+- Allow interaction without exposing implementation details
+- Enable loose coupling and dependency injection
+- Make testing easier with mock implementations
+- Example: `IProduct` defining common properties accessible across layers
+
+### ViewDtos
+
+- Read-only representation of data for clients
+- May include calculated or derived properties
+- Tailored for specific UI requirements
+- Can include data from multiple entities
+- Example: `ProductView` with product information and availability status
+
+### Database Views
+
+- Optimized for read-heavy operations
+- Combine data from multiple tables with joins
+- Reduce roundtrips to the database
+- Better performance for complex data retrieval
+- Example: `ProductView` that includes product category name, supplier info, etc.
+
+## 🏗️ Building Your App Layer by Layer
+
+Let's build a product catalog application using the Paradigm.Enterprise framework, following the same approach as our example folder:
+
+### 1️⃣ Define Your Interfaces
+
+Start by defining your entity interfaces and DTOs:
 
 ```csharp
+// ExampleApp.Interfaces/Inventory/IProduct.cs
 using Paradigm.Enterprise.Interfaces;
 
-namespace ProductCatalog.Api.Dtos
+namespace ExampleApp.Interfaces.Inventory;
+
+public interface IProduct : IEntity
 {
-    public class ProductViewDto : IEntity
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int CategoryId { get; set; }
-        public string CategoryName { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-
-        public bool IsNew() => Id == default;
-    }
-
-    public class ProductEditDto : IEntity
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int CategoryId { get; set; }
-        public bool IsActive { get; set; } = true;
-
-        public bool IsNew() => Id == default;
-    }
-
-    public class ProductSearchParameters : Paradigm.Enterprise.Domain.Dtos.FilterTextPaginatedParameters
-    {
-        public int? CategoryId { get; set; }
-        public decimal? MinPrice { get; set; }
-        public decimal? MaxPrice { get; set; }
-        public bool? IsActive { get; set; }
-    }
+    DateTime CreatedDate { get; set; }
+    DateTime ModifiedDate { get; set; }
+    string Name { get; set; }
+    decimal Price { get; set; }
+    string Description { get; set; }
+    string Category { get; set; }
+    int StockQuantity { get; set; }
+    bool IsAvailable { get; set; }
 }
 ```
 
-## 1.5. Repositories
+### 2️⃣ Create Your Domain Entities
 
-Let's create repositories for our entities:
-
-### 1.5.1. ProductRepository.cs
+Next, implement your domain entities with validation rules:
 
 ```csharp
-using Paradigm.Enterprise.Data.Repositories;
-using ProductCatalog.Data;
-using ProductCatalog.Domain.Entities;
+// ExampleApp.Domain/Inventory/Entities/Product.cs
+using System.ComponentModel.DataAnnotations;
+using ExampleApp.Interfaces.Inventory;
+using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Domain.Entities;
+using Paradigm.Enterprise.Domain.Exceptions;
 
-namespace ProductCatalog.Data.Repositories
+namespace ExampleApp.Domain.Inventory.Entities;
+
+public class Product : EntityBase<IProduct, Product, ProductView>, IProduct
 {
-    public class ProductRepository : RepositoryBase<Product>
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
+
+    [Required(ErrorMessage = "Product name is required")]
+    [StringLength(100, ErrorMessage = "Product name cannot exceed 100 characters")]
+    public string Name { get; set; } = string.Empty;
+
+    [Range(0.01, 10000, ErrorMessage = "Price must be greater than 0 and less than 10,000")]
+    public decimal Price { get; set; }
+
+    [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
+    public string Description { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Category is required")]
+    public string Category { get; set; } = string.Empty;
+
+    [Range(0, 10000, ErrorMessage = "Stock quantity must be between 0 and 10,000")]
+    public int StockQuantity { get; set; }
+
+    public bool IsAvailable { get; set; }
+
+    public override Product? MapFrom(IServiceProvider serviceProvider, IProduct model)
     {
-        public ProductRepository(AppDbContext context) : base(context)
-        {
-        }
+        this.Id = model.Id;
+        this.Name = model.Name;
+        this.Price = model.Price;
+        this.Description = model.Description;
+        this.Category = model.Category;
+        this.StockQuantity = model.StockQuantity;
+        this.IsAvailable = model.IsAvailable;
+        return this;
     }
+
+    public override ProductView MapTo(IServiceProvider serviceProvider)
+    {
+        var view = serviceProvider.GetRequiredService<ProductView>();
+        view.Id = this.Id;
+        view.Name = this.Name;
+        view.Price = this.Price;
+        view.Description = this.Description;
+        view.Category = this.Category;
+        view.StockQuantity = this.StockQuantity;
+        return view;
+    }
+
+    public override void Validate()
+    {
+        var validator = new DomainValidator();
+        validator.Assert(!string.IsNullOrWhiteSpace(this.Name), "Name is required");
+        validator.Assert(this.Price > 0, "Price must be greater than 0");
+        validator.Assert(this.StockQuantity >= 0, "Stock quantity must be greater than or equal to 0");
+        validator.Assert(!string.IsNullOrWhiteSpace(this.Category), "Category is required");
+        validator.Assert(this.Description.Length <= 500, "Description cannot exceed 500 characters");
+        validator.Assert(!this.IsAvailable || this.StockQuantity > 0, "A product with no stock cannot be available");
+        validator.ThrowIfAny();
+    }
+}
+
+// ExampleApp.Domain/Inventory/Entities/ProductView.cs
+using Paradigm.Enterprise.Interfaces;
+
+namespace ExampleApp.Domain.Inventory.Entities;
+
+public class ProductView : IViewDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public int StockQuantity { get; set; }
+
+    // Calculated property example
+    public bool IsInStock => StockQuantity > 0;
 }
 ```
 
-### 1.5.2. ProductCategoryRepository.cs
+### 3️⃣ Set Up Your Data Access
+
+Create your DbContext and repositories:
 
 ```csharp
-using Paradigm.Enterprise.Data.Repositories;
-using ProductCatalog.Data;
-using ProductCatalog.Domain.Entities;
-
-namespace ProductCatalog.Data.Repositories
-{
-    public class ProductCategoryRepository : RepositoryBase<ProductCategory>
-    {
-        public ProductCategoryRepository(AppDbContext context) : base(context)
-        {
-        }
-    }
-}
-```
-
-## 1.6. Providers
-
-Create providers for the business logic:
-
-### 1.6.1. IProductProvider.cs
-
-```csharp
-using Paradigm.Enterprise.Providers;
-using ProductCatalog.Api.Dtos;
-
-namespace ProductCatalog.Api.Providers
-{
-    public interface IProductProvider : IEditProvider<ProductViewDto, ProductEditDto>
-    {
-        Task<IEnumerable<ProductViewDto>> GetProductsByCategoryAsync(int categoryId);
-    }
-}
-```
-
-### 1.6.2. ProductProvider.cs
-
-```csharp
+// ExampleApp.Data/AppDbContext.cs
+using ExampleApp.Domain.Inventory.Entities;
 using Microsoft.EntityFrameworkCore;
-using Paradigm.Enterprise.Data.Uow;
-using Paradigm.Enterprise.Domain.Dtos;
-using Paradigm.Enterprise.Providers;
-using ProductCatalog.Api.Dtos;
-using ProductCatalog.Data;
-using ProductCatalog.Data.Repositories;
-using ProductCatalog.Domain.Entities;
+using Paradigm.Enterprise.Data.Context;
 
-namespace ProductCatalog.Api.Providers
+namespace ExampleApp.Data;
+
+public class AppDbContext : DbContextBase
 {
-    public class ProductProvider : EditProviderBase<ProductViewDto, ProductEditDto>, IProductProvider
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<Product> Products { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        private readonly ProductRepository _repository;
-        private readonly AppDbContext _context;
+        base.OnModelCreating(modelBuilder);
 
-        public ProductProvider(
-            ProductRepository repository,
-            IUnitOfWork unitOfWork,
-            IServiceProvider serviceProvider,
-            AppDbContext context)
-            : base(repository, unitOfWork, serviceProvider)
+        modelBuilder.Entity<Product>(entity =>
         {
-            _repository = repository;
-            _context = context;
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Category).IsRequired();
+        });
+    }
+}
 
-        public async Task<IEnumerable<ProductViewDto>> GetProductsByCategoryAsync(int categoryId)
-        {
-            var products = await _context.Products
-                .Where(p => p.CategoryId == categoryId)
-                .Join(_context.ProductCategories,
-                    p => p.CategoryId,
-                    c => c.Id,
-                    (p, c) => new ProductViewDto
-                    {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Price = p.Price,
-                        CategoryId = p.CategoryId,
-                        CategoryName = c.Name,
-                        IsActive = p.IsActive
-                    })
-                .ToListAsync();
+// ExampleApp.Data/Repositories/ProductRepository.cs
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Domain.Inventory.Repositories;
+using Paradigm.Enterprise.Data.Repositories;
 
-            return products;
-        }
+namespace ExampleApp.Data.Repositories;
 
-        public override async Task<PaginatedResultDto<ProductViewDto>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
-        {
-            var searchParams = parameters as ProductSearchParameters;
+public class ProductRepository : RepositoryBase<Product>, IProductRepository
+{
+    public ProductRepository(AppDbContext dbContext) : base(dbContext) { }
 
-            var query = _context.Products.AsQueryable();
+    public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
+    {
+        return await FindAsync(p => p.Category == category);
+    }
 
-            if (!string.IsNullOrEmpty(searchParams?.FilterText))
-            {
-                query = query.Where(p => p.Name.Contains(searchParams.FilterText) ||
-                                        p.Description.Contains(searchParams.FilterText));
-            }
-
-            if (searchParams?.CategoryId.HasValue == true)
-            {
-                query = query.Where(p => p.CategoryId == searchParams.CategoryId.Value);
-            }
-
-            if (searchParams?.MinPrice.HasValue == true)
-            {
-                query = query.Where(p => p.Price >= searchParams.MinPrice.Value);
-            }
-
-            if (searchParams?.MaxPrice.HasValue == true)
-            {
-                query = query.Where(p => p.Price <= searchParams.MaxPrice.Value);
-            }
-
-            if (searchParams?.IsActive.HasValue == true)
-            {
-                query = query.Where(p => p.IsActive == searchParams.IsActive.Value);
-            }
-
-            var totalItems = await query.CountAsync();
-
-            // Apply pagination
-            query = query.Skip((searchParams?.PageNumber ?? 1 - 1) * (searchParams?.PageSize ?? 10))
-                        .Take(searchParams?.PageSize ?? 10);
-
-            // Join with categories
-            var result = await query
-                .Join(_context.ProductCategories,
-                    p => p.CategoryId,
-                    c => c.Id,
-                    (p, c) => new ProductViewDto
-                    {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Price = p.Price,
-                        CategoryId = p.CategoryId,
-                        CategoryName = c.Name,
-                        IsActive = p.IsActive
-                    })
-                .ToListAsync();
-
-            return new PaginatedResultDto<ProductViewDto>
-            {
-                Items = result,
-                TotalItems = totalItems,
-                PageNumber = searchParams?.PageNumber ?? 1,
-                PageSize = searchParams?.PageSize ?? 10
-            };
-        }
-
-        protected override ProductViewDto MapEntityToView(Product entity)
-        {
-            var category = _context.ProductCategories.FirstOrDefault(c => c.Id == entity.CategoryId);
-
-            return new ProductViewDto
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-                Description = entity.Description,
-                Price = entity.Price,
-                CategoryId = entity.CategoryId,
-                CategoryName = category?.Name ?? string.Empty,
-                IsActive = entity.IsActive
-            };
-        }
-
-        protected override Product MapEditToEntity(ProductEditDto model)
-        {
-            var entity = model.Id != default
-                ? _repository.GetByIdAsync(model.Id).Result
-                : new Product();
-
-            entity.Name = model.Name;
-            entity.Description = model.Description;
-            entity.Price = model.Price;
-            entity.CategoryId = model.CategoryId;
-            entity.IsActive = model.IsActive;
-
-            return entity;
-        }
+    public async Task<IEnumerable<Product>> GetAvailableProductsAsync()
+    {
+        return await FindAsync(p => p.IsAvailable && p.StockQuantity > 0);
     }
 }
 ```
 
-## 1.7. Controllers
+### 4️⃣ Implement Your Providers
 
-Finally, let's create the API controllers:
-
-### 1.7.1. ProductsController.cs
+Add business logic with providers:
 
 ```csharp
+// ExampleApp.Providers/Inventory/IProductProvider.cs
+using ExampleApp.Domain.Inventory.Entities;
+
+namespace ExampleApp.Providers.Inventory;
+
+public interface IProductProvider
+{
+    Task<IEnumerable<ProductView>> GetAllAsync();
+    Task<ProductView?> GetByIdAsync(int id);
+    Task<IEnumerable<ProductView>> GetByCategoryAsync(string category);
+    Task<IEnumerable<ProductView>> GetAvailableProductsAsync();
+    Task<ProductView?> AddAsync(ProductView product);
+    Task<ProductView?> UpdateAsync(ProductView product);
+    Task DeleteAsync(int id);
+}
+
+// ExampleApp.Providers/Inventory/ProductProvider.cs
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Domain.Inventory.Repositories;
+using Paradigm.Enterprise.Domain.Uow;
+using Paradigm.Enterprise.Providers;
+
+namespace ExampleApp.Providers.Inventory;
+
+public class ProductProvider : ProviderBase<Product>, IProductProvider
+{
+    private readonly IProductRepository _repository;
+
+    public ProductProvider(
+        IProductRepository repository,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider)
+        : base(repository, unitOfWork, serviceProvider)
+    {
+        _repository = repository;
+    }
+
+    public async Task<IEnumerable<ProductView>> GetAllAsync()
+    {
+        var products = await _repository.GetAllAsync();
+        return products.Select(p => p.MapTo(ServiceProvider));
+    }
+
+    public async Task<ProductView?> GetByIdAsync(int id)
+    {
+        var product = await _repository.GetByIdAsync(id);
+        return product?.MapTo(ServiceProvider);
+    }
+
+    public async Task<IEnumerable<ProductView>> GetByCategoryAsync(string category)
+    {
+        var products = await _repository.GetByCategoryAsync(category);
+        return products.Select(p => p.MapTo(ServiceProvider));
+    }
+
+    public async Task<IEnumerable<ProductView>> GetAvailableProductsAsync()
+    {
+        var products = await _repository.GetAvailableProductsAsync();
+        return products.Select(p => p.MapTo(ServiceProvider));
+    }
+
+    public async Task<ProductView?> AddAsync(ProductView productView)
+    {
+        var product = new Product();
+        product.MapFrom(ServiceProvider, productView);
+        product.Validate();
+
+        await _repository.AddAsync(product);
+        await UnitOfWork.SaveChangesAsync();
+
+        return product.MapTo(ServiceProvider);
+    }
+
+    public async Task<ProductView?> UpdateAsync(ProductView productView)
+    {
+        var product = await _repository.GetByIdAsync(productView.Id);
+        if (product == null) return null;
+
+        product.MapFrom(ServiceProvider, productView);
+        product.Validate();
+
+        await UnitOfWork.SaveChangesAsync();
+
+        return product.MapTo(ServiceProvider);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        await _repository.DeleteAsync(id);
+        await UnitOfWork.SaveChangesAsync();
+    }
+}
+```
+
+### 5️⃣ Build Your API
+
+Finally, create your API controllers:
+
+```csharp
+// ExampleApp.WebApi/Controllers/ProductsController.cs
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Providers.Inventory;
 using Microsoft.AspNetCore.Mvc;
-using Paradigm.Enterprise.WebApi.Controllers;
-using ProductCatalog.Api.Dtos;
-using ProductCatalog.Api.Providers;
 
-namespace ProductCatalog.Api.Controllers
+namespace ExampleApp.WebApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProductsController : ApiControllerCrudBase<IProductProvider, ProductViewDto, ProductEditDto, ProductSearchParameters>
-    {
-        public ProductsController(
-            ILogger<ProductsController> logger,
-            IProductProvider provider)
-            : base(logger, provider)
-        {
-        }
+    private readonly IProductProvider _productProvider;
 
-        [HttpGet("by-category/{categoryId}")]
-        public async Task<IActionResult> GetByCategory(int categoryId)
-        {
-            var products = await Provider.GetProductsByCategoryAsync(categoryId);
-            return Ok(products);
-        }
+    public ProductsController(IProductProvider productProvider)
+    {
+        _productProvider = productProvider;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ProductView>>> GetAll()
+    {
+        var products = await _productProvider.GetAllAsync();
+        return Ok(products);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProductView>> GetById(int id)
+    {
+        var product = await _productProvider.GetByIdAsync(id);
+
+        if (product == null)
+            return NotFound();
+
+        return Ok(product);
+    }
+
+    [HttpGet("category/{category}")]
+    public async Task<ActionResult<IEnumerable<ProductView>>> GetByCategory(string category)
+    {
+        var products = await _productProvider.GetByCategoryAsync(category);
+        return Ok(products);
+    }
+
+    [HttpGet("available")]
+    public async Task<ActionResult<IEnumerable<ProductView>>> GetAvailable()
+    {
+        var products = await _productProvider.GetAvailableProductsAsync();
+        return Ok(products);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ProductView>> Create([FromBody]ProductView product)
+    {
+        var result = await _productProvider.AddAsync(product);
+
+        if (result is null)
+            return BadRequest();
+
+        return Ok(result);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update([FromBody]ProductView product)
+    {
+        var result = await _productProvider.UpdateAsync(product);
+
+        if (result is null)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _productProvider.DeleteAsync(id);
+        return NoContent();
     }
 }
 ```
 
-## 1.8. Program.cs
+### 6️⃣ Wire Everything Up
 
-Set up the application in the Program.cs file:
+Configure your services:
 
 ```csharp
+// ExampleApp.WebApi/Program.cs
+using ExampleApp.Data;
+using ExampleApp.Data.Repositories;
+using ExampleApp.Domain.Inventory.Entities;
+using ExampleApp.Domain.Inventory.Repositories;
+using ExampleApp.Providers.Inventory;
 using Microsoft.EntityFrameworkCore;
-using Paradigm.Enterprise.Data.Uow;
-using ProductCatalog.Api.Providers;
-using ProductCatalog.Data;
-using ProductCatalog.Data.Repositories;
+using Paradigm.Enterprise.Data.UoW;
+using Paradigm.Enterprise.Domain.Uow;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add database context
+// Database connection
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseInMemoryDatabase("ExampleAppDb"));
 
-// Add repositories
-builder.Services.AddScoped<ProductRepository>();
-builder.Services.AddScoped<ProductCategoryRepository>();
-
-// Add unit of work
-builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-
-// Add providers
+// Register core services
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductProvider, ProductProvider>();
+builder.Services.AddScoped<ProductView>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -433,45 +618,60 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
-```
-
-## 1.9. appsettings.json
-
-Configure the connection string in appsettings.json:
-
-```json
+// Seed some initial data
+using (var scope = app.Services.CreateScope())
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=ProductCatalog;Trusted_Connection=True;MultipleActiveResultSets=true"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    SeedData(dbContext);
+}
+
+app.Run();
+
+void SeedData(AppDbContext dbContext)
+{
+    if (!dbContext.Products.Any())
+    {
+        dbContext.Products.AddRange(
+            new Product { Name = "Laptop", Price = 999.99m, Description = "Powerful laptop", Category = "Electronics", StockQuantity = 10, IsAvailable = true },
+            new Product { Name = "Smartphone", Price = 699.99m, Description = "Latest model", Category = "Electronics", StockQuantity = 15, IsAvailable = true },
+            new Product { Name = "Desk Chair", Price = 199.99m, Description = "Ergonomic office chair", Category = "Furniture", StockQuantity = 5, IsAvailable = true },
+            new Product { Name = "Headphones", Price = 149.99m, Description = "Noise cancelling", Category = "Electronics", StockQuantity = 0, IsAvailable = false }
+        );
+        dbContext.SaveChanges();
     }
-  },
-  "AllowedHosts": "*"
 }
 ```
 
-## 1.10. Running the Application
+## 🎯 Pro Tips
 
-1. Create the database using Entity Framework migrations:
+1. **Domain-Driven Design** - Entity behaviors keep your domain logic focused
+2. **Separation of Concerns** - Each layer has a clear and distinct responsibility
+3. **Database Optimization** - Use views for complex read operations to reduce roundtrips
+4. **Validation** - Keep validation in your domain entities to ensure data integrity
+5. **Async Everything** - Use async/await throughout for better performance
 
-    ```shell
-    dotnet ef migrations add InitialCreate
-    dotnet ef database update
-    ```
+## 🤔 Common Questions
 
-2. Run the application:
+### "Why separate DTOs, Entities, and Views?"
 
-    ```shell
-    dotnet run
-    ```
+- **DTOs** are optimized for client interaction
+- **Entities** enforce business rules and data integrity
+- **Database Views** optimize data retrieval performance
 
-3. Access the Swagger UI at <https://localhost:5001/swagger> to test the API endpoints.
+### "Can I use this with existing databases?"
 
-## 1.11. Conclusion
+Absolutely! Just configure your DbContext to map to your existing tables and views.
 
-This sample application demonstrates how to use the Paradigm.Enterprise framework to build a complete API with CRUD operations. The framework provides a solid foundation for implementing best practices like repository pattern, unit of work, and provider pattern, while reducing boilerplate code.
+### "What about authentication?"
+
+Add the Paradigm.Enterprise.Auth package for built-in JWT auth support!
+
+### "Is it production-ready?"
+
+Yes, this framework is designed for real-world, enterprise applications.
+
+## 🚀 Next Steps
+
+Now you're equipped to build clean, maintainable applications with clear separation of concerns and optimized data flows.
+
+Happy coding! 🎉
