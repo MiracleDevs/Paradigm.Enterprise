@@ -65,6 +65,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.12`
+- Moved entity audit logic to `Data` layer.
+
 Version `1.0.11`
 - Modified `Data` to allow to set the command timeout when executing a stored procedure.
 

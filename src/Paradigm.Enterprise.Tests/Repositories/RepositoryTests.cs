@@ -23,7 +23,7 @@ public class RepositoryTests
     {
         public DbSet<TestEntity> TestEntities { get; set; } = null!;
 
-        public TestDbContext(DbContextOptions<TestDbContext> options) : base(options) { }
+        public TestDbContext(IServiceProvider serviceProvider, DbContextOptions<TestDbContext> options) : base(serviceProvider, options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -88,14 +88,14 @@ public class RepositoryTests
         
         // Set up the UnitOfWork to commit changes when CommitChangesAsync is called
         _mockUnitOfWork.Setup(m => m.CommitChangesAsync()).Returns(async () => {
-            using var context = new TestDbContext(_options);
+            using var context = new TestDbContext(_serviceProvider!, _options);
             await context.SaveChangesAsync();
             return true;
         });
         
         var services = new ServiceCollection();
         services.AddSingleton(_mockUnitOfWork.Object);
-        services.AddSingleton<TestDbContext>(_ => new TestDbContext(_options));
+        services.AddSingleton(serviceProvider => new TestDbContext(serviceProvider, _options));
         _serviceProvider = services.BuildServiceProvider();
         
         _repository = new TestRepository(_serviceProvider);

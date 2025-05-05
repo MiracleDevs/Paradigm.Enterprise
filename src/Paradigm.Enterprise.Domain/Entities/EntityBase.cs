@@ -43,7 +43,7 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// </summary>
         /// <param name="serviceProvider">The service provider.</param>
         /// <returns></returns>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public virtual TView MapTo(IServiceProvider serviceProvider)
         {
             throw new NotImplementedException();

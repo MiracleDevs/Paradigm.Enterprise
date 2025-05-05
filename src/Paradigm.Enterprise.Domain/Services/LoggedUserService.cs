@@ -1,9 +1,7 @@
 ﻿using Paradigm.Enterprise.Interfaces;
-using Paradigm.Enterprise.Providers.Exceptions;
 
-namespace Paradigm.Enterprise.Providers.Utils;
-
-public class LoggedUserManager
+namespace Paradigm.Enterprise.Domain.Services;
+internal class LoggedUserService : ILoggedUserService
 {
     #region Properties
 
@@ -39,7 +37,7 @@ public class LoggedUserManager
     /// <typeparam name="TUser">The type of the user.</typeparam>
     /// <returns></returns>
     /// <exception cref="NotAuthorizedException"></exception>
-    public TUser GetAuthenticatedUser<TUser>() where TUser : IEntity => TryGetAuthenticatedUser<TUser>() ?? throw new NotAuthenticatedException();
+    public TUser GetAuthenticatedUser<TUser>() where TUser : IEntity => TryGetAuthenticatedUser<TUser>() ?? throw new UnauthorizedAccessException();
 
     #endregion
 }

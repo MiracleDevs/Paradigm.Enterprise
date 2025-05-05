@@ -10,7 +10,7 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 [AllowAnonymous]
 public abstract class ApiControllerCrudBase<TProvider, TView, TParameters> : ApiControllerBase<TProvider, TView, TParameters>
     where TView : EntityBase, new()
-    where TProvider : IAuditableProvider<TView>
+    where TProvider : IEditProvider<TView>
     where TParameters : FilterTextPaginatedParameters
 {
     #region Constructor

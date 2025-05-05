@@ -87,10 +87,11 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         }
 
         /// <summary>
-        /// Registers the repositories.
+        /// Registers the mappers.
         /// </summary>
-        /// <param name="services">The service collection.</param>
+        /// <param name="services">The services.</param>
         /// <param name="assemblies">The assemblies.</param>
+        /// <returns></returns>
         public static IServiceCollection RegisterMappers(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(IMapper).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -107,10 +108,11 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         }
 
         /// <summary>
-        /// Registers the repositories.
+        /// Registers the entities.
         /// </summary>
-        /// <param name="services">The service collection.</param>
+        /// <param name="services">The services.</param>
         /// <param name="assemblies">The assemblies.</param>
+        /// <returns></returns>
         public static IServiceCollection RegisterEntities(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(EntityBase).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -122,10 +124,11 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         }
 
         /// <summary>
-        /// Registers the repositories.
+        /// Registers the dtos.
         /// </summary>
-        /// <param name="services">The service collection.</param>
+        /// <param name="services">The services.</param>
         /// <param name="assemblies">The assemblies.</param>
+        /// <returns></returns>
         public static IServiceCollection RegisterDtos(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(DtoBase).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
