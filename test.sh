@@ -16,9 +16,6 @@ C_YELLOW='\033[1;33m'
 C_WHITE='\033[1;37m'
 C_RESET='\e[0m'
 
-# define docker variables
-DOCKER_COMPOSE_FILE="${CURRENT_PATH}/docker/docker-compose.yml"
-DOCKER_PROJECT_NAME="paradigm-enterprise"
 
 # define helper methods
 function newline() {
@@ -79,9 +76,6 @@ function check_dotnet_tool() {
 ################################################################################################
 newline
 header "Checking required software:"
-check_command "docker"
-check_command "docker-compose"
-check_command "start"
 check_command "dotnet"
 
 newline
@@ -98,14 +92,9 @@ if [ -f .env ]; then
     message " - Variables loaded"
 fi
 
-
-# Docker Containers
-message " - Building containers..."
-docker-compose -f "${DOCKER_COMPOSE_FILE}" -p "${DOCKER_PROJECT_NAME}" build >/dev/null || error "Couldn't build containers."
-newline
-message " - Starting containers..."
-docker-compose -f "${DOCKER_COMPOSE_FILE}" -p "${DOCKER_PROJECT_NAME}" up -d || error "Couldn't start the containers."
-newline
+pushd "$CURRENT_PATH/src/" || error "Failed to pushd to ./src/Paradigm.Enterprise.Api"
+dotnet test || error "Failed to run tests"
+popd || error "Failed to popd from ./src/Paradigm.Enterprise.Api"
 
 
 ################################################################################################

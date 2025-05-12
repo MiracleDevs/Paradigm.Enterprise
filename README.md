@@ -19,6 +19,16 @@ For detailed documentation about each component of the framework, please visit t
 - [Code Generator](docs/code-generator.md) - Automated code generation utilities
 - [Sample Application](docs/sample-application.md) - Complete example application using the framework
 
+## Request for Comments (RFC)
+
+For significant changes to the framework, we follow a Request for Comments (RFC) process. This ensures proper consideration, documentation and team collaboration on important architectural decisions.
+
+- [RFC Process](docs/rfc/README.md) - Our RFC process documentation
+- [RFC Template](docs/rfc/template.md) - Template for creating new RFCs
+- [Sample RFC](docs/rfc/2023-07-01-sample-rfc.md) - Example RFC document
+
+If you're planning to propose a significant change to the framework, please follow the RFC process to ensure it's properly reviewed and documented.
+
 ## Nuget Packages
 
 | Library    | Nuget | Install
