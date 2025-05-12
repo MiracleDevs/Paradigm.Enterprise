@@ -6,14 +6,32 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TContext>, IReadRepository<TEntity>
+public abstract class ReadRepositoryBase<TEntity, TContext> : ReadRepositoryBase<TEntity, TContext, FilterTextPaginatedParameters>
     where TEntity : EntityBase
     where TContext : DbContextBase
 {
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadRepositoryBase{TEntity, TContext}" /> class.
+    /// Initializes a new instance of the <see cref="ReadRepositoryBase{TEntity, TContext}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    protected ReadRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+    }
+
+    #endregion
+}
+
+public abstract class ReadRepositoryBase<TEntity, TContext, TParameters> : RepositoryBase<TContext>, IReadRepository<TEntity, TParameters>
+    where TEntity : EntityBase
+    where TContext : DbContextBase
+    where TParameters : FilterTextPaginatedParameters
+{
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReadRepositoryBase{TEntity, TContext, TParameters}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected ReadRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)
@@ -53,7 +71,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// </summary>
     /// <param name="parametersBase"></param>
     /// <returns></returns>
-    public async Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase)
+    public async Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(TParameters parametersBase)
     {
         var (paginationInfo, entities) = await GetSearchPaginatedFunction(parametersBase).Invoke(parametersBase);
         return new PaginatedResultDto<TEntity>(paginationInfo, entities);
@@ -74,7 +92,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// </summary>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    protected virtual Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters) => throw new NotImplementedException();
+    protected virtual Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(TParameters parameters) => throw new NotImplementedException();
 
     #endregion
 }

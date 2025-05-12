@@ -1,9 +1,11 @@
-﻿using Paradigm.Enterprise.Domain.Entities;
+﻿using Paradigm.Enterprise.Domain.Dtos;
+using Paradigm.Enterprise.Domain.Entities;
 
 namespace Paradigm.Enterprise.Domain.Repositories;
 
-public interface IEditRepository<TEntity> : IReadRepository<TEntity>
+public interface IEditRepository<TEntity, TParameters> : IReadRepository<TEntity, TParameters>
     where TEntity : EntityBase
+    where TParameters : FilterTextPaginatedParameters
 {
     /// <summary>
     /// Adds a new entity.

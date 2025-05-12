@@ -41,11 +41,11 @@ public class EditProviderBaseTests
     }
 
     // Repository interfaces
-    public interface ITestRepository : IEditRepository<TestEntity> { }
-    public interface ITestViewRepository : IReadRepository<TestView> { }
+    public interface ITestRepository : IEditRepository<TestEntity, FilterTextPaginatedParameters> { }
+    public interface ITestViewRepository : IReadRepository<TestView, FilterTextPaginatedParameters> { }
 
     // Provider interface
-    public interface ITestProvider : IEditProvider<TestView> { }
+    public interface ITestProvider : IEditProvider<TestView, FilterTextPaginatedParameters> { }
 
     // Test provider implementation
     public class TestProvider : EditProviderBase<IEntity, TestEntity, TestView, ITestRepository, ITestViewRepository>, ITestProvider

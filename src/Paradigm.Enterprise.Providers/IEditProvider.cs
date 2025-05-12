@@ -1,9 +1,11 @@
-﻿using Paradigm.Enterprise.Domain.Entities;
+﻿using Paradigm.Enterprise.Domain.Dtos;
+using Paradigm.Enterprise.Domain.Entities;
 
 namespace Paradigm.Enterprise.Providers;
 
-public interface IEditProvider<TView> : IReadProvider<TView>
+public interface IEditProvider<TView, TParameters> : IReadProvider<TView, TParameters>
     where TView : EntityBase, new()
+    where TParameters : FilterTextPaginatedParameters
 {
     /// <summary>
     /// Adds a new entity.

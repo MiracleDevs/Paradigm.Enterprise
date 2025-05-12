@@ -2,7 +2,8 @@
 
 namespace Paradigm.Enterprise.Providers;
 
-public interface IReadProvider<TView> : IProvider
+public interface IReadProvider<TView, TParameters> : IProvider
+    where TParameters : FilterTextPaginatedParameters
 {
     /// <summary>
     /// Gets the entity identifier.
@@ -29,5 +30,5 @@ public interface IReadProvider<TView> : IProvider
     /// </summary>
     /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
-    Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters);
+    Task<PaginatedResultDto<TView>> SearchPaginatedAsync(TParameters parameters);
 }

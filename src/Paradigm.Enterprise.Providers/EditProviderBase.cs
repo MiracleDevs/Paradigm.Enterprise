@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 using Paradigm.Enterprise.Domain.Uow;
@@ -6,12 +7,33 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository> : ReadProviderBase<TInterface, TView, TViewRepository>, IEditProvider<TView>
+public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository> : EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository, FilterTextPaginatedParameters>
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
-    where TRepository : IEditRepository<TEntity>
-    where TViewRepository : IReadRepository<TView>
+    where TRepository : IEditRepository<TEntity, FilterTextPaginatedParameters>
+    where TViewRepository : IReadRepository<TView, FilterTextPaginatedParameters>
+{
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EditProviderBase{TInterface, TEntity, TView, TRepository, TViewRepository}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    protected EditProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+    }
+
+    #endregion
+}
+
+public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository, TParameters> : ReadProviderBase<TInterface, TView, TViewRepository, TParameters>, IEditProvider<TView, TParameters>
+    where TInterface : Interfaces.IEntity
+    where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
+    where TView : EntityBase, TInterface, new()
+    where TRepository : IEditRepository<TEntity, TParameters>
+    where TViewRepository : IReadRepository<TView, TParameters>
+    where TParameters : FilterTextPaginatedParameters
 {
     #region Properties
 
@@ -36,7 +58,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EditProviderBase{TEntity, TDto, TRepository}"/> class.
+    /// Initializes a new instance of the <see cref="EditProviderBase{TInterface, TEntity, TView, TRepository, TViewRepository, TParameters}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected EditProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)

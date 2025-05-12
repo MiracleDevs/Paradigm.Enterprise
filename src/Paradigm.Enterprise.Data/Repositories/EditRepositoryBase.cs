@@ -1,18 +1,37 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
+using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-public abstract class EditRepositoryBase<TEntity, TContext> : ReadRepositoryBase<TEntity, TContext>, IEditRepository<TEntity>
+public abstract class EditRepositoryBase<TEntity, TContext> : EditRepositoryBase<TEntity, TContext, FilterTextPaginatedParameters>
      where TEntity : EntityBase
      where TContext : DbContextBase
 {
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EditRepositoryBase{TEntity, TContext}" /> class.
+    /// Initializes a new instance of the <see cref="EditRepositoryBase{TEntity, TContext}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    protected EditRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+    }
+
+    #endregion
+}
+
+public abstract class EditRepositoryBase<TEntity, TContext, TParameters> : ReadRepositoryBase<TEntity, TContext, TParameters>, IEditRepository<TEntity, TParameters>
+     where TEntity : EntityBase
+     where TContext : DbContextBase
+     where TParameters : FilterTextPaginatedParameters
+{
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EditRepositoryBase{TEntity, TContext, TParameters}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected EditRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)

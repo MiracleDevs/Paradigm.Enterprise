@@ -6,10 +6,29 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : ProviderBase, IReadProvider<TView>
+public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : ReadProviderBase<TInterface, TView, TViewRepository, FilterTextPaginatedParameters>
       where TInterface : Interfaces.IEntity
       where TView : EntityBase, TInterface, new()
-      where TViewRepository : IReadRepository<TView>
+      where TViewRepository : IReadRepository<TView, FilterTextPaginatedParameters>
+{
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReadProviderBase{TInterface, TView, TViewRepository}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    protected ReadProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
+    {
+    }
+
+    #endregion
+}
+
+public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TParameters> : ProviderBase, IReadProvider<TView, TParameters>
+      where TInterface : Interfaces.IEntity
+      where TView : EntityBase, TInterface, new()
+      where TViewRepository : IReadRepository<TView, TParameters>
+      where TParameters : FilterTextPaginatedParameters
 {
     #region Properties
 
@@ -26,7 +45,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : Pro
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadProviderBase{TEntity, TDto, TRepository}"/> class.
+    /// Initializes a new instance of the <see cref="ReadProviderBase{TInterface, TView, TViewRepository, TParameters}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected ReadProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
@@ -73,7 +92,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : Pro
     /// </summary>
     /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
-    public virtual async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
+    public virtual async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(TParameters parameters)
     {
         return await ViewRepository.SearchPaginatedAsync(parameters);
     }

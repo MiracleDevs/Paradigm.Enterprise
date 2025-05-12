@@ -51,8 +51,27 @@ public abstract class ApiControllerBase<TProvider> : ControllerBase
 
 [AllowAnonymous]
 [ApiController]
+public abstract class ApiControllerBase<TProvider, TView> : ApiControllerBase<TProvider, TView, FilterTextPaginatedParameters>
+    where TProvider : IReadProvider<TView, FilterTextPaginatedParameters>
+{
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiControllerBase{TProvider, TView}"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="provider">The provider.</param>
+    public ApiControllerBase(ILogger<ApiControllerBase<TProvider, TView, FilterTextPaginatedParameters>> logger, TProvider provider) : base(logger, provider)
+    {
+    }
+
+    #endregion
+}
+
+[AllowAnonymous]
+[ApiController]
 public abstract class ApiControllerBase<TProvider, TView, TParameters> : ControllerBase
-    where TProvider : IReadProvider<TView>
+    where TProvider : IReadProvider<TView, TParameters>
     where TParameters : FilterTextPaginatedParameters
 {
     #region Properties
@@ -78,7 +97,7 @@ public abstract class ApiControllerBase<TProvider, TView, TParameters> : Control
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiControllerBase{TProvider, TView}"/> class.
+    /// Initializes a new instance of the <see cref="ApiControllerBase{TProvider, TView, TParameters}"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="provider">The provider.</param>

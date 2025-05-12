@@ -16,10 +16,10 @@ public class ReadProviderBaseTests
     }
 
     // Repository interface
-    public interface ITestRepository : IReadRepository<TestEntity> { }
+    public interface ITestRepository : IReadRepository<TestEntity, FilterTextPaginatedParameters> { }
 
     // Provider interface
-    public interface ITestProvider : IReadProvider<TestEntity> { }
+    public interface ITestProvider : IReadProvider<TestEntity, FilterTextPaginatedParameters> { }
 
     // Test provider implementation
     public class TestProvider : ReadProviderBase<IEntity, TestEntity, ITestRepository>, ITestProvider

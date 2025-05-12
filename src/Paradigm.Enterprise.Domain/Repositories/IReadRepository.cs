@@ -3,8 +3,9 @@ using Paradigm.Enterprise.Domain.Entities;
 
 namespace Paradigm.Enterprise.Domain.Repositories;
 
-public interface IReadRepository<TEntity> : IRepository
+public interface IReadRepository<TEntity, TParameters> : IRepository
     where TEntity : EntityBase
+    where TParameters : FilterTextPaginatedParameters
 {
     /// <summary>
     /// Gets the entity by identifier.
@@ -31,5 +32,5 @@ public interface IReadRepository<TEntity> : IRepository
     /// </summary>
     /// <param name="parametersBase">The parameters base.</param>
     /// <returns></returns>
-    Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase);
+    Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(TParameters parametersBase);
 }

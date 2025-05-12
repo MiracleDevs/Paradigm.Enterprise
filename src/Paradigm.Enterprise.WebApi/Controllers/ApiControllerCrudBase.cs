@@ -8,15 +8,34 @@ using Paradigm.Enterprise.Providers;
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
 [AllowAnonymous]
-public abstract class ApiControllerCrudBase<TProvider, TView, TParameters> : ApiControllerBase<TProvider, TView, TParameters>
+public abstract class ApiControllerCrudBase<TProvider, TView> : ApiControllerCrudBase<TProvider, TView, FilterTextPaginatedParameters>
     where TView : EntityBase, new()
-    where TProvider : IEditProvider<TView>
-    where TParameters : FilterTextPaginatedParameters
+    where TProvider : IEditProvider<TView, FilterTextPaginatedParameters>
 {
     #region Constructor
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiControllerCrudBase{TProvider, TView}"/> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="provider">The provider.</param>
+    public ApiControllerCrudBase(ILogger<ApiControllerCrudBase<TProvider, TView>> logger, TProvider provider) : base(logger, provider)
+    {
+    }
+
+    #endregion
+}
+
+[AllowAnonymous]
+public abstract class ApiControllerCrudBase<TProvider, TView, TParameters> : ApiControllerBase<TProvider, TView, TParameters>
+    where TView : EntityBase, new()
+    where TProvider : IEditProvider<TView, TParameters>
+    where TParameters : FilterTextPaginatedParameters
+{
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiControllerCrudBase{TProvider, TView, TParameters}"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="provider">The provider.</param>
