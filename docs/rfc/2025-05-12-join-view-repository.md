@@ -2,7 +2,7 @@
 
 - **RFC ID**: 2025-05-12-join-view-repository
 - **Status**: Draft
-- **Author(s)**: [Your Name]
+- **Author(s)**: Pablo Ordóñez <pablo@miracledevs.com>
 - **Created**: 2025-05-12
 - **Last Updated**: 2025-05-12
 
