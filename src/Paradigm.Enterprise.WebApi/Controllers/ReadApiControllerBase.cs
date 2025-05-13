@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Providers;
+using Paradigm.Enterprise.WebApi.Attributes;
 using System.ComponentModel.DataAnnotations;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
@@ -48,7 +49,7 @@ public abstract class ReadApiControllerBase<TProvider, TView, TParameters> : Api
     /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
     [HttpPost("search")]
-    //[ExposeEndpoint] // New attribute to control endpoint exposure
+    [ExposeEndpoint]
     public virtual async Task<PaginatedResultDto<TView>> SearchAsync([FromBody, Required] TParameters parameters)
     {
         return await Provider.SearchAsync(parameters);
@@ -60,7 +61,7 @@ public abstract class ReadApiControllerBase<TProvider, TView, TParameters> : Api
     /// <param name="id">The identifier.</param>
     /// <returns></returns>
     [HttpGet("get-by-id")]
-    //[ExposeEndpoint]
+    [ExposeEndpoint]
     public virtual async Task<TView> GetByIdAsync([FromQuery] int id)
     {
         return await Provider.GetByIdAsync(id);

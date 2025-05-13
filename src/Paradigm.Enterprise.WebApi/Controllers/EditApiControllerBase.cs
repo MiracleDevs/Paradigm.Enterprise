@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Providers;
+using Paradigm.Enterprise.WebApi.Attributes;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
@@ -35,7 +36,7 @@ public abstract class EditApiControllerBase<TProvider, TView, TParameters> : Rea
     /// <param name="view">The view.</param>
     /// <returns></returns>
     [HttpPost]
-    //[ExposeEndpoint]
+    [ExposeEndpoint]
     public virtual async Task<TView> SaveAsync([FromBody] TView view)
     {
         return await Provider.SaveAsync(view);
@@ -46,7 +47,7 @@ public abstract class EditApiControllerBase<TProvider, TView, TParameters> : Rea
     /// </summary>
     /// <param name="id">The identifier.</param>
     [HttpDelete]
-    //[ExposeEndpoint]
+    [ExposeEndpoint]
     public virtual async Task DeleteAsync([FromQuery] int id)
     {
         await Provider.DeleteAsync(id);
