@@ -25,9 +25,18 @@ public interface IReadProvider<TView> : IProvider
     Task<IEnumerable<TView>> GetAllAsync();
 
     /// <summary>
+    /// Executes the search using the specified parameters.
+    /// </summary>
+    /// <typeparam name="TParameters">The type of the parameters.</typeparam>
+    /// <param name="parameters">The parameters.</param>
+    /// <returns></returns>
+    Task<PaginatedResultDto<TView>> SearchAsync<TParameters>(TParameters parameters) where TParameters : PaginationParametersBase;
+
+    /// <summary>
     /// Gets the results paginated.
     /// </summary>
     /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
+    [Obsolete("Use SearchAsync<TParameters> instead")]
     Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters);
 }

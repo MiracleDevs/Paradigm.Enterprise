@@ -27,9 +27,18 @@ public interface IReadRepository<TEntity> : IRepository
     Task<IEnumerable<TEntity>> GetAllAsync();
 
     /// <summary>
-    /// Searches the paginated asynchronous.
+    /// Executes the search using the specified parameters.
     /// </summary>
-    /// <param name="parametersBase">The parameters base.</param>
+    /// <typeparam name="TParameters">The type of the parameters.</typeparam>
+    /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
-    Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase);
+    Task<PaginatedResultDto<TEntity>> SearchAsync<TParameters>(TParameters parameters) where TParameters : PaginationParametersBase;
+
+    /// <summary>
+    /// Searches the results paginated.
+    /// </summary>
+    /// <param name="parameters">The parameters.</param>
+    /// <returns></returns>
+    [Obsolete("Use SearchAsync<TParameters> instead")]
+    Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters);
 }
