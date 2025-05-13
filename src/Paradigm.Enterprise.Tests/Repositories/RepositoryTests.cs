@@ -41,15 +41,15 @@ public class RepositoryTests
 
         protected override IQueryable<TestEntity> AsQueryable() => GetDbSet().AsQueryable();
 
-        protected override Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TestEntity>)>> GetSearchPaginatedFunction(
-            FilterTextPaginatedParameters parameters) 
+        protected override Func<PaginationParametersBase, Task<(PaginationInfo, List<TestEntity>)>> GetSearchPaginatedFunction(
+            PaginationParametersBase parameters) 
         {
             return async (parameters) =>
             {
                 var query = AsQueryable();
                 
-                if (!string.IsNullOrEmpty(parameters.FilterText))
-                    query = query.Where(e => e.Name.Contains(parameters.FilterText));
+                if (parameters is FilterTextPaginatedParameters filterTextParameters && !string.IsNullOrEmpty(filterTextParameters.FilterText))
+                    query = query.Where(e => e.Name.Contains(filterTextParameters.FilterText));
 
                 var totalCount = await query.CountAsync();
                 
