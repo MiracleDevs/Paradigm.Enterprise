@@ -10,16 +10,16 @@ public class ProviderBaseTests
     public class TestProvider : ProviderBase
     {
         public TestProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
-        
+
         public T GetProviderTest<T>() where T : IProvider
         {
             return GetProvider<T>();
         }
     }
-    
+
     // Test provider interface
     public interface ITestDependencyProvider : IProvider { }
-    
+
     // Test provider implementation
     public class TestDependencyProvider : ITestDependencyProvider
     {
@@ -34,11 +34,11 @@ public class ProviderBaseTests
     public void Initialize()
     {
         _dependencyProvider = new TestDependencyProvider();
-        
+
         var services = new ServiceCollection();
         services.AddSingleton<ITestDependencyProvider>(_dependencyProvider);
         _serviceProvider = services.BuildServiceProvider();
-        
+
         _provider = new TestProvider(_serviceProvider);
     }
 
@@ -53,9 +53,9 @@ public class ProviderBaseTests
     {
         // Act
         var result = _provider!.GetProviderTest<ITestDependencyProvider>();
-        
+
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(_dependencyProvider, result);
     }
-} 
+}

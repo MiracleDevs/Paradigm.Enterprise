@@ -137,7 +137,6 @@ internal partial class {mapperClassName} : NpgsqlParameterMapperBase
                 propertyAssignments.AppendLine($"            table{propertyName}.Rows.Add(dataRow);");
             }
 
-
             propertyAssignments.AppendLine($"            AddNpgsqlParameter(nameof({targetTypeName}.{propertyName}), table{propertyName});");
             propertyAssignments.AppendLine("        }");
         }

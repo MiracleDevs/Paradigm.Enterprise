@@ -23,7 +23,7 @@ public class EmailServiceTests
         // Set up configuration section for email configuration
         _mockConfigSection.Setup(x => x["MailFrom"]).Returns("test@example.com");
         _mockConfigSection.Setup(x => x["ConnectionString"]).Returns("mock-connection-string");
-        
+
         _mockConfiguration.Setup(x => x.GetSection("EmailConfiguration"))
             .Returns(_mockConfigSection.Object);
     }
@@ -34,10 +34,10 @@ public class EmailServiceTests
         // Arrange
         var messageInfo = new MailMessageInfo("recipient@example.com", "Test Subject", "<p>Test Body</p>");
         var testEmailService = new TestableEmailService(_mockConfiguration!.Object, _mockLogger!.Object);
-        
+
         // Act
         testEmailService.SendMail(messageInfo);
-        
+
         // Assert
         Assert.IsTrue(testEmailService.SendMailsCalled);
         Assert.AreEqual(1, testEmailService.SendMailsCallCount);
@@ -49,7 +49,7 @@ public class EmailServiceTests
     {
         // Arrange - setup null configuration
         _mockConfigSection!.Setup(x => x["MailFrom"]).Returns((string?)null);
-        
+
         var emailService = new EmailService(_mockConfiguration!.Object, _mockLogger!.Object);
         var messages = new List<MailMessageInfo>
         {
@@ -78,7 +78,7 @@ public class EmailServiceTests
         {
             new MailMessageInfo("recipient@example.com", "Test Subject", "<p>Test Body</p>")
         };
-        
+
         var testEmailService = new ExceptionThrowingEmailService(_mockConfiguration!.Object, _mockLogger!.Object);
 
         // Act - Execute the method which will throw and catch the exception
@@ -101,8 +101,8 @@ public class EmailServiceTests
         // Arrange & Act
         var singleRecipient = new MailMessageInfo("recipient@example.com", "Test Subject", "<p>Test Body</p>");
         var multipleRecipients = new MailMessageInfo(
-            new[] { "recipient1@example.com", "recipient2@example.com" }, 
-            "Test Subject Multiple", 
+            new[] { "recipient1@example.com", "recipient2@example.com" },
+            "Test Subject Multiple",
             "<p>Test Body Multiple</p>");
 
         // Assert
@@ -174,4 +174,4 @@ public class EmailServiceTests
             }
         }
     }
-} 
+}

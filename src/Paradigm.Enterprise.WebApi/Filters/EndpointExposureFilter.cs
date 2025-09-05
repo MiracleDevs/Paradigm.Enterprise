@@ -10,15 +10,12 @@ namespace Paradigm.Enterprise.WebApi.Filters;
 /// </summary>
 public class EndpointExposureFilter : IActionFilter
 {
-    private readonly bool _requireExplicitExposure;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="EndpointExposureFilter"/> class.
     /// </summary>
     /// <param name="requireExplicitExposure">When true, endpoints must have the ExposeEndpoint attribute to be accessible.</param>
-    public EndpointExposureFilter(bool requireExplicitExposure = true)
+    public EndpointExposureFilter()
     {
-        _requireExplicitExposure = requireExplicitExposure;
     }
 
     /// <summary>
@@ -27,19 +24,10 @@ public class EndpointExposureFilter : IActionFilter
     /// <param name="context">The action executing context.</param>
     public void OnActionExecuting(ActionExecutingContext context)
     {
-        if (!_requireExplicitExposure)
-            return;
-
-        // Skip this filter in development/debug mode
-        if (System.Diagnostics.Debugger.IsAttached)
-            return;
-
-        // Get the controller action descriptor
         if (context.ActionDescriptor is ControllerActionDescriptor actionDescriptor)
         {
             // Check if the action method has the ExposeEndpoint attribute
             var hasExposeAttribute = actionDescriptor.MethodInfo.GetCustomAttributes(typeof(ExposeEndpointAttribute), true).Any();
-
             if (!hasExposeAttribute)
             {
                 // If the attribute is not present, return a 404 Not Found to hide the endpoint
@@ -56,4 +44,4 @@ public class EndpointExposureFilter : IActionFilter
     {
         // This method intentionally left empty.
     }
-} 
+}

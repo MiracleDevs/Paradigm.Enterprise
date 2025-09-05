@@ -42,31 +42,31 @@ public class RepositoryTests
         protected override IQueryable<TestEntity> AsQueryable() => GetDbSet().AsQueryable();
 
         protected override Func<PaginationParametersBase, Task<(PaginationInfo, List<TestEntity>)>> GetSearchPaginatedFunction(
-            PaginationParametersBase parameters) 
+            PaginationParametersBase parameters)
         {
             return async (parameters) =>
             {
                 var query = AsQueryable();
-                
+
                 if (parameters is FilterTextPaginatedParameters filterTextParameters && !string.IsNullOrEmpty(filterTextParameters.FilterText))
                     query = query.Where(e => e.Name.Contains(filterTextParameters.FilterText));
 
                 var totalCount = await query.CountAsync();
-                
+
                 // Apply pagination
                 var pageSize = parameters.PageSize ?? 10;
                 var pageNumber = parameters.PageNumber ?? 1;
-                
+
                 query = query.Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize);
-                    
+
                 var pageInfo = new PaginationInfo
                 {
                     ItemsCount = totalCount,
                     PageNumber = pageNumber,
                     TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
                 };
-                
+
                 return (pageInfo, await query.ToListAsync());
             };
         }
@@ -85,19 +85,20 @@ public class RepositoryTests
             .Options;
 
         _mockUnitOfWork = new Mock<IUnitOfWork>();
-        
+
         // Set up the UnitOfWork to commit changes when CommitChangesAsync is called
-        _mockUnitOfWork.Setup(m => m.CommitChangesAsync()).Returns(async () => {
+        _mockUnitOfWork.Setup(m => m.CommitChangesAsync()).Returns(async () =>
+        {
             using var context = new TestDbContext(_serviceProvider!, _options);
             await context.SaveChangesAsync();
             return true;
         });
-        
+
         var services = new ServiceCollection();
         services.AddSingleton(_mockUnitOfWork.Object);
         services.AddSingleton(serviceProvider => new TestDbContext(serviceProvider, _options));
         _serviceProvider = services.BuildServiceProvider();
-        
+
         _repository = new TestRepository(_serviceProvider);
     }
 
@@ -112,10 +113,10 @@ public class RepositoryTests
     {
         // Arrange
         var entity = new TestEntity { Name = "Test Entity" };
-        
+
         // Act
         var result = await _repository!.AddAsync(entity);
-        
+
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual("Test Entity", result.Name);
@@ -130,10 +131,10 @@ public class RepositoryTests
         var entity = new TestEntity { Name = "Test Entity" };
         context.TestEntities.Add(entity);
         await context.SaveChangesAsync();
-        
+
         // Act
         var result = await _repository!.GetByIdAsync(entity.Id);
-        
+
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual("Test Entity", result.Name);
@@ -147,10 +148,10 @@ public class RepositoryTests
         context.TestEntities.Add(new TestEntity { Name = "Entity 1" });
         context.TestEntities.Add(new TestEntity { Name = "Entity 2" });
         await context.SaveChangesAsync();
-        
+
         // Act
         var results = await _repository!.GetAllAsync();
-        
+
         // Assert
         Assert.IsNotNull(results);
         Assert.AreEqual(2, results.Count());
@@ -164,21 +165,21 @@ public class RepositoryTests
         var entity = new TestEntity { Name = "Test Entity" };
         context.TestEntities.Add(entity);
         await context.SaveChangesAsync();
-        
+
         // Get the ID from the saved entity
         var entityId = entity.Id;
-        
+
         // Update the entity
         entity.Name = "Updated Entity";
-        
+
         // Act
         var result = await _repository!.UpdateAsync(entity);
         await context.SaveChangesAsync(); // Save changes directly
-        
+
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual("Updated Entity", result.Name);
-        
+
         // Verify in database by fetching from the context again
         context.ChangeTracker.Clear(); // Clear tracked entities
         var updated = await context.TestEntities.FindAsync(entityId);
@@ -194,14 +195,14 @@ public class RepositoryTests
         var entity = new TestEntity { Name = "Test Entity" };
         context.TestEntities.Add(entity);
         await context.SaveChangesAsync();
-        
+
         // Get the ID from the saved entity
         var entityId = entity.Id;
-        
+
         // Act
         await _repository!.DeleteAsync(entity);
         await context.SaveChangesAsync(); // Save changes directly
-        
+
         // Assert
         context.ChangeTracker.Clear(); // Clear tracked entities
         var deleted = await context.TestEntities.FindAsync(entityId);
@@ -224,10 +225,10 @@ public class RepositoryTests
             PageNumber = 2,
             PageSize = 5
         };
-        
+
         // Act
         var result = await _repository!.SearchPaginatedAsync(parameters);
-        
+
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(5, result.Results.Count());
@@ -235,4 +236,4 @@ public class RepositoryTests
         Assert.AreEqual(4, result.PageInfo.TotalPages);
         Assert.AreEqual(2, result.PageInfo.PageNumber);
     }
-} 
+}

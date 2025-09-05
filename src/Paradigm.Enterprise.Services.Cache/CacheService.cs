@@ -134,7 +134,7 @@ public class CacheService : ICacheService, IDisposable
         if (_cacheConfiguration.Disabled) return default;
 
         var cachedData = await _distributedCache.GetStringAsync(key);
-        
+
         if (!string.IsNullOrWhiteSpace(cachedData))
         {
             var deserializedCachedData = System.Text.Json.JsonSerializer.Deserialize(cachedData, jsonTypeInfo);
