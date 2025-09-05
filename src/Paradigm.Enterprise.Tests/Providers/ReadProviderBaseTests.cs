@@ -35,11 +35,11 @@ public class ReadProviderBaseTests
     public void Initialize()
     {
         _mockRepository = new Mock<ITestRepository>();
-        
+
         var services = new ServiceCollection();
         services.AddSingleton(_mockRepository.Object);
         _serviceProvider = services.BuildServiceProvider();
-        
+
         _provider = new TestProvider(_serviceProvider);
     }
 
@@ -55,10 +55,10 @@ public class ReadProviderBaseTests
         // Arrange
         var entity = new TestEntity { Name = "Test Entity" };
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
-        
+
         // Act
         var result = await _provider!.GetByIdAsync(1);
-        
+
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual("Test Entity", result.Name);
@@ -75,10 +75,10 @@ public class ReadProviderBaseTests
             new() { Name = "Entity 2" }
         };
         _mockRepository!.Setup(m => m.GetAllAsync()).ReturnsAsync(entities);
-        
+
         // Act
         var results = await _provider!.GetAllAsync();
-        
+
         // Assert
         Assert.IsNotNull(results);
         Assert.AreEqual(2, results.Count());
@@ -94,27 +94,27 @@ public class ReadProviderBaseTests
             PageNumber = 1,
             PageSize = 10
         };
-        
+
         var entities = new List<TestEntity>
         {
             new() { Name = "Entity 1" },
             new() { Name = "Entity 2" }
         };
-        
+
         var pageInfo = new PaginationInfo
         {
             ItemsCount = 2,
             PageNumber = 1,
             TotalPages = 1
         };
-        
+
         var result = new PaginatedResultDto<TestEntity>(pageInfo, entities);
-        
+
         _mockRepository!.Setup(m => m.SearchPaginatedAsync(It.IsAny<FilterTextPaginatedParameters>())).ReturnsAsync(result);
-        
+
         // Act
         var paginatedResult = await _provider!.SearchPaginatedAsync(parameters);
-        
+
         // Assert
         Assert.IsNotNull(paginatedResult);
         Assert.AreEqual(2, paginatedResult.Results.Count());
@@ -123,4 +123,4 @@ public class ReadProviderBaseTests
         Assert.AreEqual(2, paginatedResult.PageInfo.ItemsCount);
         _mockRepository.Verify(m => m.SearchPaginatedAsync(parameters), Times.Once);
     }
-} 
+}

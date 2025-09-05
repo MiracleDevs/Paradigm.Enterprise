@@ -1,7 +1,5 @@
-using Paradigm.Enterprise.Domain.Attributes;
 using Paradigm.Enterprise.Domain.Exceptions;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace Paradigm.Enterprise.Tests.Entities;
 
@@ -31,7 +29,7 @@ public class ValidatableEntityTests
             var validationResults = new List<ValidationResult>();
             var validationContext = new ValidationContext(this);
             var isValid = Validator.TryValidateObject(this, validationContext, validationResults, true);
-            
+
             var validator = new DomainValidator();
 
             // Custom business rules
@@ -51,9 +49,9 @@ public class ValidatableEntityTests
             else if (Age < 18 && string.IsNullOrEmpty(Email))
             {
                 // Remove any email-related validation errors
-                validationResults.RemoveAll(result => 
+                validationResults.RemoveAll(result =>
                     result.MemberNames.Contains(nameof(Email)));
-                
+
                 // Recheck if valid without email validation
                 isValid = !validationResults.Any() && validator.ToString() == string.Empty;
             }
@@ -210,4 +208,4 @@ public class ValidatableEntityTests
         // Act & Assert - no exception should be thrown
         entity.Validate();
     }
-} 
+}

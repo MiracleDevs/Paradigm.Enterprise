@@ -85,4 +85,4 @@ public class EntityMapperTests
         Assert.AreEqual(2, entity.Id);
         Assert.AreEqual("Test DTO", entity.Name);
     }
-} 
+}

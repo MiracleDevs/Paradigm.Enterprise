@@ -112,4 +112,4 @@ public class PaginatedResultDtoTests
         // Assert
         Assert.AreEqual(10, PaginationParametersBase.DefaultPageSize);
     }
-} 
+}

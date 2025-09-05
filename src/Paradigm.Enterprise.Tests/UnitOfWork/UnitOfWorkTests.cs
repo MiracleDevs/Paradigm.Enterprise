@@ -25,10 +25,10 @@ public class UnitOfWorkTests
     public void RegisterCommiteable_ShouldAddCommiteable()
     {
         // Arrange
-        
+
         // Act
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
-        
+
         // Assert
         Assert.IsFalse(_unitOfWork.HasActiveTransaction);
     }
@@ -38,10 +38,10 @@ public class UnitOfWorkTests
     {
         // Arrange
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
-        
+
         // Act
         var transaction = _unitOfWork.CreateTransaction();
-        
+
         // Assert
         Assert.IsNotNull(transaction);
         Assert.IsTrue(_unitOfWork.HasActiveTransaction);
@@ -54,10 +54,10 @@ public class UnitOfWorkTests
         // Arrange
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.RegisterCommiteable(_mockCommiteable2!.Object);
-        
+
         // Act
         var transaction = _unitOfWork.CreateTransaction();
-        
+
         // Assert
         Assert.IsNotNull(transaction);
         _mockTransaction!.Verify(m => m.AddCommiteable(_mockCommiteable2.Object), Times.Once);
@@ -78,7 +78,7 @@ public class UnitOfWorkTests
         // Arrange
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.CreateTransaction();
-        
+
         // Act
         _unitOfWork.CreateTransaction();
     }
@@ -89,10 +89,10 @@ public class UnitOfWorkTests
         // Arrange
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.RegisterCommiteable(_mockCommiteable2!.Object);
-        
+
         // Act
         await _unitOfWork.CommitChangesAsync();
-        
+
         // Assert
         _mockCommiteable1.Verify(m => m.CommitChangesAsync(), Times.Once);
         _mockCommiteable2.Verify(m => m.CommitChangesAsync(), Times.Once);
@@ -104,10 +104,10 @@ public class UnitOfWorkTests
         // Arrange
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.CreateTransaction();
-        
+
         // Act
         var transaction = _unitOfWork.UseCurrentTransaction();
-        
+
         // Assert
         Assert.IsNotNull(transaction);
         Assert.AreEqual(_mockTransaction!.Object, transaction);
@@ -120,4 +120,4 @@ public class UnitOfWorkTests
         // Act
         _unitOfWork!.UseCurrentTransaction();
     }
-} 
+}

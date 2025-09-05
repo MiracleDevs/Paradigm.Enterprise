@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Tests.Providers;
@@ -149,14 +148,14 @@ public class EditProviderBaseTests
         _mockRepository = new Mock<ITestRepository>();
         _mockViewRepository = new Mock<ITestViewRepository>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
-        
+
         var services = new ServiceCollection();
         services.AddSingleton(_mockRepository.Object);
         services.AddSingleton(_mockViewRepository.Object);
         services.AddSingleton(_mockUnitOfWork.Object);
         services.AddTransient<TestEntity>();
         _serviceProvider = services.BuildServiceProvider();
-        
+
         _provider = new TestProvider(_serviceProvider);
     }
 
@@ -172,13 +171,13 @@ public class EditProviderBaseTests
         // Arrange
         var entity = new TestEntity { Name = "Test Entity" };
         var view = new TestView { Name = "Test View" };
-        
+
         _mockRepository!.Setup(m => m.AddAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockViewRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(view);
-        
+
         // Act
         var result = await _provider!.AddAsync(view);
-        
+
         // Assert
         Assert.IsNotNull(result);
         _mockRepository.Verify(m => m.AddAsync(It.IsAny<TestEntity>()), Times.Once);
@@ -191,14 +190,14 @@ public class EditProviderBaseTests
         // Arrange
         var entity = new TestEntity { Id = 1, Name = "Test Entity" };
         var view = new TestView { Id = 1, Name = "Test View" };
-        
+
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
         _mockRepository!.Setup(m => m.UpdateAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockViewRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(view);
-        
+
         // Act
         var result = await _provider!.UpdateAsync(view);
-        
+
         // Assert
         Assert.IsNotNull(result);
         _mockRepository.Verify(m => m.UpdateAsync(It.IsAny<TestEntity>()), Times.Once);
@@ -210,12 +209,12 @@ public class EditProviderBaseTests
     {
         // Arrange
         var entity = new TestEntity { Id = 1, Name = "Test Entity" };
-        
+
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
-        
+
         // Act
         await _provider!.DeleteAsync(1);
-        
+
         // Assert
         _mockRepository.Verify(m => m.DeleteAsync(It.IsAny<TestEntity>()), Times.Once);
         _mockUnitOfWork!.Verify(m => m.CommitChangesAsync(), Times.Once);
@@ -227,13 +226,13 @@ public class EditProviderBaseTests
         // Arrange
         var entity = new TestEntity { Name = "Test Entity" };
         var view = new TestView { Name = "Test View" }; // Id = 0 means it's new
-        
+
         _mockRepository!.Setup(m => m.AddAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockViewRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(view);
-        
+
         // Act
         var result = await _provider!.SaveAsync(view);
-        
+
         // Assert
         Assert.IsNotNull(result);
         _mockRepository.Verify(m => m.AddAsync(It.IsAny<TestEntity>()), Times.Once);
@@ -246,14 +245,14 @@ public class EditProviderBaseTests
         // Arrange
         var entity = new TestEntity { Id = 1, Name = "Test Entity" };
         var view = new TestView { Id = 1, Name = "Test View" }; // Id != 0 means it exists
-        
+
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
         _mockRepository!.Setup(m => m.UpdateAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockViewRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(view);
-        
+
         // Act
         var result = await _provider!.SaveAsync(view);
-        
+
         // Assert
         Assert.IsNotNull(result);
         _mockRepository.Verify(m => m.UpdateAsync(It.IsAny<TestEntity>()), Times.Once);
@@ -272,10 +271,10 @@ public class EditProviderBaseTests
         };
 
         _mockRepository!.Setup(m => m.AddAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
-        
+
         // Act
         var results = await _provider!.AddAsync(views);
-        
+
         // Assert
         Assert.IsNotNull(results);
         Assert.AreEqual(2, results.Count());
@@ -296,10 +295,10 @@ public class EditProviderBaseTests
 
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
         _mockRepository!.Setup(m => m.UpdateAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
-        
+
         // Act
         var results = await _provider!.UpdateAsync(views);
-        
+
         // Assert
         Assert.IsNotNull(results);
         Assert.AreEqual(2, results.Count());
@@ -321,10 +320,10 @@ public class EditProviderBaseTests
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
         _mockRepository!.Setup(m => m.AddAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockRepository!.Setup(m => m.UpdateAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
-        
+
         // Act
         var results = await _provider!.SaveAsync(views);
-        
+
         // Assert
         Assert.IsNotNull(results);
         Assert.AreEqual(2, results.Count());
@@ -341,10 +340,10 @@ public class EditProviderBaseTests
         var ids = new List<int> { 1, 2 };
 
         _mockRepository!.Setup(m => m.GetByIdsAsync(It.IsAny<IEnumerable<int>>())).ReturnsAsync(new List<TestEntity> { entity, entity });
-        
+
         // Act
         await _provider!.DeleteAsync(ids);
-        
+
         // Assert
         _mockRepository.Verify(m => m.DeleteAsync(It.IsAny<TestEntity>()), Times.Exactly(2));
         _mockUnitOfWork!.Verify(m => m.CommitChangesAsync(), Times.Once);
@@ -356,9 +355,9 @@ public class EditProviderBaseTests
     {
         // Arrange
         var view = new TestView { Id = 1, Name = "Test View" };
-        
+
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((TestEntity)null!);
-        
+
         // Act - Should throw NotFoundException
         await _provider!.UpdateAsync(view);
     }
@@ -369,15 +368,15 @@ public class EditProviderBaseTests
         // Arrange
         var entity = new TestEntity { Name = "Test Entity" };
         var view = new TestView { Name = "Test View" };
-        
+
         _mockRepository!.Setup(m => m.AddAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockViewRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(view);
-        
+
         var providerWithHooks = new TestProviderWithHooks(_serviceProvider!);
-        
+
         // Act
         await providerWithHooks.AddAsync(view);
-        
+
         // Assert
         Assert.IsTrue(providerWithHooks.BeforeAddViewCalled, "BeforeAddAsync(view) should be called");
         Assert.IsTrue(providerWithHooks.BeforeSaveViewCalled, "BeforeSaveAsync(view) should be called");
@@ -393,16 +392,16 @@ public class EditProviderBaseTests
         // Arrange
         var entity = new TestEntity { Id = 1, Name = "Test Entity" };
         var view = new TestView { Id = 1, Name = "Test View" };
-        
+
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
         _mockRepository!.Setup(m => m.UpdateAsync(It.IsAny<TestEntity>())).ReturnsAsync(entity);
         _mockViewRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(view);
-        
+
         var providerWithHooks = new TestProviderWithHooks(_serviceProvider!);
-        
+
         // Act
         await providerWithHooks.UpdateAsync(view);
-        
+
         // Assert
         Assert.IsTrue(providerWithHooks.BeforeUpdateViewCalled, "BeforeUpdateAsync(view) should be called");
         Assert.IsTrue(providerWithHooks.BeforeSaveViewCalled, "BeforeSaveAsync(view) should be called");
@@ -417,16 +416,16 @@ public class EditProviderBaseTests
     {
         // Arrange
         var entity = new TestEntity { Id = 1, Name = "Test Entity" };
-        
+
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync(entity);
-        
+
         var providerWithHooks = new TestProviderWithHooks(_serviceProvider!);
-        
+
         // Act
         await providerWithHooks.DeleteAsync(1);
-        
+
         // Assert
         Assert.IsTrue(providerWithHooks.BeforeDeleteEntityCalled, "BeforeDeleteAsync(entity) should be called");
         Assert.IsTrue(providerWithHooks.AfterDeleteEntityCalled, "AfterDeleteAsync(entity) should be called");
     }
-} 
+}
