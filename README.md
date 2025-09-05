@@ -75,6 +75,12 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.14`
+- Search functionality refactor.
+
+Version `1.0.13`
+- Added MIT license information
+
 Version `1.0.12`
 - Moved entity audit logic to `Data` layer.
 

@@ -1,7 +1,7 @@
 # RFC: Standardizing MIT License Information and Central Package Management in NuGet Packages
 
 - **RFC ID**: 2025-05-28-license-info-nuget
-- **Status**: Draft
+- **Status**: Implemented
 - **Author(s)**: Iván Falletti <ivan@miracledevs.com>
 - **Created**: 2025-05-28
 - **Last Updated**: 2025-05-28

@@ -138,7 +138,6 @@ internal partial class {mapperClassName} : SqlParameterMapperBase
                 propertyAssignments.AppendLine($"            table{propertyName}.Rows.Add(dataRow);");
             }
 
-
             propertyAssignments.AppendLine($"            AddSqlParameter(nameof({targetTypeName}.{propertyName}), table{propertyName});");
             propertyAssignments.AppendLine("        }");
         }

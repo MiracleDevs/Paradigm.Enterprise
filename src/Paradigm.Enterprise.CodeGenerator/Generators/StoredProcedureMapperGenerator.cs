@@ -278,7 +278,6 @@ internal partial class {mapperClassName} : DataReaderMapperBase
             registerDataReaderMappers.AppendLine($"        DataReaderMapperFactory.RegisterMapper<{generatedType.Replace($"{_projectName}.", string.Empty)}>(() => new {className}DataReaderMapper());");
         }
 
-
         foreach (var generatedType in sqlParameterMappers)
         {
             var className = generatedType.Substring(generatedType.LastIndexOf('.') + 1);

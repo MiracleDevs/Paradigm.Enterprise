@@ -49,13 +49,27 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     }
 
     /// <summary>
+    /// Executes the search using the specified parameters.
+    /// </summary>
+    /// <typeparam name="TParameters">The type of the parameters.</typeparam>
+    /// <param name="parameters">The parameters.</param>
+    /// <returns></returns>
+    public async Task<PaginatedResultDto<TEntity>> SearchAsync<TParameters>(TParameters parameters)
+        where TParameters : PaginationParametersBase
+    {
+        var (paginationInfo, entities) = await GetSearchPaginatedFunction(parameters).Invoke(parameters);
+        return new PaginatedResultDto<TEntity>(paginationInfo, entities);
+    }
+
+    /// <summary>
     /// Execute the search function for entities that implements the method.
     /// </summary>
-    /// <param name="parametersBase"></param>
+    /// <param name="parameters"></param>
     /// <returns></returns>
-    public async Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parametersBase)
+    [Obsolete("Use SearchAsync<TParameters> instead")]
+    public async Task<PaginatedResultDto<TEntity>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
     {
-        var (paginationInfo, entities) = await GetSearchPaginatedFunction(parametersBase).Invoke(parametersBase);
+        var (paginationInfo, entities) = await GetSearchPaginatedFunction(parameters).Invoke(parameters);
         return new PaginatedResultDto<TEntity>(paginationInfo, entities);
     }
 
@@ -74,7 +88,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// </summary>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    protected virtual Func<FilterTextPaginatedParameters, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(FilterTextPaginatedParameters parameters) => throw new NotImplementedException();
+    protected virtual Func<PaginationParametersBase, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(PaginationParametersBase parameters) => throw new NotImplementedException();
 
     #endregion
 }

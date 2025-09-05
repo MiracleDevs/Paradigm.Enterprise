@@ -69,10 +69,23 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : Pro
     }
 
     /// <summary>
+    /// Executes the search using the specified parameters.
+    /// </summary>
+    /// <typeparam name="TParameters">The type of the parameters.</typeparam>
+    /// <param name="parameters">The parameters.</param>
+    /// <returns></returns>
+    public virtual async Task<PaginatedResultDto<TView>> SearchAsync<TParameters>(TParameters parameters)
+        where TParameters : PaginationParametersBase
+    {
+        return await ViewRepository.SearchAsync(parameters);
+    }
+
+    /// <summary>
     /// Gets the results paginated.
     /// </summary>
     /// <param name="parameters">The parameters.</param>
     /// <returns></returns>
+    [Obsolete("Use SearchAsync<TParameters> instead")]
     public virtual async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
     {
         return await ViewRepository.SearchPaginatedAsync(parameters);
