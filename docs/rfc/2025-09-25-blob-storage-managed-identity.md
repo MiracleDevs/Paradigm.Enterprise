@@ -1,10 +1,10 @@
 # RFC: Blob Storage Service - Managed Identity Authentication Support
 
 - **RFC ID**: 2025-09-25-blob-storage-managed-identity
-- **Status**: Draft
+- **Status**: Implemented
 - **Author(s)**: Iván Falletti <ivan@miracledevs.com>
 - **Created**: 2025-09-25
-- **Last Updated**: 2025-09-25
+- **Last Updated**: 2025-09-26
 
 ## Summary
 
