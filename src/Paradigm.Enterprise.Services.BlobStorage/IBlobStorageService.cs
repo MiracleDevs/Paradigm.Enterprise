@@ -7,6 +7,22 @@ namespace Paradigm.Enterprise.Services.BlobStorage;
 public interface IBlobStorageService : IService
 {
     /// <summary>
+    /// Gets the connection string.
+    /// </summary>
+    /// <value>
+    /// The connection string.
+    /// </value>
+    string? ConnectionString { get; }
+
+    /// <summary>
+    /// Gets the storage account URI.
+    /// </summary>
+    /// <value>
+    /// The storage account URI.
+    /// </value>
+    string? StorageAccountUri { get; }
+
+    /// <summary>
     /// Creates the BLOB storage container.
     /// </summary>
     /// <param name="containerName">Name of the container.</param>
@@ -26,10 +42,4 @@ public interface IBlobStorageService : IService
     /// </summary>
     /// <returns></returns>
     Task<List<BlobContainerItem>> GetAllContainersAsync();
-
-    /// <summary>
-    /// Gets the connection string.
-    /// </summary>
-    /// <returns></returns>
-    string GetConnectionString();
 }

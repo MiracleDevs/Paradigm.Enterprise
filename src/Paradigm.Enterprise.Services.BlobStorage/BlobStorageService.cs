@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Identity;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage;
 
@@ -14,9 +15,20 @@ public class BlobStorageService : IBlobStorageService
     private readonly BlobServiceClient _serviceClient;
 
     /// <summary>
-    /// The connection string
+    /// Gets the connection string.
     /// </summary>
-    private readonly string _connectionString;
+    /// <value>
+    /// The connection string.
+    /// </value>
+    public string? ConnectionString { get; }
+
+    /// <summary>
+    /// Gets the storage account URI.
+    /// </summary>
+    /// <value>
+    /// The storage account URI.
+    /// </value>
+    public string? StorageAccountUri { get; }
 
     #endregion
 
@@ -25,16 +37,45 @@ public class BlobStorageService : IBlobStorageService
     /// <summary>
     /// Initializes a new instance of the <see cref="BlobStorageService" /> class.
     /// </summary>
-    /// <param name="connectionString">The blob storage account connection string.</param>
-    public BlobStorageService(string connectionString)
+    /// <param name="storageConnection">The storage connection.</param>
+    /// <param name="isConnectionString">if set to <c>true</c> [is connection string].</param>
+    private BlobStorageService(string storageConnection, bool isConnectionString)
     {
-        _connectionString = connectionString;
-        _serviceClient = new BlobServiceClient(connectionString);
+        if (isConnectionString)
+        {
+            ConnectionString = storageConnection;
+            _serviceClient = new BlobServiceClient(storageConnection);
+        }
+        else
+        {
+            StorageAccountUri = storageConnection;
+            _serviceClient = new BlobServiceClient(new Uri(storageConnection), new DefaultAzureCredential());
+        }
     }
 
     #endregion
 
     #region Public Methods
+
+    /// <summary>
+    /// Creates the service using managed identity.
+    /// </summary>
+    /// <param name="storageAccountUri">The storage account URI.</param>
+    /// <returns></returns>
+    public static BlobStorageService CreateUsingManagedIdentity(string storageAccountUri)
+    {
+        return new BlobStorageService(storageAccountUri, false);
+    }
+
+    /// <summary>
+    /// Creates the service using connection string.
+    /// </summary>
+    /// <param name="connectionString">The connection string.</param>
+    /// <returns></returns>
+    public static BlobStorageService CreateUsingConnectionString(string connectionString)
+    {
+        return new BlobStorageService(connectionString, true);
+    }
 
     /// <summary>
     /// Creates the BLOB storage container.
@@ -57,7 +98,7 @@ public class BlobStorageService : IBlobStorageService
     /// <returns></returns>
     public IAzureBlobStorageContainer GetBlobStorageContainer(string containerName)
     {
-        var containerClient = new BlobContainerClient(_connectionString, containerName);
+        var containerClient = _serviceClient.GetBlobContainerClient(containerName);
         return new AzureBlobStorageContainer(containerClient);
     }
 
@@ -74,12 +115,6 @@ public class BlobStorageService : IBlobStorageService
 
         return containers;
     }
-
-    /// <summary>
-    /// Gets the connection string.
-    /// </summary>
-    /// <returns></returns>
-    public string GetConnectionString() => _connectionString;
 
     #endregion
 }

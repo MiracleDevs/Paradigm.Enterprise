@@ -1,7 +1,7 @@
 # RFC: Refactoring Search Path in Controllers, Providers and Repositories
 
 - **RFC ID**: 2025-05-12-refactor-search-path
-- **Status**: Draft
+- **Status**: Implemented
 - **Author(s)**: Pablo Ordóñez <pablo@miracledevs.com>
 - **Created**: 2025-05-12
 - **Last Updated**: 2025-05-12
