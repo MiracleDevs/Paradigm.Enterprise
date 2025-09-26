@@ -76,7 +76,7 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 ## Change log
 
 Version `1.0.15`
-- Modified `BlobStorageService` to support Azure Managed Identity authentication.
+- Modified `BlobStorageService` to support Azure Managed Identity authentication. Added Health Checks to the `BlobStorage` and `Cache` packages.
 
 Version `1.0.14`
 - Search functionality refactor.
