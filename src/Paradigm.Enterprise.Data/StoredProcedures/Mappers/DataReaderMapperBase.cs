@@ -150,6 +150,15 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     protected bool GetBoolean(IDataReader reader, string name) => (bool)reader.GetValue(reader.GetOrdinal(name));
 
     /// <summary>
+    /// Gets the unique identifier.
+    /// </summary>
+    /// <param name="reader">The reader.</param>
+    /// <param name="name">The name.</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected Guid GetGuid(IDataReader reader, string name) => reader.GetGuid(reader.GetOrdinal(name));
+
+    /// <summary>
     /// Gets the date time.
     /// </summary>
     /// <param name="reader">The reader.</param>
