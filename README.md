@@ -75,6 +75,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.16`
+- Added `TableReader` service package that provides a unified service for reading and parsing multiple file formats including Excel (.xlsx, .xls), CSV, JSON, and XML.
+
 Version `1.0.15`
 - Modified `BlobStorageService` to support Azure Managed Identity authentication. Added Health Checks to the `BlobStorage` and `Cache` packages.
 
