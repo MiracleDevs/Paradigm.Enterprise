@@ -15,8 +15,11 @@ public class TableReaderService : ITableReaderService
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    public ITableReader GetReaderInstance(Stream sourceStream, bool sourceHasHeader, TableReaderConfiguration configuration)
+    public ITableReader GetReaderInstance(Stream? sourceStream, bool sourceHasHeader, TableReaderConfiguration configuration)
     {
+        if (sourceStream is null)
+            throw new ArgumentNullException(nameof(sourceStream));
+
         var originalPosition = sourceStream.CanSeek ? sourceStream.Position : 0;
 
         try
@@ -52,8 +55,11 @@ public class TableReaderService : ITableReaderService
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
     /// <exception cref="Exception">TableReader not found.</exception>
-    public ITableReader GetReaderInstance(byte[] sourceBytes, bool sourceHasHeader, TableReaderConfiguration configuration)
+    public ITableReader GetReaderInstance(byte[]? sourceBytes, bool sourceHasHeader, TableReaderConfiguration configuration)
     {
+        if (sourceBytes is null)
+            throw new ArgumentNullException(nameof(sourceBytes));
+
         switch (configuration.TableReaderType)
         {
             case TableReaderTypes.Csv:

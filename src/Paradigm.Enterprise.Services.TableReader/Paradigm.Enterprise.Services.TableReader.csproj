@@ -18,6 +18,11 @@
     <RepositoryType>git</RepositoryType>
     <Description>Provides a unified service for reading and parsing multiple file formats including Excel (.xlsx, .xls), CSV, JSON, and XML.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Paradigm.Enterprise.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
 	
   <ItemGroup>
     <None Include="icon.png">

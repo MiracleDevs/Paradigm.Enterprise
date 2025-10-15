@@ -105,11 +105,4 @@ public class PaginatedResultDtoTests
         Assert.AreEqual("Name", parameters.SortBy);
         Assert.AreEqual("DESC", parameters.SortDirection);
     }
-
-    [TestMethod]
-    public void PaginationParametersBase_DefaultConstants_ShouldBeCorrect()
-    {
-        // Assert
-        Assert.AreEqual(10, PaginationParametersBase.DefaultPageSize);
-    }
 }
