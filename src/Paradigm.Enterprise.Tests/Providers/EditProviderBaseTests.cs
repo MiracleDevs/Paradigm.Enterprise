@@ -350,7 +350,6 @@ public class EditProviderBaseTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(NotFoundException))]
     public async Task UpdateAsync_WhenEntityNotFound_ShouldThrowNotFoundException()
     {
         // Arrange
@@ -358,8 +357,8 @@ public class EditProviderBaseTests
 
         _mockRepository!.Setup(m => m.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((TestEntity)null!);
 
-        // Act - Should throw NotFoundException
-        await _provider!.UpdateAsync(view);
+        // Act & Assert - Should throw NotFoundException
+        await Assert.ThrowsExactlyAsync<NotFoundException>(() => _provider!.UpdateAsync(view));
     }
 
     [TestMethod]

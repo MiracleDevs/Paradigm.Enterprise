@@ -227,7 +227,7 @@ public class RepositoryTests
         };
 
         // Act
-        var result = await _repository!.SearchPaginatedAsync(parameters);
+        var result = await _repository!.SearchAsync(parameters);
 
         // Assert
         Assert.IsNotNull(result);

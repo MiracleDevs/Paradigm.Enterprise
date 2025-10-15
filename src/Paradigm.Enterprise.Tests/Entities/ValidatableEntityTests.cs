@@ -53,7 +53,7 @@ public class ValidatableEntityTests
                     result.MemberNames.Contains(nameof(Email)));
 
                 // Recheck if valid without email validation
-                isValid = !validationResults.Any() && validator.ToString() == string.Empty;
+                isValid = !validationResults.Any();
             }
 
             // Custom rule that disallows "admin" as a name
@@ -114,7 +114,6 @@ public class ValidatableEntityTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(DomainException))]
     public void Validate_WithMissingRequiredFields_ShouldThrowDomainException()
     {
         // Arrange
@@ -125,12 +124,11 @@ public class ValidatableEntityTests
             Email = "test@example.com"
         };
 
-        // Act - should throw DomainException
-        entity.Validate();
+        // Act & Assert - should throw DomainException
+        Assert.ThrowsExactly<DomainException>(() => entity.Validate());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(DomainException))]
     public void Validate_WithInvalidEmail_ShouldThrowDomainException()
     {
         // Arrange
@@ -141,12 +139,11 @@ public class ValidatableEntityTests
             Email = "invalid-email" // Invalid email format
         };
 
-        // Act - should throw DomainException
-        entity.Validate();
+        // Act & Assert - should throw DomainException
+        Assert.ThrowsExactly<DomainException>(() => entity.Validate());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(DomainException))]
     public void Validate_WithValueOutOfRange_ShouldThrowDomainException()
     {
         // Arrange
@@ -157,12 +154,11 @@ public class ValidatableEntityTests
             Email = "age.test@example.com"
         };
 
-        // Act - should throw DomainException
-        entity.Validate();
+        // Act & Assert - should throw DomainException
+        Assert.ThrowsExactly<DomainException>(() => entity.Validate());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(DomainException))]
     public void Validate_WithCustomRuleViolation_ShouldThrowDomainException()
     {
         // Arrange
@@ -173,12 +169,11 @@ public class ValidatableEntityTests
             Email = "admin@example.com"
         };
 
-        // Act - should throw DomainException
-        entity.Validate();
+        // Act & Assert - should throw DomainException
+        Assert.ThrowsExactly<DomainException>(() => entity.Validate());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(DomainException))]
     public void Validate_WithBusinessRuleViolation_ShouldThrowDomainException()
     {
         // Arrange
@@ -189,12 +184,11 @@ public class ValidatableEntityTests
             Email = "young.user@example.com" // Email shouldn't be set for users under 18
         };
 
-        // Act - should throw DomainException
-        entity.Validate();
+        // Act & Assert - should throw DomainException
+        Assert.ThrowsExactly<DomainException>(() => entity.Validate());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(DomainException))]
     public void Validate_UnderAgeWithoutEmail_ShouldPass()
     {
         // Arrange
