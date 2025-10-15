@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Version>1.0.16</Version>
+    <Authors>Miracle Devs</Authors>
+    <Company>Miracle Devs</Company>
+    <Product>Paradigm Enterprise</Product>
+    <Copyright>Miracle Devs</Copyright>
+    <PackageProjectUrl>https://www.paradigm.net.co/</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>Provides a unified service for reading and parsing multiple file formats including Excel (.xlsx, .xls), CSV, JSON, and XML.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Paradigm.Enterprise.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+	
+  <ItemGroup>
+    <PackageReference Include="ExcelDataReader" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Paradigm.Enterprise.Services.Core\Paradigm.Enterprise.Services.Core.csproj" />
+  </ItemGroup>
+
+</Project>

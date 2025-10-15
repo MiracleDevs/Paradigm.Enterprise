@@ -46,6 +46,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paradigm.Enterprise.Service
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paradigm.Enterprise.Services.Core", "Paradigm.Enterprise.Services.Core\Paradigm.Enterprise.Services.Core.csproj", "{3907A593-8D1D-4E0F-BA43-B78EC3B039EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Paradigm.Enterprise.Services.TableReader", "Paradigm.Enterprise.Services.TableReader\Paradigm.Enterprise.Services.TableReader.csproj", "{4FE5F671-581E-4655-8546-3CABC89AE38E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +106,10 @@ Global
 		{3907A593-8D1D-4E0F-BA43-B78EC3B039EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3907A593-8D1D-4E0F-BA43-B78EC3B039EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3907A593-8D1D-4E0F-BA43-B78EC3B039EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FE5F671-581E-4655-8546-3CABC89AE38E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FE5F671-581E-4655-8546-3CABC89AE38E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FE5F671-581E-4655-8546-3CABC89AE38E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FE5F671-581E-4655-8546-3CABC89AE38E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -122,5 +128,9 @@ Global
 		{A54DD3D9-70BC-4840-BD06-4E486CFD7A63} = {8DC37F31-249A-4993-AB09-649D0A85AAE0}
 		{03AE84EB-9473-4B2C-B6F0-B3A23EF0753C} = {7A13C21A-9719-4A3E-BC5F-1D9AC8E85FA7}
 		{3907A593-8D1D-4E0F-BA43-B78EC3B039EA} = {7A13C21A-9719-4A3E-BC5F-1D9AC8E85FA7}
+		{4FE5F671-581E-4655-8546-3CABC89AE38E} = {7A13C21A-9719-4A3E-BC5F-1D9AC8E85FA7}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E555EEA7-8738-4EEE-8CA3-260040517DD2}
 	EndGlobalSection
 EndGlobal

@@ -64,23 +64,21 @@ public class UnitOfWorkTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(InvalidOperationException))]
     public void CreateTransaction_ShouldThrowIfNoCommiteables()
     {
-        // Act
-        _unitOfWork!.CreateTransaction();
+        // Act & Assert
+        Assert.ThrowsExactly<InvalidOperationException>(() => _unitOfWork!.CreateTransaction());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(InvalidOperationException))]
     public void CreateTransaction_ShouldThrowIfActiveTransaction()
     {
         // Arrange
         _unitOfWork!.RegisterCommiteable(_mockCommiteable1!.Object);
         _unitOfWork.CreateTransaction();
 
-        // Act
-        _unitOfWork.CreateTransaction();
+        // Act & Assert
+        Assert.ThrowsExactly<InvalidOperationException>(() => _unitOfWork.CreateTransaction());
     }
 
     [TestMethod]
@@ -114,10 +112,9 @@ public class UnitOfWorkTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(InvalidOperationException))]
     public void UseCurrentTransaction_ShouldThrowIfNoActiveTransaction()
     {
-        // Act
-        _unitOfWork!.UseCurrentTransaction();
+        // Act & Assert
+        Assert.ThrowsExactly<InvalidOperationException>(() => _unitOfWork!.UseCurrentTransaction());
     }
 }
