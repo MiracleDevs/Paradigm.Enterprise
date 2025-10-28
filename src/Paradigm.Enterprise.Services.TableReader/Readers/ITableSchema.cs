@@ -30,4 +30,12 @@ public interface ITableSchema
     /// <param name="index">Index of the column.</param>
     /// <returns>A column.</returns>
     IColumn? GetColumn(int index);
+
+    /// <summary>
+    /// Gets the column with the specified name. Throws if the column does not exist.
+    /// </summary>
+    /// <param name="columnName">Name of the column.</param>
+    /// <returns>A column.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the column does not exist.</exception>
+    IColumn GetRequiredColumn(string columnName);
 }

@@ -668,8 +668,8 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var nameColumn = schema.GetColumn("Name");
-        var emailColumn = schema.GetColumn("Email");
+        var nameColumn = schema.GetRequiredColumn("Name");
+        var emailColumn = schema.GetRequiredColumn("Email");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -699,8 +699,8 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var ageColumn = schema.GetColumn("Age");
-        var experienceColumn = schema.GetColumn("YearsExperience");
+        var ageColumn = schema.GetRequiredColumn("Age");
+        var experienceColumn = schema.GetRequiredColumn("YearsExperience");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -730,9 +730,9 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var productNameColumn = schema.GetColumn("ProductName");
-        var priceColumn = schema.GetColumn("Price");
-        var inStockColumn = schema.GetColumn("InStock");
+        var productNameColumn = schema.GetRequiredColumn("ProductName");
+        var priceColumn = schema.GetRequiredColumn("Price");
+        var inStockColumn = schema.GetRequiredColumn("InStock");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -764,9 +764,9 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var nameColumn = schema.GetColumn("Name");
-        var ageColumn = schema.GetColumn("Age");
-        var emailColumn = schema.GetColumn("Email");
+        var nameColumn = schema.GetRequiredColumn("Name");
+        var ageColumn = schema.GetRequiredColumn("Age");
+        var emailColumn = schema.GetRequiredColumn("Email");
 
         // Assert - First row: email is empty
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -801,11 +801,11 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var nameColumn = schema.GetColumn("Name");
-        var ageColumn = schema.GetColumn("Age");
-        var scoreColumn = schema.GetColumn("Score");
-        var activeColumn = schema.GetColumn("Active");
-        var gradeColumn = schema.GetColumn("Grade");
+        var nameColumn = schema.GetRequiredColumn("Name");
+        var ageColumn = schema.GetRequiredColumn("Age");
+        var scoreColumn = schema.GetRequiredColumn("Score");
+        var activeColumn = schema.GetRequiredColumn("Active");
+        var gradeColumn = schema.GetRequiredColumn("Grade");
 
         // Assert - First row
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -844,12 +844,12 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var byteColumn = schema.GetColumn("ByteVal");
-        var int16Column = schema.GetColumn("Int16Val");
-        var int32Column = schema.GetColumn("Int32Val");
-        var int64Column = schema.GetColumn("Int64Val");
-        var floatColumn = schema.GetColumn("FloatVal");
-        var decimalColumn = schema.GetColumn("DecimalVal");
+        var byteColumn = schema.GetRequiredColumn("ByteVal");
+        var int16Column = schema.GetRequiredColumn("Int16Val");
+        var int32Column = schema.GetRequiredColumn("Int32Val");
+        var int64Column = schema.GetRequiredColumn("Int64Val");
+        var floatColumn = schema.GetRequiredColumn("FloatVal");
+        var decimalColumn = schema.GetRequiredColumn("DecimalVal");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -879,10 +879,10 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var sbyteColumn = schema.GetColumn("SByteVal");
-        var uint16Column = schema.GetColumn("UInt16Val");
-        var uint32Column = schema.GetColumn("UInt32Val");
-        var uint64Column = schema.GetColumn("UInt64Val");
+        var sbyteColumn = schema.GetRequiredColumn("SByteVal");
+        var uint16Column = schema.GetRequiredColumn("UInt16Val");
+        var uint32Column = schema.GetRequiredColumn("UInt32Val");
+        var uint64Column = schema.GetRequiredColumn("UInt64Val");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -910,8 +910,8 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var eventNameColumn = schema.GetColumn("EventName");
-        var eventDateColumn = schema.GetColumn("EventDate");
+        var eventNameColumn = schema.GetRequiredColumn("EventName");
+        var eventDateColumn = schema.GetRequiredColumn("EventDate");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -937,9 +937,9 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var nameColumn = schema.GetColumn("Name");
-        var ageColumn = schema.GetColumn("Age");
-        var cityColumn = schema.GetColumn("City");
+        var nameColumn = schema.GetRequiredColumn("Name");
+        var ageColumn = schema.GetRequiredColumn("Age");
+        var cityColumn = schema.GetRequiredColumn("City");
 
         // Assert - Verify both approaches produce identical results
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -975,11 +975,11 @@ public class TableReaderServiceTests
         var schema = reader.Schema;
         
         // Get all columns upfront
-        var firstNameColumn = schema.GetColumn("FirstName");
-        var lastNameColumn = schema.GetColumn("LastName");
-        var ageColumn = schema.GetColumn("Age");
-        var emailColumn = schema.GetColumn("Email");
-        var departmentColumn = schema.GetColumn("Department");
+        var firstNameColumn = schema.GetRequiredColumn("FirstName");
+        var lastNameColumn = schema.GetRequiredColumn("LastName");
+        var ageColumn = schema.GetRequiredColumn("Age");
+        var emailColumn = schema.GetRequiredColumn("Email");
+        var departmentColumn = schema.GetRequiredColumn("Department");
 
         // Process rows using the new IColumn overloads
         var employees = new List<(string FirstName, string LastName, int Age, string Email, string Department)>();
@@ -1030,9 +1030,9 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var nameColumn = schema.GetColumn("Name");
-        var ageColumn = schema.GetColumn("Age");
-        var activeColumn = schema.GetColumn("Active");
+        var nameColumn = schema.GetRequiredColumn("Name");
+        var ageColumn = schema.GetRequiredColumn("Age");
+        var activeColumn = schema.GetRequiredColumn("Active");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);
@@ -1058,8 +1058,8 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        var nameColumn = schema.GetColumn("Name");
-        var ageColumn = schema.GetColumn("Age");
+        var nameColumn = schema.GetRequiredColumn("Name");
+        var ageColumn = schema.GetRequiredColumn("Age");
 
         // Assert
         Assert.IsTrue(reader.ReadRowAsync().Result);

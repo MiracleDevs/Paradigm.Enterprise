@@ -82,6 +82,17 @@ internal abstract class TableSchemaBase : ITableSchema
     /// </returns>
     public IColumn? GetColumn(int index) => Columns?.SingleOrDefault(x => x.Index == index);
 
+    /// <summary>
+    /// Gets the column with the specified name. Throws if the column does not exist.
+    /// </summary>
+    /// <param name="columnName">Name of the column.</param>
+    /// <returns>A column.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the column does not exist.</exception>
+    public IColumn GetRequiredColumn(string columnName)
+    {
+        return GetColumn(columnName) ?? throw new InvalidOperationException($"Column '{columnName}' does not exist in the schema.");
+    }
+
     #endregion
 
     #region Protected Methods
