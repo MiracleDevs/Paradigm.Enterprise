@@ -146,4 +146,125 @@ public interface IRow
     ///   <c>true</c> if the value is null; otherwise, <c>false</c>.
     /// </returns>
     bool IsNull(int index);
+
+    /// <summary>
+    /// Gets a object value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A object value.</returns>
+    object? GetValue(IColumn column);
+
+    /// <summary>
+    /// Determines whether the value specified by the column is null.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    ///   <c>true</c> if the value is null; otherwise, <c>false</c>.
+    /// </returns>
+    bool IsNull(IColumn column);
+
+    /// <summary>
+    /// Gets a byte value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A byte value.</returns>
+    byte GetByte(IColumn column);
+
+    /// <summary>
+    /// Gets a sbyte value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A sbyte value.</returns>
+    sbyte GetSByte(IColumn column);
+
+    /// <summary>
+    /// Gets a ushort value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A ushort value.</returns>
+    ushort GetUInt16(IColumn column);
+
+    /// <summary>
+    /// Gets a short value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A short value.</returns>
+    short GetInt16(IColumn column);
+
+    /// <summary>
+    /// Gets a uint value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A uint value.</returns>
+    uint GetUInt32(IColumn column);
+
+    /// <summary>
+    /// Gets a int value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A int value.</returns>
+    int GetInt32(IColumn column);
+
+    /// <summary>
+    /// Gets a ulong value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A ulong value.</returns>
+    ulong GetUInt64(IColumn column);
+
+    /// <summary>
+    /// Gets a long value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A long value.</returns>
+    long GetInt64(IColumn column);
+
+    /// <summary>
+    /// Gets a float value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A float value.</returns>
+    float GetSingle(IColumn column);
+
+    /// <summary>
+    /// Gets a double value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A double value.</returns>
+    double GetDouble(IColumn column);
+
+    /// <summary>
+    /// Gets a decimal value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A decimal value.</returns>
+    decimal GetDecimal(IColumn column);
+
+    /// <summary>
+    /// Gets a char value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A char value.</returns>
+    char GetChar(IColumn column);
+
+    /// <summary>
+    /// Gets a string value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A string value.</returns>
+    string? GetString(IColumn column);
+
+    /// <summary>
+    /// Gets a DateTime value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A DateTime value.</returns>
+    DateTime GetDateTime(IColumn column);
+
+    /// <summary>
+    /// Gets a boolean value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>A boolean value.</returns>
+    bool GetBoolean(IColumn column);
 }

@@ -307,6 +307,162 @@ private XmlTableReader(Stream contentStream, bool sourceHasHeader)
 
 **Note**: While `XPathDocument` loads the document structure into memory for XPath navigation, it does so more efficiently from a stream than from a byte array. For truly large XML files requiring streaming XML parsing, a future enhancement could use `XmlReader` instead, but that would require significant schema and row reading logic changes.
 
+### API Usability Enhancement - IColumn Parameter Overloads
+
+As part of this RFC, we're also introducing a usability enhancement to the row reading API. Currently, all value accessor methods on `IRow` and `RowBase` only accept integer index parameters, requiring developers to manually extract the index from column objects when working with the schema.
+
+#### Current Pattern
+
+```csharp
+var schema = reader.GetSchema();
+var nameColumn = schema.GetColumn("Name");
+var ageColumn = schema.GetColumn("Age");
+
+while (reader.ReadRowAsync().Result)
+{
+    var row = reader.GetCurrentRow();
+    var name = row.GetString(nameColumn.Index);  // Manual index extraction
+    var age = row.GetInt32(ageColumn.Index);     // Manual index extraction
+}
+```
+
+#### Enhanced Pattern
+
+With the new `IColumn` parameter overloads, the same code becomes more readable:
+
+```csharp
+var schema = reader.GetSchema();
+var nameColumn = schema.GetColumn("Name");
+var ageColumn = schema.GetColumn("Age");
+
+while (reader.ReadRowAsync().Result)
+{
+    var row = reader.GetCurrentRow();
+    var name = row.GetString(nameColumn);  // Direct column reference
+    var age = row.GetInt32(ageColumn);     // Direct column reference
+}
+```
+
+#### Implementation Details
+
+All 17 value accessor methods in `IRow` interface and `RowBase` class now have corresponding `IColumn` parameter overloads:
+
+- `GetValue(IColumn column)`
+- `IsNull(IColumn column)`
+- `GetByte(IColumn column)`
+- `GetSByte(IColumn column)`
+- `GetUInt16(IColumn column)`
+- `GetInt16(IColumn column)`
+- `GetUInt32(IColumn column)`
+- `GetInt32(IColumn column)`
+- `GetUInt64(IColumn column)`
+- `GetInt64(IColumn column)`
+- `GetSingle(IColumn column)`
+- `GetDouble(IColumn column)`
+- `GetDecimal(IColumn column)`
+- `GetChar(IColumn column)`
+- `GetString(IColumn column)`
+- `GetDateTime(IColumn column)`
+- `GetBoolean(IColumn column)`
+
+Each overload simply delegates to the existing index-based method:
+
+```csharp
+public string? GetString(IColumn column) => GetString(column.Index);
+```
+
+#### Performance Considerations
+
+**No Performance Impact**: The new overloads are thin wrappers that directly delegate to the existing index-based methods. The JIT compiler will likely inline these single-line method calls, resulting in zero overhead.
+
+#### Benefits
+
+1. **Improved Readability**: Code intention is clearer when passing column objects directly
+2. **Reduced Verbosity**: Eliminates the need to manually extract `.Index` from column objects
+3. **Type Safety**: Column objects carry more semantic meaning than raw integers
+4. **IntelliSense Friendly**: Column objects provide better IDE autocomplete and documentation
+5. **Backward Compatible**: Existing index-based methods remain unchanged; this is purely additive
+
+#### Migration Strategy
+
+This is a **non-breaking enhancement**. Existing code using index-based access continues to work without modification. Applications can adopt the new overloads incrementally as code is maintained or enhanced.
+
+### Culture-Aware CSV Parsing
+
+As part of this RFC implementation, we identified and fixed culture-specific parsing issues with numeric and date values in CSV files. When running in non-English locales (e.g., Spanish), floating-point numbers like "3.14" were being parsed as "314" because the period was treated as a thousands separator instead of a decimal point.
+
+#### Problem
+
+The `Convert.To*()` methods in `RowBase.cs` use the current system culture by default, causing parsing failures when CSV files use different decimal separators than the system locale.
+
+#### Solution
+
+We implemented a configurable culture system for CSV parsing:
+
+1. **Added Culture Property to CsvParserConfiguration**:
+
+```csharp
+public class CsvParserConfiguration
+{
+    public static readonly CsvParserConfiguration Default = new()
+    {
+        RowDelimiter = "\r\n",
+        ColumnDelimiter = ",",
+        Quotation = '"',
+        EscapeCharacter = '\\',
+        Culture = CultureInfo.InvariantCulture  // Defaults to InvariantCulture
+    };
+
+    /// <summary>
+    /// Gets or sets the culture for numeric and date conversions.
+    /// Defaults to InvariantCulture for consistent parsing across locales.
+    /// </summary>
+    public IFormatProvider? Culture { get; set; }
+}
+```
+
+2. **Made RowBase Conversion Methods Virtual**: All numeric and date conversion methods (`GetByte`, `GetInt32`, `GetSingle`, `GetDouble`, `GetDecimal`, `GetDateTime`, etc.) are now virtual to allow CSV-specific implementations.
+
+3. **Overrode Methods in CsvRow**: The `CsvRow` class now overrides all conversion methods to use the configured culture:
+
+```csharp
+public override double GetDouble(int index) =>
+    Convert.ToDouble(this[index], Parser.CsvConfiguration.Culture ?? CultureInfo.InvariantCulture);
+```
+
+#### Benefits
+
+- **Consistent by Default**: CSV parsing uses `InvariantCulture` by default, ensuring "3.14" is always parsed as 3.14 regardless of system locale
+- **Configurable**: Users can specify a custom culture for locale-specific CSV files (e.g., European CSVs using comma as decimal separator)
+- **Backward Compatible**: Existing code continues to work; new behavior fixes actual bugs
+- **Clean Architecture**: Culture configuration is specific to CSV reader implementation via virtual method overrides
+
+#### Usage Example
+
+For standard CSV files (using period as decimal separator):
+
+```csharp
+var config = CsvParserConfiguration.Default; // Uses InvariantCulture
+var reader = service.GetReaderInstance(stream, true, new TableReaderConfiguration
+{
+    TableReaderType = TableReaderTypes.Csv,
+    CsvParserConfiguration = config
+});
+```
+
+For European-style CSV files (using comma as decimal separator):
+
+```csharp
+var config = new CsvParserConfiguration
+{
+    RowDelimiter = "\r\n",
+    ColumnDelimiter = ";",
+    Quotation = '"',
+    EscapeCharacter = '\\',
+    Culture = new CultureInfo("de-DE") // German culture: comma for decimal, semicolon for delimiter
+};
+```
+
 #### 5. JsonTableReader.cs
 
 **New Method**:
@@ -856,7 +1012,6 @@ public class TableReaderBenchmarks
 - **Integration Test Coverage**: All supported file formats with streams
 - **Performance Tests**: Memory usage validation for files 10MB, 50MB, 100MB
 - **Backward Compatibility**: All existing tests must pass without modification
-
 
 ### Backward Compatibility Strategy
 

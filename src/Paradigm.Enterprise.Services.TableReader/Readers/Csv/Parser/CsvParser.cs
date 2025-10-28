@@ -18,6 +18,14 @@ internal class CsvParser
     private readonly CsvParserConfiguration _configuration;
 
     /// <summary>
+    /// Gets the configuration.
+    /// </summary>
+    /// <value>
+    /// The configuration.
+    /// </value>
+    public CsvParserConfiguration CsvConfiguration => _configuration;
+
+    /// <summary>
     /// Gets or sets the reading cursor.
     /// </summary>
     /// <value>

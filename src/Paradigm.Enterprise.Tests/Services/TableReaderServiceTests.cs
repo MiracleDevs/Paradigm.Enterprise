@@ -649,6 +649,433 @@ public class TableReaderServiceTests
     }
 
     #endregion
+
+    #region IColumn parameter overload tests
+
+    [TestMethod]
+    public void GetReaderInstance_GetString_WithIColumnParameter_ReturnsCorrectValue()
+    {
+        // Arrange
+        var content = "Name,Age,Email\r\nJohn,25,john@example.com\r\nJane,30,jane@example.com";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var nameColumn = schema.GetColumn("Name");
+        var emailColumn = schema.GetColumn("Email");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        // Test new IColumn overload
+        var name = row.GetString(nameColumn);
+        var email = row.GetString(emailColumn);
+
+        Assert.AreEqual("John", name);
+        Assert.AreEqual("john@example.com", email);
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_GetInt32_WithIColumnParameter_ReturnsCorrectValue()
+    {
+        // Arrange
+        var content = "Name,Age,YearsExperience\r\nJohn,25,5\r\nJane,30,8";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var ageColumn = schema.GetColumn("Age");
+        var experienceColumn = schema.GetColumn("YearsExperience");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        // Test new IColumn overload
+        var age = row.GetInt32(ageColumn);
+        var experience = row.GetInt32(experienceColumn);
+
+        Assert.AreEqual(25, age);
+        Assert.AreEqual(5, experience);
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_GetValue_WithIColumnParameter_ReturnsCorrectValue()
+    {
+        // Arrange
+        var content = "ProductName,Price,InStock\r\nLaptop,999.99,true\r\nMouse,29.99,false";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var productNameColumn = schema.GetColumn("ProductName");
+        var priceColumn = schema.GetColumn("Price");
+        var inStockColumn = schema.GetColumn("InStock");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        // Test new IColumn overload with GetValue
+        var productName = row.GetValue(productNameColumn);
+        var price = row.GetValue(priceColumn);
+        var inStock = row.GetValue(inStockColumn);
+
+        Assert.AreEqual("Laptop", productName);
+        Assert.AreEqual("999.99", price);
+        Assert.AreEqual("true", inStock);
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_IsNull_WithIColumnParameter_ReturnsCorrectValue()
+    {
+        // Arrange
+        var content = "Name,Age,Email\r\nJohn,25,\r\nJane,,jane@example.com";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var nameColumn = schema.GetColumn("Name");
+        var ageColumn = schema.GetColumn("Age");
+        var emailColumn = schema.GetColumn("Email");
+
+        // Assert - First row: email is empty
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row1 = reader.GetCurrentRow();
+
+        Assert.IsFalse(row1.IsNull(nameColumn), "Name should not be null");
+        Assert.IsFalse(row1.IsNull(ageColumn), "Age should not be null");
+        Assert.IsFalse(row1.IsNull(emailColumn), "Empty string is not null in CSV");
+
+        // Second row: age is empty
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row2 = reader.GetCurrentRow();
+
+        Assert.IsFalse(row2.IsNull(nameColumn), "Name should not be null");
+        Assert.IsFalse(row2.IsNull(ageColumn), "Empty string is not null in CSV");
+        Assert.IsFalse(row2.IsNull(emailColumn), "Email should not be null");
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_MultipleDataTypes_WithIColumnParameter_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "Name,Age,Score,Active,Grade\r\nJohn,25,98.5,true,A\r\nJane,30,87.3,false,B";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var nameColumn = schema.GetColumn("Name");
+        var ageColumn = schema.GetColumn("Age");
+        var scoreColumn = schema.GetColumn("Score");
+        var activeColumn = schema.GetColumn("Active");
+        var gradeColumn = schema.GetColumn("Grade");
+
+        // Assert - First row
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row1 = reader.GetCurrentRow();
+
+        Assert.AreEqual("John", row1.GetString(nameColumn));
+        Assert.AreEqual(25, row1.GetInt32(ageColumn));
+        Assert.AreEqual(98.5, row1.GetDouble(scoreColumn));
+        Assert.IsTrue(row1.GetBoolean(activeColumn));
+        Assert.AreEqual('A', row1.GetChar(gradeColumn));
+
+        // Assert - Second row
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row2 = reader.GetCurrentRow();
+
+        Assert.AreEqual("Jane", row2.GetString(nameColumn));
+        Assert.AreEqual(30, row2.GetInt32(ageColumn));
+        Assert.AreEqual(87.3, row2.GetDouble(scoreColumn));
+        Assert.IsFalse(row2.GetBoolean(activeColumn));
+        Assert.AreEqual('B', row2.GetChar(gradeColumn));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_NumericTypes_WithIColumnParameter_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "ByteVal,Int16Val,Int32Val,Int64Val,FloatVal,DecimalVal\r\n255,32767,2147483647,9223372036854775807,3.14,99.99";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var byteColumn = schema.GetColumn("ByteVal");
+        var int16Column = schema.GetColumn("Int16Val");
+        var int32Column = schema.GetColumn("Int32Val");
+        var int64Column = schema.GetColumn("Int64Val");
+        var floatColumn = schema.GetColumn("FloatVal");
+        var decimalColumn = schema.GetColumn("DecimalVal");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        Assert.AreEqual((byte)255, row.GetByte(byteColumn));
+        Assert.AreEqual((short)32767, row.GetInt16(int16Column));
+        Assert.AreEqual(2147483647, row.GetInt32(int32Column));
+        Assert.AreEqual(9223372036854775807L, row.GetInt64(int64Column));
+        Assert.AreEqual(3.14f, row.GetSingle(floatColumn), 0.01f);
+        Assert.AreEqual(99.99m, row.GetDecimal(decimalColumn));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_UnsignedTypes_WithIColumnParameter_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "SByteVal,UInt16Val,UInt32Val,UInt64Val\r\n127,65535,4294967295,18446744073709551615";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var sbyteColumn = schema.GetColumn("SByteVal");
+        var uint16Column = schema.GetColumn("UInt16Val");
+        var uint32Column = schema.GetColumn("UInt32Val");
+        var uint64Column = schema.GetColumn("UInt64Val");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        Assert.AreEqual((sbyte)127, row.GetSByte(sbyteColumn));
+        Assert.AreEqual((ushort)65535, row.GetUInt16(uint16Column));
+        Assert.AreEqual(4294967295u, row.GetUInt32(uint32Column));
+        Assert.AreEqual(18446744073709551615ul, row.GetUInt64(uint64Column));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_GetDateTime_WithIColumnParameter_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "EventName,EventDate\r\nMeeting,2025-10-28\r\nConference,2025-12-15";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var eventNameColumn = schema.GetColumn("EventName");
+        var eventDateColumn = schema.GetColumn("EventDate");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        Assert.AreEqual("Meeting", row.GetString(eventNameColumn));
+        Assert.AreEqual(new DateTime(2025, 10, 28), row.GetDateTime(eventDateColumn));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_IColumnOverload_ComparedToIndexAccess_ProducesSameResults()
+    {
+        // Arrange
+        var content = "Name,Age,City\r\nJohn,25,NYC\r\nJane,30,LA\r\nBob,35,Chicago";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var nameColumn = schema.GetColumn("Name");
+        var ageColumn = schema.GetColumn("Age");
+        var cityColumn = schema.GetColumn("City");
+
+        // Assert - Verify both approaches produce identical results
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row = reader.GetCurrentRow();
+
+        // Compare index-based access vs IColumn overload
+        Assert.AreEqual(row.GetString(0), row.GetString(nameColumn));
+        Assert.AreEqual(row.GetString(1), row.GetString(ageColumn));
+        Assert.AreEqual(row.GetString(2), row.GetString(cityColumn));
+
+        Assert.AreEqual(row.GetInt32(1), row.GetInt32(ageColumn));
+        Assert.AreEqual(row.GetValue(0), row.GetValue(nameColumn));
+        Assert.AreEqual(row.IsNull(2), row.IsNull(cityColumn));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_IColumnOverload_DemonstratesReadabilityImprovement()
+    {
+        // Arrange
+        var content = "FirstName,LastName,Age,Email,Department\r\n" +
+                     "John,Doe,25,john.doe@example.com,Engineering\r\n" +
+                     "Jane,Smith,30,jane.smith@example.com,Marketing";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        
+        // Get all columns upfront
+        var firstNameColumn = schema.GetColumn("FirstName");
+        var lastNameColumn = schema.GetColumn("LastName");
+        var ageColumn = schema.GetColumn("Age");
+        var emailColumn = schema.GetColumn("Email");
+        var departmentColumn = schema.GetColumn("Department");
+
+        // Process rows using the new IColumn overloads
+        var employees = new List<(string FirstName, string LastName, int Age, string Email, string Department)>();
+        
+        while (reader.ReadRowAsync().Result)
+        {
+            var row = reader.GetCurrentRow();
+            
+            // This demonstrates the improved readability:
+            // row.GetString(firstNameColumn) vs row.GetString(firstNameColumn.Index)
+            employees.Add((
+                FirstName: row.GetString(firstNameColumn)!,
+                LastName: row.GetString(lastNameColumn)!,
+                Age: row.GetInt32(ageColumn),
+                Email: row.GetString(emailColumn)!,
+                Department: row.GetString(departmentColumn)!
+            ));
+        }
+
+        // Assert
+        Assert.HasCount(2, employees);
+        
+        Assert.AreEqual("John", employees[0].FirstName);
+        Assert.AreEqual("Doe", employees[0].LastName);
+        Assert.AreEqual(25, employees[0].Age);
+        Assert.AreEqual("john.doe@example.com", employees[0].Email);
+        Assert.AreEqual("Engineering", employees[0].Department);
+
+        Assert.AreEqual("Jane", employees[1].FirstName);
+        Assert.AreEqual("Smith", employees[1].LastName);
+        Assert.AreEqual(30, employees[1].Age);
+        Assert.AreEqual("jane.smith@example.com", employees[1].Email);
+        Assert.AreEqual("Marketing", employees[1].Department);
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_IColumnOverload_WorksWithJsonReader()
+    {
+        // Arrange
+        var content = "{\"data\":[{\"Name\":\"John\",\"Age\":25,\"Active\":true},{\"Name\":\"Jane\",\"Age\":30,\"Active\":false}]}";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Json
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var nameColumn = schema.GetColumn("Name");
+        var ageColumn = schema.GetColumn("Age");
+        var activeColumn = schema.GetColumn("Active");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row1 = reader.GetCurrentRow();
+
+        Assert.AreEqual("John", row1.GetString(nameColumn));
+        Assert.AreEqual(25, row1.GetInt32(ageColumn));
+        Assert.IsTrue(row1.GetBoolean(activeColumn));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_IColumnOverload_WorksWithXmlReader()
+    {
+        // Arrange
+        var content = "<root><item><Name>John</Name><Age>25</Age></item><item><Name>Jane</Name><Age>30</Age></item></root>";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Xml
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+        var schema = reader.Schema;
+        var nameColumn = schema.GetColumn("Name");
+        var ageColumn = schema.GetColumn("Age");
+
+        // Assert
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row1 = reader.GetCurrentRow();
+
+        Assert.AreEqual("John", row1.GetString(nameColumn));
+        Assert.AreEqual(25, row1.GetInt32(ageColumn));
+
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row2 = reader.GetCurrentRow();
+
+        Assert.AreEqual("Jane", row2.GetString(nameColumn));
+        Assert.AreEqual(30, row2.GetInt32(ageColumn));
+    }
+
+    #endregion
 }
 
 #region Helper classes

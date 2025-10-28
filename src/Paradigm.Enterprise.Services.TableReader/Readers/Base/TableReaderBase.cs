@@ -10,7 +10,7 @@ internal abstract class TableReaderBase : ITableReader
     /// <value>
     /// The schema.
     /// </value>
-    public ITableSchema? Schema { get; protected set; }
+    public ITableSchema Schema { get; protected set; } = null!;
 
     /// <summary>
     /// Gets or sets the current row.

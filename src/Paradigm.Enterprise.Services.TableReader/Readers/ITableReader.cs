@@ -8,7 +8,7 @@ public interface ITableReader : IDisposable
     /// <value>
     /// The schema.
     /// </value>
-    ITableSchema? Schema { get; }
+    ITableSchema Schema { get; }
 
     /// <summary>
     /// Reads a new row of data.
