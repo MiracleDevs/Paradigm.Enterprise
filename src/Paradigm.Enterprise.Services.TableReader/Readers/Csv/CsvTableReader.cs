@@ -44,6 +44,20 @@ internal class CsvTableReader : TableReaderBase
         CurrentRow = new CsvRow(Schema, Parser);
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CsvTableReader" /> class from a stream.
+    /// </summary>
+    /// <param name="contentStream">The content stream.</param>
+    /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
+    /// <param name="configuration">The configuration.</param>
+    private CsvTableReader(Stream contentStream, bool sourceHasHeader, CsvParserConfiguration configuration)
+    {
+        TextReader = new StreamReader(contentStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
+        Parser = new CsvParser(TextReader, configuration);
+        Schema = new CsvTableSchema(Parser).Initialize(sourceHasHeader);
+        CurrentRow = new CsvRow(Schema, Parser);
+    }
+
     #endregion
 
     #region Public Methods
@@ -65,6 +79,25 @@ internal class CsvTableReader : TableReaderBase
         configuration.Quotation = configuration.Quotation != char.MinValue ? configuration.Quotation : defaultConfiguration.Quotation;
         configuration.RowDelimiter = !string.IsNullOrWhiteSpace(configuration.RowDelimiter) ? Regex.Unescape(configuration.RowDelimiter) : defaultConfiguration.RowDelimiter;
         return new CsvTableReader(content, sourceHasHeader, configuration);
+    }
+
+    /// <summary>
+    /// Opens a new table reader from the specified stream.
+    /// </summary>
+    /// <param name="contentStream">The content stream.</param>
+    /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns></returns>
+    public static ITableReader OpenFromStream(Stream contentStream, bool sourceHasHeader, CsvParserConfiguration? configuration = null)
+    {
+        var defaultConfiguration = CsvParserConfiguration.Default;
+
+        configuration = configuration ?? defaultConfiguration;
+        configuration.ColumnDelimiter = !string.IsNullOrWhiteSpace(configuration.ColumnDelimiter) ? Regex.Unescape(configuration.ColumnDelimiter) : defaultConfiguration.ColumnDelimiter;
+        configuration.EscapeCharacter = configuration.EscapeCharacter != char.MinValue ? configuration.EscapeCharacter : defaultConfiguration.EscapeCharacter;
+        configuration.Quotation = configuration.Quotation != char.MinValue ? configuration.Quotation : defaultConfiguration.Quotation;
+        configuration.RowDelimiter = !string.IsNullOrWhiteSpace(configuration.RowDelimiter) ? Regex.Unescape(configuration.RowDelimiter) : defaultConfiguration.RowDelimiter;
+        return new CsvTableReader(contentStream, sourceHasHeader, configuration);
     }
 
     /// <summary>

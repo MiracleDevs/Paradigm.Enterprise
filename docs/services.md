@@ -182,7 +182,106 @@ public class DocumentService
 Install-Package Paradigm.Enterprise.Services.BlobStorage
 ```
 
-## 1.5. Common Features Across Services
+## 1.5. Services.TableReader
+
+The Services.TableReader package provides capabilities for reading and parsing structured data from various file formats including CSV, JSON, XLS, and XML files.
+
+### 1.5.1. Key Components
+
+- **ITableReaderService** - Interface for table reader operations
+- **TableReaderService** - Main service implementation
+- **ITableReader** - Interface for reading table data
+- **TableReaderConfiguration** - Configuration for table reader settings
+- **CsvParserConfiguration** - Specific configuration for CSV parsing
+- **TableReaderTypes** - Enumeration of supported file types (CSV, JSON, XLS, XML)
+
+### 1.5.2. Supported File Types
+
+- **CSV** - Comma-separated values with configurable delimiters
+- **JSON** - JavaScript Object Notation format
+- **XLS** - Microsoft Excel spreadsheet format
+- **XML** - Extensible Markup Language format
+
+### 1.5.3. Usage Example
+
+```csharp
+// Register table reader service
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddScoped<ITableReaderService, TableReaderService>();
+}
+
+// Use table reader service
+public class DataImportService
+{
+    private readonly ITableReaderService _tableReaderService;
+
+    public DataImportService(ITableReaderService tableReaderService)
+    {
+        _tableReaderService = tableReaderService;
+    }
+
+    public async Task<List<Product>> ImportProductsFromCsvAsync(Stream csvStream)
+    {
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        using var reader = _tableReaderService.GetReaderInstance(csvStream, true, configuration);
+        var products = new List<Product>();
+
+        while (await reader.ReadRowAsync())
+        {
+            var row = reader.GetCurrentRow();
+            var product = new Product
+            {
+                Name = row.GetValue<string>("Name"),
+                Price = row.GetValue<decimal>("Price"),
+                Category = row.GetValue<string>("Category")
+            };
+            products.Add(product);
+        }
+
+        return products;
+    }
+
+    public async Task<List<Order>> ImportOrdersFromJsonAsync(byte[] jsonBytes)
+    {
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Json
+        };
+
+        using var reader = _tableReaderService.GetReaderInstance(jsonBytes, true, configuration);
+        var orders = new List<Order>();
+
+        while (await reader.ReadRowAsync())
+        {
+            var row = reader.GetCurrentRow();
+            var order = new Order
+            {
+                Id = row.GetValue<int>("Id"),
+                CustomerName = row.GetValue<string>("CustomerName"),
+                OrderDate = row.GetValue<DateTime>("OrderDate"),
+                TotalAmount = row.GetValue<decimal>("TotalAmount")
+            };
+            orders.Add(order);
+        }
+
+        return orders;
+    }
+}
+```
+
+### 1.5.4. NuGet Package
+
+```shell
+Install-Package Paradigm.Enterprise.Services.TableReader
+```
+
+## 1.6. Common Features Across Services
 
 1. **Consistent API** - All services follow a consistent pattern
 2. **Dependency Injection** - Designed to work with ASP.NET Core dependency injection

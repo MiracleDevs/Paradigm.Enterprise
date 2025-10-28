@@ -84,7 +84,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A object value.
     /// </returns>
-    public object? GetValue(int index) => this[index];
+    public virtual object? GetValue(int index) => this[index];
 
     /// <summary>
     /// Determines whether the value specified by the column name is null.
@@ -93,7 +93,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// <c>true</c> if the value is null; otherwise, <c>false</c>.
     /// </returns>
-    public bool IsNull(int index) => this[index] is null || this[index] == DBNull.Value;
+    public virtual bool IsNull(int index) => this[index] is null || this[index] == DBNull.Value;
 
     /// <summary>
     /// Gets a byte value from the specified column name.
@@ -102,7 +102,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A byte value.
     /// </returns>
-    public byte GetByte(int index) => Convert.ToByte(this[index]);
+    public virtual byte GetByte(int index) => Convert.ToByte(this[index]);
 
     /// <summary>
     /// Gets a sbyte value from the specified column name.
@@ -111,7 +111,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A sbyte value.
     /// </returns>
-    public sbyte GetSByte(int index) => Convert.ToSByte(this[index]);
+    public virtual sbyte GetSByte(int index) => Convert.ToSByte(this[index]);
 
     /// <summary>
     /// Gets a ushort value from the specified column name.
@@ -120,7 +120,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A ushort value.
     /// </returns>
-    public ushort GetUInt16(int index) => Convert.ToUInt16(this[index]);
+    public virtual ushort GetUInt16(int index) => Convert.ToUInt16(this[index]);
 
     /// <summary>
     /// Gets a short value from the specified column name.
@@ -129,7 +129,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A short value.
     /// </returns>
-    public short GetInt16(int index) => Convert.ToInt16(this[index]);
+    public virtual short GetInt16(int index) => Convert.ToInt16(this[index]);
 
     /// <summary>
     /// Gets a uint value from the specified column name.
@@ -138,7 +138,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A uint value.
     /// </returns>
-    public uint GetUInt32(int index) => Convert.ToUInt32(this[index]);
+    public virtual uint GetUInt32(int index) => Convert.ToUInt32(this[index]);
 
     /// <summary>
     /// Gets a int value from the specified column name.
@@ -147,7 +147,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A int value.
     /// </returns>
-    public int GetInt32(int index) => Convert.ToInt32(this[index]);
+    public virtual int GetInt32(int index) => Convert.ToInt32(this[index]);
 
     /// <summary>
     /// Gets a ulong value from the specified column name.
@@ -156,7 +156,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A ulong value.
     /// </returns>
-    public ulong GetUInt64(int index) => Convert.ToUInt64(this[index]);
+    public virtual ulong GetUInt64(int index) => Convert.ToUInt64(this[index]);
 
     /// <summary>
     /// Gets a long value from the specified column name.
@@ -165,7 +165,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A long value.
     /// </returns>
-    public long GetInt64(int index) => Convert.ToInt64(this[index]);
+    public virtual long GetInt64(int index) => Convert.ToInt64(this[index]);
 
     /// <summary>
     /// Gets a float value from the specified column name.
@@ -174,7 +174,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A float value.
     /// </returns>
-    public float GetSingle(int index) => Convert.ToSingle(this[index]);
+    public virtual float GetSingle(int index) => Convert.ToSingle(this[index]);
 
     /// <summary>
     /// Gets a double value from the specified column name.
@@ -183,7 +183,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A double value.
     /// </returns>
-    public double GetDouble(int index) => Convert.ToDouble(this[index]);
+    public virtual double GetDouble(int index) => Convert.ToDouble(this[index]);
 
     /// <summary>
     /// Gets a decimal value from the specified column name.
@@ -192,7 +192,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A decimal value.
     /// </returns>
-    public decimal GetDecimal(int index) => Convert.ToDecimal(this[index]);
+    public virtual decimal GetDecimal(int index) => Convert.ToDecimal(this[index]);
 
     /// <summary>
     /// Gets a char value from the specified column name.
@@ -201,7 +201,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A char value.
     /// </returns>
-    public char GetChar(int index) => Convert.ToChar(this[index]);
+    public virtual char GetChar(int index) => Convert.ToChar(this[index]);
 
     /// <summary>
     /// Gets a string value from the specified column name.
@@ -210,7 +210,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A string value.
     /// </returns>
-    public string? GetString(int index) => Convert.ToString(this[index]);
+    public virtual string? GetString(int index) => Convert.ToString(this[index]);
 
     /// <summary>
     /// Gets a DateTime value from the specified column name.
@@ -219,7 +219,7 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A DateTime value.
     /// </returns>
-    public DateTime GetDateTime(int index) => Convert.ToDateTime(this[index]);
+    public virtual DateTime GetDateTime(int index) => Convert.ToDateTime(this[index]);
 
     /// <summary>
     /// Gets a boolean value from the specified column name.
@@ -228,7 +228,160 @@ internal abstract class RowBase : IRow
     /// <returns>
     /// A boolean value.
     /// </returns>
-    public bool GetBoolean(int index) => Convert.ToBoolean(this[index]);
+    public virtual bool GetBoolean(int index) => Convert.ToBoolean(this[index]);
+
+    /// <summary>
+    /// Gets a object value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A object value.
+    /// </returns>
+    public object? GetValue(IColumn column) => GetValue(column.Index);
+
+    /// <summary>
+    /// Determines whether the value specified by the column is null.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// <c>true</c> if the value is null; otherwise, <c>false</c>.
+    /// </returns>
+    public bool IsNull(IColumn column) => IsNull(column.Index);
+
+    /// <summary>
+    /// Gets a byte value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A byte value.
+    /// </returns>
+    public byte GetByte(IColumn column) => GetByte(column.Index);
+
+    /// <summary>
+    /// Gets a sbyte value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A sbyte value.
+    /// </returns>
+    public sbyte GetSByte(IColumn column) => GetSByte(column.Index);
+
+    /// <summary>
+    /// Gets a ushort value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A ushort value.
+    /// </returns>
+    public ushort GetUInt16(IColumn column) => GetUInt16(column.Index);
+
+    /// <summary>
+    /// Gets a short value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A short value.
+    /// </returns>
+    public short GetInt16(IColumn column) => GetInt16(column.Index);
+
+    /// <summary>
+    /// Gets a uint value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A uint value.
+    /// </returns>
+    public uint GetUInt32(IColumn column) => GetUInt32(column.Index);
+
+    /// <summary>
+    /// Gets a int value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A int value.
+    /// </returns>
+    public int GetInt32(IColumn column) => GetInt32(column.Index);
+
+    /// <summary>
+    /// Gets a ulong value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A ulong value.
+    /// </returns>
+    public ulong GetUInt64(IColumn column) => GetUInt64(column.Index);
+
+    /// <summary>
+    /// Gets a long value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A long value.
+    /// </returns>
+    public long GetInt64(IColumn column) => GetInt64(column.Index);
+
+    /// <summary>
+    /// Gets a float value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A float value.
+    /// </returns>
+    public float GetSingle(IColumn column) => GetSingle(column.Index);
+
+    /// <summary>
+    /// Gets a double value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A double value.
+    /// </returns>
+    public double GetDouble(IColumn column) => GetDouble(column.Index);
+
+    /// <summary>
+    /// Gets a decimal value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A decimal value.
+    /// </returns>
+    public decimal GetDecimal(IColumn column) => GetDecimal(column.Index);
+
+    /// <summary>
+    /// Gets a char value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A char value.
+    /// </returns>
+    public char GetChar(IColumn column) => GetChar(column.Index);
+
+    /// <summary>
+    /// Gets a string value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A string value.
+    /// </returns>
+    public string? GetString(IColumn column) => GetString(column.Index);
+
+    /// <summary>
+    /// Gets a DateTime value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A DateTime value.
+    /// </returns>
+    public DateTime GetDateTime(IColumn column) => GetDateTime(column.Index);
+
+    /// <summary>
+    /// Gets a boolean value from the specified column.
+    /// </summary>
+    /// <param name="column">The column.</param>
+    /// <returns>
+    /// A boolean value.
+    /// </returns>
+    public bool GetBoolean(IColumn column) => GetBoolean(column.Index);
 
     #endregion
 

@@ -13,7 +13,7 @@ For detailed documentation about each component of the framework, please visit t
 - [Data](docs/data.md) - Data access and repositories
 - [Data Providers](docs/data-providers.md) - Database-specific implementations
 - [Providers](docs/providers.md) - Business logic providers
-- [Services](docs/services.md) - Service abstractions (Cache, Email, BlobStorage)
+- [Services](docs/services.md) - Service abstractions (Cache, Email, BlobStorage, TableReader)
 - [WebApi](docs/webapi.md) - API controllers and middleware
 - [Tests](docs/tests.md) - Testing infrastructure and examples
 - [Code Generator](docs/code-generator.md) - Automated code generation utilities
@@ -42,6 +42,7 @@ If you're planning to propose a significant change to the framework, please foll
 | Services.BlobStorage | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.BlobStorage.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.BlobStorage/)  | `Install-Package Paradigm.Enterprise.Services.BlobStorage` |
 | Services.Cache | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.Cache.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.Cache/)  | `Install-Package Paradigm.Enterprise.Services.Cache` |
 | Services.Email | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.Email.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.Email/)  | `Install-Package Paradigm.Enterprise.Services.Email` |
+| Services.TableReader | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.TableReader.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.TableReader/)  | `Install-Package Paradigm.Enterprise.Services.TableReader` |
 | Services.Core | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.Core.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.Core/)  | `Install-Package Paradigm.Enterprise.Services.Core` |
 | WebApi | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.WebApi.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.WebApi/)  | `Install-Package Paradigm.Enterprise.WebApi` |
 | CodeGenerator | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.CodeGenerator.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.CodeGenerator/)  | `dotnet tool install --global Paradigm.Enterprise.CodeGenerator` |
@@ -74,6 +75,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 ```
 
 ## Change log
+
+Version `1.0.17`
+- Modified `TableReader` service to support stream-based reading for various formats and implemented multiple enhancements.
 
 Version `1.0.16`
 - Added `TableReader` service package that provides a unified service for reading and parsing multiple file formats including Excel (.xlsx, .xls), CSV, JSON, and XML.

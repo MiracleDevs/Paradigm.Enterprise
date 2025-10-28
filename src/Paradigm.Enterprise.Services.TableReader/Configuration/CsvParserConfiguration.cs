@@ -1,10 +1,12 @@
-﻿namespace Paradigm.Enterprise.Services.TableReader.Configuration;
+﻿using System.Globalization;
+
+namespace Paradigm.Enterprise.Services.TableReader.Configuration;
 public class CsvParserConfiguration
 {
     /// <summary>
     /// The default options for the csv file.
     /// </summary>
-    public static readonly CsvParserConfiguration Default = new() { RowDelimiter = "\r\n", ColumnDelimiter = ",", Quotation = '"', EscapeCharacter = '\\' };
+    public static readonly CsvParserConfiguration Default = new() { RowDelimiter = "\r\n", ColumnDelimiter = ",", Quotation = '"', EscapeCharacter = '\\', Culture = CultureInfo.InvariantCulture };
 
     /// <summary>
     /// Gets the delimiter.
@@ -37,4 +39,13 @@ public class CsvParserConfiguration
     /// The quotation.
     /// </value>
     public char? EscapeCharacter { get; set; }
+
+    /// <summary>
+    /// Gets or sets the culture for numeric and date conversions.
+    /// Defaults to InvariantCulture for consistent parsing across locales.
+    /// </summary>
+    /// <value>
+    /// The culture.
+    /// </value>
+    public IFormatProvider? Culture { get; set; }
 }

@@ -26,7 +26,10 @@ internal class XlsTableReader : TableReaderBase
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     private XlsTableReader(Stream contentStream, bool sourceHasHeader)
     {
-        DataReader = ExcelReaderFactory.CreateReader(contentStream);
+        DataReader = ExcelReaderFactory.CreateReader(contentStream, new ExcelReaderConfiguration
+        {
+            LeaveOpen = true  // Allow caller to manage stream lifetime
+        });
         Schema = new XlsTableSchema(DataReader).Initialize(sourceHasHeader);
         CurrentRow = new XlsRow(Schema, DataReader);
     }
@@ -44,6 +47,17 @@ internal class XlsTableReader : TableReaderBase
     public static ITableReader OpenFromContent(byte[] content, bool sourceHasHeader)
     {
         return new XlsTableReader(new MemoryStream(content), sourceHasHeader);
+    }
+
+    /// <summary>
+    /// Opens a new table reader from the specified stream.
+    /// </summary>
+    /// <param name="contentStream">The content stream.</param>
+    /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
+    /// <returns></returns>
+    public static ITableReader OpenFromStream(Stream contentStream, bool sourceHasHeader)
+    {
+        return new XlsTableReader(contentStream, sourceHasHeader);
     }
 
     /// <summary>
