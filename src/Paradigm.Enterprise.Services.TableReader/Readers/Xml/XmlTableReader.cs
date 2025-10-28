@@ -46,5 +46,16 @@ internal class XmlTableReader : TableReaderBase
         return new XmlTableReader(new MemoryStream(content), sourceHasHeader);
     }
 
+    /// <summary>
+    /// Opens a new table reader from the specified stream.
+    /// </summary>
+    /// <param name="contentStream">The content stream.</param>
+    /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
+    /// <returns></returns>
+    public static ITableReader OpenFromStream(Stream contentStream, bool sourceHasHeader)
+    {
+        return new XmlTableReader(contentStream, sourceHasHeader);
+    }
+
     #endregion
 }

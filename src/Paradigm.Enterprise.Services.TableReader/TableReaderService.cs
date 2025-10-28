@@ -20,31 +20,26 @@ public class TableReaderService : ITableReaderService
         if (sourceStream is null)
             throw new ArgumentNullException(nameof(sourceStream));
 
-        var originalPosition = sourceStream.CanSeek ? sourceStream.Position : 0;
+        // Reset stream position if seekable
+        if (sourceStream.CanSeek && sourceStream.Position != 0)
+            sourceStream.Position = 0;
 
-        try
+        switch (configuration.TableReaderType)
         {
-            if (sourceStream.CanSeek)
-                sourceStream.Position = 0;
+            case TableReaderTypes.Csv:
+                return CsvTableReader.OpenFromStream(sourceStream, sourceHasHeader, configuration.CsvParserConfiguration);
 
-            byte[] bytes;
-            if (sourceStream is MemoryStream ms)
-                bytes = ms.ToArray();
-            else
-            {
-                using var memoryStream = new MemoryStream();
-                sourceStream.CopyTo(memoryStream);
-                bytes = memoryStream.ToArray();
-            }
+            case TableReaderTypes.Json:
+                return JsonTableReader.OpenFromStream(sourceStream, sourceHasHeader);
 
-            return GetReaderInstance(bytes, sourceHasHeader, configuration);
+            case TableReaderTypes.Xls:
+                return XlsTableReader.OpenFromStream(sourceStream, sourceHasHeader);
+
+            case TableReaderTypes.Xml:
+                return XmlTableReader.OpenFromStream(sourceStream, sourceHasHeader);
         }
-        finally
-        {
-            // Restore original position if seekable
-            if (sourceStream.CanSeek)
-                sourceStream.Position = originalPosition;
-        }
+
+        throw new Exception("TableReader not found.");
     }
 
     /// <summary>

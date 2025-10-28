@@ -83,8 +83,8 @@ public class TableReaderServiceTests
             Assert.IsNotNull(result);
             Assert.IsInstanceOfType(result, typeof(XlsTableReader));
         }
-        catch (Exception ex) when (ex.Message.Contains("compound document") || 
-                                   ex.Message.Contains("sector") || 
+        catch (Exception ex) when (ex.Message.Contains("compound document") ||
+                                   ex.Message.Contains("sector") ||
                                    ex.Message.Contains("Unable to read beyond the end of the stream"))
         {
             // This is expected for our minimal test data - the important thing is that
@@ -124,7 +124,7 @@ public class TableReaderServiceTests
         };
 
         // Act & Assert
-        var exception = Assert.ThrowsExactly<Exception>(() => 
+        var exception = Assert.ThrowsExactly<Exception>(() =>
             _service.GetReaderInstance(bytes, true, configuration));
         Assert.AreEqual("TableReader not found.", exception.Message);
     }
@@ -210,14 +210,14 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_WithSeekableStream_PreservesOriginalPosition()
+    public void GetReaderInstance_WithSeekableStream_ResetsToStartAndReadsSchema()
     {
         // Arrange
-        var content = "Name,Age\nJohn,25";
+        var content = "Name,Age\r\nJohn,25\r\nJane,30";  // Use \r\n for proper CSV format
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        stream.Position = 5; // Set to middle of stream
-        var originalPosition = stream.Position;
+        stream.Position = 5; // Start partway through
+
         var configuration = new TableReaderConfiguration
         {
             TableReaderType = TableReaderTypes.Csv,
@@ -229,7 +229,22 @@ public class TableReaderServiceTests
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.AreEqual(originalPosition, stream.Position);
+
+        // Verify schema was initialized correctly (columns were read from header)
+        Assert.IsNotNull(result.Schema);
+        var columns = result.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("Name", columns[0].Name);
+        Assert.AreEqual("Age", columns[1].Name);
+
+        // Stream position has advanced past the header row during schema initialization
+        Assert.IsGreaterThan(0, stream.Position, "Stream should have advanced during schema initialization");
+
+        // Verify we can read the first data row
+        Assert.IsTrue(result.ReadRowAsync().Result, "Should be able to read first data row");
+        var row = result.GetCurrentRow();
+        Assert.AreEqual("John", row.GetValue(0));
+        Assert.AreEqual("25", row.GetValue(1));
     }
 
     [TestMethod]
@@ -394,7 +409,7 @@ public class TableReaderServiceTests
         // Create minimal XLS file bytes for testing
         // This is just enough to trigger the XlsTableReader creation
         // The actual parsing will fail, but that's expected for our test
-        return new byte[] 
+        return new byte[]
         {
             0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1, // OLE signature
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -403,6 +418,234 @@ public class TableReaderServiceTests
             0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         };
+    }
+
+    #endregion
+
+    #region Stream-based parsing tests
+
+    [TestMethod]
+    public void GetReaderInstance_WithFileStream_UsesStreamDirectly()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        File.WriteAllText(tempFile, "Name,Age\r\nJohn,25");
+
+        try
+        {
+            using var fileStream = File.OpenRead(tempFile);
+            var configuration = new TableReaderConfiguration
+            {
+                TableReaderType = TableReaderTypes.Csv,
+                CsvParserConfiguration = CsvParserConfiguration.Default
+            };
+
+            // Act
+            var result = _service.GetReaderInstance(fileStream, true, configuration);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOfType(result, typeof(CsvTableReader));
+
+            // Verify stream was not consumed entirely (stream-based approach)
+            Assert.IsTrue(fileStream.CanRead);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_WithLargeStream_DoesNotLoadEntireFileIntoMemory()
+    {
+        // Arrange
+        var largeContent = new StringBuilder();
+        largeContent.Append("Name,Age,Email,Address\r\n");  // Add header with \r\n
+        for (int i = 0; i < 10000; i++) // Reasonable amount of test data
+        {
+            largeContent.Append($"Name{i},Age{i},Email{i}@example.com,Address{i}\r\n");  // Use \r\n for proper CSV format
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(largeContent.ToString());
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert - Verify we can read rows without issues
+        Assert.IsNotNull(result);
+
+        // Verify schema columns
+        Assert.IsNotNull(result.Schema);
+        var columns = result.Schema.GetColumns().ToList();
+        Assert.HasCount(4, columns);
+        Assert.AreEqual("Name", columns[0].Name);
+        Assert.AreEqual("Age", columns[1].Name);
+        Assert.AreEqual("Email", columns[2].Name);
+        Assert.AreEqual("Address", columns[3].Name);
+
+        // Read rows and verify values are correct
+        int rowCount = 0;
+        while (result.ReadRowAsync().Result && rowCount < 100)
+        {
+            var row = result.GetCurrentRow();
+            Assert.IsNotNull(row);
+
+            // Verify the values match the expected format
+            Assert.AreEqual($"Name{rowCount}", row.GetValue(0), $"Row {rowCount} column 0 should be 'Name{rowCount}'");
+            Assert.AreEqual($"Age{rowCount}", row.GetValue(1), $"Row {rowCount} column 1 should be 'Age{rowCount}'");
+            Assert.AreEqual($"Email{rowCount}@example.com", row.GetValue(2), $"Row {rowCount} column 2 should be 'Email{rowCount}@example.com'");
+            Assert.AreEqual($"Address{rowCount}", row.GetValue(3), $"Row {rowCount} column 3 should be 'Address{rowCount}'");
+
+            rowCount++;
+        }
+
+        Assert.AreEqual(100, rowCount, "Should have read exactly 100 rows");
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_CsvFromStream_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "Name,Age\r\nJohn,25\r\nJane,30\r\nBob,35";  // Use \r\n for proper CSV format
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(CsvTableReader));
+
+        // Verify schema columns
+        Assert.IsNotNull(result.Schema);
+        var columns = result.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("Name", columns[0].Name);
+        Assert.AreEqual("Age", columns[1].Name);
+
+        // Verify can read data rows
+        Assert.IsTrue(result.ReadRowAsync().Result, "Should read first data row");
+        var row1 = result.GetCurrentRow();
+        Assert.AreEqual("John", row1.GetValue(0));
+        Assert.AreEqual("25", row1.GetValue(1));
+
+        Assert.IsTrue(result.ReadRowAsync().Result, "Should read second data row");
+        var row2 = result.GetCurrentRow();
+        Assert.AreEqual("Jane", row2.GetValue(0));
+        Assert.AreEqual("30", row2.GetValue(1));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_JsonFromStream_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "{\"data\":[{\"Name\":\"John\",\"Age\":25}]}";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Json
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(JsonTableReader));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_XmlFromStream_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "<root><item><name>John</name><age>25</age></item></root>";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Xml
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(XmlTableReader));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_StreamAtNonZeroPosition_ResetsToStart()
+    {
+        // Arrange
+        var content = "Name,Age\r\nJohn,25\r\nJane,30\r\nBob,35";  // Use \r\n for proper CSV format
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        stream.Position = 10; // Start partway through
+
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(result);
+
+        // Verify schema was read from the beginning (not from position 10)
+        Assert.IsNotNull(result.Schema);
+        var columns = result.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("Name", columns[0].Name);
+        Assert.AreEqual("Age", columns[1].Name);
+
+        // Should read data from start of file, not from position 10
+        Assert.IsTrue(result.ReadRowAsync().Result, "Should read first data row");
+        var row = result.GetCurrentRow();
+        Assert.AreEqual("John", row.GetValue(0));
+        Assert.AreEqual("25", row.GetValue(1));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_AfterDisposingReader_StreamRemainsOpen()
+    {
+        // Arrange
+        var content = "Name,Age\r\nJohn,25";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var stream = new MemoryStream(bytes);
+        var configuration = new TableReaderConfiguration
+        {
+            TableReaderType = TableReaderTypes.Csv,
+            CsvParserConfiguration = CsvParserConfiguration.Default
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(stream, true, configuration);
+        result.Dispose();
+
+        // Assert - stream should still be usable
+        Assert.IsTrue(stream.CanRead);
+        Assert.IsTrue(stream.CanSeek);
+
+        // Cleanup
+        stream.Dispose();
     }
 
     #endregion
