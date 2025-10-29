@@ -76,6 +76,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.18`
+- Added support for NET8 to `Data.SqlServer` and `Domain` libraries.
+
 Version `1.0.17`
 - Modified `TableReader` service to support stream-based reading for various formats and implemented multiple enhancements.
 
