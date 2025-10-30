@@ -72,7 +72,7 @@ internal class XmlRow : RowBase
 
         do
             Values.Add(XmlNavigator.Value);
-while (XmlNavigator.MoveToNext());
+        while (XmlNavigator.MoveToNext());
 
         XmlNavigator.MoveToParent();
     }

@@ -1,6 +1,5 @@
 ﻿using Paradigm.Enterprise.Services.TableReader;
 using Paradigm.Enterprise.Services.TableReader.Configuration;
-using Paradigm.Enterprise.Services.TableReader.Readers;
 using Paradigm.Enterprise.Services.TableReader.Readers.Csv;
 using Paradigm.Enterprise.Services.TableReader.Readers.Json;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
@@ -973,7 +972,7 @@ public class TableReaderServiceTests
         // Act
         var reader = _service.GetReaderInstance(stream, true, configuration);
         var schema = reader.Schema;
-        
+
         // Get all columns upfront
         var firstNameColumn = schema.GetRequiredColumn("FirstName");
         var lastNameColumn = schema.GetRequiredColumn("LastName");
@@ -983,11 +982,11 @@ public class TableReaderServiceTests
 
         // Process rows using the new IColumn overloads
         var employees = new List<(string FirstName, string LastName, int Age, string Email, string Department)>();
-        
+
         while (reader.ReadRowAsync().Result)
         {
             var row = reader.GetCurrentRow();
-            
+
             // This demonstrates the improved readability:
             // row.GetString(firstNameColumn) vs row.GetString(firstNameColumn.Index)
             employees.Add((
@@ -1001,7 +1000,7 @@ public class TableReaderServiceTests
 
         // Assert
         Assert.HasCount(2, employees);
-        
+
         Assert.AreEqual("John", employees[0].FirstName);
         Assert.AreEqual("Doe", employees[0].LastName);
         Assert.AreEqual(25, employees[0].Age);

@@ -76,6 +76,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.19`
+- Fixed `Cache` package extension methods.
+
 Version `1.0.18`
 - Added support for NET8 to `Data.SqlServer` and `Domain` libraries.
 

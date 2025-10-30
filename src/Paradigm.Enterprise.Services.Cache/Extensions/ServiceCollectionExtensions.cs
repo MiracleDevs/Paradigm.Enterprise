@@ -6,10 +6,9 @@ namespace Paradigm.Enterprise.Services.Cache.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static ServiceCollection AddCache(this ServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
+    public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
     {
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(services);
 
         var connectionString = configuration.GetConnectionString(connectionStringName);
 
@@ -29,12 +28,11 @@ public static class ServiceCollectionExtensions
             options.ConnectionMultiplexerFactory = () => Task.FromResult(connectionMultiplexer);
 
             if (!string.IsNullOrWhiteSpace(instanceName))
-            {
                 options.InstanceName = instanceName;
-            }
         });
 
         services.AddScoped<ICacheService, CacheService>();
+
         return services;
     }
 }
