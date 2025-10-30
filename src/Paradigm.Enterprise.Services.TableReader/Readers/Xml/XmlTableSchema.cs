@@ -50,7 +50,7 @@ internal class XmlTableSchema : TableSchemaBase
 
             do
                 properties.Add(XmlNavigator.Name);
-while (XmlNavigator.MoveToNext());
+            while (XmlNavigator.MoveToNext());
 
             GenerateColumnsNames(properties.Count);
 
