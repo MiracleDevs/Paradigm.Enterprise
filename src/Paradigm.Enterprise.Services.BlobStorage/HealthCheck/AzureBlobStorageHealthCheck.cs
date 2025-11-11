@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Identity;
+using Azure.Storage.Blobs;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.HealthCheck;
@@ -19,7 +20,7 @@ internal class AzureBlobStorageHealthCheck : IHealthCheck
     /// <param name="healthCheckOptions">The health check options.</param>
     public AzureBlobStorageHealthCheck(AzureBlobStorageHealthCheckOptions healthCheckOptions)
     {
-        this._healthCheckOptions = healthCheckOptions
+        _healthCheckOptions = healthCheckOptions
             ?? throw new ArgumentNullException(nameof(healthCheckOptions), "The Azure Blob Storage Health Check Options argument is mandatory.");
     }
 
@@ -35,11 +36,19 @@ internal class AzureBlobStorageHealthCheck : IHealthCheck
     {
         try
         {
-            var blobClient = new BlobServiceClient(_healthCheckOptions.ConnectionString ?? throw new NullReferenceException("The Azure Blob Storage Health Check needs at least a connection string."));
+            BlobServiceClient? blobClient = null;
 
-            if (this._healthCheckOptions.ContainerName != null)
+            if (!string.IsNullOrWhiteSpace(_healthCheckOptions.ConnectionString))
+                blobClient = new BlobServiceClient(_healthCheckOptions.ConnectionString);
+            else if (!string.IsNullOrWhiteSpace(_healthCheckOptions.StorageAccountUri))
+                blobClient = new BlobServiceClient(new Uri(_healthCheckOptions.StorageAccountUri), new DefaultAzureCredential());
+
+            if (blobClient is null)
+                throw new NullReferenceException($"The Azure Blob Storage Health Check needs at least a {nameof(_healthCheckOptions.ConnectionString)} or {nameof(_healthCheckOptions.StorageAccountUri)}.");
+
+            if (!string.IsNullOrWhiteSpace(_healthCheckOptions.ContainerName))
             {
-                var containerClient = blobClient.GetBlobContainerClient(this._healthCheckOptions.ContainerName);
+                var containerClient = blobClient.GetBlobContainerClient(_healthCheckOptions.ContainerName);
                 await containerClient.GetPropertiesAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             }
             else
