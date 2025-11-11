@@ -76,6 +76,9 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.20`
+- Fixed `AzureBlobStorageHealthCheck` to support managed identity. Updated dependencies.
+
 Version `1.0.19`
 - Fixed `Cache` package extension methods.
 
