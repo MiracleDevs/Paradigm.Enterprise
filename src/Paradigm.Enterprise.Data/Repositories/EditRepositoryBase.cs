@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
@@ -50,7 +51,7 @@ public abstract class EditRepositoryBase<TEntity, TContext> : ReadRepositoryBase
     /// <returns></returns>
     public virtual async Task<TEntity> UpdateAsync(TEntity entity)
     {
-        await DeleteRemovedAggregatesAsync(entity);
+        DeleteRemovedAggregates(entity);
         GetDbSet().Update(entity);
         return await Task.FromResult(entity);
     }
@@ -62,7 +63,7 @@ public abstract class EditRepositoryBase<TEntity, TContext> : ReadRepositoryBase
     public async Task UpdateAsync(IEnumerable<TEntity> entities)
     {
         foreach (var entity in entities)
-            await DeleteRemovedAggregatesAsync(entity);
+            DeleteRemovedAggregates(entity);
 
         GetDbSet().UpdateRange(entities);
     }
@@ -98,11 +99,49 @@ public abstract class EditRepositoryBase<TEntity, TContext> : ReadRepositoryBase
     protected virtual DbSet<TEntity> GetDbSet() => EntityContext.Set<TEntity>();
 
     /// <summary>
+    /// Removes an aggregated entity from the database context.
+    /// This method allows aggregate root repositories to delete child entities
+    /// without requiring separate repositories, maintaining aggregate boundaries.
+    /// If the entity is null, no operation is performed.
+    /// </summary>
+    /// <typeparam name="TAggregatedEntity">The type of the aggregated entity.</typeparam>
+    /// <param name="entity">The aggregated entity to remove.</param>
+    protected void RemoveAggregate<TAggregatedEntity>(TAggregatedEntity? entity)
+        where TAggregatedEntity : EntityBase
+    {
+        if (entity is null)
+            return;
+
+        EntityContext.Set<TAggregatedEntity>().Remove(entity);
+    }
+
+    /// <summary>
+    /// Removes multiple aggregated entities from the database context.
+    /// This method allows aggregate root repositories to delete child entities
+    /// without requiring separate repositories, maintaining aggregate boundaries.
+    /// If the collection is null or empty, no operation is performed.
+    /// </summary>
+    /// <typeparam name="TAggregatedEntity">The type of the aggregated entity.</typeparam>
+    /// <param name="entities">The aggregated entities to remove.</param>
+    protected void RemoveAggregate<TAggregatedEntity>(IEnumerable<TAggregatedEntity>? entities)
+        where TAggregatedEntity : EntityBase
+    {
+        if (entities is null)
+            return;
+
+        var entityList = entities.ToList();
+        if (entityList.Count == 0)
+            return;
+
+        EntityContext.Set<TAggregatedEntity>().RemoveRange(entityList);
+    }
+
+    /// <summary>
     /// Deletes the removed aggregates.
     /// </summary>
-    protected virtual async Task DeleteRemovedAggregatesAsync(TEntity entity)
+    /// <param name="entity">The entity.</param>
+    protected virtual void DeleteRemovedAggregates(TEntity entity)
     {
-        await Task.CompletedTask;
     }
 
     #endregion
