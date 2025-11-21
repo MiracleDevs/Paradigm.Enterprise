@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.Extensions;
+
 public static class ServiceCollectionExtensions
 {
     /// <summary>

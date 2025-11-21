@@ -1,4 +1,5 @@
 ﻿namespace Paradigm.Enterprise.Services.Cache.Configuration;
+
 internal class RedisCacheConfiguration
 {
     public int? ExpirationInMinutes { get; set; }

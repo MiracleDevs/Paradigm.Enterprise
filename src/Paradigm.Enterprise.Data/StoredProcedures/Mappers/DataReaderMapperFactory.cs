@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 
 namespace Paradigm.Enterprise.Data.StoredProcedures.Mappers;
+
 public static class DataReaderMapperFactory
 {
     private static readonly ConcurrentDictionary<Type, Func<IDataReaderMapper>> MapperFactories = new ConcurrentDictionary<Type, Func<IDataReaderMapper>>();

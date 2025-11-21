@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Data.Context;
 using Paradigm.Enterprise.Data.Repositories;
 using Paradigm.Enterprise.Domain.Dtos;
-using Paradigm.Enterprise.Domain.Entities;
 
 namespace Paradigm.Enterprise.Tests.Repositories;
 

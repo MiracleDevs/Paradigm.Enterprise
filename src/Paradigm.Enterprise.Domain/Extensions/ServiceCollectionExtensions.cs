@@ -2,6 +2,7 @@
 using Paradigm.Enterprise.Domain.Services;
 
 namespace Paradigm.Enterprise.Domain.Extensions;
+
 public static class ServiceCollectionExtensions
 {
     /// <summary>

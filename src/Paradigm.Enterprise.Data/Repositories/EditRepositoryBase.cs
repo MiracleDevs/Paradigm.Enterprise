@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;

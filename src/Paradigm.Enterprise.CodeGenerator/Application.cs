@@ -2,6 +2,7 @@
 using Paradigm.Enterprise.CodeGenerator.Generators;
 
 namespace Microsoft.DemoManagementSystem.WebApi.CodeGenerator;
+
 internal class Application
 {
     #region Properties

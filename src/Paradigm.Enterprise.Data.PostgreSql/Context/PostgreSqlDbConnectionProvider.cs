@@ -3,6 +3,7 @@ using Npgsql;
 using Paradigm.Enterprise.Data.Context;
 
 namespace Paradigm.Enterprise.Data.PostgreSql.Context;
+
 public class PostgreSqlDbConnectionProvider : DbContextConnectionProvider
 {
     #region Properties

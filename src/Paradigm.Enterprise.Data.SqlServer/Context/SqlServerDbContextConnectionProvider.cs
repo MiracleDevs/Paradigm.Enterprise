@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Paradigm.Enterprise.Data.Context;
 
 namespace Paradigm.Enterprise.Data.SqlServer.Context;
+
 public class SqlServerDbContextConnectionProvider : DbContextConnectionProvider
 {
     #region Properties

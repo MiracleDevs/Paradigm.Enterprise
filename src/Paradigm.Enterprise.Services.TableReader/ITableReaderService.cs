@@ -3,6 +3,7 @@ using Paradigm.Enterprise.Services.TableReader.Configuration;
 using Paradigm.Enterprise.Services.TableReader.Readers;
 
 namespace Paradigm.Enterprise.Services.TableReader;
+
 public interface ITableReaderService : IService
 {
     /// <summary>

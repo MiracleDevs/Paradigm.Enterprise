@@ -5,6 +5,7 @@ using Paradigm.Enterprise.Services.Email.Configuration;
 using Paradigm.Enterprise.Services.Email.Models;
 
 namespace Paradigm.Enterprise.Services.Email;
+
 public class EmailService : IEmailService
 {
     #region Properties

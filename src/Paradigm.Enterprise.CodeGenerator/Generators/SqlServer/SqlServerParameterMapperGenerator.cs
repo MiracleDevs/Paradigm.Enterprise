@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 
 namespace Paradigm.Enterprise.CodeGenerator.Generators.SqlServer;
+
 internal class SqlServerParameterMapperGenerator
 {
     private readonly ILogger _logger;
