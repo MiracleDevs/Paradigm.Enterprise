@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Data.PostgreSql.Context;
 
 namespace Paradigm.Enterprise.Data.PostgreSql.Extensions;
+
 public static class ServiceCollectionExtensions
 {
     /// <summary>

@@ -1,6 +1,7 @@
 ﻿using Paradigm.Enterprise.Interfaces;
 
 namespace Paradigm.Enterprise.Domain.Services;
+
 public interface ILoggedUserService
 {
     /// <summary>

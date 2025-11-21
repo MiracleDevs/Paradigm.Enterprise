@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Data.SqlServer.Context;
 
 namespace Paradigm.Enterprise.Data.SqlServer.Extensions;
+
 public static class ServiceCollectionExtensions
 {
     /// <summary>

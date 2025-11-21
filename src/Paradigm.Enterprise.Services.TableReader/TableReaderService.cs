@@ -6,6 +6,7 @@ using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 
 namespace Paradigm.Enterprise.Services.TableReader;
+
 public class TableReaderService : ITableReaderService
 {
     /// <summary>

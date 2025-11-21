@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 
 namespace Paradigm.Enterprise.CodeGenerator.Generators.PostgreSql;
+
 internal class NpgsqlParameterMapperGenerator
 {
     private readonly ILogger _logger;

@@ -2,6 +2,7 @@
 using StackExchange.Redis;
 
 namespace Paradigm.Enterprise.Services.Cache.HealthCheck;
+
 internal class RedisHealthCheck : IHealthCheck
 {
     private readonly IConnectionMultiplexer _redis;

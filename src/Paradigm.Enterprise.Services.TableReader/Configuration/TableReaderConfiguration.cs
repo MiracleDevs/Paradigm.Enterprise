@@ -1,4 +1,5 @@
 ﻿namespace Paradigm.Enterprise.Services.TableReader.Configuration;
+
 public class TableReaderConfiguration
 {
     /// <summary>

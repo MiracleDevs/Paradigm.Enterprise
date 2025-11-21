@@ -3,6 +3,7 @@ using Azure.Storage.Blobs;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.HealthCheck;
+
 internal class AzureBlobStorageHealthCheck : IHealthCheck
 {
     /// <summary>

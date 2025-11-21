@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 
 namespace Paradigm.Enterprise.Services.TableReader.Configuration;
+
 public class CsvParserConfiguration
 {
     /// <summary>

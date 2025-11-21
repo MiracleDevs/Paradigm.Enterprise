@@ -4,6 +4,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Paradigm.Enterprise.Services.BlobStorage.HealthCheck;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.Extensions;
+
 public static class HealthChecksBuilderExtensions
 {
     public static IHealthChecksBuilder AddAzureBlobStorageCheck(this IHealthChecksBuilder builder, string configurationSection = nameof(AzureBlobStorageHealthCheck), string name = "AzureBlobStorage", HealthStatus? failureStatus = null, IEnumerable<string>? tags = null)

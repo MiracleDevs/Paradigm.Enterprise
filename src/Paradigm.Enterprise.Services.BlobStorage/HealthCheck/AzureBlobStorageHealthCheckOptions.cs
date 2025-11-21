@@ -1,4 +1,5 @@
 ﻿namespace Paradigm.Enterprise.Services.BlobStorage.HealthCheck;
+
 internal class AzureBlobStorageHealthCheckOptions
 {
     /// <summary>

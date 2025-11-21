@@ -2,6 +2,7 @@
 using Paradigm.Enterprise.Services.Email.Models;
 
 namespace Paradigm.Enterprise.Services.Email;
+
 public interface IEmailService : IService
 {
     /// <summary>
