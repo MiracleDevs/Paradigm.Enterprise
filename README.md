@@ -82,6 +82,7 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 Version `1.0.22`
 
 - Added `TableWriter` service that provides a unified service for exporting table data into multiple file formats including Excel (.xlsx), CSV, and XML.
+- Removed JSON support from `TableReader` service.
 
 Version `1.0.21`
 

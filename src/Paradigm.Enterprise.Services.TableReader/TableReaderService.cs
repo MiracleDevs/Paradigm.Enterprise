@@ -1,7 +1,6 @@
 ﻿using Paradigm.Enterprise.Services.TableReader.Configuration;
 using Paradigm.Enterprise.Services.TableReader.Readers;
 using Paradigm.Enterprise.Services.TableReader.Readers.Csv;
-using Paradigm.Enterprise.Services.TableReader.Readers.Json;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 
@@ -30,9 +29,6 @@ public class TableReaderService : ITableReaderService
             case TableFileTypes.Csv:
                 return CsvTableReader.OpenFromStream(sourceStream, sourceHasHeader, configuration.CsvParserConfiguration);
 
-            case TableFileTypes.Json:
-                return JsonTableReader.OpenFromStream(sourceStream, sourceHasHeader);
-
             case TableFileTypes.Xls:
                 return XlsTableReader.OpenFromStream(sourceStream, sourceHasHeader);
 
@@ -60,9 +56,6 @@ public class TableReaderService : ITableReaderService
         {
             case TableFileTypes.Csv:
                 return CsvTableReader.OpenFromContent(sourceBytes, sourceHasHeader, configuration.CsvParserConfiguration);
-
-            case TableFileTypes.Json:
-                return JsonTableReader.OpenFromContent(sourceBytes, sourceHasHeader);
 
             case TableFileTypes.Xls:
                 return XlsTableReader.OpenFromContent(sourceBytes, sourceHasHeader);

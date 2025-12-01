@@ -1,7 +1,6 @@
 ﻿using Paradigm.Enterprise.Services.TableReader;
 using Paradigm.Enterprise.Services.TableReader.Configuration;
 using Paradigm.Enterprise.Services.TableReader.Readers.Csv;
-using Paradigm.Enterprise.Services.TableReader.Readers.Json;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 using System.Text;
@@ -41,24 +40,6 @@ public class TableReaderServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.IsInstanceOfType(result, typeof(CsvTableReader));
-    }
-
-    [TestMethod]
-    public void GetReaderInstance_WithJsonConfiguration_ReturnsJsonTableReader()
-    {
-        // Arrange
-        var bytes = Encoding.UTF8.GetBytes("{\"data\":[{\"Name\":\"John\",\"Age\":25}]}");
-        var configuration = new TableConfiguration
-        {
-            TableFileType = TableFileTypes.Json
-        };
-
-        // Act
-        var result = _service.GetReaderInstance(bytes, true, configuration);
-
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.IsInstanceOfType(result, typeof(JsonTableReader));
     }
 
     [TestMethod]
@@ -331,25 +312,6 @@ public class TableReaderServiceTests
         Assert.IsInstanceOfType(result, typeof(CsvTableReader));
     }
 
-    [TestMethod]
-    public void GetReaderInstance_WithIndentResultsConfiguration_PassesConfiguration()
-    {
-        // Arrange
-        var bytes = Encoding.UTF8.GetBytes("{\"data\":[{\"Name\":\"John\",\"Age\":25}]}");
-        var configuration = new TableConfiguration
-        {
-            TableFileType = TableFileTypes.Json,
-            IndentResults = true
-        };
-
-        // Act
-        var result = _service.GetReaderInstance(bytes, true, configuration);
-
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.IsInstanceOfType(result, typeof(JsonTableReader));
-    }
-
     #endregion
 
     #region Edge cases and error handling
@@ -545,26 +507,6 @@ public class TableReaderServiceTests
         var row2 = result.GetCurrentRow();
         Assert.AreEqual("Jane", row2.GetValue(0));
         Assert.AreEqual("30", row2.GetValue(1));
-    }
-
-    [TestMethod]
-    public void GetReaderInstance_JsonFromStream_ParsesCorrectly()
-    {
-        // Arrange
-        var content = "{\"data\":[{\"Name\":\"John\",\"Age\":25}]}";
-        var bytes = Encoding.UTF8.GetBytes(content);
-        using var stream = new MemoryStream(bytes);
-        var configuration = new TableConfiguration
-        {
-            TableFileType = TableFileTypes.Json
-        };
-
-        // Act
-        var result = _service.GetReaderInstance(stream, true, configuration);
-
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.IsInstanceOfType(result, typeof(JsonTableReader));
     }
 
     [TestMethod]
@@ -1012,34 +954,6 @@ public class TableReaderServiceTests
         Assert.AreEqual(30, employees[1].Age);
         Assert.AreEqual("jane.smith@example.com", employees[1].Email);
         Assert.AreEqual("Marketing", employees[1].Department);
-    }
-
-    [TestMethod]
-    public void GetReaderInstance_IColumnOverload_WorksWithJsonReader()
-    {
-        // Arrange
-        var content = "{\"data\":[{\"Name\":\"John\",\"Age\":25,\"Active\":true},{\"Name\":\"Jane\",\"Age\":30,\"Active\":false}]}";
-        var bytes = Encoding.UTF8.GetBytes(content);
-        using var stream = new MemoryStream(bytes);
-        var configuration = new TableConfiguration
-        {
-            TableFileType = TableFileTypes.Json
-        };
-
-        // Act
-        var reader = _service.GetReaderInstance(stream, true, configuration);
-        var schema = reader.Schema;
-        var nameColumn = schema.GetRequiredColumn("Name");
-        var ageColumn = schema.GetRequiredColumn("Age");
-        var activeColumn = schema.GetRequiredColumn("Active");
-
-        // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
-        var row1 = reader.GetCurrentRow();
-
-        Assert.AreEqual("John", row1.GetString(nameColumn));
-        Assert.AreEqual(25, row1.GetInt32(ageColumn));
-        Assert.IsTrue(row1.GetBoolean(activeColumn));
     }
 
     [TestMethod]
