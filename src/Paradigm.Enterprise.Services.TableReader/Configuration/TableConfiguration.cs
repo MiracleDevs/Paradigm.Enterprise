@@ -1,14 +1,14 @@
 ﻿namespace Paradigm.Enterprise.Services.TableReader.Configuration;
 
-public class TableReaderConfiguration
+public class TableConfiguration
 {
     /// <summary>
-    /// Gets the type of the table reader.
+    /// Gets the type of the table file.
     /// </summary>
     /// <value>
-    /// The type of the table reader.
+    /// The type of the table file.
     /// </value>
-    public TableReaderTypes TableReaderType { get; set; }
+    public TableFileTypes TableFileType { get; set; }
 
     /// <summary>
     /// Gets or sets the CSV parser configuration.

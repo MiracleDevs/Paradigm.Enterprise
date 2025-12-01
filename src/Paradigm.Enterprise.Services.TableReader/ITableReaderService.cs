@@ -13,7 +13,7 @@ public interface ITableReaderService : IService
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    ITableReader GetReaderInstance(Stream sourceStream, bool sourceHasHeader, TableReaderConfiguration configuration);
+    ITableReader GetReaderInstance(Stream sourceStream, bool sourceHasHeader, TableConfiguration configuration);
 
     /// <summary>
     /// Gets the reader instance.
@@ -22,5 +22,5 @@ public interface ITableReaderService : IService
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    ITableReader GetReaderInstance(byte[] sourceBytes, bool sourceHasHeader, TableReaderConfiguration configuration);
+    ITableReader GetReaderInstance(byte[] sourceBytes, bool sourceHasHeader, TableConfiguration configuration);
 }

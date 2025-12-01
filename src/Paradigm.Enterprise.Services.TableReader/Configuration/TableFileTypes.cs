@@ -1,6 +1,6 @@
 ﻿namespace Paradigm.Enterprise.Services.TableReader.Configuration;
 
-public enum TableReaderTypes
+public enum TableFileTypes
 {
     Csv = 0,
     Json = 1,

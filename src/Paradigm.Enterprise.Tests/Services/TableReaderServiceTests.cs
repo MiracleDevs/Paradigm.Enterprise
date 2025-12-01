@@ -29,9 +29,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         var bytes = Encoding.UTF8.GetBytes("Name,Age\nJohn,25");
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -48,9 +48,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         var bytes = Encoding.UTF8.GetBytes("{\"data\":[{\"Name\":\"John\",\"Age\":25}]}");
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Json
+            TableFileType = TableFileTypes.Json
         };
 
         // Act
@@ -68,9 +68,9 @@ public class TableReaderServiceTests
         // For this test, we'll use a simple approach that doesn't require parsing actual XLS content
         // We'll test that the service correctly routes to the XlsTableReader based on configuration
         var xlsBytes = CreateSimpleXlsBytes();
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Xls
+            TableFileType = TableFileTypes.Xls
         };
 
         // Act & Assert
@@ -99,9 +99,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         var bytes = Encoding.UTF8.GetBytes("<root><item><name>John</name><age>25</age></item></root>");
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Xml
+            TableFileType = TableFileTypes.Xml
         };
 
         // Act
@@ -117,9 +117,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         var bytes = Encoding.UTF8.GetBytes("test data");
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = (TableReaderTypes)999 // Invalid enum value
+            TableFileType = (TableFileTypes)999 // Invalid enum value
         };
 
         // Act & Assert
@@ -133,9 +133,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         byte[]? bytes = null;
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -149,9 +149,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         var bytes = new byte[0];
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -173,9 +173,9 @@ public class TableReaderServiceTests
         var content = "Name,Age\nJohn,25";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -194,9 +194,9 @@ public class TableReaderServiceTests
         var content = "Name,Age\nJohn,25";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -217,9 +217,9 @@ public class TableReaderServiceTests
         using var stream = new MemoryStream(bytes);
         stream.Position = 5; // Start partway through
 
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -253,9 +253,9 @@ public class TableReaderServiceTests
         var content = "Name,Age\nJohn,25";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new NonSeekableStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -272,9 +272,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         Stream? stream = null;
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -288,9 +288,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         using var stream = new MemoryStream();
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -317,9 +317,9 @@ public class TableReaderServiceTests
             Quotation = '\'',
             EscapeCharacter = '\\'
         };
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = customCsvConfig
         };
 
@@ -336,9 +336,9 @@ public class TableReaderServiceTests
     {
         // Arrange
         var bytes = Encoding.UTF8.GetBytes("{\"data\":[{\"Name\":\"John\",\"Age\":25}]}");
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Json,
+            TableFileType = TableFileTypes.Json,
             IndentResults = true
         };
 
@@ -365,9 +365,9 @@ public class TableReaderServiceTests
         }
         var bytes = Encoding.UTF8.GetBytes(largeContent.ToString());
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -385,9 +385,9 @@ public class TableReaderServiceTests
         // Arrange
         var binaryData = new byte[] { 0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD };
         using var stream = new MemoryStream(binaryData);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -433,9 +433,9 @@ public class TableReaderServiceTests
         try
         {
             using var fileStream = File.OpenRead(tempFile);
-            var configuration = new TableReaderConfiguration
+            var configuration = new TableConfiguration
             {
-                TableReaderType = TableReaderTypes.Csv,
+                TableFileType = TableFileTypes.Csv,
                 CsvParserConfiguration = CsvParserConfiguration.Default
             };
 
@@ -468,9 +468,9 @@ public class TableReaderServiceTests
 
         var bytes = Encoding.UTF8.GetBytes(largeContent.ToString());
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -515,9 +515,9 @@ public class TableReaderServiceTests
         var content = "Name,Age\r\nJohn,25\r\nJane,30\r\nBob,35";  // Use \r\n for proper CSV format
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -554,9 +554,9 @@ public class TableReaderServiceTests
         var content = "{\"data\":[{\"Name\":\"John\",\"Age\":25}]}";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Json
+            TableFileType = TableFileTypes.Json
         };
 
         // Act
@@ -574,9 +574,9 @@ public class TableReaderServiceTests
         var content = "<root><item><name>John</name><age>25</age></item></root>";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Xml
+            TableFileType = TableFileTypes.Xml
         };
 
         // Act
@@ -596,9 +596,9 @@ public class TableReaderServiceTests
         using var stream = new MemoryStream(bytes);
         stream.Position = 10; // Start partway through
 
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -629,9 +629,9 @@ public class TableReaderServiceTests
         var content = "Name,Age\r\nJohn,25";
         var bytes = Encoding.UTF8.GetBytes(content);
         var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -658,9 +658,9 @@ public class TableReaderServiceTests
         var content = "Name,Age,Email\r\nJohn,25,john@example.com\r\nJane,30,jane@example.com";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -689,9 +689,9 @@ public class TableReaderServiceTests
         var content = "Name,Age,YearsExperience\r\nJohn,25,5\r\nJane,30,8";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -720,9 +720,9 @@ public class TableReaderServiceTests
         var content = "ProductName,Price,InStock\r\nLaptop,999.99,true\r\nMouse,29.99,false";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -754,9 +754,9 @@ public class TableReaderServiceTests
         var content = "Name,Age,Email\r\nJohn,25,\r\nJane,,jane@example.com";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -791,9 +791,9 @@ public class TableReaderServiceTests
         var content = "Name,Age,Score,Active,Grade\r\nJohn,25,98.5,true,A\r\nJane,30,87.3,false,B";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -834,9 +834,9 @@ public class TableReaderServiceTests
         var content = "ByteVal,Int16Val,Int32Val,Int64Val,FloatVal,DecimalVal\r\n255,32767,2147483647,9223372036854775807,3.14,99.99";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -869,9 +869,9 @@ public class TableReaderServiceTests
         var content = "SByteVal,UInt16Val,UInt32Val,UInt64Val\r\n127,65535,4294967295,18446744073709551615";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -900,9 +900,9 @@ public class TableReaderServiceTests
         var content = "EventName,EventDate\r\nMeeting,2025-10-28\r\nConference,2025-12-15";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -927,9 +927,9 @@ public class TableReaderServiceTests
         var content = "Name,Age,City\r\nJohn,25,NYC\r\nJane,30,LA\r\nBob,35,Chicago";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -963,9 +963,9 @@ public class TableReaderServiceTests
                      "Jane,Smith,30,jane.smith@example.com,Marketing";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Csv,
+            TableFileType = TableFileTypes.Csv,
             CsvParserConfiguration = CsvParserConfiguration.Default
         };
 
@@ -1021,9 +1021,9 @@ public class TableReaderServiceTests
         var content = "{\"data\":[{\"Name\":\"John\",\"Age\":25,\"Active\":true},{\"Name\":\"Jane\",\"Age\":30,\"Active\":false}]}";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Json
+            TableFileType = TableFileTypes.Json
         };
 
         // Act
@@ -1049,9 +1049,9 @@ public class TableReaderServiceTests
         var content = "<root><item><Name>John</Name><Age>25</Age></item><item><Name>Jane</Name><Age>30</Age></item></root>";
         var bytes = Encoding.UTF8.GetBytes(content);
         using var stream = new MemoryStream(bytes);
-        var configuration = new TableReaderConfiguration
+        var configuration = new TableConfiguration
         {
-            TableReaderType = TableReaderTypes.Xml
+            TableFileType = TableFileTypes.Xml
         };
 
         // Act

@@ -16,7 +16,7 @@ public class TableReaderService : ITableReaderService
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    public ITableReader GetReaderInstance(Stream? sourceStream, bool sourceHasHeader, TableReaderConfiguration configuration)
+    public ITableReader GetReaderInstance(Stream? sourceStream, bool sourceHasHeader, TableConfiguration configuration)
     {
         if (sourceStream is null)
             throw new ArgumentNullException(nameof(sourceStream));
@@ -25,18 +25,18 @@ public class TableReaderService : ITableReaderService
         if (sourceStream.CanSeek && sourceStream.Position != 0)
             sourceStream.Position = 0;
 
-        switch (configuration.TableReaderType)
+        switch (configuration.TableFileType)
         {
-            case TableReaderTypes.Csv:
+            case TableFileTypes.Csv:
                 return CsvTableReader.OpenFromStream(sourceStream, sourceHasHeader, configuration.CsvParserConfiguration);
 
-            case TableReaderTypes.Json:
+            case TableFileTypes.Json:
                 return JsonTableReader.OpenFromStream(sourceStream, sourceHasHeader);
 
-            case TableReaderTypes.Xls:
+            case TableFileTypes.Xls:
                 return XlsTableReader.OpenFromStream(sourceStream, sourceHasHeader);
 
-            case TableReaderTypes.Xml:
+            case TableFileTypes.Xml:
                 return XmlTableReader.OpenFromStream(sourceStream, sourceHasHeader);
         }
 
@@ -51,23 +51,23 @@ public class TableReaderService : ITableReaderService
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
     /// <exception cref="Exception">TableReader not found.</exception>
-    public ITableReader GetReaderInstance(byte[]? sourceBytes, bool sourceHasHeader, TableReaderConfiguration configuration)
+    public ITableReader GetReaderInstance(byte[]? sourceBytes, bool sourceHasHeader, TableConfiguration configuration)
     {
         if (sourceBytes is null)
             throw new ArgumentNullException(nameof(sourceBytes));
 
-        switch (configuration.TableReaderType)
+        switch (configuration.TableFileType)
         {
-            case TableReaderTypes.Csv:
+            case TableFileTypes.Csv:
                 return CsvTableReader.OpenFromContent(sourceBytes, sourceHasHeader, configuration.CsvParserConfiguration);
 
-            case TableReaderTypes.Json:
+            case TableFileTypes.Json:
                 return JsonTableReader.OpenFromContent(sourceBytes, sourceHasHeader);
 
-            case TableReaderTypes.Xls:
+            case TableFileTypes.Xls:
                 return XlsTableReader.OpenFromContent(sourceBytes, sourceHasHeader);
 
-            case TableReaderTypes.Xml:
+            case TableFileTypes.Xml:
                 return XmlTableReader.OpenFromContent(sourceBytes, sourceHasHeader);
         }
 
