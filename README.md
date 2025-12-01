@@ -79,6 +79,10 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.22`
+
+- Added `TableWriter` service that provides a unified service for exporting table data into multiple file formats including Excel (.xlsx), CSV, and XML.
+
 Version `1.0.21`
 
 - Added protected `RemoveAggregate` methods to `EditRepositoryBase` to allow aggregate root repositories to delete aggregated child entities without requiring separate repositories, maintaining DDD aggregate boundaries.
