@@ -51,7 +51,7 @@ internal static class XmlTableWriter
             for (int i = 0; i < columnNamesList.Count; i++)
             {
                 var columnName = columnNamesList[i];
-                
+
                 if (!IsValidXmlElementName(columnName))
                 {
                     throw new ArgumentException(

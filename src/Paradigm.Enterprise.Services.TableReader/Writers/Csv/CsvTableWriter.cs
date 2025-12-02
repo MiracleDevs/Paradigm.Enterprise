@@ -60,11 +60,8 @@ internal static class CsvTableWriter
             {
                 var rowValues = getColumnValues(enumerator.Current).ToList();
 
-                // Ensure consistent column count
-                while (rowValues.Count < columnCount)
-                {
-                    rowValues.Add(string.Empty);
-                }
+                if (rowValues.Count != columnCount)
+                    throw new InvalidOperationException("Inconsistent column count in data rows.");
 
                 await WriteRowAsync(writer, rowValues.Take(columnCount), columnDelimiter, rowDelimiter, quote, escape);
             }

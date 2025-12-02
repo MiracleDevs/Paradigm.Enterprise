@@ -80,43 +80,52 @@ public enum TableFileTypes
 
 **Migration Strategy**: Update all references in a single commit to maintain consistency.
 
-#### 2. ITableWriterService Interface
+#### 2. TableWriterParameters Model
+
+**File**: `src/Paradigm.Enterprise.Services.TableReader/Models/TableWriterParameters.cs`
+
+A parameters object model that encapsulates all writer parameters, providing a cleaner API and easier extensibility.
+
+#### 3. ITableWriterService Interface
 
 **File**: `src/Paradigm.Enterprise.Services.TableReader/ITableWriterService.cs`
 
 ```csharp
 public interface ITableWriterService : IService
 {
-    Task WriteToStreamAsync<T>(
-        Stream targetStream,
-        IEnumerable<T> data,
-        TableFileTypes format,
-        bool includeHeader,
-        Func<T, IEnumerable<string>> getColumnValues,
-        IEnumerable<string>? columnNames = null,
-        TableReaderConfiguration? configuration = null);
+    Task WriteToStreamAsync<T>(Stream targetStream, TableWriterParameters<T> parameters);
 
-    Task<byte[]> WriteToBytesAsync<T>(
-        IEnumerable<T> data,
-        TableFileTypes format,
-        bool includeHeader,
-        Func<T, IEnumerable<string>> getColumnValues,
-        IEnumerable<string>? columnNames = null,
-        TableReaderConfiguration? configuration = null);
+    Task<byte[]> WriteToBytesAsync<T>(TableWriterParameters<T> parameters);
+}
+```
+
+**File**: `src/Paradigm.Enterprise.Services.TableReader/Models/TableWriterParameters.cs`
+
+```csharp
+public class TableWriterParameters<T>
+{
+    public IEnumerable<T> Data { get; set; } = null!;
+    public TableFileTypes Format { get; set; }
+    public bool IncludeHeader { get; set; }
+    public Func<T, IEnumerable<string?>> GetColumnValues { get; set; } = null!;
+    public IEnumerable<string>? ColumnNames { get; set; }
+    public TableConfiguration? Configuration { get; set; }
 }
 ```
 
 **Key Design Decisions**:
 
-1. **Delegate-Based Data Extraction**: The `getColumnValues` delegate allows callers to specify how to extract column values from each item, avoiding reflection and providing flexibility for custom transformations.
+1. **Parameters Object Pattern**: All parameters are encapsulated in a `TableWriterParameters<T>` object, providing a cleaner API and easier extensibility.
 
-2. **Optional Column Names**: If `columnNames` is null and `includeHeader` is true, column names will be auto-generated (e.g., "Column1", "Column2", etc.).
+2. **Delegate-Based Data Extraction**: The `GetColumnValues` delegate allows callers to specify how to extract column values from each item, avoiding reflection and providing flexibility for custom transformations. The delegate returns `IEnumerable<string?>` to support null values.
 
-3. **Header Control**: The `includeHeader` parameter allows callers to control whether headers are written, similar to the reader's `sourceHasHeader` parameter.
+3. **Optional Column Names**: If `ColumnNames` is null and `IncludeHeader` is true, column names will be auto-generated (e.g., "Column1", "Column2", etc.).
 
-4. **Configuration Reuse**: Reuses `TableReaderConfiguration` for consistency, with CSV-specific settings coming from `CsvParserConfiguration`.
+4. **Header Control**: The `IncludeHeader` parameter allows callers to control whether headers are written, similar to the reader's `sourceHasHeader` parameter.
 
-#### 3. TableWriterService Implementation
+5. **Configuration Reuse**: Uses `TableConfiguration` (renamed from `TableReaderConfiguration`) for consistency, with CSV-specific settings coming from `CsvParserConfiguration`.
+
+#### 4. TableWriterService Implementation
 
 **File**: `src/Paradigm.Enterprise.Services.TableReader/TableWriterService.cs`
 
@@ -128,7 +137,7 @@ The service implementation will:
 - Handle null checks and validation
 - For byte[] method: create MemoryStream, write to it, then return byte array
 
-#### 4. Writer Implementations
+#### 5. Writer Implementations
 
 Each writer will be located in `src/Paradigm.Enterprise.Services.TableReader/Writers/{Format}/` directory:
 
@@ -159,34 +168,51 @@ var data = new[] {
     new Person { Name = "Jane", Age = 30 }
 };
 
-var config = new TableReaderConfiguration
+var parameters = new TableWriterParameters<Person>
 {
-    TableReaderType = TableFileTypes.Csv,
-    CsvParserConfiguration = CsvParserConfiguration.Default
+    Data = data,
+    Format = TableFileTypes.Csv,
+    IncludeHeader = true,
+    GetColumnValues = p => new[] { p.Name, p.Age.ToString() },
+    ColumnNames = new[] { "Name", "Age" },
+    Configuration = new TableConfiguration
+    {
+        TableFileType = TableFileTypes.Csv,
+        CsvParserConfiguration = CsvParserConfiguration.Default
+    }
 };
 
-await service.WriteToStreamAsync(
-    stream,
-    data,
-    TableFileTypes.Csv,
-    includeHeader: true,
-    getColumnValues: p => new[] { p.Name, p.Age.ToString() },
-    columnNames: new[] { "Name", "Age" },
-    configuration: config
-);
+await service.WriteToStreamAsync(stream, parameters);
 ```
 
 #### XLSX Export
 
 ```csharp
-await service.WriteToStreamAsync(
-    stream,
-    data,
-    TableFileTypes.Xls,
-    includeHeader: true,
-    getColumnValues: p => new[] { p.Name, p.Age.ToString() },
-    columnNames: new[] { "Name", "Age" }
-);
+var parameters = new TableWriterParameters<Person>
+{
+    Data = data,
+    Format = TableFileTypes.Xls,
+    IncludeHeader = true,
+    GetColumnValues = p => new[] { p.Name, p.Age.ToString() },
+    ColumnNames = new[] { "Name", "Age" }
+};
+
+await service.WriteToStreamAsync(stream, parameters);
+```
+
+#### Byte Array Export
+
+```csharp
+var parameters = new TableWriterParameters<Person>
+{
+    Data = data,
+    Format = TableFileTypes.Csv,
+    IncludeHeader = true,
+    GetColumnValues = p => new[] { p.Name, p.Age.ToString() },
+    ColumnNames = new[] { "Name", "Age" }
+};
+
+var bytes = await service.WriteToBytesAsync(parameters);
 ```
 
 ### Key Considerations
@@ -322,9 +348,9 @@ var config = new TableReaderConfiguration
 
 **After**:
 ```csharp
-var config = new TableReaderConfiguration
+var config = new TableConfiguration
 {
-    TableReaderType = TableFileTypes.Csv
+    TableFileType = TableFileTypes.Csv
 };
 ```
 
