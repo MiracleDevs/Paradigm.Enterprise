@@ -193,7 +193,7 @@ await service.WriteToStreamAsync(
 
 1. **No Reflection**: All data extraction is done via delegate functions, providing better performance and flexibility.
 
-2. **Null Handling**: Null values should be converted to empty strings or appropriate null representations based on the format (e.g., empty string in CSV).
+2. **Null Handling**: Null values are preserved as null and not converted to empty strings. The distinction between null and empty string is maintained, and each format handles null values appropriately (e.g., null remains null in CSV, not converted to an empty string). It is the caller's responsibility to decide how to represent null values through the `getColumnValues` delegate if conversion is desired.
 
 3. **Culture Support**: CSV writing respects the culture settings from `CsvParserConfiguration` for numeric and date formatting.
 

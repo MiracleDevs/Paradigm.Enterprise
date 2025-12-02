@@ -17,7 +17,7 @@ internal static class CsvTableWriter
     /// <param name="getColumnValues">The delegate function that extracts column values from each item.</param>
     /// <param name="columnNames">The column names.</param>
     /// <param name="configuration">The configuration.</param>
-    public static async Task WriteToStreamAsync<T>(Stream targetStream, IEnumerable<T> data, bool includeHeader, Func<T, IEnumerable<string>> getColumnValues, IEnumerable<string>? columnNames, CsvParserConfiguration? configuration)
+    public static async Task WriteToStreamAsync<T>(Stream targetStream, IEnumerable<T> data, bool includeHeader, Func<T, IEnumerable<string?>> getColumnValues, IEnumerable<string>? columnNames, CsvParserConfiguration? configuration)
     {
         var config = configuration ?? CsvParserConfiguration.Default;
         var columnDelimiter = config.ColumnDelimiter ?? ",";
@@ -86,7 +86,7 @@ internal static class CsvTableWriter
     /// <summary>
     /// Writes a single row to the stream.
     /// </summary>
-    private static async Task WriteRowAsync(StreamWriter writer, IEnumerable<string> values, string columnDelimiter, string rowDelimiter, char quote, char escape)
+    private static async Task WriteRowAsync(StreamWriter writer, IEnumerable<string?> values, string columnDelimiter, string rowDelimiter, char quote, char escape)
     {
         var first = true;
 
@@ -97,7 +97,7 @@ internal static class CsvTableWriter
 
             first = false;
 
-            var escapedValue = EscapeCsvValue(value ?? string.Empty, columnDelimiter, rowDelimiter, quote, escape);
+            var escapedValue = EscapeCsvValue(value, columnDelimiter, rowDelimiter, quote, escape);
             await writer.WriteAsync(escapedValue);
         }
 
@@ -107,46 +107,70 @@ internal static class CsvTableWriter
     /// <summary>
     /// Escapes a CSV value according to the configuration.
     /// </summary>
-    private static string EscapeCsvValue(string value, string columnDelimiter, string rowDelimiter, char quote, char escape)
+    private static string? EscapeCsvValue(string? value, string columnDelimiter, string rowDelimiter, char quote, char escape)
     {
+        if (value is null)
+            return value;
+
         // Check if value needs quoting (contains delimiter, quote, newline, or row delimiter)
         var needsQuoting = value.Contains(columnDelimiter) ||
-                          value.Contains(quote) ||
-                          value.Contains('\n') ||
-                          value.Contains('\r') ||
-                          value.Contains(rowDelimiter);
+            value.Contains(quote) ||
+            value.Contains('\n') ||
+            value.Contains('\r') ||
+            value.Contains(rowDelimiter);
 
         if (!needsQuoting)
             return value;
 
-        // Escape quotes and escape characters within the value
-        var escaped = new StringBuilder();
-        escaped.Append(quote);
-
+        // Count quotes and escape characters to calculate final size
+        // Each quote/escape character doubles, plus 2 for surrounding quotes
+        int quoteCount = 0;
+        int escapeCount = 0;
         foreach (var ch in value)
         {
             if (ch == quote)
-            {
-                // Escape quote by doubling it (standard CSV behavior)
-                escaped.Append(quote);
-                escaped.Append(quote);
-            }
+                quoteCount++;
             else if (ch == escape)
-            {
-                // Escape escape character
-                escaped.Append(escape);
-                escaped.Append(escape);
-            }
-            else
-            {
-                escaped.Append(ch);
-            }
+                escapeCount++;
         }
 
-        escaped.Append(quote);
-        return escaped.ToString();
+        // Final size: original length + quote count (each quote doubles) + escape count (each escape doubles) + 2 (surrounding quotes)
+        var finalLength = value.Length + quoteCount + escapeCount + 2;
+
+        // Use string.Create with Span<char> for better performance than StringBuilder
+        return string.Create(finalLength, (value, quote, escape), static (span, state) =>
+        {
+            var (original, quoteChar, escapeChar) = state;
+            int pos = 0;
+
+            // Opening quote
+            span[pos++] = quoteChar;
+
+            // Escape quotes and escape characters within the value
+            foreach (var ch in original)
+            {
+                if (ch == quoteChar)
+                {
+                    // Escape quote by doubling it (standard CSV behavior)
+                    span[pos++] = quoteChar;
+                    span[pos++] = quoteChar;
+                }
+                else if (ch == escapeChar)
+                {
+                    // Escape escape character
+                    span[pos++] = escapeChar;
+                    span[pos++] = escapeChar;
+                }
+                else
+                {
+                    span[pos++] = ch;
+                }
+            }
+
+            // Closing quote
+            span[pos] = quoteChar;
+        });
     }
 
     #endregion
 }
-

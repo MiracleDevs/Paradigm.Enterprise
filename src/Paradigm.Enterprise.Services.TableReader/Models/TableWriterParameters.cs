@@ -38,7 +38,7 @@ public class TableWriterParameters<T>
     /// <value>
     /// The get column values.
     /// </value>
-    public Func<T, IEnumerable<string>> GetColumnValues { get; set; } = null!;
+    public Func<T, IEnumerable<string?>> GetColumnValues { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets the column names for the header. If null and includeHeader is true, column names will be auto-generated.

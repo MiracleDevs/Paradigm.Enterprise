@@ -1,3 +1,4 @@
+using Paradigm.Enterprise.Services.TableReader.Configuration;
 using System.Text;
 using System.Xml;
 
@@ -16,7 +17,7 @@ internal static class XmlTableWriter
     /// <param name="includeHeader">if set to <c>true</c> [include header].</param>
     /// <param name="getColumnValues">The delegate function that extracts column values from each item.</param>
     /// <param name="columnNames">The column names.</param>
-    public static async Task WriteToStreamAsync<T>(Stream targetStream, IEnumerable<T> data, bool includeHeader, Func<T, IEnumerable<string>> getColumnValues, IEnumerable<string>? columnNames)
+    public static async Task WriteToStreamAsync<T>(Stream targetStream, IEnumerable<T> data, bool includeHeader, Func<T, IEnumerable<string?>> getColumnValues, IEnumerable<string>? columnNames, XmlParserConfiguration? configuration)
     {
         // Determine column count and names
         var columnCount = 0;
@@ -44,13 +45,31 @@ internal static class XmlTableWriter
             columnCount = columnNamesList.Count;
         }
 
+        // Pre-sanitize all column names once (they're reused for all rows)
+        // If no column names provided, generate and sanitize them once
+        string[] sanitizedColumnNames;
+        
+        if (columnNamesList != null)
+        {
+            sanitizedColumnNames = columnNamesList.Select(SanitizeXmlName).ToArray();
+        }
+        else
+        {
+            // Generate column names and sanitize them once
+            sanitizedColumnNames = new string[columnCount];
+            for (int i = 0; i < columnCount; i++)
+            {
+                sanitizedColumnNames[i] = $"Column{i + 1}";
+            }
+        }
+
         var settings = new XmlWriterSettings
         {
             Async = true,
-            Indent = true,
-            IndentChars = "  ",
-            Encoding = Encoding.UTF8,
-            OmitXmlDeclaration = false
+            Indent = configuration?.Indent ?? true,
+            IndentChars = configuration?.IndentChars ?? "  ",
+            Encoding = configuration?.Enconding ?? Encoding.UTF8,
+            OmitXmlDeclaration = configuration?.OmitXmlDeclaration ?? false
         };
 
         using var writer = XmlWriter.Create(targetStream, settings);
@@ -60,25 +79,22 @@ internal static class XmlTableWriter
 
         // Reset enumerator and write rows
         enumerator = data.GetEnumerator();
+
         while (enumerator.MoveNext())
         {
             var rowValues = getColumnValues(enumerator.Current).ToList();
 
-            // Ensure consistent column count
-            while (rowValues.Count < columnCount)
-            {
-                rowValues.Add(string.Empty);
-            }
+            if (rowValues.Count != columnCount)
+                throw new InvalidOperationException("Inconsistent column count in data rows.");
 
             await writer.WriteStartElementAsync(null, "Row", null);
 
             for (int i = 0; i < columnCount; i++)
             {
-                var columnName = SanitizeXmlName(columnNamesList?[i] ?? $"Column{i + 1}");
-                var value = i < rowValues.Count ? (rowValues[i] ?? string.Empty) : string.Empty;
+                var columnName = sanitizedColumnNames[i];
 
                 await writer.WriteStartElementAsync(null, columnName, null);
-                await writer.WriteStringAsync(value);
+                await writer.WriteStringAsync(rowValues[i]);
                 await writer.WriteEndElementAsync();
             }
 
@@ -102,28 +118,20 @@ internal static class XmlTableWriter
         if (string.IsNullOrWhiteSpace(name))
             return "Column";
 
-        // XML element names must start with a letter or underscore
-        var sanitized = new StringBuilder();
-        var firstChar = name[0];
-
-        if (char.IsLetter(firstChar) || firstChar == '_')
-            sanitized.Append(firstChar);
-        else
-            sanitized.Append('_');
-
-        // Remaining characters can be letters, digits, hyphens, periods, or underscores
-        for (int i = 1; i < name.Length; i++)
+        return string.Create(name.Length, name, static (span, original) =>
         {
-            var ch = name[i];
-            if (char.IsLetterOrDigit(ch) || ch == '-' || ch == '.' || ch == '_')
-                sanitized.Append(ch);
-            else
-                sanitized.Append('_');
-        }
+            // XML element names must start with a letter or underscore
+            var firstChar = original[0];
+            span[0] = (char.IsLetter(firstChar) || firstChar == '_') ? firstChar : '_';
 
-        return sanitized.ToString();
+            // Remaining characters can be letters, digits, hyphens, periods, or underscores
+            for (int i = 1; i < original.Length; i++)
+            {
+                var ch = original[i];
+                span[i] = (char.IsLetterOrDigit(ch) || ch == '-' || ch == '.' || ch == '_') ? ch : '_';
+            }
+        });
     }
 
     #endregion
 }
-

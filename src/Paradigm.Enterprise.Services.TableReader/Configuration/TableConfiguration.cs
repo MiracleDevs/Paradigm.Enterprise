@@ -19,6 +19,14 @@ public class TableConfiguration
     public CsvParserConfiguration? CsvParserConfiguration { get; set; }
 
     /// <summary>
+    /// Gets or sets the XML parser configuration.
+    /// </summary>
+    /// <value>
+    /// The XML parser configuration.
+    /// </value>
+    public XmlParserConfiguration? XmlParserConfiguration { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether [indent results].
     /// </summary>
     /// <value>

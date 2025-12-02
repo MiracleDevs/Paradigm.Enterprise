@@ -40,7 +40,7 @@ public class TableWriterService : ITableWriterService
                 break;
 
             case TableFileTypes.Xml:
-                await XmlTableWriter.WriteToStreamAsync(targetStream, parameters.Data, parameters.IncludeHeader, parameters.GetColumnValues, parameters.ColumnNames);
+                await XmlTableWriter.WriteToStreamAsync(targetStream, parameters.Data, parameters.IncludeHeader, parameters.GetColumnValues, parameters.ColumnNames, parameters.Configuration?.XmlParserConfiguration);
                 break;
 
             default:
