@@ -45,23 +45,25 @@ internal static class XmlTableWriter
             columnCount = columnNamesList.Count;
         }
 
-        // Pre-sanitize all column names once (they're reused for all rows)
-        // If no column names provided, generate and sanitize them once
-        string[] sanitizedColumnNames;
-        
-        if (columnNamesList != null)
+        // Validate column names if provided (auto-generated names are always valid)
+        if (columnNamesList is not null)
         {
-            sanitizedColumnNames = columnNamesList.Select(SanitizeXmlName).ToArray();
-        }
-        else
-        {
-            // Generate column names and sanitize them once
-            sanitizedColumnNames = new string[columnCount];
-            for (int i = 0; i < columnCount; i++)
+            for (int i = 0; i < columnNamesList.Count; i++)
             {
-                sanitizedColumnNames[i] = $"Column{i + 1}";
+                var columnName = columnNamesList[i];
+                
+                if (!IsValidXmlElementName(columnName))
+                {
+                    throw new ArgumentException(
+                        $"Invalid XML element name at index {i}: '{columnName}'. " +
+                        "XML element names must start with a letter or underscore, and contain only letters, digits, hyphens, periods, or underscores.",
+                        nameof(columnNames));
+                }
             }
         }
+
+        var finalColumnNames = columnNamesList?.ToArray() ??
+            Enumerable.Range(1, columnCount).Select(i => $"Column{i}").ToArray();
 
         var settings = new XmlWriterSettings
         {
@@ -91,7 +93,7 @@ internal static class XmlTableWriter
 
             for (int i = 0; i < columnCount; i++)
             {
-                var columnName = sanitizedColumnNames[i];
+                var columnName = finalColumnNames[i];
 
                 await writer.WriteStartElementAsync(null, columnName, null);
                 await writer.WriteStringAsync(rowValues[i]);
@@ -111,26 +113,29 @@ internal static class XmlTableWriter
     #region Private Methods
 
     /// <summary>
-    /// Sanitizes a string to be a valid XML element name.
+    /// Validates that a string is a valid XML element name.
     /// </summary>
-    private static string SanitizeXmlName(string name)
+    /// <param name="name">The name to validate.</param>
+    /// <returns><c>true</c> if the name is valid; otherwise, <c>false</c>.</returns>
+    private static bool IsValidXmlElementName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            return "Column";
+            return false;
 
-        return string.Create(name.Length, name, static (span, original) =>
+        // XML element names must start with a letter or underscore
+        var firstChar = name[0];
+        if (!char.IsLetter(firstChar) && firstChar != '_')
+            return false;
+
+        // Remaining characters can be letters, digits, hyphens, periods, or underscores
+        for (int i = 1; i < name.Length; i++)
         {
-            // XML element names must start with a letter or underscore
-            var firstChar = original[0];
-            span[0] = (char.IsLetter(firstChar) || firstChar == '_') ? firstChar : '_';
+            var ch = name[i];
+            if (!char.IsLetterOrDigit(ch) && ch != '-' && ch != '.' && ch != '_')
+                return false;
+        }
 
-            // Remaining characters can be letters, digits, hyphens, periods, or underscores
-            for (int i = 1; i < original.Length; i++)
-            {
-                var ch = original[i];
-                span[i] = (char.IsLetterOrDigit(ch) || ch == '-' || ch == '.' || ch == '_') ? ch : '_';
-            }
-        });
+        return true;
     }
 
     #endregion
