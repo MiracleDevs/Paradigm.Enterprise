@@ -28,7 +28,7 @@ public static class HealthChecksBuilderExtensions
 
             options.ConnectionString = config.GetConnectionString(connectionStringSection);
 
-            if (containerNameSection != null)
+            if (containerNameSection is not null)
                 options.ContainerName = config.GetValue<string>(containerNameSection);
 
             return new AzureBlobStorageHealthCheck(options);
