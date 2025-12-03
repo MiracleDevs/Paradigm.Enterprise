@@ -46,6 +46,8 @@ public class TableWriterService : ITableWriterService
             default:
                 throw new ArgumentException($"Unsupported file format: {parameters.Format}", nameof(parameters));
         }
+
+        targetStream.Seek(0, SeekOrigin.Begin);
     }
 
     /// <summary>
