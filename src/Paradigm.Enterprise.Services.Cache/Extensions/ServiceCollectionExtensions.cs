@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
                 options.InstanceName = instanceName;
         });
 
-        services.AddScoped<ICacheService, CacheService>();
+        services.AddSingleton<ICacheService, CacheService>();
 
         return services;
     }
