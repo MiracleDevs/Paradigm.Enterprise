@@ -1,0 +1,31 @@
+<Solution>
+  <Folder Name="/00.Core/">
+    <Project Path="Paradigm.Enterprise.Domain/Paradigm.Enterprise.Domain.csproj" />
+    <Project Path="Paradigm.Enterprise.Interfaces/Paradigm.Enterprise.Interfaces.csproj" />
+    <Project Path="Paradigm.Enterprise.Providers/Paradigm.Enterprise.Providers.csproj" />
+  </Folder>
+  <Folder Name="/01.Data/">
+    <Project Path="Paradigm.Enterprise.Data.PostgreSQL/Paradigm.Enterprise.Data.PostgreSql.csproj" />
+    <Project Path="Paradigm.Enterprise.Data.SqlServer/Paradigm.Enterprise.Data.SqlServer.csproj" />
+    <Project Path="Paradigm.Enterprise.Data/Paradigm.Enterprise.Data.csproj" />
+  </Folder>
+  <Folder Name="/02.Services/">
+    <Project Path="Paradigm.Enterprise.Services.BlobStorage/Paradigm.Enterprise.Services.BlobStorage.csproj" />
+    <Project Path="Paradigm.Enterprise.Services.Cache/Paradigm.Enterprise.Services.Cache.csproj" />
+    <Project Path="Paradigm.Enterprise.Services.Core/Paradigm.Enterprise.Services.Core.csproj" />
+    <Project Path="Paradigm.Enterprise.Services.Email/Paradigm.Enterprise.Services.Email.csproj" />
+    <Project Path="Paradigm.Enterprise.Services.TableReader/Paradigm.Enterprise.Services.TableReader.csproj" />
+  </Folder>
+  <Folder Name="/03.WebApi/">
+    <Project Path="Paradigm.Enterprise.WebApi/Paradigm.Enterprise.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/04.Tools/">
+    <Project Path="Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj" />
+  </Folder>
+  <Folder Name="/05.Tests/">
+    <Project Path="Paradigm.Enterprise.Tests/Paradigm.Enterprise.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution items/">
+    <File Path=".editorconfig" />
+  </Folder>
+</Solution>
