@@ -15,7 +15,7 @@ block "$index - Build Solution"
 #------------------------------------------------
 # BUILD SOLUTION
 #------------------------------------------------
-execute "dotnet restore ../src/Paradigm.Enterprise.sln -v q"
-execute "dotnet build ../src/Paradigm.Enterprise.sln -c Release -v q"
+execute "dotnet restore ../src/Paradigm.Enterprise.slnx -v q"
+execute "dotnet build ../src/Paradigm.Enterprise.slnx -c Release -v q"
 
 buildSuccessfully
