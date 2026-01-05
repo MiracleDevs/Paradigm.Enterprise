@@ -79,6 +79,10 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.24`
+
+- Fixed `ExceptionHandler` class to return the original Exception type.
+
 Version `1.0.23`
 
 - Fixed `CacheService` registration method.
