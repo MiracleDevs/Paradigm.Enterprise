@@ -75,7 +75,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected string GetString(IDataReader reader, string name) => reader.GetString(reader.GetOrdinal(name));
+    protected virtual string GetString(IDataReader reader, string name) => reader.GetString(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the character.
@@ -84,7 +84,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected char GetChar(IDataReader reader, string name) => reader.GetChar(reader.GetOrdinal(name));
+    protected virtual char GetChar(IDataReader reader, string name) => reader.GetChar(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the int16.
@@ -93,7 +93,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected short GetInt16(IDataReader reader, string name) => reader.GetInt16(reader.GetOrdinal(name));
+    protected virtual short GetInt16(IDataReader reader, string name) => reader.GetInt16(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the int32.
@@ -102,7 +102,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int GetInt32(IDataReader reader, string name) => reader.GetInt32(reader.GetOrdinal(name));
+    protected virtual int GetInt32(IDataReader reader, string name) => reader.GetInt32(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the int64.
@@ -111,7 +111,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected long GetInt64(IDataReader reader, string name) => reader.GetInt64(reader.GetOrdinal(name));
+    protected virtual long GetInt64(IDataReader reader, string name) => reader.GetInt64(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the double.
@@ -120,7 +120,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected double GetDouble(IDataReader reader, string name) => reader.GetDouble(reader.GetOrdinal(name));
+    protected virtual double GetDouble(IDataReader reader, string name) => reader.GetDouble(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the decimal.
@@ -129,7 +129,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected decimal GetDecimal(IDataReader reader, string name) => reader.GetDecimal(reader.GetOrdinal(name));
+    protected virtual decimal GetDecimal(IDataReader reader, string name) => reader.GetDecimal(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the float.
@@ -138,7 +138,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected float GetFloat(IDataReader reader, string name) => reader.GetFloat(reader.GetOrdinal(name));
+    protected virtual float GetFloat(IDataReader reader, string name) => reader.GetFloat(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the boolean.
@@ -147,7 +147,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected bool GetBoolean(IDataReader reader, string name) => (bool)reader.GetValue(reader.GetOrdinal(name));
+    protected virtual bool GetBoolean(IDataReader reader, string name) => (bool)reader.GetValue(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the unique identifier.
@@ -156,7 +156,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected Guid GetGuid(IDataReader reader, string name) => reader.GetGuid(reader.GetOrdinal(name));
+    protected virtual Guid GetGuid(IDataReader reader, string name) => reader.GetGuid(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the date time.
@@ -165,7 +165,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected DateTime GetDateTime(IDataReader reader, string name) => reader.GetDateTime(reader.GetOrdinal(name));
+    protected virtual DateTime GetDateTime(IDataReader reader, string name) => reader.GetDateTime(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the date time offset.
@@ -174,7 +174,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected DateTimeOffset GetDateTimeOffset(IDataReader reader, string name) => (DateTimeOffset)reader.GetValue(reader.GetOrdinal(name));
+    protected virtual DateTimeOffset GetDateTimeOffset(IDataReader reader, string name) => (DateTimeOffset)reader.GetValue(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the byte.
@@ -183,7 +183,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected byte GetByte(IDataReader reader, string name) => reader.GetByte(reader.GetOrdinal(name));
+    protected virtual byte GetByte(IDataReader reader, string name) => reader.GetByte(reader.GetOrdinal(name));
 
     /// <summary>
     /// Gets the bytes.
@@ -192,7 +192,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="name">The name.</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected byte[] GetBytes(IDataReader reader, string name)
+    protected virtual byte[] GetBytes(IDataReader reader, string name)
     {
         var ordinal = reader.GetOrdinal(name);
         var buffer = new byte[reader.GetBytes(ordinal, 0, null, 0, 0)];
@@ -206,7 +206,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <param name="reader">The reader.</param>
     /// <param name="name">The name.</param>
     /// <returns></returns>
-    protected T[]? GetArray<T>(IDataReader reader, string name)
+    protected virtual T[]? GetArray<T>(IDataReader reader, string name)
     {
         var databaseValue = reader.GetValue(reader.GetOrdinal(name));
 
