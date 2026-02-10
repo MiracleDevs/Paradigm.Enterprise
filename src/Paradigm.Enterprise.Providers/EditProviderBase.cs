@@ -6,7 +6,7 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-[Obsolete("This class it's replaced by EntityViewProvider instead")]
+[Obsolete("Use EntityViewProviderBase instead")]
 public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository> : ReadProviderBase<TInterface, TView, TViewRepository>, IEditProvider<TView>
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
