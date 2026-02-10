@@ -6,7 +6,7 @@ using Paradigm.Enterprise.Domain.Repositories;
 namespace Paradigm.Enterprise.Data.Repositories;
 
 public abstract class EntityViewRepositoryBase<TEntity, TView, TContext>
-    : ReadRepositoryBase<TView, TContext>, IEntityViewRepository<TEntity, TView>
+    : ReadRepositoryBase<TView, TContext>, IEntityViewRepository<Interfaces.IEntity, TEntity, TView>
     where TEntity : EntityBase<Interfaces.IEntity, TEntity, TView>, Interfaces.IEntity, new()
     where TView : EntityBase, Interfaces.IEntity, new()
     where TContext : DbContextBase

@@ -11,7 +11,7 @@ public abstract class EntityViewProviderBase<TInterface, TEntity, TView, TReposi
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
-    where TRepository : IEntityViewRepository<TEntity, TView>
+    where TRepository : IEntityViewRepository<TInterface, TEntity, TView>
 {
     #region Properties
 

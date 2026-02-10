@@ -1,10 +1,12 @@
 ﻿using Paradigm.Enterprise.Domain.Entities;
+using Paradigm.Enterprise.Interfaces;
 
 namespace Paradigm.Enterprise.Domain.Repositories;
 
-public interface IEntityViewRepository<TEntity, TView> : IReadRepository<TView>
-    where TEntity : EntityBase
-    where TView : EntityBase
+public interface IEntityViewRepository<TInterface,TEntity, TView> : IReadRepository<TView>
+    where TInterface : IEntity
+    where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
+    where TView : EntityBase, TInterface, new()
 {
     Task<TEntity?> GetEntityByIdAsync(int id);
     Task<IEnumerable<TEntity>> GetEntitiesByIdsAsync(IEnumerable<int> ids);
