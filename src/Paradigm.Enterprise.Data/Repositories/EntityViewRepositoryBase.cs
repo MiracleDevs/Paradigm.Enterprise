@@ -1,24 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
-using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-
-public abstract class EntityRepositoryBase<TEntity, TView, TContext>
+public abstract class EntityViewRepositoryBase<TEntity, TView, TContext>
     : ReadRepositoryBase<TView, TContext>, IEntityViewRepository<TEntity, TView>
-    where TEntity : EntityBase
-    where TView : EntityBase
+    where TEntity : EntityBase<Interfaces.IEntity, TEntity, TView>, Interfaces.IEntity, new()
+    where TView : EntityBase, Interfaces.IEntity, new()
     where TContext : DbContextBase
 {
-    protected EntityRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)
+    protected EntityViewRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)
     {
     }
 
@@ -27,8 +20,7 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext>
     /// </summary>
     /// <param name="id">Entity identifier.</param>
     /// <returns>The entity if found; otherwise, null.</returns>
-    public async Task<TEntity?> GetEntityByIdAsync(int id) =>
-        await AsQueryableEntity().FirstOrDefaultAsync(x => x.Id == id);
+    public async Task<TEntity?> GetEntityByIdAsync(int id) => await AsQueryableEntity().FirstOrDefaultAsync(x => x.Id == id);
 
     /// <summary>
     /// Gets multiple entities by their identifiers.
@@ -62,8 +54,7 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext>
     /// </summary>
     /// <param name="id">Entity identifier.</param>
     /// <returns>True if the entity exists; otherwise, false.</returns>
-    public async Task<bool> ExistsEntityAsync(int id) =>
-        await AsQueryableEntity().AnyAsync(x => x.Id == id);
+    public async Task<bool> ExistsEntityAsync(int id) => await AsQueryableEntity().AnyAsync(x => x.Id == id);
 
     /// <summary>
     /// Adds a new entity to the context.
@@ -80,8 +71,7 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext>
     /// Adds multiple entities to the context.
     /// </summary>
     /// <param name="entities">Entities to add.</param>
-    public async Task AddAsync(IEnumerable<TEntity> entities) =>
-        await GetDbSet().AddRangeAsync(entities);
+    public async Task AddAsync(IEnumerable<TEntity> entities) => await GetDbSet().AddRangeAsync(entities);
 
     /// <summary>
     /// Deletes an entity by its identifier.
@@ -192,4 +182,3 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext>
     {
     }
 }
-

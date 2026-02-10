@@ -20,8 +20,6 @@ namespace Paradigm.Enterprise.Domain.Entities
         ///   <c>true</c> if this instance is new; otherwise, <c>false</c>.
         /// </returns>
         public bool IsNew() => Id == default;
-
-        public virtual void Validate() { } //Polémico, sólo para que ahora compile
     }
 
     public abstract class EntityBase<TInterface, TEntity, TView> : EntityBase
@@ -64,6 +62,6 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// <summary>
         /// Validates this instance.
         /// </summary>
-        //public virtual void Validate() { }
+        public virtual void Validate() { }
     }
 }
