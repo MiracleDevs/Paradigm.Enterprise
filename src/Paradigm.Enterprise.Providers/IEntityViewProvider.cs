@@ -7,17 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Paradigm.Enterprise.Providers.Prueba;
+namespace Paradigm.Enterprise.Providers;
 
-public interface IEntityProvider<TEntity, TView>
+public interface IEntityViewProvider<TEntity, TView> : IReadProvider<TView>
     where TEntity : EntityBase
     where TView : EntityBase
 {
-    Task<PaginatedResultDto<TView>> SearchAsync<TParameters>(TParameters parameters) where TParameters : PaginationParametersBase;
     Task<TView> SaveAsync(TView view);
     Task<IEnumerable<TEntity>> GetEntitiesByIdsAsync(IEnumerable<int> ids);
-    Task<IEnumerable<TView>> GetViewsByIdsAsync(IEnumerable<int> ids);
-    Task<TView?> GetViewByIdAsync(int id);
     Task<TEntity?> GetEntityByIdAsync(int id);
     Task<TView> AddAsync(TView view);
     Task<IEnumerable<TView>> AddAsync(List<TView> entitys);

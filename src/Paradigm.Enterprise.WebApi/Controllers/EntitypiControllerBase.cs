@@ -3,16 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
-using Paradigm.Enterprise.Providers.Prueba;
+using Paradigm.Enterprise.Providers;
 using Paradigm.Enterprise.WebApi.Attributes;
-using Paradigm.Enterprise.WebApi.Controllers.Prueba;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
 [AllowAnonymous]
 [ApiController]
-public abstract class EntitypiControllerBase<TProvider, TEntity, TView, TParameters> : EntityReadApiControllerBase<TProvider, TEntity, TView, TParameters>
-    where TProvider : IEntityProvider<TEntity, TView>
+public abstract class EntitypiControllerBase<TProvider, TEntity, TView, TParameters> : ReadApiControllerBase<TProvider, TView, TParameters>
+    where TProvider : IEntityViewProvider<TEntity, TView>
     where TEntity : EntityBase
     where TView : EntityBase
     where TParameters : PaginationParametersBase

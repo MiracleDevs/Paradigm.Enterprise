@@ -1,6 +1,6 @@
 ﻿using Paradigm.Enterprise.Domain.Entities;
 
-namespace Paradigm.Enterprise.Domain.Repositories.Prueba;
+namespace Paradigm.Enterprise.Domain.Repositories;
 
 public interface IEntityViewRepository<TEntity, TView> : IReadRepository<TView>
     where TEntity : EntityBase

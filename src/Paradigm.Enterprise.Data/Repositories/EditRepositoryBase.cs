@@ -5,6 +5,7 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
+[Obsolete("This class it's replaced by EntityViewRepositoryBase instead")]
 public abstract class EditRepositoryBase<TEntity, TContext> : ReadRepositoryBase<TEntity, TContext>, IEditRepository<TEntity>
      where TEntity : EntityBase
      where TContext : DbContextBase

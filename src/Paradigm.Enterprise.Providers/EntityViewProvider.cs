@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
-using Paradigm.Enterprise.Domain.Repositories.Prueba;
+using Paradigm.Enterprise.Domain.Repositories;
 using Paradigm.Enterprise.Domain.Uow;
 using Paradigm.Enterprise.Providers.Exceptions;
 
-namespace Paradigm.Enterprise.Providers.Prueba;
+namespace Paradigm.Enterprise.Providers;
 
-internal class EntityProvider<TInterface, TEntity, TView, TRepository> : ProviderBase, IEntityProvider<TEntity, TView>
+internal class EntityViewProvider<TInterface, TEntity, TView, TRepository> : ProviderBase, IEntityViewProvider<TEntity, TView>
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
@@ -39,7 +39,7 @@ internal class EntityProvider<TInterface, TEntity, TView, TRepository> : Provide
     /// Initializes a new instance of the <see cref="EditProviderBase{TEntity, TDto, TRepository}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
-    protected EntityProvider(IServiceProvider serviceProvider) : base(serviceProvider)
+    protected EntityViewProvider(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         Repository = serviceProvider.GetRequiredService<TRepository>();
         UnitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -61,6 +61,11 @@ internal class EntityProvider<TInterface, TEntity, TView, TRepository> : Provide
         return await Repository.SearchAsync(parameters);
     }
 
+    /// <summary>
+    /// Add or update a TView item
+    /// </summary>
+    /// <param name="view"></param>
+    /// <returns></returns>
     public virtual async Task<TView> SaveAsync(TView view)
     {
         return view.IsNew() ?
@@ -68,22 +73,62 @@ internal class EntityProvider<TInterface, TEntity, TView, TRepository> : Provide
             await UpdateAsync(view);
     }
 
+    /// <summary>
+    /// Returns all the TView items
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<TView>> GetAllAsync() => await Repository.GetAllAsync();
+
+    /// <summary>
+    /// Returns a list of TView
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <returns></returns>
+    public async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters) => await Repository.SearchAsync(parameters);
+
+    /// <summary>
+    /// Returns a list of TEntity by the given ids
+    /// </summary>
+    /// <param name="ids"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<TEntity>> GetEntitiesByIdsAsync(IEnumerable<int> ids) => await Repository.GetEntitiesByIdsAsync(ids);
 
+    /// <summary>
+    /// Returns a TEntity by Id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
     public virtual async Task<TEntity?> GetEntityByIdAsync(int id)
     {
         return await Repository.GetEntityByIdAsync(id)
             ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
     }
 
-    public async Task<IEnumerable<TView>> GetViewsByIdsAsync(IEnumerable<int> ids) => await Repository.GetViewsByIdsAsync(ids);
+    /// <summary>
+    /// Returns a list of TView items by the given Ids
+    /// </summary>
+    /// <param name="ids"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<TView>> GetByIdsAsync(IEnumerable<int> ids) => await Repository.GetByIdsAsync(ids);
 
-    public virtual async Task<TView?> GetViewByIdAsync(int id)
+    /// <summary>
+    /// Returns a TView item by id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
+    public virtual async Task<TView> GetByIdAsync(int id)
     {
-        return await Repository.GetViewByIdAsync(id)
+        return await Repository.GetByIdAsync(id)
             ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
     }
 
+    /// <summary>
+    /// Adds a TView item
+    /// </summary>
+    /// <param name="view"></param>
+    /// <returns></returns>
     public virtual async Task<TView> AddAsync(TView view)
     {
         await BeforeAddAsync(view);
@@ -102,7 +147,7 @@ internal class EntityProvider<TInterface, TEntity, TView, TRepository> : Provide
         await AfterSaveAsync(entity);
         await AfterAddAsync(entity);
 
-        return await GetViewByIdAsync(entity.Id);
+        return await GetByIdAsync(entity.Id);
     }
 
     /// <summary>
@@ -166,7 +211,7 @@ internal class EntityProvider<TInterface, TEntity, TView, TRepository> : Provide
         await AfterSaveAsync(entity);
         await AfterUpdateAsync(entity);
 
-        return await GetViewByIdAsync(entity.Id);
+        return await GetByIdAsync(entity.Id);
     }
 
     /// <summary>
