@@ -10,13 +10,12 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 
 [AllowAnonymous]
 [ApiController]
-public abstract class EntitypiControllerBase<TProvider, TEntity, TView, TParameters> : ReadApiControllerBase<TProvider, TView, TParameters>
-    where TProvider : IEntityViewProvider<TEntity, TView>
-    where TEntity : EntityBase
+public abstract class EntityApiControllerBase<TProvider, TView, TParameters> : ReadApiControllerBase<TProvider, TView, TParameters>
+    where TProvider : IEntityViewProvider<TView>
     where TView : EntityBase
     where TParameters : PaginationParametersBase
 {
-    protected EntitypiControllerBase(ILogger<ApiControllerBase> logger, TProvider provider) : base(logger, provider)
+    protected EntityApiControllerBase(ILogger<ApiControllerBase> logger, TProvider provider) : base(logger, provider)
     {
     }
 

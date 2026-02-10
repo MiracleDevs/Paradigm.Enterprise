@@ -7,7 +7,7 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-internal class EntityViewProvider<TInterface, TEntity, TView, TRepository> : ProviderBase, IEntityViewProvider<TEntity, TView>
+public abstract class EntityViewProviderBase<TInterface, TEntity, TView, TRepository> : ProviderBase, IEntityViewProvider<TView>
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
@@ -39,7 +39,7 @@ internal class EntityViewProvider<TInterface, TEntity, TView, TRepository> : Pro
     /// Initializes a new instance of the <see cref="EditProviderBase{TEntity, TDto, TRepository}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
-    protected EntityViewProvider(IServiceProvider serviceProvider) : base(serviceProvider)
+    protected EntityViewProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         Repository = serviceProvider.GetRequiredService<TRepository>();
         UnitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -85,25 +85,6 @@ internal class EntityViewProvider<TInterface, TEntity, TView, TRepository> : Pro
     /// <param name="parameters"></param>
     /// <returns></returns>
     public async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters) => await Repository.SearchAsync(parameters);
-
-    /// <summary>
-    /// Returns a list of TEntity by the given ids
-    /// </summary>
-    /// <param name="ids"></param>
-    /// <returns></returns>
-    public async Task<IEnumerable<TEntity>> GetEntitiesByIdsAsync(IEnumerable<int> ids) => await Repository.GetEntitiesByIdsAsync(ids);
-
-    /// <summary>
-    /// Returns a TEntity by Id
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    /// <exception cref="NotFoundException"></exception>
-    public virtual async Task<TEntity?> GetEntityByIdAsync(int id)
-    {
-        return await Repository.GetEntityByIdAsync(id)
-            ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
-    }
 
     /// <summary>
     /// Returns a list of TView items by the given Ids
