@@ -96,7 +96,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// Gets the entity set as queryable.
     /// </summary>
     /// <returns></returns>
-    protected virtual IQueryable<TEntity> AsQueryable() => EntityContext.Set<TEntity>();
+    protected virtual IQueryable<TEntity> AsQueryable() => EntityContext.Set<TEntity>().AsNoTracking();
 
     /// <summary>
     /// Gets the method to be executed for filter entities.

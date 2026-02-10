@@ -12,9 +12,7 @@ using System.Threading.Tasks;
 
 namespace Paradigm.Enterprise.Data.Repositories.Prueba;
 
-#region OPCION 2, QUE VA CON POLÉMICA POR USO DE AsNoTracking() pensando en performance (debatible)
-
-public abstract class EntityRepositoryBase<TEntity, TView, TContext> : ReadRepositoryBase<TView, TContext>, IEntityRepository<TEntity, TView>
+public abstract class EntityRepositoryBase<TEntity, TView, TContext> : ReadRepositoryBase<TView, TContext>, IEntityViewRepository<TEntity, TView>
     where TEntity : EntityBase
     where TView : EntityBase
     where TContext : DbContextBase
@@ -23,30 +21,32 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext> : ReadRepos
     {
     }
 
+    public async Task<TEntity?> GetEntityByIdAsync(int id) => await AsQueryableEntity().FirstOrDefaultAsync(x => x.Id == id);
+
+    public async Task<IEnumerable<TEntity>> GetEntitiesByIdsAsync(IEnumerable<int> ids)
+    {
+        // TODO: use chunks
+        return await AsQueryableEntity().Where(x => ids.Contains(x.Id)).ToListAsync();
+    }
+
+    public async Task<bool> ExistsEntityAsync(int id) => await AsQueryableEntity().AnyAsync(x => x.Id == id);
+
     public async Task<TEntity> AddAsync(TEntity entity)
     {
         await GetDbSet().AddAsync(entity);
         return entity;
     }
 
-    public async Task AddAsync(IEnumerable<TEntity> entities)
-    {
-        await GetDbSet().AddRangeAsync(entities);
-    }
+    public async Task AddAsync(IEnumerable<TEntity> entities) =>  await GetDbSet().AddRangeAsync(entities);
+
+    public async Task DeleteAsync(int id) => await AsQueryableEntity().Where(x => x.Id == id).ExecuteDeleteAsync();
+
+    public async Task DeleteAsync(IEnumerable<int> ids) => await AsQueryableEntity().Where(x => ids.Contains(x.Id)).ExecuteDeleteAsync();
 
     public async Task DeleteAsync(TEntity entity)
     {
         GetDbSet().Remove(entity);
         await Task.CompletedTask;
-    }
-
-    public async Task DeleteAsync(int id)
-    {
-        var dbset = GetDbSet();
-        var item = await dbset.FirstAsync(e => e.Id == id);
-        dbset.Remove(item);
-
-        await EntityContext.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(IEnumerable<TEntity> entities)
@@ -93,41 +93,7 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext> : ReadRepos
         await EntityContext.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<TEntity>> GetEntitiesByIdsAsync(IEnumerable<int> ids)
-    {
-        return await GetDbSet()
-            .Where(x => ids.Contains(x.Id))
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-    public async Task<bool> ExistsEntityAsync(int id)
-    {
-       return await GetDbSet()
-            .AsNoTracking()
-            .AnyAsync(x => x.Id == id);
-    }
-
-    public async Task<TEntity?> GetEntityByIdAsync(int id)
-    {
-        return await GetDbSet()
-             .AsNoTracking()
-             .FirstOrDefaultAsync(x => x.Id == id);
-    }
-
-    public async Task<TView?> GetViewByIdAsync(int id)
-    {
-        return await GetViewDbSet().AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
-    }
-
-    public async Task<IEnumerable<TView>> GetViewsByIdsAsync(IEnumerable<int> ids)
-    {
-        return await GetViewDbSet()
-            .Where(x => ids.Contains(x.Id))
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
+    protected virtual IQueryable<TEntity> AsQueryableEntity() => EntityContext.Set<TEntity>().AsNoTracking();
 
     /// <summary>
     /// Gets the database set.
@@ -135,11 +101,7 @@ public abstract class EntityRepositoryBase<TEntity, TView, TContext> : ReadRepos
     /// <returns></returns>
     protected virtual DbSet<TEntity> GetDbSet() => EntityContext.Set<TEntity>();
 
-    protected virtual DbSet<TView> GetViewDbSet() => EntityContext.Set<TView>();
-
     protected virtual void DeleteRemovedAggregates(TEntity entity)
     {
     }
 }
-
-#endregion

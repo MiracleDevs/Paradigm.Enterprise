@@ -11,7 +11,7 @@ internal class EntityProvider<TInterface, TEntity, TView, TRepository> : Provide
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
-    where TRepository : IEntityRepository<TEntity, TView>
+    where TRepository : IEntityViewRepository<TEntity, TView>
 {
     #region Properties
 
