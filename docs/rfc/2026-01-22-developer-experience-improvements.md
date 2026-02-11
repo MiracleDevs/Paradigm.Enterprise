@@ -136,6 +136,7 @@ public class Product : EntityBase<...>
 ### Real-World Scenario
 
 A developer wants to add custom validation before saving an entity. They need to know:
+
 - Should they override `BeforeSaveAsync(TView)` or `BeforeSaveAsync(TEntity)`?
 - What's the difference between `BeforeAddAsync` and `BeforeSaveAsync`?
 - When is validation called relative to these hooks?
@@ -189,6 +190,7 @@ The domain interfaces are being generated with source generators, and it's annoy
 **Current Location:** Source generators are in `src/Paradigm.Enterprise.CodeGenerator/Generators/`
 
 **Ideal Scenario:** Generate the domain interfaces when generating the domain entities and the context, all together. Either extending the EF Tools, or by creating a custom method. This would:
+
 - Generate interfaces as part of the design-time tooling, not compile-time
 - Allow interfaces to be generated even if current code doesn't compile
 - Provide a clear separation between generation and compilation phases
@@ -248,6 +250,7 @@ All generators run together in a single execution:
 ### Real-World Scenario
 
 A developer makes a small change to a backend entity property. They need to:
+
 1. Regenerate JSON contexts (fast, local)
 2. Regenerate stored procedure mappers (fast, local)
 3. Start the API server (slow, requires database connection)
@@ -303,6 +306,7 @@ EditController (with search) → inherits ReadController + adds TParameters
 ```
 
 This creates **decision paralysis**:
+
 - Do I need search? (Maybe not now, but maybe later?)
 - Should I add search parameters now to avoid refactoring later?
 - Which base class should I inherit from?
@@ -329,6 +333,7 @@ The framework should consider moving to a **composition-based approach** rather 
 - **Proposed (Composition)**: Repository with pluggable capabilities (Read, Write, Search, etc.)
 
 This would allow:
+
 - Entities without search don't pay the cost of search generics
 - Easy to add capabilities later without refactoring
 - Clear, explicit dependencies instead of hidden inheritance chains
@@ -368,6 +373,7 @@ This would allow:
 ### Real-World Scenario
 
 A developer needs to implement soft-delete functionality. They:
+
 1. Don't know if "Activation" pattern is what they need
 2. Can't find documentation on how to use it
 3. Implement their own solution (reinventing the wheel)
@@ -428,11 +434,13 @@ Before proposing solutions, the team should discuss:
 After team discussion and consensus on approach, create individual RFCs for approved solution areas:
 
 - **RFC: Interface Contract Simplification** - Address Problem Area 1 with better discoverability and documentation
+- **RFC: Function-Oriented Composition** - Address Problem Areas 1 and 4 with composition-based endpoint modules and function-oriented providers/repositories → [2026-02-11-function-oriented-composition.md](./2026-02-11-function-oriented-composition.md)
 - **RFC: Code Generation Architecture v2** - Address Problem Area 2 with improved T4 templates, source generator alternatives, and template distribution
 - **RFC: Decoupled Generation Commands** - Address Problem Area 3 with separate, configurable generation processes
 - **RFC: Framework Documentation Overhaul** - Address Problem Area 4 with comprehensive guides for all patterns
 
 Each individual RFC should include:
+
 - Detailed design proposals
 - Migration strategies
 - Backward compatibility considerations
