@@ -44,8 +44,23 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// <returns></returns>
     public virtual async Task<IEnumerable<TEntity>> GetByIdsAsync(IEnumerable<int> ids)
     {
-        // todo: look for the IN(...) limit, and separate the request into chunks.
-        return await AsQueryable().Where(x => ids.Contains(x.Id)).ToListAsync();
+        var idList = ids.ToList();
+        if (idList.Count == 0)
+            return Enumerable.Empty<TEntity>();
+
+        // Determine chunk size based on database provider limits:
+        var chunkSize = GetChunkSize();
+        var results = new List<TEntity>();
+        var queryable = AsQueryable();
+
+        foreach (var chunk in idList.Chunk(chunkSize))
+        {
+            var chunkList = chunk.ToList();
+            var chunkResults = await queryable.Where(x => chunkList.Contains(x.Id)).ToListAsync();
+            results.AddRange(chunkResults);
+        }
+
+        return results;
     }
 
     /// <summary>
@@ -81,7 +96,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// Gets the entity set as queryable.
     /// </summary>
     /// <returns></returns>
-    protected virtual IQueryable<TEntity> AsQueryable() => EntityContext.Set<TEntity>();
+    protected virtual IQueryable<TEntity> AsQueryable() => EntityContext.Set<TEntity>().AsNoTracking();
 
     /// <summary>
     /// Gets the method to be executed for filter entities.
@@ -89,6 +104,24 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// <param name="parameters"></param>
     /// <returns></returns>
     protected virtual Func<PaginationParametersBase, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(PaginationParametersBase parameters) => throw new NotImplementedException();
+
+    /// <summary>
+    /// Gets the chunk size for batching ID queries based on the database provider.
+    /// </summary>
+    /// <returns>The chunk size to use for batching queries.</returns>
+    protected virtual int GetChunkSize()
+    {
+        var providerName = EntityContext.Database.ProviderName;
+
+        // PostgreSQL has a limit of 65535 parameters, using 10000 for efficiency while staying well under the limit
+        if (providerName?.Contains("PostgreSQL", StringComparison.OrdinalIgnoreCase) == true ||
+            providerName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
+            return 10000;
+
+        // SQL Server has a limit of 2100 parameters per query, using 2000 for safety
+        // Default to 2000 for unknown providers (safe for most databases)
+        return 2000;
+    }
 
     #endregion
 }
