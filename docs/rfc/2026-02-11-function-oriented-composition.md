@@ -10,6 +10,8 @@
 
 This RFC proposes shifting the Web API enterprise library from **entity-oriented inheritance** (base controllers, providers, and repositories per capability) to **function-oriented composition**. Controllers would be replaced by modular endpoint registration (`MapCrud`, `MapSearch`, `MapActivable`); providers and repositories would become function-oriented types (`CrudProvider<TEntity>`, `SearchProvider<TEntity, TFilter>`, etc.) composed explicitly rather than inherited. This addresses the inheritance hell, override callback complexity, and tight coupling described in [RFC 2026-01-22 (Developer Experience Pain Points)](./2026-01-22-developer-experience-improvements.md), specifically **Problem Area 1** (interface contracts and hidden knowledge) and **Problem Area 4** (undocumented inheritance patterns and inheritance hell). It does not address Problem Areas 2 (T4 Code Generation) or 3 (Coupled Code Generation Processes).
 
+![Diagram](./images/composable-pipeline.drawio.png)
+
 ## Motivation
 
 The current framework is built around entity-oriented base classes: `ApiControllerBase`, `SearchApiControllerBase`, `ActivableApiControllerBase`, `CrudProviderBase`, `SearchRepositoryBase`, and similar. Over time this has led to:
