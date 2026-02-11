@@ -5,15 +5,25 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-public abstract class EntityViewRepositoryBase<TEntity, TView, TContext>
-    : ReadRepositoryBase<TView, TContext>, IEntityViewRepository<Interfaces.IEntity, TEntity, TView>
-    where TEntity : EntityBase<Interfaces.IEntity, TEntity, TView>, Interfaces.IEntity, new()
-    where TView : EntityBase, Interfaces.IEntity, new()
+public abstract class EntityViewRepositoryBase<TInterface, TEntity, TView, TContext> : ReadRepositoryBase<TView, TContext>, IEntityViewRepository<TInterface, TEntity, TView>
+    where TInterface : Interfaces.IEntity
+    where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
+    where TView : EntityBase, TInterface, new()
     where TContext : DbContextBase
 {
+    #region Constructor
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EntityViewRepositoryBase{TInterface, TEntity, TView, TContext}"/> class.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
     protected EntityViewRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)
     {
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// Gets an entity by its identifier.
@@ -47,7 +57,6 @@ public abstract class EntityViewRepositoryBase<TEntity, TView, TContext>
 
         return results;
     }
-
 
     /// <summary>
     /// Determines whether an entity with the given identifier exists.
@@ -160,6 +169,10 @@ public abstract class EntityViewRepositoryBase<TEntity, TView, TContext>
         await EntityContext.SaveChangesAsync();
     }
 
+    #endregion
+
+    #region Protected Methods
+
     /// <summary>
     /// Gets a queryable for entities with no tracking enabled.
     /// </summary>
@@ -181,4 +194,6 @@ public abstract class EntityViewRepositoryBase<TEntity, TView, TContext>
     protected virtual void DeleteRemovedAggregates(TEntity entity)
     {
     }
+
+    #endregion
 }

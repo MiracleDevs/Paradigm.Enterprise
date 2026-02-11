@@ -3,7 +3,7 @@ using Paradigm.Enterprise.Interfaces;
 
 namespace Paradigm.Enterprise.Domain.Repositories;
 
-public interface IEntityViewRepository<TInterface,TEntity, TView> : IReadRepository<TView>
+public interface IEntityViewRepository<TInterface, TEntity, TView> : IReadRepository<TView>
     where TInterface : IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
