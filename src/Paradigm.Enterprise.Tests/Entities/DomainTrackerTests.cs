@@ -66,7 +66,7 @@ public class DomainTrackerTests
 
         // Assert
         Assert.AreEqual(1, tracker.Removed.Count);
-        Assert.Contains(entity, tracker.Removed.ToList());
+        CollectionAssert.Contains(tracker.Removed.ToList(), entity);
     }
 
     [TestMethod]
