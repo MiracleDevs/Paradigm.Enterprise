@@ -79,6 +79,18 @@
         /// <param name="entity">The entity.</param>
         public void Remove(TEntity entity) => _removedList.Add(entity);
 
+        /// <summary>
+        /// Resets the tracker by clearing all Added, Edited, and Removed lists.
+        /// This is useful for edge case scenarios where tracker state needs to be cleared
+        /// before entity mapping operations.
+        /// </summary>
+        public void Reset()
+        {
+            _addedList.Clear();
+            _editedList.Clear();
+            _removedList.Clear();
+        }
+
         #endregion
     }
 }

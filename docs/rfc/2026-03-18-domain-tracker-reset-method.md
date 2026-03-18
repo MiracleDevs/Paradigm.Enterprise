@@ -1,7 +1,7 @@
 # RFC: DomainTracker Reset Method
 
 - **RFC ID**: 2026-03-18-domain-tracker-reset-method
-- **Status**: Draft
+- **Status**: Implemented
 - **Author(s)**: Iván Falletti
 - **Created**: 2026-03-18
 - **Last Updated**: 2026-03-18
