@@ -50,14 +50,14 @@ public class ExceptionHandler : IExceptionHandler
                 }
 
                 var message = matcher.GetMessageKey(_resourceManager, e);
-                
+
                 if (message is not null)
                 {
                     var exceptionType = e.GetType();
                     var constructor = exceptionType.GetConstructor([typeof(string), typeof(Exception)]);
                     if (constructor is not null)
                         return (Exception)constructor.Invoke([message, e]);
-                    
+
                     var stringConstructor = exceptionType.GetConstructor([typeof(string)]);
                     if (stringConstructor is not null)
                         return (Exception)stringConstructor.Invoke([message]);
