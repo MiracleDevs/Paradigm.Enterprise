@@ -79,6 +79,14 @@ $ ./publish.nuget.sh "{nuget-secret-key}"
 
 ## Change log
 
+Version `1.0.26`
+
+- Added `Reset()` method to `DomainTracker<TEntity>` class.
+
+Version `1.0.25`
+
+- Added support for net10.
+
 Version `1.0.24`
 
 - Fixed `ExceptionHandler` class to return the original Exception type.
