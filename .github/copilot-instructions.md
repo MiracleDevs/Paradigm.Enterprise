@@ -1,4 +1,3 @@
-#+#+#+#+
 # Copilot Instructions
 
 This repository has two primary Copilot workflows:

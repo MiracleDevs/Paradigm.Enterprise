@@ -1,5 +1,5 @@
 ---
-applyTo: "src/api/**"
+applyTo: "src/Paradigm.Enterprise.*/**"
 ---
 
 # Backend Development Instructions
