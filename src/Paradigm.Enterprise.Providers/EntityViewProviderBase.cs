@@ -1,4 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 using Paradigm.Enterprise.Domain.Uow;
@@ -6,13 +7,11 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-[Obsolete("Use EntityViewProviderBase instead")]
-public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository> : ReadProviderBase<TInterface, TView, TViewRepository>, IEditProvider<TView>
+public abstract class EntityViewProviderBase<TInterface, TEntity, TView, TRepository> : ProviderBase, IEntityViewProvider<TView>
     where TInterface : Interfaces.IEntity
     where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
     where TView : EntityBase, TInterface, new()
-    where TRepository : IEditRepository<TEntity>
-    where TViewRepository : IReadRepository<TView>
+    where TRepository : IEntityViewRepository<TInterface, TEntity, TView>
 {
     #region Properties
 
@@ -40,7 +39,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Initializes a new instance of the <see cref="EditProviderBase{TEntity, TDto, TRepository}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
-    protected EditProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
+    protected EntityViewProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
     {
         Repository = serviceProvider.GetRequiredService<TRepository>();
         UnitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -51,9 +50,65 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     #region Public Methods
 
     /// <summary>
-    /// Adds a new entity.
+    /// Executes the search using the specified parameters.
     /// </summary>
-    /// <param name="view">The dto.</param>
+    /// <typeparam name="TParameters">The type of the parameters.</typeparam>
+    /// <param name="parameters">The parameters.</param>
+    /// <returns></returns>
+    public virtual async Task<PaginatedResultDto<TView>> SearchAsync<TParameters>(TParameters parameters)
+        where TParameters : PaginationParametersBase
+    {
+        return await Repository.SearchAsync(parameters);
+    }
+
+    /// <summary>
+    /// Add or update a TView item
+    /// </summary>
+    /// <param name="view"></param>
+    /// <returns></returns>
+    public virtual async Task<TView> SaveAsync(TView view)
+    {
+        return view.IsNew() ?
+            await AddAsync(view) :
+            await UpdateAsync(view);
+    }
+
+    /// <summary>
+    /// Returns all the TView items
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<TView>> GetAllAsync() => await Repository.GetAllAsync();
+
+    /// <summary>
+    /// Returns a list of TView
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <returns></returns>
+    public async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters) => await Repository.SearchAsync(parameters);
+
+    /// <summary>
+    /// Returns a list of TView items by the given Ids
+    /// </summary>
+    /// <param name="ids"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<TView>> GetByIdsAsync(IEnumerable<int> ids) => await Repository.GetByIdsAsync(ids);
+
+    /// <summary>
+    /// Returns a TView item by id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="NotFoundException"></exception>
+    public virtual async Task<TView> GetByIdAsync(int id)
+    {
+        return await Repository.GetByIdAsync(id)
+            ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
+    }
+
+    /// <summary>
+    /// Adds a TView item
+    /// </summary>
+    /// <param name="view"></param>
     /// <returns></returns>
     public virtual async Task<TView> AddAsync(TView view)
     {
@@ -119,7 +174,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// <returns></returns>
     public virtual async Task<TView> UpdateAsync(TView view)
     {
-        var entity = await Repository.GetByIdAsync(view.Id)
+        var entity = await Repository.GetEntityByIdAsync(view.Id)
             ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
 
         await BeforeUpdateAsync(view);
@@ -151,7 +206,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
 
         foreach (var view in views)
         {
-            var entity = await Repository.GetByIdAsync(view.Id)
+            var entity = await Repository.GetEntityByIdAsync(view.Id)
                 ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
 
             await BeforeUpdateAsync(view);
@@ -179,75 +234,12 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Adds or updates the entity.
-    /// </summary>
-    /// <param name="view">The dto.</param>
-    /// <returns></returns>
-    public virtual async Task<TView> SaveAsync(TView view)
-    {
-        return view.IsNew() ?
-            await AddAsync(view) :
-            await UpdateAsync(view);
-    }
-
-    /// <summary>
-    /// Adds or updates the entities.
-    /// </summary>
-    /// <param name="views">The dto.</param>
-    /// <returns></returns>
-    public virtual async Task<IEnumerable<TView>> SaveAsync(IEnumerable<TView> views)
-    {
-        var entities = new List<(bool, TEntity)>();
-
-        foreach (var view in views)
-        {
-            var isNew = view.IsNew();
-            var entity = isNew
-                ? ServiceProvider.GetRequiredService<TEntity>()
-                : await Repository.GetByIdAsync(view.Id)
-                ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
-
-            entity.MapFrom(ServiceProvider, view);
-            entity.Validate();
-
-            if (isNew)
-            {
-                await BeforeAddAsync(entity);
-                await BeforeSaveAsync(entity);
-                entity = await Repository.AddAsync(entity);
-            }
-            else
-            {
-                await BeforeUpdateAsync(entity);
-                await BeforeSaveAsync(entity);
-                entity = await Repository.UpdateAsync(entity);
-            }
-
-            entities.Add((isNew, entity));
-        }
-
-        await UnitOfWork.CommitChangesAsync();
-
-        foreach (var (isNew, entity) in entities)
-        {
-            await AfterSaveAsync(entity);
-
-            if (isNew)
-                await AfterAddAsync(entity);
-            else
-                await AfterUpdateAsync(entity);
-        }
-
-        return entities.Select(x => x.Item2.MapTo(ServiceProvider)).ToList();
-    }
-
-    /// <summary>
     /// Deletes the entity.
     /// </summary>
     /// <param name="id">The identifier.</param>
     public virtual async Task DeleteAsync(int id)
     {
-        var entity = await Repository.GetByIdAsync(id);
+        var entity = await Repository.GetEntityByIdAsync(id);
         if (entity is not null)
         {
             await BeforeDeleteAsync(entity);
@@ -263,7 +255,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// <param name="ids">The identifiers.</param>
     public virtual async Task DeleteAsync(IEnumerable<int> ids)
     {
-        var entities = await Repository.GetByIdsAsync(ids);
+        var entities = await Repository.GetEntitiesByIdsAsync(ids);
 
         foreach (var entity in entities)
         {
@@ -280,19 +272,19 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     #region Protected Methods
 
     /// <summary>
-    /// Executed on add operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// Executed on add operation before the <see cref="TEntity"/> is mapped to <see cref="TEntity"/>.
     /// </summary>
-    /// <param name="view">The view.</param>
-    protected virtual async Task BeforeAddAsync(TView view)
+    /// <param name="entity">The entity.</param>
+    protected virtual async Task BeforeAddAsync(TEntity entity)
     {
         await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Executed on update operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
+    /// Executed on add operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
     /// </summary>
-    /// <param name="entity">The entity.</param>
-    protected virtual async Task BeforeAddAsync(TEntity entity)
+    /// <param name="view">The view.</param>
+    protected virtual async Task BeforeAddAsync(TView view)
     {
         await Task.CompletedTask;
     }
@@ -307,19 +299,19 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on update operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// Executed on update operation before the <see cref="TEntity"/> is mapped to <see cref="TEntity"/>.
     /// </summary>
-    /// <param name="view">The view.</param>
-    protected virtual async Task BeforeUpdateAsync(TView view)
+    /// <param name="entity">The entity.</param>
+    protected virtual async Task BeforeUpdateAsync(TEntity entity)
     {
         await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Executed on update operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
+    /// Executed on update operation before the <see cref="TEntity"/> is mapped to <see cref="TEntity"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
-    protected virtual async Task BeforeUpdateAsync(TEntity entity)
+    protected virtual async Task BeforeUpdateAsync(TView entity)
     {
         await Task.CompletedTask;
     }
@@ -334,19 +326,19 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on save operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// Executed on save operation before the <see cref="TEntity"/> is mapped to <see cref="TEntity"/>.
     /// </summary>
-    /// <param name="view">The view.</param>
-    protected virtual async Task BeforeSaveAsync(TView view)
+    /// <param name="entity">The entity.</param>
+    protected virtual async Task BeforeSaveAsync(TEntity entity)
     {
         await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Executed on save operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
+    /// Executed on save operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
     /// </summary>
-    /// <param name="entity">The entity.</param>
-    protected virtual async Task BeforeSaveAsync(TEntity entity)
+    /// <param name="view">The view.</param>
+    protected virtual async Task BeforeSaveAsync(TView view)
     {
         await Task.CompletedTask;
     }
