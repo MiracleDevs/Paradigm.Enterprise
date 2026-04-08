@@ -103,8 +103,7 @@ public class CacheService : ICacheService, IDisposable
                 data = await factory();
                 var serializedData = System.Text.Json.JsonSerializer.Serialize(data, jsonTypeInfo);
 
-                if (expiration is null)
-                    expiration = TimeSpan.FromMinutes(_cacheConfiguration.ExpirationInMinutes ?? 60);
+                expiration ??= TimeSpan.FromMinutes(_cacheConfiguration.ExpirationInMinutes ?? 60);
 
                 await _distributedCache.SetStringAsync(key, serializedData, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expiration });
 
