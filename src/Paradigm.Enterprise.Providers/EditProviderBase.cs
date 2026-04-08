@@ -6,12 +6,14 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository> : ReadProviderBase<TInterface, TView, TViewRepository>, IEditProvider<TView>
-    where TInterface : Interfaces.IEntity
-    where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface, new()
-    where TView : EntityBase, TInterface, new()
-    where TRepository : IEditRepository<TEntity>
-    where TViewRepository : IReadRepository<TView>
+public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository, TId>
+    : ReadProviderBase<TInterface, TView, TViewRepository, TId>, IEditProvider<TView, TId>
+    where TId : struct, IEquatable<TId>
+    where TInterface : Interfaces.IEntity<TId>
+    where TEntity : EntityBase<TId, TInterface, TEntity, TView>, TInterface, new()
+    where TView : EntityBase<TId>, TInterface, new()
+    where TRepository : IEditRepository<TEntity, TId>
+    where TViewRepository : IReadRepository<TView, TId>
 {
     #region Properties
 
@@ -201,10 +203,10 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
         foreach (var view in views)
         {
             var isNew = view.IsNew();
-            var entity = isNew
+            TEntity entity = isNew
                 ? ServiceProvider.GetRequiredService<TEntity>()
-                : await Repository.GetByIdAsync(view.Id)
-                ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
+                : (await Repository.GetByIdAsync(view.Id)
+                    ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it."));
 
             entity.MapFrom(ServiceProvider, view);
             entity.Validate();
@@ -244,7 +246,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Deletes the entity.
     /// </summary>
     /// <param name="id">The identifier.</param>
-    public virtual async Task DeleteAsync(int id)
+    public virtual async Task DeleteAsync(TId id)
     {
         var entity = await Repository.GetByIdAsync(id);
         if (entity is not null)
@@ -260,7 +262,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Deletes the entities.
     /// </summary>
     /// <param name="ids">The identifiers.</param>
-    public virtual async Task DeleteAsync(IEnumerable<int> ids)
+    public virtual async Task DeleteAsync(IEnumerable<TId> ids)
     {
         var entities = await Repository.GetByIdsAsync(ids);
 

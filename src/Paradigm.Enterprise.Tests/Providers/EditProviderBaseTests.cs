@@ -8,11 +8,11 @@ namespace Paradigm.Enterprise.Tests.Providers;
 public class EditProviderBaseTests
 {
     // Sample entity classes for testing
-    public class TestEntity : EntityBase<IEntity, TestEntity, TestView>, IEntity
+    public class TestEntity : EntityBase<int, IEntity<int>, TestEntity, TestView>, IEntity<int>
     {
         public string Name { get; set; } = string.Empty;
 
-        public override TestEntity? MapFrom(IServiceProvider serviceProvider, IEntity model)
+        public override TestEntity? MapFrom(IServiceProvider serviceProvider, IEntity<int> model)
         {
             if (model is TestView view)
             {
@@ -32,28 +32,26 @@ public class EditProviderBaseTests
         }
     }
 
-    public class TestView : EntityBase, IEntity
+    public class TestView : EntityBase<int>, IEntity<int>
     {
         public string Name { get; set; } = string.Empty;
-
-        public new bool IsNew() => Id == 0;
     }
 
     // Repository interfaces
-    public interface ITestRepository : IEditRepository<TestEntity> { }
-    public interface ITestViewRepository : IReadRepository<TestView> { }
+    public interface ITestRepository : IEditRepository<TestEntity, int> { }
+    public interface ITestViewRepository : IReadRepository<TestView, int> { }
 
     // Provider interface
-    public interface ITestProvider : IEditProvider<TestView> { }
+    public interface ITestProvider : IEditProvider<TestView, int> { }
 
     // Test provider implementation
-    public class TestProvider : EditProviderBase<IEntity, TestEntity, TestView, ITestRepository, ITestViewRepository>, ITestProvider
+    public class TestProvider : EditProviderBase<IEntity<int>, TestEntity, TestView, ITestRepository, ITestViewRepository, int>, ITestProvider
     {
         public TestProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
     }
 
     // Extend TestProvider to test lifecycle hooks
-    public class TestProviderWithHooks : EditProviderBase<IEntity, TestEntity, TestView, ITestRepository, ITestViewRepository>, ITestProvider
+    public class TestProviderWithHooks : EditProviderBase<IEntity<int>, TestEntity, TestView, ITestRepository, ITestViewRepository, int>, ITestProvider
     {
         public bool BeforeAddViewCalled { get; private set; }
         public bool BeforeAddEntityCalled { get; private set; }

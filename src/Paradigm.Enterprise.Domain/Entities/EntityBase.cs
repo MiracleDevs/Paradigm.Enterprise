@@ -5,13 +5,25 @@ namespace Paradigm.Enterprise.Domain.Entities
     public abstract class EntityBase : Interfaces.IEntity
     {
         /// <summary>
+        /// Determines whether this instance is new.
+        /// </summary>
+        /// <returns>
+        ///   <c>true</c> if this instance is new; otherwise, <c>false</c>.
+        /// </returns>
+        public abstract bool IsNew();
+    }
+
+    public abstract class EntityBase<TId> : EntityBase, Interfaces.IEntity<TId>
+        where TId : struct, IEquatable<TId>
+    {
+        /// <summary>
         /// Gets or sets the identifier.
         /// </summary>
         /// <value>
         /// The identifier.
         /// </value>
         [Key]
-        public int Id { get; set; }
+        public TId Id { get; set; }
 
         /// <summary>
         /// Determines whether this instance is new.
@@ -19,13 +31,14 @@ namespace Paradigm.Enterprise.Domain.Entities
         /// <returns>
         ///   <c>true</c> if this instance is new; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsNew() => Id == default;
+        public override bool IsNew() => Id.Equals(default(TId));
     }
 
-    public abstract class EntityBase<TInterface, TEntity, TView> : EntityBase
-        where TInterface : Interfaces.IEntity
-        where TEntity : EntityBase<TInterface, TEntity, TView>, TInterface
-        where TView : EntityBase, TInterface, new()
+    public abstract class EntityBase<TId, TInterface, TEntity, TView> : EntityBase<TId>
+        where TId : struct, IEquatable<TId>
+        where TInterface : Interfaces.IEntity<TId>
+        where TEntity : EntityBase<TId, TInterface, TEntity, TView>, TInterface
+        where TView : EntityBase<TId>, TInterface, new()
     {
         /// <summary>
         /// Maps from.

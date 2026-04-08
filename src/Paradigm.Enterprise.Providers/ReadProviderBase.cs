@@ -6,10 +6,11 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
-public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : ProviderBase, IReadProvider<TView>
-      where TInterface : Interfaces.IEntity
-      where TView : EntityBase, TInterface, new()
-      where TViewRepository : IReadRepository<TView>
+public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> : ProviderBase, IReadProvider<TView, TId>
+    where TId : struct, IEquatable<TId>
+    where TInterface : Interfaces.IEntity<TId>
+    where TView : EntityBase<TId>, TInterface, new()
+    where TViewRepository : IReadRepository<TView, TId>
 {
     #region Properties
 
@@ -43,7 +44,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : Pro
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <returns></returns>
-    public virtual async Task<TView> GetByIdAsync(int id)
+    public virtual async Task<TView> GetByIdAsync(TId id)
     {
         return await ViewRepository.GetByIdAsync(id)
             ?? throw new NotFoundException("Entity not found or you don't have the permissions to open it.");
@@ -54,7 +55,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository> : Pro
     /// </summary>
     /// <param name="ids">The ids.</param>
     /// <returns></returns>
-    public virtual async Task<IEnumerable<TView>> GetByIdsAsync(IEnumerable<int> ids)
+    public virtual async Task<IEnumerable<TView>> GetByIdsAsync(IEnumerable<TId> ids)
     {
         return await ViewRepository.GetByIdsAsync(ids);
     }

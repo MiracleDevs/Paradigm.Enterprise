@@ -7,7 +7,7 @@ public class DomainTrackerTests
     /// <summary>
     /// Test entity implementation for DomainTracker tests.
     /// </summary>
-    public class TestEntity : EntityBase
+    public class TestEntity : EntityBase<int>
     {
         public string Name { get; set; } = string.Empty;
     }

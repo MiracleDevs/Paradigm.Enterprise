@@ -2,8 +2,9 @@
 
 namespace Paradigm.Enterprise.Providers;
 
-public interface IEditProvider<TView> : IReadProvider<TView>
-    where TView : EntityBase, new()
+public interface IEditProvider<TView, TId> : IReadProvider<TView, TId>
+    where TId : struct, IEquatable<TId>
+    where TView : EntityBase<TId>, new()
 {
     /// <summary>
     /// Adds a new entity.
@@ -51,12 +52,12 @@ public interface IEditProvider<TView> : IReadProvider<TView>
     /// Deletes the entity.
     /// </summary>
     /// <param name="id">The identifier.</param>
-    Task DeleteAsync(int id);
+    Task DeleteAsync(TId id);
 
     /// <summary>
     /// Deletes the entities.
     /// </summary>
     /// <param name="ids">The ids.</param>
     /// <returns></returns>
-    Task DeleteAsync(IEnumerable<int> ids);
+    Task DeleteAsync(IEnumerable<TId> ids);
 }

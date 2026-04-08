@@ -6,9 +6,10 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TContext>, IReadRepository<TEntity>
-    where TEntity : EntityBase
+public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBase<TContext>, IReadRepository<TEntity, TId>
+    where TEntity : EntityBase<TId>
     where TContext : DbContextBase
+    where TId : struct, IEquatable<TId>
 {
     #region Constructor
 
@@ -35,14 +36,14 @@ public abstract class ReadRepositoryBase<TEntity, TContext> : RepositoryBase<TCo
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <returns></returns>
-    public virtual async Task<TEntity?> GetByIdAsync(int id) => await AsQueryable().FirstOrDefaultAsync(x => x.Id == id);
+    public virtual async Task<TEntity?> GetByIdAsync(TId id) => await AsQueryable().FirstOrDefaultAsync(x => x.Id.Equals(id));
 
     /// <summary>
     /// Gets the entities by their identifiers.
     /// </summary>
     /// <param name="ids">The identifiers.</param>
     /// <returns></returns>
-    public virtual async Task<IEnumerable<TEntity>> GetByIdsAsync(IEnumerable<int> ids)
+    public virtual async Task<IEnumerable<TEntity>> GetByIdsAsync(IEnumerable<TId> ids)
     {
         // todo: look for the IN(...) limit, and separate the request into chunks.
         return await AsQueryable().Where(x => ids.Contains(x.Id)).ToListAsync();

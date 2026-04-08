@@ -10,8 +10,9 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 
 [AllowAnonymous]
 [ApiController]
-public abstract class ReadApiControllerBase<TProvider, TView, TParameters> : ApiControllerBase
-    where TProvider : IReadProvider<TView>
+public abstract class ReadApiControllerBase<TProvider, TView, TParameters, TId> : ApiControllerBase
+    where TId : struct, IEquatable<TId>
+    where TProvider : IReadProvider<TView, TId>
     where TParameters : PaginationParametersBase
 {
 
@@ -62,7 +63,7 @@ public abstract class ReadApiControllerBase<TProvider, TView, TParameters> : Api
     /// <returns></returns>
     [HttpGet("get-by-id")]
     [ExposeEndpoint]
-    public virtual async Task<TView> GetByIdAsync([FromQuery] int id)
+    public virtual async Task<TView> GetByIdAsync([FromQuery] TId id)
     {
         return await Provider.GetByIdAsync(id);
     }

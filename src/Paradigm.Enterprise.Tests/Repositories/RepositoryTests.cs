@@ -11,11 +11,9 @@ namespace Paradigm.Enterprise.Tests.Repositories;
 public class RepositoryTests
 {
     // Sample entity for testing
-    public class TestEntity : EntityBase, IEntity
+    public class TestEntity : EntityBase<int>
     {
         public string Name { get; set; } = string.Empty;
-
-        public new bool IsNew() => Id == 0;
     }
 
     // Test DbContext
@@ -33,7 +31,7 @@ public class RepositoryTests
     }
 
     // Test Repository
-    public class TestRepository : EditRepositoryBase<TestEntity, TestDbContext>
+    public class TestRepository : EditRepositoryBase<TestEntity, TestDbContext, int>
     {
         public TestRepository(IServiceProvider serviceProvider) : base(serviceProvider) { }
 

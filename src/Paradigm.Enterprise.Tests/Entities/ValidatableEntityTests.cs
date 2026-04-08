@@ -8,7 +8,7 @@ namespace Paradigm.Enterprise.Tests.Entities;
 public class ValidatableEntityTests
 {
     // Sample entity with validation logic
-    public class TestEntity : EntityBase<IEntity, TestEntity, TestEntity>, IEntity
+    public class TestEntity : EntityBase<int, IEntity<int>, TestEntity, TestEntity>, IEntity<int>
     {
         [Required(ErrorMessage = "Name is required")]
         [StringLength(50, ErrorMessage = "Name cannot be longer than 50 characters")]
@@ -83,7 +83,7 @@ public class ValidatableEntityTests
             return this;
         }
 
-        public override TestEntity? MapFrom(IServiceProvider serviceProvider, IEntity model)
+        public override TestEntity? MapFrom(IServiceProvider serviceProvider, IEntity<int> model)
         {
             if (model is TestEntity entity)
             {

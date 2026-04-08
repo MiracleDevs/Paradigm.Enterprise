@@ -10,9 +10,10 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 
 [AllowAnonymous]
 [ApiController]
-public abstract class EditApiControllerBase<TProvider, TView, TParameters> : ReadApiControllerBase<TProvider, TView, TParameters>
-    where TProvider : IEditProvider<TView>
-    where TView : EntityBase, new()
+public abstract class EditApiControllerBase<TProvider, TView, TParameters, TId> : ReadApiControllerBase<TProvider, TView, TParameters, TId>
+    where TId : struct, IEquatable<TId>
+    where TProvider : IEditProvider<TView, TId>
+    where TView : EntityBase<TId>, new()
     where TParameters : PaginationParametersBase
 {
     #region Constructor
@@ -22,7 +23,7 @@ public abstract class EditApiControllerBase<TProvider, TView, TParameters> : Rea
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="provider">The provider.</param>
-    protected EditApiControllerBase(ILogger<ReadApiControllerBase<TProvider, TView, TParameters>> logger, TProvider provider) : base(logger, provider)
+    protected EditApiControllerBase(ILogger<ReadApiControllerBase<TProvider, TView, TParameters, TId>> logger, TProvider provider) : base(logger, provider)
     {
     }
 
@@ -48,7 +49,7 @@ public abstract class EditApiControllerBase<TProvider, TView, TParameters> : Rea
     /// <param name="id">The identifier.</param>
     [HttpDelete]
     [ExposeEndpoint]
-    public virtual async Task DeleteAsync([FromQuery] int id)
+    public virtual async Task DeleteAsync([FromQuery] TId id)
     {
         await Provider.DeleteAsync(id);
     }

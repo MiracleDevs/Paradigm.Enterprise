@@ -1,0 +1,441 @@
+<#@ template hostSpecific="true" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
+<#@ assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" #>
+<#@ assembly name="System.Text.Json" #>
+<#@ parameter name="EntityType" type="Microsoft.EntityFrameworkCore.Metadata.IEntityType" #>
+<#@ parameter name="Options" type="Microsoft.EntityFrameworkCore.Scaffolding.ModelCodeGenerationOptions" #>
+<#@ parameter name="NamespaceHint" type="System.String" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text.Json" #>
+<#@ import namespace="System.ComponentModel.DataAnnotations" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore.Design" #>
+<#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
+
+<#
+    if (EntityType.IsSimpleManyToManyJoinEntityType())
+    {
+        // Don't scaffold these
+        return "";
+    }
+
+    Dictionary<string, List<string>>? _navConfig = null;
+    bool _navConfigLoaded = false;
+
+    Dictionary<string, List<string>>? LoadNavConfig(string templateFile, string contextName)
+    {
+        if (_navConfigLoaded) return _navConfig;
+        _navConfigLoaded = true;
+        if (string.IsNullOrEmpty(templateFile) || string.IsNullOrEmpty(contextName))
+            return null;
+        var templateDir = Path.GetDirectoryName(templateFile);
+        if (string.IsNullOrEmpty(templateDir)) return null;
+        var projectDir = Path.GetFullPath(Path.Combine(templateDir, "..", ".."));
+        var navConfigPath = Path.Combine(projectDir, contextName + ".nav.json");
+        if (!File.Exists(navConfigPath)) return null;
+        var json = File.ReadAllText(navConfigPath);
+        try
+        {
+            _navConfig = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+        }
+        catch
+        {
+            _navConfig = ParseSimpleNavJson(json);
+        }
+        return _navConfig;
+    }
+    Dictionary<string, List<string>> ParseSimpleNavJson(string json)
+    {
+        var result = new Dictionary<string, List<string>>();
+        var entityPattern = new System.Text.RegularExpressions.Regex("\"(\\w+)\"\\s*:\\s*\\[([^\\]]*)\\]");
+        foreach (System.Text.RegularExpressions.Match m in entityPattern.Matches(json))
+        {
+            var entityName = m.Groups[1].Value;
+            var propsRaw = m.Groups[2].Value;
+            var propPattern = new System.Text.RegularExpressions.Regex("\"([^\"]+)\"");
+            var props = propPattern.Matches(propsRaw).Cast<System.Text.RegularExpressions.Match>().Select(pm => pm.Groups[1].Value).ToList();
+            result[entityName] = props;
+        }
+        return result;
+    }
+    bool IsNavigationAllowed(Dictionary<string, List<string>>? navConfig, string entityName, string navigationName)
+    {
+        if (navConfig == null) return true;
+        if (!navConfig.TryGetValue(entityName, out var allowed)) return false;
+        if (allowed.Contains("*")) return true;
+        return allowed.Contains(navigationName);
+    }
+    bool IncludeRequiredAttribute(AttributeCodeFragment attribute, Microsoft.EntityFrameworkCore.Metadata.IProperty property, Microsoft.EntityFrameworkCore.Metadata.IEntityType? relatedEntity)
+    {
+        if (attribute.Type == typeof(RequiredAttribute) && relatedEntity != null && relatedEntity.GetProperties().Any(x => x.Name == property.Name))
+            return true;
+        return false;
+    }
+
+    var services = (IServiceProvider)Host;
+    var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
+    var code = services.GetRequiredService<ICSharpHelper>();
+
+    string GetEntityIdTypeName(Microsoft.EntityFrameworkCore.Metadata.IEntityType entityType)
+    {
+        var idProperty = entityType.FindProperty("Id");
+        var keyProperty = entityType.FindPrimaryKey()?.Properties.FirstOrDefault();
+        var clrType = idProperty?.ClrType ?? keyProperty?.ClrType ?? typeof(int);
+        clrType = Nullable.GetUnderlyingType(clrType) ?? clrType;
+        return code.Reference(clrType);
+    }
+
+    var isExternalEntity = NamespaceHint.Contains(".External.");
+    var isView = !isExternalEntity && EntityType.Name.EndsWith("View");
+    var collectionNavigations = EntityType.GetNavigations().Where(x => x.IsCollection).ToList();
+    var navConfig = LoadNavConfig(Host.TemplateFile, Options.ContextName ?? "");
+    collectionNavigations = collectionNavigations
+        .Where(n => IsNavigationAllowed(navConfig, EntityType.Name, n.Name))
+        .ToList();
+    var model = EntityType.Model;
+    var relatedEntity = EntityType.Model.FindEntityType(EntityType.Name.Replace("View", string.Empty));
+    var relatedEntityCollectionNavigations = new List<Microsoft.EntityFrameworkCore.Metadata.INavigation>();
+    var isEntityView = isView && relatedEntity != null;
+    var entityIdTypeName = GetEntityIdTypeName(isEntityView ? relatedEntity! : EntityType);
+    var usings = new List<string>();
+    var interfaces = new List<string>();
+
+    if (!isExternalEntity)
+    {
+        usings.Add("Paradigm.Enterprise.Domain.Entities");
+        usings.Add(NamespaceHint.Replace("Domain", "Interfaces"));
+    }
+
+    if (!isView && !isExternalEntity)
+    {
+        usings.Add("Paradigm.Enterprise.Domain.Mappers");
+        usings.Add("Microsoft.Extensions.DependencyInjection");
+    }
+
+    if (isEntityView)
+    {
+        usings.Add("System.ComponentModel.DataAnnotations");
+    }
+
+    if (!string.IsNullOrEmpty(NamespaceHint))
+    {
+#>
+namespace <#= NamespaceHint #>;
+
+<#
+    }
+
+    if (!string.IsNullOrEmpty(EntityType.GetComment()))
+    {
+#>
+/// <summary>
+/// <#= code.XmlComment(EntityType.GetComment()) #>
+/// </summary>
+<#
+    }
+#>
+<#
+    if (isEntityView)
+    {
+        interfaces.Add($"I{EntityType.Name.Replace("View", string.Empty)}<{entityIdTypeName}>");
+        relatedEntityCollectionNavigations = relatedEntity.GetNavigations().Where(x => x.IsCollection).ToList();
+        relatedEntityCollectionNavigations = relatedEntityCollectionNavigations
+            .Where(n => IsNavigationAllowed(navConfig, relatedEntity.Name, n.Name))
+            .ToList();
+    }
+    else if (!isExternalEntity && !isView)
+    {
+        interfaces.Add($"I{EntityType.Name}<{entityIdTypeName}>");
+    }
+
+    var auditableColumns = (new [] { "CreationDate", "ModificationDate", "CreatedByUserId","ModifiedByUserId"}).ToList();
+    if (!isExternalEntity && !isView && auditableColumns.All(columnName => EntityType.GetProperties().Any(p => p.Name == columnName)))
+        interfaces.Add($"Paradigm.Enterprise.Interfaces.IAuditableEntity<DateTimeOffset, {entityIdTypeName}>");
+
+    if (!isExternalEntity && !isView && EntityType.GetProperties().Any(p => p.Name == "TentedDate"))
+        interfaces.Add("Microsoft.Dmt.Interfaces.ITenteableEntity");
+    
+    var baseClass = !isExternalEntity
+        ? (isView ? $" : EntityBase<{entityIdTypeName}>" : $" : EntityBase<{entityIdTypeName}, I{EntityType.Name}<{entityIdTypeName}>, {EntityType.Name}, {EntityType.Name}View>")
+        : string.Empty;
+#>
+public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() ? (", " + string.Join(", ", interfaces)) : string.Empty #>
+{
+    #region Properties
+<#
+    WriteLine("");
+    var firstProperty = true;
+    foreach (var property in EntityType.GetProperties().Where(p => p.Name != "Id").OrderBy(p => p.GetColumnOrder() ?? -1))
+    {
+        if (!firstProperty)
+        {
+            WriteLine("");
+        }
+
+        if (!string.IsNullOrEmpty(property.GetComment()))
+        {
+#>
+    /// <summary>
+    /// <#= code.XmlComment(property.GetComment(), indent: 1) #>
+    /// </summary>
+<#
+        }
+
+        if (isEntityView)
+        {
+            var dataAnnotations = property.GetDataAnnotations(annotationCodeGenerator)
+                .Where(a => a.Type == typeof(StringLengthAttribute) || IncludeRequiredAttribute(a, property, relatedEntity));
+                //.Where(a => a. !(a.Type == typeof(RequiredAttribute) && Options.UseNullableReferenceTypes && !property.ClrType.IsValueType));
+
+            foreach (var dataAnnotation in dataAnnotations)
+            {
+#>
+    <#= code.Fragment(dataAnnotation).Replace("StringLength", "MaxLength") #>
+<#
+            }
+        }
+
+        usings.AddRange(code.GetRequiredUsings(property.ClrType).Where(x => !string.Equals(x, "System", StringComparison.Ordinal)));
+
+        var needsNullable = Options.UseNullableReferenceTypes && property.IsNullable && !property.ClrType.IsValueType;
+        var needsInitializer = Options.UseNullableReferenceTypes && !property.IsNullable && !property.ClrType.IsValueType;
+#>
+    public <#= code.Reference(property.ClrType) #><#= needsNullable ? "?" : "" #> <#= property.Name #> { get; set; }<#= needsInitializer ? " = null!;" : "" #>
+<#
+        firstProperty = false;
+    }
+    
+    foreach (var navigation in collectionNavigations)
+    {
+        WriteLine("");
+
+        if (Options.UseDataAnnotations)
+        {
+            foreach (var dataAnnotation in navigation.GetDataAnnotations(annotationCodeGenerator))
+            {
+#>
+    <#= code.Fragment(dataAnnotation) #>
+<#
+            }
+        }
+
+        var targetType = navigation.TargetEntityType.Name;
+        var privateCollectionName = string.Format("_{0}{1}", char.ToLower(navigation.Name[0]), navigation.Name.Substring(1));
+#>
+    private readonly List<<#= targetType #>> <#= privateCollectionName #> = [];
+    public IList<<#= targetType #>> <#= navigation.Name #> => <#= privateCollectionName #>;
+    public DomainTracker<<#= targetType #>> <#= navigation.Name #>DomainTracker { get; } = new();
+<#
+    }
+
+    foreach (var skipNavigation in EntityType.GetSkipNavigations())
+    {
+        WriteLine("");
+
+        if (Options.UseDataAnnotations)
+        {
+            foreach (var dataAnnotation in skipNavigation.GetDataAnnotations(annotationCodeGenerator))
+            {
+#>
+    <#= code.Fragment(dataAnnotation) #>
+<#
+            }
+        }
+#>
+    public virtual ICollection<<#= skipNavigation.TargetEntityType.Name #>> <#= skipNavigation.Name #> { get; set; } = new List<<#= skipNavigation.TargetEntityType.Name #>>();
+<#
+    }
+
+    if (isEntityView)
+    {
+        foreach (var navigation in relatedEntityCollectionNavigations)
+        {
+            var targetType = navigation.TargetEntityType.Name;
+#>
+
+    public List<<#= targetType #>View> <#= navigation.Name #> { get; set; } = [];
+<#
+        }
+    }
+    WriteLine("");
+#>
+    #endregion
+<#
+    if (!isView && !isExternalEntity)
+    {
+#>
+
+    #region Public Methods
+
+    public override void Validate()
+    {
+        ValidateEntity();
+<#
+    foreach (var navigation in collectionNavigations)
+    {
+        var privateCollectionName = string.Format("_{0}{1}", char.ToLower(navigation.Name[0]), navigation.Name.Substring(1));
+#>
+        <#= privateCollectionName #>.ForEach(x => x.Validate());
+<#
+    }
+#>
+    }
+
+    public override <#= EntityType.Name #>? MapFrom(IServiceProvider serviceProvider, I<#= EntityType.Name #><<#= entityIdTypeName #>> model)
+    {
+        BeforeMap(model);
+
+        var mapper = serviceProvider.GetRequiredService<<#= EntityType.Name #>Mapper>();
+        mapper.MapFromInterface(this, model);
+<#
+    foreach (var navigation in collectionNavigations)
+    {
+#>
+        Map<#= navigation.Name #>(serviceProvider, model.Get<#= navigation.Name #>());
+<#
+    }
+#>
+
+        AfterMap(model);
+
+        return this;
+    }
+
+    public override <#= EntityType.Name #>View MapTo(IServiceProvider serviceProvider)
+    {
+        var mapper = serviceProvider.GetRequiredService<<#= EntityType.Name #>Mapper>();
+        var view = serviceProvider.GetRequiredService<<#= EntityType.Name #>View>();
+        mapper.MapTo(this, view);
+<#
+    foreach (var navigation in collectionNavigations)
+    {
+#>
+        view.<#= navigation.Name #> = <#= navigation.Name #>.Select(x => x.MapTo(serviceProvider)).ToList();
+<#
+    }
+#>
+
+        return view ?? throw new Exception($"Failed to map <#= EntityType.Name #> with Id '{this.Id}' to <#= EntityType.Name #>View.");
+    }
+<#
+    foreach (var navigation in collectionNavigations)
+    {
+        var targetType = navigation.TargetEntityType.Name;
+        var privateCollectionName = string.Format("_{0}{1}", char.ToLower(navigation.Name[0]), navigation.Name.Substring(1));
+#>
+
+    public void Add<#= navigation.Name #>(<#= targetType #>? entity)
+    {
+        if (entity is null) return;
+        <#= privateCollectionName #>.Add(entity);
+        <#= navigation.Name #>DomainTracker.Add(entity);
+    }
+    public void Remove<#= navigation.Name #>(<#= targetType #>? entity)
+    {
+        if (entity is null) return;
+        <#= privateCollectionName #>.Remove(entity);
+        <#= navigation.Name #>DomainTracker.Remove(entity);
+    }
+    public IReadOnlyCollection<I<#= targetType #><<#= entityIdTypeName #>>> Get<#= navigation.Name #>() => <#= navigation.Name #>.AsReadOnly();
+<#
+    }
+#>
+
+    #endregion
+
+    #region Partial Methods
+
+    partial void ValidateEntity();
+
+    partial void BeforeMap(I<#= EntityType.Name #><<#= entityIdTypeName #>> model);
+
+    partial void AfterMap(I<#= EntityType.Name #><<#= entityIdTypeName #>> model);
+
+    #endregion
+
+    #region Private Methods
+<#
+    foreach (var navigation in collectionNavigations)
+    {
+        var targetType = navigation.TargetEntityType.Name;
+        var privateCollectionName = string.Format("_{0}{1}", char.ToLower(navigation.Name[0]), navigation.Name.Substring(1));
+#>
+
+    private void Map<#= navigation.Name #>(IServiceProvider serviceProvider, IReadOnlyCollection<I<#= targetType #><<#= entityIdTypeName #>>> childContracts)
+    {
+        foreach (var childContract in childContracts)
+        {
+            if (!childContract.IsNew())
+            {
+                var childModel = <#= privateCollectionName #>.FirstOrDefault(x => x.Id.Equals(childContract.Id))
+                    ?? throw new Exception($"<#= targetType #> with Id '{childContract.Id}' not found.");
+
+                childModel.MapFrom(serviceProvider, childContract);
+                <#= navigation.Name #>DomainTracker.Edit(childModel);
+            }
+            else
+                Add<#= navigation.Name #>(serviceProvider.GetRequiredService<<#= targetType #>>().MapFrom(serviceProvider, childContract));
+        }
+
+        foreach (var childModel in <#= privateCollectionName #>.ToList())
+        {
+            if (!childContracts.Any(x => x.Id.Equals(childModel.Id)))
+                Remove<#= navigation.Name #>(childModel);
+        }
+    }
+<#
+    }
+#>
+
+    #endregion
+<#
+    }
+    else if (isEntityView && relatedEntityCollectionNavigations.Any())
+    {
+#>
+
+    #region Public Methods
+<#
+    foreach (var navigation in relatedEntityCollectionNavigations)
+    {
+        var targetType = navigation.TargetEntityType.Name;
+#>
+
+    public IReadOnlyCollection<I<#= targetType #><<#= entityIdTypeName #>>> Get<#= navigation.Name #>() => <#= navigation.Name #>.AsReadOnly();
+<#
+    }
+#>
+
+    #endregion
+<#
+    }
+#>
+}
+<#
+    if (!isView && !isExternalEntity)
+    {
+#>
+
+public partial class <#= EntityType.Name #>Mapper : EntityMapperBase<<#= entityIdTypeName #>, I<#= EntityType.Name #><<#= entityIdTypeName #>>, <#= EntityType.Name #>, <#= EntityType.Name #>View>
+{
+}
+<#
+    }
+
+    var previousOutput = GenerationEnvironment;
+    GenerationEnvironment = new StringBuilder();
+
+    foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer()))
+    {
+#>
+using <#= ns #>;
+<#
+    }
+
+    GenerationEnvironment.Append(previousOutput);
+#>

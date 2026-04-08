@@ -80,13 +80,36 @@ namespace Paradigm.Enterprise.Data.Context
         /// </remarks>
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            IEntity? loggedUser = null;
+            return await base.SaveChangesAsync(cancellationToken);
+        }
 
-            foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
+        #endregion
+
+        #region Protected Methods
+
+        #endregion
+    }
+
+    public class DbContextBase<TId> : DbContextBase
+        where TId : struct, IEquatable<TId>
+    {
+        public DbContextBase(IServiceProvider serviceProvider, DbContextOptions options)
+            : base(serviceProvider, options)
+        {
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            IEntity<TId>? loggedUser = null;
+
+            foreach (var entry in ChangeTracker.Entries<IAuditableEntity<TId>>())
             {
-                loggedUser = loggedUser ?? _serviceProvider.GetRequiredService<ILoggedUserService>().TryGetAuthenticatedUser<IEntity>();
+                loggedUser ??= _serviceProvider
+                    .GetRequiredService<ILoggedUserService<TId>>()
+                    .TryGetAuthenticatedUser<IEntity<TId>>();
 
-                if (loggedUser is null) continue;
+                if (loggedUser is null)
+                    continue;
 
                 switch (entry.State)
                 {
@@ -100,20 +123,14 @@ namespace Paradigm.Enterprise.Data.Context
             return await base.SaveChangesAsync(cancellationToken);
         }
 
-        #endregion
-
-        #region Protected Methods
-
         /// <summary>
         /// Audits the entity.
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <param name="loggedUserId">The logged user identifier.</param>
-        protected virtual void AuditEntity(IAuditableEntity entity, int loggedUserId)
+        protected virtual void AuditEntity(IAuditableEntity<TId> entity, TId loggedUserId)
         {
             entity.Audit(loggedUserId);
         }
-
-        #endregion
     }
 }

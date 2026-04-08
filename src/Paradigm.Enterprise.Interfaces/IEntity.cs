@@ -1,8 +1,15 @@
-﻿namespace Paradigm.Enterprise.Interfaces;
+﻿using System;
+
+namespace Paradigm.Enterprise.Interfaces;
 
 public interface IEntity
 {
-    int Id { get; }
-
     bool IsNew();
+}
+
+public interface IEntity<TId>
+    : IEntity
+    where TId : struct, IEquatable<TId>
+{
+    TId Id { get; }
 }
