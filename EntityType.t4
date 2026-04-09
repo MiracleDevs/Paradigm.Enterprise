@@ -18,6 +18,12 @@
 <#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
 
 <#
+    if (EntityType == null)
+    {
+        Warning("EntityType.t4 received a null 'EntityType' parameter. No entity will be scaffolded for this template invocation.");
+        return "";
+    }
+
     if (EntityType.IsSimpleManyToManyJoinEntityType())
     {
         // Don't scaffold these
@@ -77,7 +83,12 @@
         return false;
     }
 
-    var services = (IServiceProvider)Host;
+    if (Host is not IServiceProvider services)
+    {
+        Warning("EntityType.t4 host is not an IServiceProvider. Ensure EF Core scaffolding is running with a compatible templating host (EF Core 7+).");
+        return "";
+    }
+
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
 
@@ -142,7 +153,7 @@ namespace <#= NamespaceHint #>;
 <#
     if (isEntityView)
     {
-        interfaces.Add($"I{EntityType.Name.Replace("View", string.Empty)}<{entityIdTypeName}>");
+        interfaces.Add("I" + EntityType.Name.Replace("View", string.Empty));
         relatedEntityCollectionNavigations = relatedEntity.GetNavigations().Where(x => x.IsCollection).ToList();
         relatedEntityCollectionNavigations = relatedEntityCollectionNavigations
             .Where(n => IsNavigationAllowed(navConfig, relatedEntity.Name, n.Name))
@@ -150,7 +161,7 @@ namespace <#= NamespaceHint #>;
     }
     else if (!isExternalEntity && !isView)
     {
-        interfaces.Add($"I{EntityType.Name}<{entityIdTypeName}>");
+        interfaces.Add($"I{EntityType.Name}");
     }
 
     var auditableColumns = (new [] { "CreationDate", "ModificationDate", "CreatedByUserId","ModifiedByUserId"}).ToList();
@@ -161,7 +172,7 @@ namespace <#= NamespaceHint #>;
         interfaces.Add("Microsoft.Dmt.Interfaces.ITenteableEntity");
     
     var baseClass = !isExternalEntity
-        ? (isView ? $" : EntityBase<{entityIdTypeName}>" : $" : EntityBase<{entityIdTypeName}, I{EntityType.Name}<{entityIdTypeName}>, {EntityType.Name}, {EntityType.Name}View>")
+        ? (isView ? $" : EntityBase<{entityIdTypeName}>" : $" : EntityBase<{entityIdTypeName}, I{EntityType.Name}, {EntityType.Name}, {EntityType.Name}View>")
         : string.Empty;
 #>
 public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() ? (", " + string.Join(", ", interfaces)) : string.Empty #>
@@ -286,7 +297,7 @@ public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() 
 #>
     }
 
-    public override <#= EntityType.Name #>? MapFrom(IServiceProvider serviceProvider, I<#= EntityType.Name #><<#= entityIdTypeName #>> model)
+    public override <#= EntityType.Name #>? MapFrom(IServiceProvider serviceProvider, I<#= EntityType.Name #> model)
     {
         BeforeMap(model);
 
@@ -341,7 +352,7 @@ public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() 
         <#= privateCollectionName #>.Remove(entity);
         <#= navigation.Name #>DomainTracker.Remove(entity);
     }
-    public IReadOnlyCollection<I<#= targetType #><<#= entityIdTypeName #>>> Get<#= navigation.Name #>() => <#= navigation.Name #>.AsReadOnly();
+    public IReadOnlyCollection<I<#= targetType #>> Get<#= navigation.Name #>() => <#= navigation.Name #>.AsReadOnly();
 <#
     }
 #>
@@ -352,9 +363,9 @@ public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() 
 
     partial void ValidateEntity();
 
-    partial void BeforeMap(I<#= EntityType.Name #><<#= entityIdTypeName #>> model);
+    partial void BeforeMap(I<#= EntityType.Name #> model);
 
-    partial void AfterMap(I<#= EntityType.Name #><<#= entityIdTypeName #>> model);
+    partial void AfterMap(I<#= EntityType.Name #> model);
 
     #endregion
 
@@ -366,7 +377,7 @@ public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() 
         var privateCollectionName = string.Format("_{0}{1}", char.ToLower(navigation.Name[0]), navigation.Name.Substring(1));
 #>
 
-    private void Map<#= navigation.Name #>(IServiceProvider serviceProvider, IReadOnlyCollection<I<#= targetType #><<#= entityIdTypeName #>>> childContracts)
+    private void Map<#= navigation.Name #>(IServiceProvider serviceProvider, IReadOnlyCollection<I<#= targetType #>> childContracts)
     {
         foreach (var childContract in childContracts)
         {
@@ -406,7 +417,7 @@ public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() 
         var targetType = navigation.TargetEntityType.Name;
 #>
 
-    public IReadOnlyCollection<I<#= targetType #><<#= entityIdTypeName #>>> Get<#= navigation.Name #>() => <#= navigation.Name #>.AsReadOnly();
+    public IReadOnlyCollection<I<#= targetType #>> Get<#= navigation.Name #>() => <#= navigation.Name #>.AsReadOnly();
 <#
     }
 #>
@@ -421,7 +432,7 @@ public partial class <#= EntityType.Name #><#= baseClass #><#= interfaces.Any() 
     {
 #>
 
-public partial class <#= EntityType.Name #>Mapper : EntityMapperBase<<#= entityIdTypeName #>, I<#= EntityType.Name #><<#= entityIdTypeName #>>, <#= EntityType.Name #>, <#= EntityType.Name #>View>
+public partial class <#= EntityType.Name #>Mapper : EntityMapperBase<<#= entityIdTypeName #>, I<#= EntityType.Name #>, <#= EntityType.Name #>, <#= EntityType.Name #>View>
 {
 }
 <#

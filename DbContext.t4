@@ -18,7 +18,10 @@
 <#@ import namespace="Microsoft.EntityFrameworkCore.Scaffolding" #>
 <#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
 <#
-    if (!ProductInfo.GetVersion().StartsWith("7.0"))
+    var efVersion = ProductInfo.GetVersion();
+    var efMajor = 0;
+    _ = int.TryParse(efVersion.Split('.').FirstOrDefault(), out efMajor);
+    if (efMajor > 0 && efMajor < 7)
     {
         Warning("Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
     }
@@ -76,19 +79,38 @@
     var code = services.GetRequiredService<ICSharpHelper>();
     var navConfig = LoadNavConfig(Host.TemplateFile, Options.ContextName ?? "");
 
-    string GetContextIdTypeName(Microsoft.EntityFrameworkCore.Metadata.IModel model)
+    string GetContextBaseClassName(Microsoft.EntityFrameworkCore.Metadata.IModel? model)
     {
-        var firstEntity = model.GetEntityTypes().FirstOrDefault(e => !e.IsSimpleManyToManyJoinEntityType());
-        if (firstEntity == null) return code.Reference(typeof(int));
+        if (model == null)
+        {
+            Warning("DbContext.t4 received a null 'Model' parameter. Falling back to non-generic DbContextBase.");
+            return "DbContextBase";
+        }
 
-        var idProperty = firstEntity.FindProperty("Id");
-        var keyProperty = firstEntity.FindPrimaryKey()?.Properties.FirstOrDefault();
-        var clrType = idProperty?.ClrType ?? keyProperty?.ClrType ?? typeof(int);
-        clrType = Nullable.GetUnderlyingType(clrType) ?? clrType;
-        return code.Reference(clrType);
+        var entityTypes = model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType()).ToList();
+        if (entityTypes.Count == 0) return "DbContextBase";
+
+        var idTypes = entityTypes
+            .Select(e =>
+            {
+                var idProperty = e.FindProperty("Id");
+                var keyProperty = e.FindPrimaryKey()?.Properties.FirstOrDefault();
+                var clrType = idProperty?.ClrType ?? keyProperty?.ClrType ?? typeof(int);
+                return Nullable.GetUnderlyingType(clrType) ?? clrType;
+            })
+            .Distinct()
+            .ToList();
+
+        if (idTypes.Count != 1)
+        {
+            Warning($"Multiple PK types detected ({string.Join(", ", idTypes.Select(t => t.Name))}). Falling back to non-generic DbContextBase.");
+            return "DbContextBase";
+        }
+
+        return $"DbContextBase<{code.Reference(idTypes[0])}>";
     }
 
-    var contextIdTypeName = GetContextIdTypeName(Model);
+    var contextBaseClassName = GetContextBaseClassName(Model);
 
     var usings = new List<string>
     {
@@ -110,9 +132,8 @@ namespace <#= NamespaceHint #>;
 <#
     }
 #>
-public partial class <#= Options.ContextName #> : DbContextBase<<#= contextIdTypeName #>>
+public partial class <#= Options.ContextName #> : <#= contextBaseClassName #>
 {
-<#
     public <#= Options.ContextName #>(IServiceProvider serviceProvider, DbContextOptions<<#= Options.ContextName #>> options)
         : base(serviceProvider, options)
     {
