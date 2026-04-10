@@ -6,9 +6,9 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBase<TContext>, IReadRepository<TEntity, TId>
+public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBase<TContext, TId>, IReadRepository<TEntity, TId>
     where TEntity : EntityBase<TId>
-    where TContext : DbContextBase
+    where TContext : DbContextBase<TId>
     where TId : struct, IEquatable<TId>
 {
     #region Constructor

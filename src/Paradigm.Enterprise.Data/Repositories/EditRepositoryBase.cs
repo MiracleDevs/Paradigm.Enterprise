@@ -7,7 +7,7 @@ namespace Paradigm.Enterprise.Data.Repositories;
 
 public abstract class EditRepositoryBase<TEntity, TContext, TId> : ReadRepositoryBase<TEntity, TContext, TId>, IEditRepository<TEntity, TId>
     where TEntity : EntityBase<TId>
-     where TContext : DbContextBase
+     where TContext : DbContextBase<TId>
     where TId : struct, IEquatable<TId>
 {
     #region Constructor

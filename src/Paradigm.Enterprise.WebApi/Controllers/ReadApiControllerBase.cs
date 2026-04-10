@@ -10,24 +10,11 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 
 [AllowAnonymous]
 [ApiController]
-public abstract class ReadApiControllerBase<TProvider, TView, TParameters, TId> : ApiControllerBase
+public abstract class ReadApiControllerBase<TProvider, TView, TParameters, TId> : ApiControllerBase<TProvider>
     where TId : struct, IEquatable<TId>
     where TProvider : IReadProvider<TView, TId>
     where TParameters : PaginationParametersBase
 {
-
-    #region Properties
-
-    /// <summary>
-    /// Gets the provider.
-    /// </summary>
-    /// <value>
-    /// The provider.
-    /// </value>
-    protected TProvider Provider { get; }
-
-    #endregion
-
     #region Constructor
 
     /// <summary>
@@ -35,9 +22,9 @@ public abstract class ReadApiControllerBase<TProvider, TView, TParameters, TId> 
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="provider">The provider.</param>
-    protected ReadApiControllerBase(ILogger<ApiControllerBase> logger, TProvider provider) : base(logger)
+    protected ReadApiControllerBase(ILogger<ApiControllerBase> logger, TProvider provider)
+        : base(logger, provider)
     {
-        Provider = provider;
     }
 
     #endregion

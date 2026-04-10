@@ -7,8 +7,9 @@ using System.Data.Common;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
-public abstract class RepositoryBase<TContext> : IRepository
-    where TContext : DbContextBase
+public abstract class RepositoryBase<TContext, TId> : IRepository
+    where TContext : DbContextBase<TId>
+    where TId : struct, IEquatable<TId>
 {
     #region Properties
 

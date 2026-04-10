@@ -83,12 +83,16 @@
     {
         if (model == null)
         {
-            Warning("DbContext.t4 received a null 'Model' parameter. Falling back to non-generic DbContextBase.");
-            return "DbContextBase";
+            Error("DbContext.t4 received a null 'Model' parameter. Cannot determine TId for DbContextBase<TId>.");
+            return "DbContextBase<int>";
         }
 
         var entityTypes = model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType()).ToList();
-        if (entityTypes.Count == 0) return "DbContextBase";
+        if (entityTypes.Count == 0)
+        {
+            Warning("No entity types detected; defaulting DbContext base class to DbContextBase<int>.");
+            return "DbContextBase<int>";
+        }
 
         var idTypes = entityTypes
             .Select(e =>
@@ -103,8 +107,8 @@
 
         if (idTypes.Count != 1)
         {
-            Warning($"Multiple PK types detected ({string.Join(", ", idTypes.Select(t => t.Name))}). Falling back to non-generic DbContextBase.");
-            return "DbContextBase";
+            Error($"Multiple PK types detected ({string.Join(", ", idTypes.Select(t => t.Name))}). A single TId is required to generate DbContextBase<TId>.");
+            return "DbContextBase<int>";
         }
 
         return $"DbContextBase<{code.Reference(idTypes[0])}>";

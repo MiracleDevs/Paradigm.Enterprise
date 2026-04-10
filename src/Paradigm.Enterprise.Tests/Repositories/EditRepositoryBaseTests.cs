@@ -27,7 +27,7 @@ public class EditRepositoryBaseTests
     }
 
     // Test DbContext
-    public class TestDbContext : DbContextBase
+    public class TestDbContext : DbContextBase<int>
     {
         public DbSet<TestAggregateRoot> AggregateRoots { get; set; } = null!;
 

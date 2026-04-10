@@ -17,7 +17,7 @@ public class RepositoryTests
     }
 
     // Test DbContext
-    public class TestDbContext : DbContextBase
+    public class TestDbContext : DbContextBase<int>
     {
         public DbSet<TestEntity> TestEntities { get; set; } = null!;
 
