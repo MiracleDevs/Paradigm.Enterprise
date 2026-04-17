@@ -11,7 +11,7 @@ namespace Paradigm.Enterprise.Tests.Repositories;
 public class EditRepositoryBaseTests
 {
     // Aggregate root entity for testing
-    public class TestAggregateRoot : EntityBase, IEntity
+    public class TestAggregateRoot : EntityBase<int>
     {
         public string Name { get; set; } = string.Empty;
 
@@ -19,7 +19,7 @@ public class EditRepositoryBaseTests
     }
 
     // Aggregated child entity for testing
-    public class TestAggregatedChild : EntityBase, IEntity
+    public class TestAggregatedChild : EntityBase<int>
     {
         public string Description { get; set; } = string.Empty;
 
@@ -27,7 +27,7 @@ public class EditRepositoryBaseTests
     }
 
     // Test DbContext
-    public class TestDbContext : DbContextBase
+    public class TestDbContext : DbContextBase<int>
     {
         public DbSet<TestAggregateRoot> AggregateRoots { get; set; } = null!;
 
@@ -52,7 +52,7 @@ public class EditRepositoryBaseTests
     }
 
     // Test Repository with RemoveAggregate implementation
-    public class TestAggregateRepository : EditRepositoryBase<TestAggregateRoot, TestDbContext>
+    public class TestAggregateRepository : EditRepositoryBase<TestAggregateRoot, TestDbContext, int>
     {
         public TestAggregateRepository(IServiceProvider serviceProvider) : base(serviceProvider) { }
 

@@ -7,19 +7,15 @@ namespace Paradigm.Enterprise.Tests.Mappers;
 public class EntityMapperTests
 {
     // Sample entity for testing
-    public class TestEntity : EntityBase, IEntity
+    public class TestEntity : EntityBase<int>
     {
         public string Name { get; set; } = string.Empty;
-
-        public new bool IsNew() => Id == 0;
     }
 
     // Sample entity for mapping to/from
-    public class TestEntityDto : EntityBase, IEntity
+    public class TestEntityDto : EntityBase<int>
     {
         public string Name { get; set; } = string.Empty;
-
-        public new bool IsNew() => Id == 0;
     }
 
     // Test mapper implementation

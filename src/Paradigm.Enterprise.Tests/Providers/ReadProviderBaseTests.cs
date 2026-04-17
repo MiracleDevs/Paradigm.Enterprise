@@ -8,21 +8,19 @@ namespace Paradigm.Enterprise.Tests.Providers;
 public class ReadProviderBaseTests
 {
     // Sample entity for testing
-    public class TestEntity : EntityBase, IEntity
+    public class TestEntity : EntityBase<int>
     {
         public string Name { get; set; } = string.Empty;
-
-        public new bool IsNew() => Id == 0;
     }
 
     // Repository interface
-    public interface ITestRepository : IReadRepository<TestEntity> { }
+    public interface ITestRepository : IReadRepository<TestEntity, int> { }
 
     // Provider interface
-    public interface ITestProvider : IReadProvider<TestEntity> { }
+    public interface ITestProvider : IReadProvider<TestEntity, int> { }
 
     // Test provider implementation
-    public class TestProvider : ReadProviderBase<IEntity, TestEntity, ITestRepository>, ITestProvider
+    public class TestProvider : ReadProviderBase<IEntity<int>, TestEntity, ITestRepository, int>, ITestProvider
     {
         public TestProvider(IServiceProvider serviceProvider) : base(serviceProvider) { }
     }

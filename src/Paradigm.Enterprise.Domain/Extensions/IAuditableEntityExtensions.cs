@@ -4,15 +4,17 @@ namespace Paradigm.Enterprise.Domain.Extensions;
 
 public static class IAuditableEntityExtensions
 {
-    public static void Audit(this IAuditableEntity entity, int? userId)
+    public static void Audit<TId>(this IAuditableEntity<TId> entity, TId? userId)
+        where TId : struct, IEquatable<TId>
     {
-        if (entity is IAuditableEntity<DateTime> dateTimeEntity)
+        if (entity is IAuditableEntity<DateTime, TId> dateTimeEntity)
             dateTimeEntity.Audit(userId);
-        else if (entity is IAuditableEntity<DateTimeOffset> dateTimeOffsetEntity)
+        else if (entity is IAuditableEntity<DateTimeOffset, TId> dateTimeOffsetEntity)
             dateTimeOffsetEntity.Audit(userId);
     }
 
-    public static void Audit(this IAuditableEntity<DateTime> entity, int? userId)
+    public static void Audit<TId>(this IAuditableEntity<DateTime, TId> entity, TId? userId)
+        where TId : struct, IEquatable<TId>
     {
         var now = DateTime.UtcNow;
 
@@ -21,7 +23,7 @@ public static class IAuditableEntityExtensions
         else
             entity.ModificationDate = now;
 
-        if (userId is not null && userId != default)
+        if (userId is not null && !userId.Value.Equals(default(TId)))
         {
             if (entity.IsNew())
                 entity.CreatedByUserId = userId;
@@ -30,7 +32,8 @@ public static class IAuditableEntityExtensions
         }
     }
 
-    public static void Audit(this IAuditableEntity<DateTimeOffset> entity, int? userId)
+    public static void Audit<TId>(this IAuditableEntity<DateTimeOffset, TId> entity, TId? userId)
+        where TId : struct, IEquatable<TId>
     {
         var now = DateTimeOffset.UtcNow;
 
@@ -39,7 +42,7 @@ public static class IAuditableEntityExtensions
         else
             entity.ModificationDate = now;
 
-        if (userId is not null && userId != default)
+        if (userId is not null && !userId.Value.Equals(default(TId)))
         {
             if (entity.IsNew())
                 entity.CreatedByUserId = userId;

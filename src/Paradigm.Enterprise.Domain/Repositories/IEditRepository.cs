@@ -2,8 +2,9 @@
 
 namespace Paradigm.Enterprise.Domain.Repositories;
 
-public interface IEditRepository<TEntity> : IReadRepository<TEntity>
-    where TEntity : EntityBase
+public interface IEditRepository<TEntity, TId> : IReadRepository<TEntity, TId>
+    where TEntity : EntityBase<TId>
+    where TId : struct, IEquatable<TId>
 {
     /// <summary>
     /// Adds a new entity.

@@ -12,6 +12,6 @@ public static class ServiceCollectionExtensions
     /// <returns></returns>
     public static IServiceCollection RegisterLoggedUserService(this IServiceCollection services)
     {
-        return services.AddScoped<ILoggedUserService, LoggedUserService>();
+        return services.AddScoped(typeof(ILoggedUserService<>), typeof(LoggedUserService<>));
     }
 }

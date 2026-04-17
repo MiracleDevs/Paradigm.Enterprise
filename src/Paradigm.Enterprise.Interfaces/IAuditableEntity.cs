@@ -1,6 +1,9 @@
-﻿namespace Paradigm.Enterprise.Interfaces;
+﻿using System;
 
-public interface IAuditableEntity : IEntity
+namespace Paradigm.Enterprise.Interfaces;
+
+public interface IAuditableEntity<TId> : IEntity<TId>
+    where TId : struct, IEquatable<TId>
 {
     /// <summary>
     /// Gets or sets the creation user identifier.
@@ -8,7 +11,7 @@ public interface IAuditableEntity : IEntity
     /// <value>
     /// The creation user identifier.
     /// </value>
-    int? CreatedByUserId { get; set; }
+    TId? CreatedByUserId { get; set; }
 
     /// <summary>
     /// Gets or sets the modified by user identifier.
@@ -16,10 +19,12 @@ public interface IAuditableEntity : IEntity
     /// <value>
     /// The modified by user identifier.
     /// </value>
-    int? ModifiedByUserId { get; set; }
+    TId? ModifiedByUserId { get; set; }
 }
 
-public interface IAuditableEntity<TDate> : IAuditableEntity where TDate : struct
+public interface IAuditableEntity<TDate, TId> : IAuditableEntity<TId>
+    where TDate : struct
+    where TId : struct, IEquatable<TId>
 {
     /// <summary>
     /// Gets or sets the creation date.

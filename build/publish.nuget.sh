@@ -8,8 +8,8 @@ nugetKey=$1
 index=$2
 noclsArg=$3
 nugetDir=../.nuget/
-nugetExt=*.*nupkg
-nugetUrl=https://www.nuget.org/api/v2/package
+nugetExt=*.nupkg
+nugetUrl=https://api.nuget.org/v3/index.json
 
 if [[ "$nugetKey" == "" ]]; then error "Missing nuget key." ; buildFailed ; fi
 if [[ "$index" == "" ]]; 	then index="1"; fi
