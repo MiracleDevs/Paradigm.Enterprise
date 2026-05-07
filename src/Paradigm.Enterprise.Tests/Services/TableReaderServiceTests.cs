@@ -1,6 +1,7 @@
 ﻿using Paradigm.Enterprise.Services.TableReader;
 using Paradigm.Enterprise.Services.TableReader.Configuration;
 using Paradigm.Enterprise.Services.TableReader.Readers.Csv;
+using Paradigm.Enterprise.Services.TableReader.Readers.Json;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 using System.Text;
@@ -91,6 +92,24 @@ public class TableReaderServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.IsInstanceOfType(result, typeof(XmlTableReader));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_WithJsonConfiguration_ReturnsJsonTableReader()
+    {
+        // Arrange
+        var bytes = Encoding.UTF8.GetBytes("{\"rows\":[{\"name\":\"John\",\"age\":\"25\"}]}");
+        var configuration = new TableConfiguration
+        {
+            TableFileType = TableFileTypes.Json
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(bytes, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(JsonTableReader));
     }
 
     [TestMethod]
@@ -527,6 +546,63 @@ public class TableReaderServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.IsInstanceOfType(result, typeof(XmlTableReader));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_JsonFromStream_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "{\"rows\":[{\"Name\":\"John\",\"Age\":\"25\"},{\"Name\":\"Jane\",\"Age\":\"30\"}]}";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableConfiguration
+        {
+            TableFileType = TableFileTypes.Json
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(reader);
+        Assert.IsInstanceOfType(reader, typeof(JsonTableReader));
+
+        var columns = reader.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("Name", columns[0].Name);
+        Assert.AreEqual("Age", columns[1].Name);
+
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row1 = reader.GetCurrentRow();
+        Assert.AreEqual("John", row1.GetValue(0));
+        Assert.AreEqual("25", row1.GetValue(1));
+
+        Assert.IsTrue(reader.ReadRowAsync().Result);
+        var row2 = reader.GetCurrentRow();
+        Assert.AreEqual("Jane", row2.GetValue(0));
+        Assert.AreEqual("30", row2.GetValue(1));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_JsonWithoutHeader_GeneratesColumnNames()
+    {
+        // Arrange
+        var content = "{\"rows\":[{\"Name\":\"John\",\"Age\":\"25\"}]}";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableConfiguration
+        {
+            TableFileType = TableFileTypes.Json
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, false, configuration);
+
+        // Assert
+        var columns = reader.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("A", columns[0].Name);
+        Assert.AreEqual("B", columns[1].Name);
     }
 
     [TestMethod]
