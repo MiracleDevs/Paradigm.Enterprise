@@ -27,6 +27,6 @@ execute "bash ./build.nuget.sh $index.1 nocls"
 #------------------------------------------------
 for f in $(find $nugetDir -type f -name "$nugetExt"); do
 	echo "PUBLISHING: $f"
-	./nuget.exe push $f $nugetKey -source $nugetUrl
+	dotnet nuget push "$f" --api-key "$nugetKey" --source "$nugetUrl"
 	echo ""
 done

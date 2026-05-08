@@ -4,5 +4,6 @@ public enum TableFileTypes
 {
     Csv = 0,
     Xls = 1,
-    Xml = 2
+    Xml = 2,
+    Json = 3
 }

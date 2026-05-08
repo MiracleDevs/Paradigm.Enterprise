@@ -1,6 +1,7 @@
 ﻿using Paradigm.Enterprise.Services.TableReader.Configuration;
 using Paradigm.Enterprise.Services.TableReader.Readers;
 using Paradigm.Enterprise.Services.TableReader.Readers.Csv;
+using Paradigm.Enterprise.Services.TableReader.Readers.Json;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 
@@ -34,6 +35,9 @@ public class TableReaderService : ITableReaderService
 
             case TableFileTypes.Xml:
                 return XmlTableReader.OpenFromStream(sourceStream, sourceHasHeader);
+
+            case TableFileTypes.Json:
+                return JsonTableReader.OpenFromStream(sourceStream, sourceHasHeader);
         }
 
         throw new Exception("TableReader not found.");
@@ -62,6 +66,9 @@ public class TableReaderService : ITableReaderService
 
             case TableFileTypes.Xml:
                 return XmlTableReader.OpenFromContent(sourceBytes, sourceHasHeader);
+
+            case TableFileTypes.Json:
+                return JsonTableReader.OpenFromContent(sourceBytes, sourceHasHeader);
         }
 
         throw new Exception("TableReader not found.");

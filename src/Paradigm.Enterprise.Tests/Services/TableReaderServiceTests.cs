@@ -1,6 +1,7 @@
 ﻿using Paradigm.Enterprise.Services.TableReader;
 using Paradigm.Enterprise.Services.TableReader.Configuration;
 using Paradigm.Enterprise.Services.TableReader.Readers.Csv;
+using Paradigm.Enterprise.Services.TableReader.Readers.Json;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xls;
 using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 using System.Text;
@@ -91,6 +92,24 @@ public class TableReaderServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.IsInstanceOfType(result, typeof(XmlTableReader));
+    }
+
+    [TestMethod]
+    public void GetReaderInstance_WithJsonConfiguration_ReturnsJsonTableReader()
+    {
+        // Arrange
+        var bytes = Encoding.UTF8.GetBytes("{\"rows\":[{\"name\":\"John\",\"age\":\"25\"}]}");
+        var configuration = new TableConfiguration
+        {
+            TableFileType = TableFileTypes.Json
+        };
+
+        // Act
+        var result = _service.GetReaderInstance(bytes, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(JsonTableReader));
     }
 
     [TestMethod]
@@ -190,7 +209,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_WithSeekableStream_ResetsToStartAndReadsSchema()
+    public async Task GetReaderInstance_WithSeekableStream_ResetsToStartAndReadsSchema()
     {
         // Arrange
         var content = "Name,Age\r\nJohn,25\r\nJane,30";  // Use \r\n for proper CSV format
@@ -221,7 +240,7 @@ public class TableReaderServiceTests
         Assert.IsGreaterThan(0, stream.Position, "Stream should have advanced during schema initialization");
 
         // Verify we can read the first data row
-        Assert.IsTrue(result.ReadRowAsync().Result, "Should be able to read first data row");
+        Assert.IsTrue(await result.ReadRowAsync(), "Should be able to read first data row");
         var row = result.GetCurrentRow();
         Assert.AreEqual("John", row.GetValue(0));
         Assert.AreEqual("25", row.GetValue(1));
@@ -418,7 +437,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_WithLargeStream_DoesNotLoadEntireFileIntoMemory()
+    public async Task GetReaderInstance_WithLargeStream_DoesNotLoadEntireFileIntoMemory()
     {
         // Arrange
         var largeContent = new StringBuilder();
@@ -453,7 +472,7 @@ public class TableReaderServiceTests
 
         // Read rows and verify values are correct
         int rowCount = 0;
-        while (result.ReadRowAsync().Result && rowCount < 100)
+        while (await result.ReadRowAsync() && rowCount < 100)
         {
             var row = result.GetCurrentRow();
             Assert.IsNotNull(row);
@@ -471,7 +490,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_CsvFromStream_ParsesCorrectly()
+    public async Task GetReaderInstance_CsvFromStream_ParsesCorrectly()
     {
         // Arrange
         var content = "Name,Age\r\nJohn,25\r\nJane,30\r\nBob,35";  // Use \r\n for proper CSV format
@@ -498,12 +517,12 @@ public class TableReaderServiceTests
         Assert.AreEqual("Age", columns[1].Name);
 
         // Verify can read data rows
-        Assert.IsTrue(result.ReadRowAsync().Result, "Should read first data row");
+        Assert.IsTrue(await result.ReadRowAsync(), "Should read first data row");
         var row1 = result.GetCurrentRow();
         Assert.AreEqual("John", row1.GetValue(0));
         Assert.AreEqual("25", row1.GetValue(1));
 
-        Assert.IsTrue(result.ReadRowAsync().Result, "Should read second data row");
+        Assert.IsTrue(await result.ReadRowAsync(), "Should read second data row");
         var row2 = result.GetCurrentRow();
         Assert.AreEqual("Jane", row2.GetValue(0));
         Assert.AreEqual("30", row2.GetValue(1));
@@ -530,7 +549,76 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_StreamAtNonZeroPosition_ResetsToStart()
+    public async Task GetReaderInstance_JsonFromStream_ParsesCorrectly()
+    {
+        // Arrange
+        var content = "{\"rows\":[{\"Name\":\"John\",\"Age\":\"25\"},{\"Name\":\"Jane\",\"Age\":\"30\"}]}";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableConfiguration
+        {
+            TableFileType = TableFileTypes.Json
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, true, configuration);
+
+        // Assert
+        Assert.IsNotNull(reader);
+        Assert.IsInstanceOfType(reader, typeof(JsonTableReader));
+
+        var columns = reader.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("Name", columns[0].Name);
+        Assert.AreEqual("Age", columns[1].Name);
+
+        Assert.IsTrue(await reader.ReadRowAsync());
+        var row1 = reader.GetCurrentRow();
+        Assert.AreEqual("John", row1.GetValue(0));
+        Assert.AreEqual("25", row1.GetValue(1));
+
+        Assert.IsTrue(await reader.ReadRowAsync());
+        var row2 = reader.GetCurrentRow();
+        Assert.AreEqual("Jane", row2.GetValue(0));
+        Assert.AreEqual("30", row2.GetValue(1));
+
+        Assert.IsFalse(await reader.ReadRowAsync());
+    }
+
+    [TestMethod]
+    public async Task GetReaderInstance_JsonWithoutHeader_GeneratesColumnNames_AndReadsValuesBySourceProperty()
+    {
+        // Arrange
+        var content = "{\"rows\":[{\"Name\":\"John\",\"Age\":\"25\"},{\"Age\":\"30\",\"Name\":\"Jane\"}]}";
+        var bytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(bytes);
+        var configuration = new TableConfiguration
+        {
+            TableFileType = TableFileTypes.Json
+        };
+
+        // Act
+        var reader = _service.GetReaderInstance(stream, false, configuration);
+
+        // Assert
+        var columns = reader.Schema.GetColumns().ToList();
+        Assert.HasCount(2, columns);
+        Assert.AreEqual("A", columns[0].Name);
+        Assert.AreEqual("B", columns[1].Name);
+
+        Assert.IsTrue(await reader.ReadRowAsync());
+        var row1 = reader.GetCurrentRow();
+        Assert.AreEqual("John", row1.GetValue(0));
+        Assert.AreEqual("25", row1.GetValue(1));
+
+        Assert.IsTrue(await reader.ReadRowAsync());
+        var row2 = reader.GetCurrentRow();
+        Assert.AreEqual("Jane", row2.GetValue(0));
+        Assert.AreEqual("30", row2.GetValue(1));
+    }
+
+    [TestMethod]
+    public async Task GetReaderInstance_StreamAtNonZeroPosition_ResetsToStart()
     {
         // Arrange
         var content = "Name,Age\r\nJohn,25\r\nJane,30\r\nBob,35";  // Use \r\n for proper CSV format
@@ -558,7 +646,7 @@ public class TableReaderServiceTests
         Assert.AreEqual("Age", columns[1].Name);
 
         // Should read data from start of file, not from position 10
-        Assert.IsTrue(result.ReadRowAsync().Result, "Should read first data row");
+        Assert.IsTrue(await result.ReadRowAsync(), "Should read first data row");
         var row = result.GetCurrentRow();
         Assert.AreEqual("John", row.GetValue(0));
         Assert.AreEqual("25", row.GetValue(1));
@@ -594,7 +682,7 @@ public class TableReaderServiceTests
     #region IColumn parameter overload tests
 
     [TestMethod]
-    public void GetReaderInstance_GetString_WithIColumnParameter_ReturnsCorrectValue()
+    public async Task GetReaderInstance_GetString_WithIColumnParameter_ReturnsCorrectValue()
     {
         // Arrange
         var content = "Name,Age,Email\r\nJohn,25,john@example.com\r\nJane,30,jane@example.com";
@@ -613,7 +701,7 @@ public class TableReaderServiceTests
         var emailColumn = schema.GetRequiredColumn("Email");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         // Test new IColumn overload
@@ -625,7 +713,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_GetInt32_WithIColumnParameter_ReturnsCorrectValue()
+    public async Task GetReaderInstance_GetInt32_WithIColumnParameter_ReturnsCorrectValue()
     {
         // Arrange
         var content = "Name,Age,YearsExperience\r\nJohn,25,5\r\nJane,30,8";
@@ -644,7 +732,7 @@ public class TableReaderServiceTests
         var experienceColumn = schema.GetRequiredColumn("YearsExperience");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         // Test new IColumn overload
@@ -656,7 +744,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_GetValue_WithIColumnParameter_ReturnsCorrectValue()
+    public async Task GetReaderInstance_GetValue_WithIColumnParameter_ReturnsCorrectValue()
     {
         // Arrange
         var content = "ProductName,Price,InStock\r\nLaptop,999.99,true\r\nMouse,29.99,false";
@@ -676,7 +764,7 @@ public class TableReaderServiceTests
         var inStockColumn = schema.GetRequiredColumn("InStock");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         // Test new IColumn overload with GetValue
@@ -690,7 +778,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_IsNull_WithIColumnParameter_ReturnsCorrectValue()
+    public async Task GetReaderInstance_IsNull_WithIColumnParameter_ReturnsCorrectValue()
     {
         // Arrange
         var content = "Name,Age,Email\r\nJohn,25,\r\nJane,,jane@example.com";
@@ -710,7 +798,7 @@ public class TableReaderServiceTests
         var emailColumn = schema.GetRequiredColumn("Email");
 
         // Assert - First row: email is empty
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row1 = reader.GetCurrentRow();
 
         Assert.IsFalse(row1.IsNull(nameColumn), "Name should not be null");
@@ -718,7 +806,7 @@ public class TableReaderServiceTests
         Assert.IsFalse(row1.IsNull(emailColumn), "Empty string is not null in CSV");
 
         // Second row: age is empty
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row2 = reader.GetCurrentRow();
 
         Assert.IsFalse(row2.IsNull(nameColumn), "Name should not be null");
@@ -727,7 +815,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_MultipleDataTypes_WithIColumnParameter_ParsesCorrectly()
+    public async Task GetReaderInstance_MultipleDataTypes_WithIColumnParameter_ParsesCorrectly()
     {
         // Arrange
         var content = "Name,Age,Score,Active,Grade\r\nJohn,25,98.5,true,A\r\nJane,30,87.3,false,B";
@@ -749,7 +837,7 @@ public class TableReaderServiceTests
         var gradeColumn = schema.GetRequiredColumn("Grade");
 
         // Assert - First row
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row1 = reader.GetCurrentRow();
 
         Assert.AreEqual("John", row1.GetString(nameColumn));
@@ -759,7 +847,7 @@ public class TableReaderServiceTests
         Assert.AreEqual('A', row1.GetChar(gradeColumn));
 
         // Assert - Second row
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row2 = reader.GetCurrentRow();
 
         Assert.AreEqual("Jane", row2.GetString(nameColumn));
@@ -770,7 +858,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_NumericTypes_WithIColumnParameter_ParsesCorrectly()
+    public async Task GetReaderInstance_NumericTypes_WithIColumnParameter_ParsesCorrectly()
     {
         // Arrange
         var content = "ByteVal,Int16Val,Int32Val,Int64Val,FloatVal,DecimalVal\r\n255,32767,2147483647,9223372036854775807,3.14,99.99";
@@ -793,7 +881,7 @@ public class TableReaderServiceTests
         var decimalColumn = schema.GetRequiredColumn("DecimalVal");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         Assert.AreEqual((byte)255, row.GetByte(byteColumn));
@@ -805,7 +893,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_UnsignedTypes_WithIColumnParameter_ParsesCorrectly()
+    public async Task GetReaderInstance_UnsignedTypes_WithIColumnParameter_ParsesCorrectly()
     {
         // Arrange
         var content = "SByteVal,UInt16Val,UInt32Val,UInt64Val\r\n127,65535,4294967295,18446744073709551615";
@@ -826,7 +914,7 @@ public class TableReaderServiceTests
         var uint64Column = schema.GetRequiredColumn("UInt64Val");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         Assert.AreEqual((sbyte)127, row.GetSByte(sbyteColumn));
@@ -836,7 +924,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_GetDateTime_WithIColumnParameter_ParsesCorrectly()
+    public async Task GetReaderInstance_GetDateTime_WithIColumnParameter_ParsesCorrectly()
     {
         // Arrange
         var content = "EventName,EventDate\r\nMeeting,2025-10-28\r\nConference,2025-12-15";
@@ -855,7 +943,7 @@ public class TableReaderServiceTests
         var eventDateColumn = schema.GetRequiredColumn("EventDate");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         Assert.AreEqual("Meeting", row.GetString(eventNameColumn));
@@ -863,7 +951,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_IColumnOverload_ComparedToIndexAccess_ProducesSameResults()
+    public async Task GetReaderInstance_IColumnOverload_ComparedToIndexAccess_ProducesSameResults()
     {
         // Arrange
         var content = "Name,Age,City\r\nJohn,25,NYC\r\nJane,30,LA\r\nBob,35,Chicago";
@@ -883,7 +971,7 @@ public class TableReaderServiceTests
         var cityColumn = schema.GetRequiredColumn("City");
 
         // Assert - Verify both approaches produce identical results
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row = reader.GetCurrentRow();
 
         // Compare index-based access vs IColumn overload
@@ -897,7 +985,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_IColumnOverload_DemonstratesReadabilityImprovement()
+    public async Task GetReaderInstance_IColumnOverload_DemonstratesReadabilityImprovement()
     {
         // Arrange
         var content = "FirstName,LastName,Age,Email,Department\r\n" +
@@ -925,7 +1013,7 @@ public class TableReaderServiceTests
         // Process rows using the new IColumn overloads
         var employees = new List<(string FirstName, string LastName, int Age, string Email, string Department)>();
 
-        while (reader.ReadRowAsync().Result)
+        while (await reader.ReadRowAsync())
         {
             var row = reader.GetCurrentRow();
 
@@ -957,7 +1045,7 @@ public class TableReaderServiceTests
     }
 
     [TestMethod]
-    public void GetReaderInstance_IColumnOverload_WorksWithXmlReader()
+    public async Task GetReaderInstance_IColumnOverload_WorksWithXmlReader()
     {
         // Arrange
         var content = "<root><item><Name>John</Name><Age>25</Age></item><item><Name>Jane</Name><Age>30</Age></item></root>";
@@ -975,13 +1063,13 @@ public class TableReaderServiceTests
         var ageColumn = schema.GetRequiredColumn("Age");
 
         // Assert
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row1 = reader.GetCurrentRow();
 
         Assert.AreEqual("John", row1.GetString(nameColumn));
         Assert.AreEqual(25, row1.GetInt32(ageColumn));
 
-        Assert.IsTrue(reader.ReadRowAsync().Result);
+        Assert.IsTrue(await reader.ReadRowAsync());
         var row2 = reader.GetCurrentRow();
 
         Assert.AreEqual("Jane", row2.GetString(nameColumn));
