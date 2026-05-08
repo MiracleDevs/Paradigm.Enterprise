@@ -54,7 +54,7 @@ internal class JsonTableSchema : TableSchemaBase
             .Select((property, i) =>
             {
                 var columnName = SourceHasHeader ? property.Name : GetGeneratedColumnName(i);
-                return new JsonColumn(i, columnName, typeof(string));
+                return new JsonColumn(i, columnName, property.Name, typeof(string));
             })
             .Cast<IColumn>()
             .ToList();
