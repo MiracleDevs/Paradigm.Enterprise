@@ -47,9 +47,18 @@ namespace Paradigm.Enterprise.Services.TableReader.Readers.Json
             if (item.ValueKind != JsonValueKind.Object)
                 throw new FormatException("Each json item must be an object.");
 
-            Values = item
+            // Build a dictionary of JSON properties by name (case-insensitive) for quick lookup
+            var propertyDictionary = item
                 .EnumerateObject()
-                .Select(x => GetValueAsString(x.Value))
+                .ToDictionary(
+                    x => x.Name,
+                    x => x.Value,
+                    StringComparer.OrdinalIgnoreCase);
+
+            // Populate Values in schema column order
+            Values = TableSchema
+                .GetColumns()
+                .Select(column => GetColumnValue(propertyDictionary, column.Name))
                 .ToList();
 
             Index++;
@@ -72,6 +81,20 @@ namespace Paradigm.Enterprise.Services.TableReader.Readers.Json
             return value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
                 ? string.Empty
                 : value.ToString();
+        }
+
+        /// <summary>
+        /// Gets the column value from the property dictionary.
+        /// </summary>
+        /// <param name="propertyDictionary">The dictionary of JSON properties by name.</param>
+        /// <param name="columnName">The name of the column to retrieve.</param>
+        /// <returns>The scalar string representation of the column value, or empty string if the property is missing.</returns>
+        private static string GetColumnValue(Dictionary<string, JsonElement> propertyDictionary, string columnName)
+        {
+            if (propertyDictionary.TryGetValue(columnName, out var value))
+                return GetValueAsString(value);
+
+            return string.Empty;
         }
 
         #endregion
