@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Services.Cache.Configuration;
@@ -17,7 +16,7 @@ public static class ServiceCollectionExtensions
     /// <param name="connectionStringName">Name of the connection string.</param>
     /// <param name="instanceName">Name of the instance.</param>
     /// <returns></returns>
-    /// <exception cref="System.ArgumentNullException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
     public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -54,7 +53,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    /// <exception cref="System.ArgumentException">Connection string not found and managed identity host is missing in 'RedisCacheConfiguration:ManagedIdentity:Host'.</exception>
+    /// <exception cref="ArgumentException">Connection string not found and managed identity host is missing in 'RedisCacheConfiguration:ManagedIdentity:Host'.</exception>
     private static ConfigurationOptions BuildManagedIdentityConfigurationOptions(IConfiguration configuration)
     {
         var cacheConfiguration = new RedisCacheConfiguration();
@@ -81,8 +80,7 @@ public static class ServiceCollectionExtensions
             credentialOptions.ManagedIdentityClientId = managedIdentityConfiguration.ClientId;
 
         var credential = new DefaultAzureCredential(credentialOptions);
-        var token = credential.GetToken(new TokenRequestContext([managedIdentityConfiguration.Scope]), CancellationToken.None);
-        configurationOptions.Password = token.Token;
+        configurationOptions.ConfigureForAzureWithTokenCredentialAsync(credential);
 
         return configurationOptions;
     }
