@@ -1,4 +1,5 @@
 ﻿using Azure.Communication.Email;
+using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Services.Email.Configuration;
@@ -57,14 +58,19 @@ public class EmailService : IEmailService
     {
         try
         {
-            if (_emailConfiguration is null ||
-                string.IsNullOrWhiteSpace(_emailConfiguration.MailFrom) || string.IsNullOrWhiteSpace(_emailConfiguration.ConnectionString))
+            if (string.IsNullOrWhiteSpace(_emailConfiguration.MailFrom))
             {
                 _logger.LogInformation("Email configuration is not valid.");
                 return;
             }
 
-            var client = new EmailClient(_emailConfiguration.ConnectionString);
+            var client = BuildEmailClient();
+
+            if (client is null)
+            {
+                _logger.LogInformation("Email configuration is not valid.");
+                return;
+            }
 
             foreach (var messageInfo in messages)
             {
@@ -77,6 +83,33 @@ public class EmailService : IEmailService
         {
             _logger.LogError(ex, "Failed to send email.");
         }
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// Builds the email client.
+    /// </summary>
+    /// <returns></returns>
+    private EmailClient? BuildEmailClient()
+    {
+        if (!string.IsNullOrWhiteSpace(_emailConfiguration.ConnectionString))
+            return new EmailClient(_emailConfiguration.ConnectionString);
+
+        if (string.IsNullOrWhiteSpace(_emailConfiguration.ManagedIdentity?.Endpoint))
+            return null;
+
+        if (!Uri.TryCreate(_emailConfiguration.ManagedIdentity.Endpoint, UriKind.Absolute, out var endpointUri))
+            return null;
+
+        var credentialOptions = new DefaultAzureCredentialOptions();
+
+        if (!string.IsNullOrWhiteSpace(_emailConfiguration.ManagedIdentity.ClientId))
+            credentialOptions.ManagedIdentityClientId = _emailConfiguration.ManagedIdentity.ClientId;
+
+        return new EmailClient(endpointUri, new DefaultAzureCredential(credentialOptions));
     }
 
     #endregion

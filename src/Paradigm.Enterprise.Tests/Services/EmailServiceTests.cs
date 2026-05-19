@@ -121,16 +121,12 @@ public class EmailServiceTests
     // Custom implementation for testing SendMail behavior
     private class TestableEmailService : IEmailService
     {
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<EmailService> _logger;
         public bool SendMailsCalled { get; private set; }
         public int SendMailsCallCount { get; private set; }
         public List<MailMessageInfo> SentMessages { get; }
 
         public TestableEmailService(IConfiguration configuration, ILogger<EmailService> logger)
         {
-            _configuration = configuration;
-            _logger = logger;
             SentMessages = new List<MailMessageInfo>();
             SendMailsCalled = false;
             SendMailsCallCount = 0;
