@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
 
         var configurationOptions = !string.IsNullOrWhiteSpace(connectionString)
             ? ConfigurationOptions.Parse(connectionString)
-            : await BuildManagedIdentityConfigurationOptions(configuration);
+            : await BuildManagedIdentityConfigurationOptionsAsync(configuration);
 
         // registers the connection multiplexer
         IConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(configurationOptions);
@@ -52,7 +52,7 @@ public static class ServiceCollectionExtensions
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException">Connection string not found and managed identity host is missing in 'RedisCacheConfiguration:ManagedIdentity:Host'.</exception>
-    private static async Task<ConfigurationOptions> BuildManagedIdentityConfigurationOptions(IConfiguration configuration)
+    private static async Task<ConfigurationOptions> BuildManagedIdentityConfigurationOptionsAsync(IConfiguration configuration)
     {
         var cacheConfiguration = new RedisCacheConfiguration();
         configuration.Bind("RedisCacheConfiguration", cacheConfiguration);
