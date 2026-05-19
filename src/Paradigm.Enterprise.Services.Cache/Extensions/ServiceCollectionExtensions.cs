@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     /// <param name="instanceName">Name of the instance.</param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
+    public static async Task AddCacheAsync(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
 
         var configurationOptions = !string.IsNullOrWhiteSpace(connectionString)
             ? ConfigurationOptions.Parse(connectionString)
-            : BuildManagedIdentityConfigurationOptions(configuration);
+            : await BuildManagedIdentityConfigurationOptions(configuration);
 
         // registers the connection multiplexer
         IConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(configurationOptions);
@@ -44,8 +44,6 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddSingleton<ICacheService, CacheService>();
-
-        return services;
     }
 
     /// <summary>
@@ -54,14 +52,14 @@ public static class ServiceCollectionExtensions
     /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException">Connection string not found and managed identity host is missing in 'RedisCacheConfiguration:ManagedIdentity:Host'.</exception>
-    private static ConfigurationOptions BuildManagedIdentityConfigurationOptions(IConfiguration configuration)
+    private static async Task<ConfigurationOptions> BuildManagedIdentityConfigurationOptions(IConfiguration configuration)
     {
         var cacheConfiguration = new RedisCacheConfiguration();
         configuration.Bind("RedisCacheConfiguration", cacheConfiguration);
 
         var managedIdentityConfiguration = cacheConfiguration.ManagedIdentity;
 
-        if (string.IsNullOrWhiteSpace(managedIdentityConfiguration?.Host))
+        if (managedIdentityConfiguration is null || string.IsNullOrWhiteSpace(managedIdentityConfiguration.Host))
             throw new ArgumentException("Connection string not found and managed identity host is missing in 'RedisCacheConfiguration:ManagedIdentity:Host'.");
 
         var configurationOptions = new ConfigurationOptions
@@ -80,7 +78,7 @@ public static class ServiceCollectionExtensions
             credentialOptions.ManagedIdentityClientId = managedIdentityConfiguration.ClientId;
 
         var credential = new DefaultAzureCredential(credentialOptions);
-        configurationOptions.ConfigureForAzureWithTokenCredentialAsync(credential);
+        await configurationOptions.ConfigureForAzureWithTokenCredentialAsync(credential);
 
         return configurationOptions;
     }

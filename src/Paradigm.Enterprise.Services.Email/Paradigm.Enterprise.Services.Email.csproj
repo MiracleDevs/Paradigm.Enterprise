@@ -37,4 +37,8 @@
     <ProjectReference Include="..\Paradigm.Enterprise.Services.Core\Paradigm.Enterprise.Services.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Paradigm.Enterprise.Tests" />
+  </ItemGroup>
+
 </Project>

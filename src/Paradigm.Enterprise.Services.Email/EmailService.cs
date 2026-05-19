@@ -95,21 +95,40 @@ public class EmailService : IEmailService
     /// <returns></returns>
     private EmailClient? BuildEmailClient()
     {
+        var strategy = GetClientCreationStrategy();
+
+        if (strategy == EmailClientCreationStrategy.ConnectionString)
+            return new EmailClient(_emailConfiguration.ConnectionString!);
+
+        if (strategy != EmailClientCreationStrategy.ManagedIdentity)
+            return null;
+
+        Uri.TryCreate(_emailConfiguration.ManagedIdentity!.Endpoint, UriKind.Absolute, out var endpointUri);
+        return new EmailClient(endpointUri!, new DefaultAzureCredential(BuildManagedIdentityCredentialOptions()));
+    }
+
+    internal EmailClientCreationStrategy GetClientCreationStrategy()
+    {
         if (!string.IsNullOrWhiteSpace(_emailConfiguration.ConnectionString))
-            return new EmailClient(_emailConfiguration.ConnectionString);
+            return EmailClientCreationStrategy.ConnectionString;
 
-        if (string.IsNullOrWhiteSpace(_emailConfiguration.ManagedIdentity?.Endpoint))
-            return null;
+        if (_emailConfiguration.ManagedIdentity is null || string.IsNullOrWhiteSpace(_emailConfiguration.ManagedIdentity.Endpoint))
+            return EmailClientCreationStrategy.Invalid;
 
-        if (!Uri.TryCreate(_emailConfiguration.ManagedIdentity.Endpoint, UriKind.Absolute, out var endpointUri))
-            return null;
+        if (!Uri.TryCreate(_emailConfiguration.ManagedIdentity.Endpoint, UriKind.Absolute, out _))
+            return EmailClientCreationStrategy.Invalid;
 
+        return EmailClientCreationStrategy.ManagedIdentity;
+    }
+
+    internal DefaultAzureCredentialOptions BuildManagedIdentityCredentialOptions()
+    {
         var credentialOptions = new DefaultAzureCredentialOptions();
 
-        if (!string.IsNullOrWhiteSpace(_emailConfiguration.ManagedIdentity.ClientId))
+        if (!string.IsNullOrWhiteSpace(_emailConfiguration.ManagedIdentity?.ClientId))
             credentialOptions.ManagedIdentityClientId = _emailConfiguration.ManagedIdentity.ClientId;
 
-        return new EmailClient(endpointUri, new DefaultAzureCredential(credentialOptions));
+        return credentialOptions;
     }
 
     #endregion

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Services.Email;
 using Paradigm.Enterprise.Services.Email.Models;
+using System.Collections.Generic;
 
 namespace Paradigm.Enterprise.Tests.Services;
 
@@ -68,6 +69,76 @@ public class EmailServiceTests
                 It.IsAny<Exception?>(),
                 (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             Times.Once);
+    }
+
+    [TestMethod]
+    public void GetClientCreationStrategy_WithConnectionStringPresent_ShouldUseConnectionStringPath()
+    {
+        // Arrange
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["EmailConfiguration:MailFrom"] = "test@example.com",
+            ["EmailConfiguration:ConnectionString"] = "endpoint=https://fake.communication.azure.com/;accesskey=fake"
+        });
+
+        var emailService = new EmailService(configuration, _mockLogger!.Object);
+
+        // Act
+        var strategy = emailService.GetClientCreationStrategy();
+
+        // Assert
+        Assert.AreEqual(EmailClientCreationStrategy.ConnectionString, strategy);
+    }
+
+    [TestMethod]
+    public void SendMails_WithMissingConnectionStringAndInvalidManagedIdentityEndpoint_ShouldLogAndReturn()
+    {
+        // Arrange
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["EmailConfiguration:MailFrom"] = "test@example.com",
+            ["EmailConfiguration:ManagedIdentity:Endpoint"] = "not-a-valid-uri"
+        });
+
+        var emailService = new EmailService(configuration, _mockLogger!.Object);
+        var messages = new List<MailMessageInfo>
+        {
+            new MailMessageInfo("recipient@example.com", "Test Subject", "<p>Test Body</p>")
+        };
+
+        // Act
+        emailService.SendMails(messages);
+
+        // Assert
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("Email configuration is not valid")),
+                It.IsAny<Exception?>(),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
+            Times.Once);
+    }
+
+    [TestMethod]
+    public void BuildManagedIdentityCredentialOptions_WithUserAssignedClientId_ShouldSetManagedIdentityClientId()
+    {
+        // Arrange
+        const string clientId = "11111111-1111-1111-1111-111111111111";
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["EmailConfiguration:MailFrom"] = "test@example.com",
+            ["EmailConfiguration:ManagedIdentity:Endpoint"] = "https://my-acs.communication.azure.com/",
+            ["EmailConfiguration:ManagedIdentity:ClientId"] = clientId
+        });
+
+        var emailService = new EmailService(configuration, _mockLogger!.Object);
+
+        // Act
+        var options = emailService.BuildManagedIdentityCredentialOptions();
+
+        // Assert
+        Assert.AreEqual(clientId, options.ManagedIdentityClientId);
     }
 
     [TestMethod]
@@ -169,5 +240,12 @@ public class EmailServiceTests
                 _logger.LogError(ex, "Failed to send email");
             }
         }
+    }
+
+    private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)
+    {
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
     }
 }
