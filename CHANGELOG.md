@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+Version `1.0.31`
+
+- Upgraded `EntityFrameworkCore` packages in `Paradigm.Enterprise.Data` projects.
+
 Version `1.0.30`
 
 - Added support for managed identity to `Services.Cache` and `Services.Email` packages.

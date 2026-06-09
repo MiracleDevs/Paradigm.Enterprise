@@ -97,7 +97,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
             try
             {
                 // Call the listing operation and return pages of the specified size.
-                var resultSegment = _containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, blobName).AsPages(default, 5000);
+                var resultSegment = _containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, blobName, cancellationToken).AsPages(default, 5000);
 
                 // Enumerate the blobs returned for each page.
                 await foreach (var blobPage in resultSegment)
@@ -321,7 +321,12 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <returns></returns>
         private async Task<List<BlobClient>> GetBlobClientsAsync(string from)
         {
-            var blobPages = _containerClient.GetBlobsByHierarchyAsync(delimiter: "/", prefix: from).AsPages(pageSizeHint: 5000);
+            var blobPages = _containerClient.GetBlobsByHierarchyAsync(
+                traits: BlobTraits.None,
+                states: BlobStates.None,
+                delimiter: "/",
+                prefix: from,
+                cancellationToken: CancellationToken.None).AsPages(pageSizeHint: 5000);
             var blobs = new List<BlobClient>();
 
             await foreach (var blobPage in blobPages)
@@ -350,7 +355,6 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
                 { nameof(properties.ContentHash), properties.ContentHash },
                 { nameof(properties.ContentLength), properties.ContentLength },
                 { nameof(properties.ETag), properties.ETag },
-                //{ nameof(properties.ContentMD5), properties.ContentMD5 }, TODO
                 { nameof(properties.LastModified), properties.LastModified }
             };
         }
