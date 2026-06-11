@@ -126,7 +126,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="cancellationToken">The cancellation token.</param>
         public async Task CopyFolderAsync(string from, string to, CancellationToken cancellationToken)
         {
-            var blobClients = await GetBlobClientsAsync(from);
+            var blobClients = await GetBlobClientsAsync(from, cancellationToken);
 
             foreach (var blobClient in blobClients)
             {
@@ -222,7 +222,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
             if (destinationContainer is not AzureBlobStorageContainer container)
                 throw new Exception("Wrong container type.");
 
-            var blobClients = await GetBlobClientsAsync(string.Empty);
+            var blobClients = await GetBlobClientsAsync(string.Empty, cancellationToken);
 
             foreach (var blobClient in blobClients)
             {
@@ -267,7 +267,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
             if (destinationContainer is not AzureBlobStorageContainer container)
                 throw new Exception("Wrong container type.");
 
-            var blobClients = await GetBlobClientsAsync(from);
+            var blobClients = await GetBlobClientsAsync(from, cancellationToken);
 
             foreach (var blobClient in blobClients)
             {
@@ -319,14 +319,14 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="from">From.</param>
         /// <returns></returns>
-        private async Task<List<BlobClient>> GetBlobClientsAsync(string from)
+        private async Task<List<BlobClient>> GetBlobClientsAsync(string from, CancellationToken cancellationToken)
         {
             var blobPages = _containerClient.GetBlobsByHierarchyAsync(
                 traits: BlobTraits.None,
                 states: BlobStates.None,
                 delimiter: "/",
                 prefix: from,
-                cancellationToken: CancellationToken.None).AsPages(pageSizeHint: 5000);
+                cancellationToken: cancellationToken).AsPages(pageSizeHint: 5000);
             var blobs = new List<BlobClient>();
 
             await foreach (var blobPage in blobPages)
@@ -334,7 +334,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
                     if (blobItem.IsBlob)
                         blobs.Add(GetBlobClient(blobItem.Blob.Name));
                     else
-                        blobs.AddRange(await GetBlobClientsAsync(blobItem.Prefix));
+                        blobs.AddRange(await GetBlobClientsAsync(blobItem.Prefix, cancellationToken));
 
             return blobs;
         }

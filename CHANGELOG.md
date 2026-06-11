@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 Version `1.0.31`
 
-- Upgraded `EntityFrameworkCore` packages in `Paradigm.Enterprise.Data` projects.
+ - Upgraded EF Core and related data-access packages to `10.x` (including `Microsoft.EntityFrameworkCore*`, `EntityFrameworkCore.Exceptions.SqlServer`, and `Npgsql.EntityFrameworkCore.PostgreSQL`).
+ - Upgraded additional dependencies (e.g., `Azure.Identity`, `Azure.Storage.Blobs`, `Microsoft.Data.SqlClient`, and Redis packages).
+ - Updated some projects that previously multi-targeted `net9.0;net10.0` to target `net10.0` only.
 
 Version `1.0.30`
 
