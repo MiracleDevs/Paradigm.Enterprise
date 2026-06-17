@@ -17,11 +17,11 @@ public static class ServiceCollectionExtensions
         return services.AddScoped<IBlobStorageService>(serviceProvider =>
         {
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var blobStorageConfiguration = new BlobStorageConfiguration
-            {
-                StorageConnection = configuration.GetValue<string>(storageAccountUriSection) ?? throw new ArgumentException("The blob storage account URI couldn't be found.")
-            };
+            var storageConnection = configuration.GetValue<string>(storageAccountUriSection) ?? throw new ArgumentException("The blob storage account URI couldn't be found.");
+            var blobStorageConfiguration = new BlobStorageConfiguration();
             configuration.Bind("BlobStorageConfiguration", blobStorageConfiguration);
+            blobStorageConfiguration.StorageConnection = storageConnection;
+
             return BlobStorageService.CreateUsingManagedIdentity(blobStorageConfiguration);
         });
     }
@@ -37,11 +37,11 @@ public static class ServiceCollectionExtensions
         return services.AddScoped<IBlobStorageService>(serviceProvider =>
         {
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var blobStorageConfiguration = new BlobStorageConfiguration
-            {
-                StorageConnection = configuration.GetConnectionString(connectionStringName) ?? throw new ArgumentException("The blob storage connection string couldn't be found.")
-            };
+            var storageConnection = configuration.GetConnectionString(connectionStringName) ?? throw new ArgumentException("The blob storage connection string couldn't be found.");
+            var blobStorageConfiguration = new BlobStorageConfiguration();
             configuration.Bind("BlobStorageConfiguration", blobStorageConfiguration);
+            blobStorageConfiguration.StorageConnection = storageConnection;
+
             return BlobStorageService.CreateUsingConnectionString(blobStorageConfiguration);
         });
     }

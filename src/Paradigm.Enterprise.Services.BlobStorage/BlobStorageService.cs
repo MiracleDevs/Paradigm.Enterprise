@@ -42,6 +42,9 @@ public class BlobStorageService : IBlobStorageService
     /// <param name="isConnectionString">if set to <c>true</c> [is connection string].</param>
     private BlobStorageService(BlobStorageConfiguration configuration, bool isConnectionString)
     {
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentException.ThrowIfNullOrWhiteSpace(configuration.StorageConnection, nameof(configuration.StorageConnection));
+
         var options = GetBlobClientOptions(configuration);
 
         if (isConnectionString)
