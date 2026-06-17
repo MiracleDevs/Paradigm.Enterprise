@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+Version `1.0.32`
+
+- Added retry logic to Upload and Download operations in `Services.BlobStorage` package.
+- Updated dependencies.
+
 Version `1.0.31`
 
  - Upgraded EF Core and related data-access packages to `10.x` (including `Microsoft.EntityFrameworkCore*`, `EntityFrameworkCore.Exceptions.SqlServer`, and `Npgsql.EntityFrameworkCore.PostgreSQL`).

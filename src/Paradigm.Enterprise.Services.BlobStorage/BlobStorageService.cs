@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage;
+using Paradigm.Enterprise.Services.BlobStorage.Configuration;
 
 namespace Paradigm.Enterprise.Services.BlobStorage;
 
@@ -13,6 +14,11 @@ public class BlobStorageService : IBlobStorageService
     /// The service client
     /// </summary>
     private readonly BlobServiceClient _serviceClient;
+
+    /// <summary>
+    /// The configuration
+    /// </summary>
+    private readonly BlobStorageConfiguration _configuration;
 
     /// <summary>
     /// Gets the connection string.
@@ -37,20 +43,22 @@ public class BlobStorageService : IBlobStorageService
     /// <summary>
     /// Initializes a new instance of the <see cref="BlobStorageService" /> class.
     /// </summary>
-    /// <param name="storageConnection">The storage connection.</param>
+    /// <param name="configuration">The configuration.</param>
     /// <param name="isConnectionString">if set to <c>true</c> [is connection string].</param>
-    private BlobStorageService(string storageConnection, bool isConnectionString)
+    private BlobStorageService(BlobStorageConfiguration configuration, bool isConnectionString)
     {
         if (isConnectionString)
         {
-            ConnectionString = storageConnection;
-            _serviceClient = new BlobServiceClient(storageConnection);
+            ConnectionString = configuration.StorageConnection;
+            _serviceClient = new BlobServiceClient(configuration.StorageConnection);
         }
         else
         {
-            StorageAccountUri = storageConnection;
-            _serviceClient = new BlobServiceClient(new Uri(storageConnection), new DefaultAzureCredential());
+            StorageAccountUri = configuration.StorageConnection;
+            _serviceClient = new BlobServiceClient(new Uri(configuration.StorageConnection), new DefaultAzureCredential());
         }
+
+        _configuration = configuration;
     }
 
     #endregion
@@ -60,21 +68,21 @@ public class BlobStorageService : IBlobStorageService
     /// <summary>
     /// Creates the service using managed identity.
     /// </summary>
-    /// <param name="storageAccountUri">The storage account URI.</param>
+    /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    public static BlobStorageService CreateUsingManagedIdentity(string storageAccountUri)
+    public static BlobStorageService CreateUsingManagedIdentity(BlobStorageConfiguration configuration)
     {
-        return new BlobStorageService(storageAccountUri, false);
+        return new BlobStorageService(configuration, false);
     }
 
     /// <summary>
     /// Creates the service using connection string.
     /// </summary>
-    /// <param name="connectionString">The connection string.</param>
+    /// <param name="configuration">The configuration.</param>
     /// <returns></returns>
-    public static BlobStorageService CreateUsingConnectionString(string connectionString)
+    public static BlobStorageService CreateUsingConnectionString(BlobStorageConfiguration configuration)
     {
-        return new BlobStorageService(connectionString, true);
+        return new BlobStorageService(configuration, true);
     }
 
     /// <summary>
@@ -88,7 +96,7 @@ public class BlobStorageService : IBlobStorageService
     {
         var containerClient = ((await _serviceClient.CreateBlobContainerAsync(containerName))?.Value) ?? throw new Exception("Unable to create the container.");
         if (metadata is not null) await containerClient.SetMetadataAsync(metadata);
-        return new AzureBlobStorageContainer(containerClient);
+        return new AzureBlobStorageContainer(containerClient, _configuration);
     }
 
     /// <summary>
@@ -99,7 +107,7 @@ public class BlobStorageService : IBlobStorageService
     public IAzureBlobStorageContainer GetBlobStorageContainer(string containerName)
     {
         var containerClient = _serviceClient.GetBlobContainerClient(containerName);
-        return new AzureBlobStorageContainer(containerClient);
+        return new AzureBlobStorageContainer(containerClient, _configuration);
     }
 
     /// <summary>

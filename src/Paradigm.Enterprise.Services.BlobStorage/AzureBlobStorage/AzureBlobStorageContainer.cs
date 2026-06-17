@@ -1,6 +1,7 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
+using Paradigm.Enterprise.Services.BlobStorage.Configuration;
 using Paradigm.Enterprise.Services.BlobStorage.Extensions;
 using System.Web;
 
@@ -8,6 +9,20 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
 {
     public class AzureBlobStorageContainer : IAzureBlobStorageContainer
     {
+        #region Constants
+
+        /// <summary>
+        /// Maximum number of retry attempts for upload and download operations
+        /// </summary>
+        private readonly int _maxRetryAttempts;
+
+        /// <summary>
+        /// Initial delay in milliseconds for exponential backoff
+        /// </summary>
+        private readonly int _initialDelayMs;
+
+        #endregion
+
         #region Properties
 
         /// <summary>
@@ -20,12 +35,15 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         #region Constructor
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BlobStorageService"/> class.
+        /// Initializes a new instance of the <see cref="AzureBlobStorageContainer"/> class.
         /// </summary>
         /// <param name="containerClient">The container client.</param>
-        public AzureBlobStorageContainer(BlobContainerClient containerClient)
+        /// <param name="configuration">The configuration.</param>
+        public AzureBlobStorageContainer(BlobContainerClient containerClient, BlobStorageConfiguration configuration)
         {
             _containerClient = containerClient;
+            _maxRetryAttempts = configuration.MaxRetryAttempts ?? 3;
+            _initialDelayMs = configuration.RetryInitialDelayMilliseconds ?? 100;
         }
 
         #endregion
@@ -64,8 +82,13 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         {
             var newBlobName = blobName ?? $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
             var blob = GetBlobClient(newBlobName);
-            await blob.UploadAsync(fileStream, true, cancellationToken);
-            await blob.SetHttpHeadersAsync(new BlobHttpHeaders { ContentType = contentType }, cancellationToken: cancellationToken);
+
+            await UploadWithRetryAsync(async () =>
+            {
+                await blob.UploadAsync(fileStream, true, cancellationToken);
+                await blob.SetHttpHeadersAsync(new BlobHttpHeaders { ContentType = contentType }, cancellationToken: cancellationToken);
+            }, cancellationToken);
+
             return blob.Uri;
         }
 
@@ -82,7 +105,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
             var blob = GetBlobClient(newBlobName);
 
             await using var stream = content.ToStream();
-            await blob.UploadAsync(stream, true, cancellationToken);
+            await UploadWithRetryAsync(() => blob.UploadAsync(stream, true, cancellationToken), cancellationToken);
 
             return blob.Uri;
         }
@@ -162,7 +185,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <summary>
         /// Downloads the blob as json content.
         /// </summary>
-        /// <param name="blobName">Name of the l.</param>
+        /// <param name="blobName">Name of the blob.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         public async Task<Stream> DownloadAsync(string blobName, CancellationToken cancellationToken)
@@ -360,14 +383,102 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         }
 
         /// <summary>
-        /// Downloads the BLOB.
+        /// Downloads the BLOB with retry logic and exponential backoff.
         /// </summary>
         /// <param name="blob">The BLOB.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         private async Task<Stream> DownloadBlobAsync(BlobClient blob, CancellationToken cancellationToken)
         {
-            return (await blob.DownloadAsync(cancellationToken)).Value.Content;
+            int delayMs = _initialDelayMs;
+
+            for (int attempt = 0; attempt <= _maxRetryAttempts; attempt++)
+            {
+                try
+                {
+                    return (await blob.DownloadAsync(cancellationToken)).Value.Content;
+                }
+                catch (Exception ex) when (IsTransientError(ex) && attempt < _maxRetryAttempts)
+                {
+                    await Task.Delay(delayMs, cancellationToken);
+                    delayMs *= 2; // Exponential backoff
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw; // Don't retry on cancellation
+                }
+            }
+
+            // This line is unreachable but required for compilation
+            throw new InvalidOperationException("Download retry logic failed unexpectedly.");
+        }
+
+        /// <summary>
+        /// Executes an upload operation with exponential backoff retry logic.
+        /// </summary>
+        /// <param name="uploadOperation">The upload operation to execute.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        private async Task UploadWithRetryAsync(Func<Task> uploadOperation, CancellationToken cancellationToken)
+        {
+            int delayMs = _initialDelayMs;
+
+            for (int attempt = 0; attempt <= _maxRetryAttempts; attempt++)
+            {
+                try
+                {
+                    await uploadOperation();
+                    return;
+                }
+                catch (Exception ex) when (IsTransientError(ex) && attempt < _maxRetryAttempts)
+                {
+                    await Task.Delay(delayMs, cancellationToken);
+                    delayMs *= 2; // Exponential backoff
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw; // Don't retry on cancellation
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines if an exception is transient and should be retried.
+        /// </summary>
+        /// <param name="exception">The exception to evaluate.</param>
+        /// <returns>True if the exception is transient; otherwise, false.</returns>
+        private static bool IsTransientError(Exception exception)
+        {
+            return exception switch
+            {
+                // Azure SDK transient errors
+                Azure.RequestFailedException rfe when rfe.Status >= 500 => true,  // Server errors
+                Azure.RequestFailedException rfe when rfe.Status == 408 => true, // Request timeout
+                Azure.RequestFailedException rfe when rfe.Status == 429 => true, // Throttling
+
+                // Network-level transient errors
+                TimeoutException => true,
+                HttpRequestException hre when hre.InnerException is TimeoutException => true,
+
+                // Task/IO transient errors
+                IOException ioe when IsNetworkError(ioe) => true,
+
+                _ => false
+            };
+        }
+
+        /// <summary>
+        /// Determines if an IOException is network-related.
+        /// </summary>
+        /// <param name="exception">The exception to check.</param>
+        /// <returns>True if the IOException is network-related; otherwise, false.</returns>
+        private static bool IsNetworkError(IOException exception)
+        {
+            const string networkErrorMessages = "Network|Connection|Socket|Timeout";
+            return System.Text.RegularExpressions.Regex.IsMatch(
+                exception.Message,
+                networkErrorMessages,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
 
         #endregion
