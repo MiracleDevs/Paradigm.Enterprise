@@ -16,11 +16,6 @@ public class BlobStorageService : IBlobStorageService
     private readonly BlobServiceClient _serviceClient;
 
     /// <summary>
-    /// The configuration
-    /// </summary>
-    private readonly BlobStorageConfiguration _configuration;
-
-    /// <summary>
     /// Gets the connection string.
     /// </summary>
     /// <value>
@@ -47,23 +42,34 @@ public class BlobStorageService : IBlobStorageService
     /// <param name="isConnectionString">if set to <c>true</c> [is connection string].</param>
     private BlobStorageService(BlobStorageConfiguration configuration, bool isConnectionString)
     {
+        var options = GetBlobClientOptions(configuration);
+
         if (isConnectionString)
         {
             ConnectionString = configuration.StorageConnection;
-            _serviceClient = new BlobServiceClient(configuration.StorageConnection);
+            _serviceClient = new BlobServiceClient(configuration.StorageConnection, options);
         }
         else
         {
             StorageAccountUri = configuration.StorageConnection;
-            _serviceClient = new BlobServiceClient(new Uri(configuration.StorageConnection), new DefaultAzureCredential());
+            _serviceClient = new BlobServiceClient(new Uri(configuration.StorageConnection), new DefaultAzureCredential(), options);
         }
-
-        _configuration = configuration;
     }
 
     #endregion
 
     #region Public Methods
+
+    /// <summary>
+    /// Creates the using managed identity.
+    /// </summary>
+    /// <param name="storageAccountUri">The storage account URI.</param>
+    /// <returns></returns>
+    [Obsolete("Use CreateUsingManagedIdentity(BlobStorageConfiguration configuration) instead.")]
+    public static BlobStorageService CreateUsingManagedIdentity(string storageAccountUri)
+    {
+        return CreateUsingManagedIdentity(new BlobStorageConfiguration { StorageConnection = storageAccountUri });
+    }
 
     /// <summary>
     /// Creates the service using managed identity.
@@ -73,6 +79,17 @@ public class BlobStorageService : IBlobStorageService
     public static BlobStorageService CreateUsingManagedIdentity(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, false);
+    }
+
+    /// <summary>
+    /// Creates the using connection string.
+    /// </summary>
+    /// <param name="connectionString">The connection string.</param>
+    /// <returns></returns>
+    [Obsolete("Use CreateUsingConnectionString(BlobStorageConfiguration configuration) instead.")]
+    public static BlobStorageService CreateUsingConnectionString(string connectionString)
+    {
+        return CreateUsingConnectionString(new BlobStorageConfiguration { StorageConnection = connectionString });
     }
 
     /// <summary>
@@ -96,7 +113,7 @@ public class BlobStorageService : IBlobStorageService
     {
         var containerClient = ((await _serviceClient.CreateBlobContainerAsync(containerName))?.Value) ?? throw new Exception("Unable to create the container.");
         if (metadata is not null) await containerClient.SetMetadataAsync(metadata);
-        return new AzureBlobStorageContainer(containerClient, _configuration);
+        return new AzureBlobStorageContainer(containerClient);
     }
 
     /// <summary>
@@ -107,7 +124,7 @@ public class BlobStorageService : IBlobStorageService
     public IAzureBlobStorageContainer GetBlobStorageContainer(string containerName)
     {
         var containerClient = _serviceClient.GetBlobContainerClient(containerName);
-        return new AzureBlobStorageContainer(containerClient, _configuration);
+        return new AzureBlobStorageContainer(containerClient);
     }
 
     /// <summary>
@@ -122,6 +139,28 @@ public class BlobStorageService : IBlobStorageService
             containers.AddRange(containerClientPage.Values);
 
         return containers;
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// Gets the BLOB client options.
+    /// </summary>
+    /// <param name="configuration">The configuration.</param>
+    /// <returns></returns>
+    private BlobClientOptions GetBlobClientOptions(BlobStorageConfiguration configuration)
+    {
+        return new BlobClientOptions
+        {
+            Retry =
+            {
+                Mode = Azure.Core.RetryMode.Exponential,
+                MaxRetries = Math.Max(0, configuration.MaxRetryAttempts ?? 3),
+                Delay = TimeSpan.FromMilliseconds(Math.Max(1, configuration.RetryInitialDelayMilliseconds ?? 100))
+            }
+        };
     }
 
     #endregion
