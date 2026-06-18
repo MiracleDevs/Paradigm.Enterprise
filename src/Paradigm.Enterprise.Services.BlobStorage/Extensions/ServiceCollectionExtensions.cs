@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Services.BlobStorage.Configuration;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.Extensions;
 
@@ -16,8 +17,12 @@ public static class ServiceCollectionExtensions
         return services.AddScoped<IBlobStorageService>(serviceProvider =>
         {
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var storageAccountUri = configuration.GetValue<string>(storageAccountUriSection) ?? throw new ArgumentException("The blob storage account URI couldn't be found.");
-            return BlobStorageService.CreateUsingManagedIdentity(storageAccountUri);
+            var storageConnection = configuration.GetValue<string>(storageAccountUriSection) ?? throw new ArgumentException("The blob storage account URI couldn't be found.");
+            var blobStorageConfiguration = new BlobStorageConfiguration();
+            configuration.Bind("BlobStorageConfiguration", blobStorageConfiguration);
+            blobStorageConfiguration.StorageConnection = storageConnection;
+
+            return BlobStorageService.CreateUsingManagedIdentity(blobStorageConfiguration);
         });
     }
 
@@ -32,8 +37,12 @@ public static class ServiceCollectionExtensions
         return services.AddScoped<IBlobStorageService>(serviceProvider =>
         {
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var connectionString = configuration.GetConnectionString(connectionStringName) ?? throw new ArgumentException("The blob storage connection string couldn't be found.");
-            return BlobStorageService.CreateUsingConnectionString(connectionString);
+            var storageConnection = configuration.GetConnectionString(connectionStringName) ?? throw new ArgumentException("The blob storage connection string couldn't be found.");
+            var blobStorageConfiguration = new BlobStorageConfiguration();
+            configuration.Bind("BlobStorageConfiguration", blobStorageConfiguration);
+            blobStorageConfiguration.StorageConnection = storageConnection;
+
+            return BlobStorageService.CreateUsingConnectionString(blobStorageConfiguration);
         });
     }
 }

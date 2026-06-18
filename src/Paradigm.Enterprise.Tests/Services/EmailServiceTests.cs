@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.Services.Email;
 using Paradigm.Enterprise.Services.Email.Models;
-using System.Collections.Generic;
 
 namespace Paradigm.Enterprise.Tests.Services;
 

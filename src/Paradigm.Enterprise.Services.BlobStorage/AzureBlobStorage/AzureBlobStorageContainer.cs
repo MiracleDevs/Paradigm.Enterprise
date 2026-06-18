@@ -20,7 +20,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         #region Constructor
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BlobStorageService"/> class.
+        /// Initializes a new instance of the <see cref="AzureBlobStorageContainer"/> class.
         /// </summary>
         /// <param name="containerClient">The container client.</param>
         public AzureBlobStorageContainer(BlobContainerClient containerClient)
@@ -64,8 +64,10 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         {
             var newBlobName = blobName ?? $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
             var blob = GetBlobClient(newBlobName);
+
             await blob.UploadAsync(fileStream, true, cancellationToken);
             await blob.SetHttpHeadersAsync(new BlobHttpHeaders { ContentType = contentType }, cancellationToken: cancellationToken);
+
             return blob.Uri;
         }
 
@@ -162,7 +164,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <summary>
         /// Downloads the blob as json content.
         /// </summary>
-        /// <param name="blobName">Name of the l.</param>
+        /// <param name="blobName">Name of the blob.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         public async Task<Stream> DownloadAsync(string blobName, CancellationToken cancellationToken)
@@ -360,7 +362,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         }
 
         /// <summary>
-        /// Downloads the BLOB.
+        /// Downloads the BLOB with retry logic and exponential backoff.
         /// </summary>
         /// <param name="blob">The BLOB.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
