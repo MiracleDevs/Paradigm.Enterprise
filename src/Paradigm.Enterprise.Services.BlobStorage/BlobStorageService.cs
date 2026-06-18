@@ -155,15 +155,28 @@ public class BlobStorageService : IBlobStorageService
     /// <returns></returns>
     private BlobClientOptions GetBlobClientOptions(BlobStorageConfiguration configuration)
     {
-        return new BlobClientOptions
+        var options = new BlobClientOptions
         {
             Retry =
             {
                 Mode = Azure.Core.RetryMode.Exponential,
-                MaxRetries = Math.Max(0, configuration.MaxRetryAttempts ?? 3),
-                Delay = TimeSpan.FromMilliseconds(Math.Max(1, configuration.RetryInitialDelayMilliseconds ?? 100))
+                Delay = TimeSpan.FromMilliseconds(Math.Max(1, configuration.RetryInitialDelayMilliseconds ?? 100)),
             }
         };
+
+        if (configuration.MaxRetryAttempts.HasValue)
+            options.Retry.MaxRetries = Math.Max(0, configuration.MaxRetryAttempts.Value);
+
+        if (configuration.RetryInitialDelayMilliseconds.HasValue)
+            options.Retry.Delay = TimeSpan.FromMilliseconds(Math.Max(1, configuration.RetryInitialDelayMilliseconds.Value));
+
+        if (configuration.RetryMaxDelayMilliseconds.HasValue)
+            options.Retry.MaxDelay = TimeSpan.FromMilliseconds(Math.Max(1, configuration.RetryMaxDelayMilliseconds.Value));
+
+        if (configuration.RetryTimeoutMilliseconds.HasValue)
+            options.Retry.NetworkTimeout = TimeSpan.FromMilliseconds(Math.Max(1, configuration.RetryTimeoutMilliseconds.Value));
+
+        return options;
     }
 
     #endregion

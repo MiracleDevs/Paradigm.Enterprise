@@ -25,4 +25,20 @@ public class BlobStorageConfiguration
     /// The retry initial delay milliseconds.
     /// </value>
     public int? RetryInitialDelayMilliseconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets the retry maximum delay milliseconds.
+    /// </summary>
+    /// <value>
+    /// The retry maximum delay milliseconds.
+    /// </value>
+    public int? RetryMaxDelayMilliseconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets the retry timeout milliseconds.
+    /// </summary>
+    /// <value>
+    /// The retry timeout milliseconds.
+    /// </value>
+    public int? RetryTimeoutMilliseconds { get; set; }
 }
