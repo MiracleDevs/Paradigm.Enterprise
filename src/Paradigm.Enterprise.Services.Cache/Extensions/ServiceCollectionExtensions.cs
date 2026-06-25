@@ -1,4 +1,5 @@
 ﻿using Azure.Identity;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Services.Cache.Configuration;
@@ -20,28 +21,39 @@ public static class ServiceCollectionExtensions
     public static async Task AddCacheAsync(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
 
         var connectionString = configuration.GetConnectionString(connectionStringName);
+        IConnectionMultiplexer? connectionMultiplexer = null;
 
-        var configurationOptions = !string.IsNullOrWhiteSpace(connectionString)
-            ? ConfigurationOptions.Parse(connectionString)
-            : await BuildManagedIdentityConfigurationOptionsAsync(configuration);
-
-        // registers the connection multiplexer
-        IConnectionMultiplexer connectionMultiplexer = ConnectionMultiplexer.Connect(configurationOptions);
-        services.AddSingleton(connectionMultiplexer);
-
-        // registers the distributed cache but using the same connection multiplexer instance
-        services.AddStackExchangeRedisCache((options) =>
+        try
         {
-            options.ConnectionMultiplexerFactory = () => Task.FromResult(connectionMultiplexer);
+            var configurationOptions = !string.IsNullOrWhiteSpace(connectionString)
+                ? ConfigurationOptions.Parse(connectionString)
+                : await BuildManagedIdentityConfigurationOptionsAsync(configuration);
 
-            if (!string.IsNullOrWhiteSpace(connectionString))
-                options.Configuration = connectionString;
+            // Registers the connection multiplexer
+            connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync(configurationOptions);
+            services.AddSingleton(connectionMultiplexer);
 
-            if (!string.IsNullOrWhiteSpace(instanceName))
-                options.InstanceName = instanceName;
-        });
+            // Only register Redis cache if connection succeeded
+            services.AddStackExchangeRedisCache((options) =>
+            {
+                options.ConnectionMultiplexerFactory = () => Task.FromResult(connectionMultiplexer);
+
+                if (!string.IsNullOrWhiteSpace(connectionString))
+                    options.Configuration = connectionString;
+
+                if (!string.IsNullOrWhiteSpace(instanceName))
+                    options.InstanceName = instanceName;
+            });
+        }
+        catch
+        {
+            // Intentionally ignore startup connection failures to keep API bootstrapping.
+            // Register a null-object cache implementation to satisfy DI requirements.
+            services.AddSingleton<IDistributedCache, NullDistributedCache>();
+        }
 
         services.AddSingleton<ICacheService, CacheService>();
     }

@@ -5,15 +5,18 @@ namespace Paradigm.Enterprise.Services.Cache.HealthCheck;
 
 internal class RedisHealthCheck : IHealthCheck
 {
-    private readonly IConnectionMultiplexer _redis;
+    private readonly IConnectionMultiplexer? _redis;
 
-    public RedisHealthCheck(IConnectionMultiplexer redis)
+    public RedisHealthCheck(IConnectionMultiplexer? redis = null)
     {
         _redis = redis;
     }
 
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
+        if (_redis is null)
+            return HealthCheckResult.Unhealthy("Redis connection is not configured.");
+
         try
         {
             var db = _redis.GetDatabase();

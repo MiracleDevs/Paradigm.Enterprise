@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+Version `1.0.33`
+
+- Added fix in `Services.Cache` package crashing when Redis connection failed.
+
 Version `1.0.32`
 
 - Added retry logic to Upload and Download operations in `Services.BlobStorage` package.
