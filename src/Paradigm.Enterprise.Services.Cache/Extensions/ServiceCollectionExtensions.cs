@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
                     options.InstanceName = instanceName;
             });
         }
-        catch
+        catch (Exception ex) when (ex is RedisConnectionException or AuthenticationFailedException)
         {
             // Intentionally ignore startup connection failures to keep API bootstrapping.
             // Register a null-object cache implementation to satisfy DI requirements.
