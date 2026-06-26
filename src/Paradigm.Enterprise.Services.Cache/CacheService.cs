@@ -118,7 +118,11 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache get-or-create operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
+
             return data ?? await factory();
         }
     }
@@ -147,7 +151,10 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache get operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
         }
 
         return default;
@@ -176,7 +183,10 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache set operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
         }
     }
 
@@ -194,7 +204,10 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache remove operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
         }
     }
 

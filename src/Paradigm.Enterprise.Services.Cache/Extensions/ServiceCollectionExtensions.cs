@@ -23,6 +23,9 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
+        var cacheConfiguration = new RedisCacheConfiguration();
+        configuration.Bind("RedisCacheConfiguration", cacheConfiguration);
+
         var connectionString = configuration.GetConnectionString(connectionStringName);
         IConnectionMultiplexer? connectionMultiplexer = null;
 
@@ -48,7 +51,7 @@ public static class ServiceCollectionExtensions
                     options.InstanceName = instanceName;
             });
         }
-        catch (Exception ex) when (ex is RedisConnectionException or RedisTimeoutException or AuthenticationFailedException)
+        catch (Exception ex) when (!cacheConfiguration.ThrowExceptions && ex is RedisConnectionException or RedisTimeoutException or AuthenticationFailedException)
         {
             // Intentionally ignore startup connection failures to keep API bootstrapping.
             // Register a null-object cache implementation to satisfy DI requirements.
