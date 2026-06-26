@@ -37,7 +37,9 @@ public class CacheService : ICacheService, IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="CacheService"/> class.
     /// </summary>
+    /// <param name="configuration">The configuration.</param>
     /// <param name="cache">The cache.</param>
+    /// <param name="logger">The logger.</param>
     public CacheService(IConfiguration configuration, IDistributedCache cache, ILogger<CacheService> logger)
     {
         _cacheConfiguration = new();
@@ -116,7 +118,11 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache get-or-create operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
+
             return data ?? await factory();
         }
     }
@@ -132,13 +138,23 @@ public class CacheService : ICacheService, IDisposable
     {
         if (_cacheConfiguration.Disabled) return default;
 
-        var cachedData = await _distributedCache.GetStringAsync(key);
-
-        if (!string.IsNullOrWhiteSpace(cachedData))
+        try
         {
-            var deserializedCachedData = System.Text.Json.JsonSerializer.Deserialize(cachedData, jsonTypeInfo);
-            if (deserializedCachedData is not null)
-                return deserializedCachedData;
+            var cachedData = await _distributedCache.GetStringAsync(key);
+
+            if (!string.IsNullOrWhiteSpace(cachedData))
+            {
+                var deserializedCachedData = System.Text.Json.JsonSerializer.Deserialize(cachedData, jsonTypeInfo);
+                if (deserializedCachedData is not null)
+                    return deserializedCachedData;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Cache get operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
         }
 
         return default;
@@ -167,7 +183,10 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache set operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
         }
     }
 
@@ -185,7 +204,10 @@ public class CacheService : ICacheService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Cache remove operation failed.");
+
+            if (_cacheConfiguration.ThrowExceptions)
+                throw;
         }
     }
 
