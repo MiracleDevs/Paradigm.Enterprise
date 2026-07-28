@@ -14,22 +14,19 @@ Use Mermaid only when a relationship or sequence is clearer visually. Keep label
 
 ## Build locally
 
-Restore the pinned tool and build the site from the repository root:
+The repository script restores the pinned tool, builds the libraries with XML documentation, validates the Docfx build, and starts the local server:
 
-```powershell
-dotnet tool restore
-dotnet restore src/Paradigm.Enterprise.slnx
-dotnet build src/Paradigm.Enterprise.slnx --configuration Release --property:GenerateDocumentationFile=true --property:NoWarn=1591%3B1572%3B1573%3B1574
-dotnet docfx docs/docfx.json --warningsAsErrors
+```bash
+bash build/serve.documentation.sh
 ```
 
-Preview the generated site:
+It serves `http://localhost:8080` by default. Pass a port as the first argument when that address is unavailable:
 
-```powershell
-dotnet docfx docs/docfx.json --serve
+```bash
+bash build/serve.documentation.sh 8090
 ```
 
-The local address is printed by Docfx. Generated API metadata and `_site` output are ignored by Git.
+Set `DOCS_HOST` when the server must bind to a hostname other than `localhost`. Generated API metadata and `_site` output are ignored by Git.
 
 ## Review
 

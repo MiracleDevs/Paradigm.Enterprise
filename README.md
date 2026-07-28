@@ -17,12 +17,11 @@ Read the [documentation site](https://miracledevs.github.io/Paradigm.Enterprise/
 
 To build and preview the site locally:
 
-```powershell
-dotnet tool restore
-dotnet restore src/Paradigm.Enterprise.slnx
-dotnet build src/Paradigm.Enterprise.slnx --configuration Release --property:GenerateDocumentationFile=true --property:NoWarn=1591%3B1572%3B1573%3B1574
-dotnet docfx docs/docfx.json --serve
+```bash
+bash build/serve.documentation.sh
 ```
+
+The site is served at `http://localhost:8080`. Pass a different port as the first argument or set `DOCS_HOST` to bind to another hostname.
 
 ## Packages
 
@@ -54,6 +53,8 @@ dotnet restore src/Paradigm.Enterprise.slnx
 dotnet build src/Paradigm.Enterprise.slnx
 dotnet test src/Paradigm.Enterprise.slnx
 ```
+
+The test wrapper is also available as `bash build/test.sh`.
 
 ## Contributing
 
