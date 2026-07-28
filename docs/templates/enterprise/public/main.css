@@ -41,7 +41,19 @@ article table {
   width: 100%;
 }
 
-.navbar-brand img {
+.navbar-brand {
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.navbar-brand #logo {
+  display: block;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  max-width: 2.25rem;
+  max-height: 2.25rem;
+  object-fit: contain;
   border-radius: 0.35rem;
 }
 

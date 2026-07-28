@@ -5,7 +5,6 @@ This tutorial follows one generic resource through the current `Guid`-based APIs
 ## Follow the request
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#dbeafe", "primaryBorderColor": "#2563eb", "primaryTextColor": "#0f172a", "lineColor": "#0f766e", "secondaryColor": "#ccfbf1", "tertiaryColor": "#ede9fe", "actorBkg": "#dbeafe", "actorBorder": "#2563eb", "actorTextColor": "#0f172a", "signalColor": "#0f766e", "signalTextColor": "#0f172a"}}}%%
 sequenceDiagram
   participant Client
   participant Host

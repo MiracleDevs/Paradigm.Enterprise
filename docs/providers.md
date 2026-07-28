@@ -13,7 +13,6 @@ Providers are the application layer. They turn an intention such as saving a rec
 `EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository, TId>` adds the write workflow. It maps the incoming view, validates the entity, stages the repository operation, commits the Unit of Work, runs lifecycle hooks, and returns a view.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#dbeafe", "primaryBorderColor": "#2563eb", "primaryTextColor": "#0f172a", "lineColor": "#0f766e", "secondaryColor": "#ccfbf1", "tertiaryColor": "#ede9fe", "actorBkg": "#dbeafe", "actorBorder": "#2563eb", "actorTextColor": "#0f172a", "signalColor": "#0f766e", "signalTextColor": "#0f172a"}}}%%
 sequenceDiagram
   participant Caller
   participant Provider
