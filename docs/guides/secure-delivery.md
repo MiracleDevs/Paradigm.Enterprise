@@ -4,6 +4,61 @@ Secure delivery is the path from a reviewed source change to an observable, reco
 
 Paradigm.Enterprise participates in that path as a versioned dependency with build and test requirements. It does not configure an application's repository protections, identity platform, pipeline, artifact registry, deployment environment, infrastructure, monitoring, or recovery process. Those controls belong to the application team and its platform.
 
+The delivery lifecycle is a feedback loop owned by that team and platform:
+
+```mermaid
+flowchart TB
+  subgraph DESIGN[Design and change]
+    direction LR
+    THREAT[Model threats and constraints]
+    CHANGE[Make a small change]
+    REVIEW[Review behavior and risk]
+
+    THREAT --> CHANGE
+    CHANGE --> REVIEW
+  end
+
+  subgraph DELIVERY[Reproducible delivery]
+    direction LR
+    VERIFY[Build, test, and scan]
+    ARTIFACT[Create immutable artifact]
+    PROMOTE[Promote the same artifact]
+    RELEASE[Deploy with controls]
+
+    VERIFY --> ARTIFACT
+    ARTIFACT --> PROMOTE
+    PROMOTE --> RELEASE
+  end
+
+  subgraph OPERATE[Operate and learn]
+    direction LR
+    OBSERVE[Observe health and behavior]
+    RESPOND[Respond or recover]
+    LEARN[Improve the next change]
+
+    OBSERVE --> RESPOND
+    RESPOND --> LEARN
+  end
+
+  REVIEW --> VERIFY
+  RELEASE --> OBSERVE
+  LEARN --> THREAT
+
+  style DESIGN fill:#faf5ff,stroke:#c084fc,stroke-width:2px,color:#581c87
+  style DELIVERY fill:#f8fbff,stroke:#93c5fd,stroke-width:2px,color:#1e3a8a
+  style OPERATE fill:#f7fcf7,stroke:#86efac,stroke-width:2px,color:#14532d
+
+  classDef designNode fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#0f172a
+  classDef deliveryNode fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#0f172a
+  classDef operationsNode fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#0f172a
+
+  class THREAT,CHANGE,REVIEW designNode
+  class VERIFY,ARTIFACT,PROMOTE,RELEASE deliveryNode
+  class OBSERVE,RESPOND,LEARN operationsNode
+```
+
+Every stage in this diagram is team or platform guidance. The library does not supply repository policy, scanners, artifact promotion, deployment automation, telemetry storage, alerting, or recovery orchestration.
+
 ## Start with the system boundary
 
 Before choosing tools, identify the assets being protected, the actors that use them, the trust boundaries they cross, and the consequences of misuse or failure. A data-flow diagram can expose where untrusted input enters, where identity changes form, where sensitive data is stored, and where the system calls an external dependency.

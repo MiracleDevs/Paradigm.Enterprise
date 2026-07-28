@@ -10,7 +10,9 @@ Prefer connected paragraphs. Use a list for an actual sequence, a set of choices
 
 Examples must be generic. Do not copy project names, namespaces, domain rules, credentials, URLs, or distinctive data from an application repository. Comments should explain why a line matters rather than narrate obvious syntax.
 
-Use Mermaid only when a relationship or sequence is clearer visually. Keep labels short, avoid icons, and use the established blue, teal, violet, amber, and green palette.
+Use Mermaid when a relationship, boundary, lifecycle, or process becomes clearer visually. There is no target count or diagram quota. Choose the form that matches the question: flowcharts for responsibilities and processes, architecture views for dependencies and boundaries, state diagrams for lifecycles, and event-oriented models for causes and outcomes. Use a sequence diagram when the ordering of messages among participants is itself important, not as the default representation for every process.
+
+Keep labels short, avoid icons, and use the established blue, teal, violet, amber, and green palette. Style node fills and borders, but leave connectors and edge labels theme-driven so diagrams remain readable in light and dark modes.
 
 ## Build locally
 

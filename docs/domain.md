@@ -109,6 +109,41 @@ Database relationships do not define aggregates by themselves. A foreign key may
 
 Avoid making every connected entity part of one large aggregate. Large object graphs increase contention, make queries and updates harder to reason about, and encourage transactions that cover unrelated changes. When a use case spans aggregates, let a provider coordinate the workflow and make the consistency and failure model explicit.
 
+```mermaid
+flowchart LR
+  PROVIDER[Provider use case]
+  REPOSITORY[Aggregate repository]
+  OTHER[Separate aggregate]
+
+  subgraph AGGREGATE[Immediate consistency boundary]
+    ROOT[Aggregate root]
+    CHILD[Child entity]
+    VALUE[Value object]
+    INVARIANT[Invariant]
+
+    ROOT -->|Controls changes| CHILD
+    ROOT -->|Owns| VALUE
+    ROOT -->|Enforces| INVARIANT
+  end
+
+  PROVIDER -->|Invokes behavior| ROOT
+  REPOSITORY -->|Loads and stores| ROOT
+  PROVIDER -->|Coordinates separately| OTHER
+  ROOT -.->|References by identity when appropriate| OTHER
+
+  style AGGREGATE fill:#faf5ff,stroke:#c084fc,stroke-width:2px,color:#581c87
+
+  classDef applicationNode fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#0f172a
+  classDef aggregateNode fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#0f172a
+  classDef separateNode fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#0f172a
+
+  class PROVIDER,REPOSITORY applicationNode
+  class ROOT,CHILD,VALUE,INVARIANT aggregateNode
+  class OTHER separateNode
+```
+
+The diagram shows a domain consistency boundary, not an Entity Framework relationship graph. A technical transaction may coordinate persistence for more than one aggregate, but it does not move the separate aggregate inside this boundary.
+
 A technical transaction can include several repository operations, but it does not redefine the domain boundary. The Unit of Work also does not make remote APIs, email, cache, or blob storage part of a database transaction. See [Transactions and commits](guides/transactions.md) for the exact commit behavior.
 
 ## Controlled child collections
@@ -142,6 +177,31 @@ Reset a tracker only when the application has deliberately reconciled or discard
 ## State transitions
 
 When allowed behavior depends strongly on an entity's current state, explicit transition methods make the rules visible. A small conditional may be enough for a simple lifecycle. A state object can be useful when each state permits substantially different behavior.
+
+This lifecycle is an illustrative application model:
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Active: Activate
+  Active --> Paused: Pause
+  Paused --> Active: Resume
+  Active --> Retired: Retire
+  Paused --> Retired: Retire
+  Retired --> [*]
+
+  classDef draftState fill:#ede9fe,stroke:#7c3aed,color:#0f172a
+  classDef activeState fill:#dcfce7,stroke:#16a34a,color:#0f172a
+  classDef pausedState fill:#fef3c7,stroke:#d97706,color:#0f172a
+  classDef retiredState fill:#dbeafe,stroke:#2563eb,color:#0f172a
+
+  class Draft draftState
+  class Active activeState
+  class Paused pausedState
+  class Retired retiredState
+```
+
+The application methods behind `Activate`, `Pause`, `Resume`, and `Retire` decide whether each transition is allowed. Any rejected transition is a domain rule implemented and tested by the application, not automatic framework enforcement.
 
 The Domain package includes `IState<TState>`, `IStateContext<TState>`, `StateFactory`, and `StateTransitionException<TState>`. `StateFactory` uses reflection and a naming convention: a requested state name is resolved as a class named `{StateName}State` in the state interface namespace and assembly, then constructed with the context. These types help organize transitions, but they do not persist state, register types, publish events, or provide a workflow engine.
 

@@ -63,6 +63,46 @@ The scoped Unit of Work awaits registered commiteable objects sequentially in re
 
 An explicit compatible transaction can coordinate supported contexts that share the underlying transaction. It cannot roll back an email, cache write, blob operation, queue publication, or remote API call.
 
+When reliable external delivery is required, an application may choose a design such as this:
+
+```mermaid
+flowchart LR
+  USECASE[Application use case]
+
+  subgraph TRANSACTION[Application-owned database transaction]
+    DATA[Persist aggregate data]
+    OUTBOX[(Optional outbox record)]
+    COMMIT[Unit of Work commit]
+
+    DATA --> COMMIT
+    OUTBOX --> COMMIT
+  end
+
+  RESULT[Committed application result]
+  DISPATCHER[Optional application dispatcher]
+  EXTERNAL[External system or consumer]
+
+  USECASE --> DATA
+  USECASE -.->|Record intent when required| OUTBOX
+  COMMIT --> RESULT
+  OUTBOX -.->|Deliver after commit| DISPATCHER
+  DISPATCHER --> EXTERNAL
+
+  style TRANSACTION fill:#f7fcf7,stroke:#86efac,stroke-width:2px,color:#14532d
+
+  classDef applicationNode fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#0f172a
+  classDef dataNode fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#0f172a
+  classDef optionalNode fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#0f172a
+  classDef externalNode fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#0f172a
+
+  class USECASE,RESULT applicationNode
+  class DATA,COMMIT dataNode
+  class OUTBOX,DISPATCHER optionalNode
+  class EXTERNAL externalNode
+```
+
+The outbox and dispatcher are optional application infrastructure. Paradigm.Enterprise supplies Unit of Work mechanics, but it does not publish domain events, create an outbox, run a dispatcher, or guarantee external delivery. If the application adopts this pattern, the data change and outbox record must share the same compatible transaction, while delivery and consumer handling occur after commit.
+
 When a workflow crosses those boundaries, define its failure behavior. Idempotency can make a repeated request safe. An outbox can couple a database change with later message publication. A saga can coordinate compensating work across independent participants. These patterns add state and operational obligations, and the framework does not implement them. Introduce them only when the use case needs their guarantees.
 
 ## Prefer reversible decisions
