@@ -5,28 +5,56 @@ This tutorial follows one generic resource through the current `Guid`-based APIs
 ## Follow the request
 
 ```mermaid
-sequenceDiagram
-  participant Client
-  participant Host
-  participant Controller
-  participant Provider
-  participant Repository
-  participant Context
-  participant Database
+flowchart TB
+  CLIENT[Client]
 
-  Client->>Host: HTTP request
-  Host->>Host: Authenticate, authorize, bind
-  Host->>Controller: Invoke action
-  Controller->>Provider: Call use case
-  Provider->>Repository: Read or stage write
-  Repository->>Context: Query or track entity
-  Context->>Database: Execute command
-  Database-->>Context: Result
-  Context-->>Repository: Entity or view
-  Repository-->>Provider: Domain result
-  Provider-->>Controller: View
-  Controller-->>Client: Serialized response
+  subgraph HTTP[HTTP boundary]
+    direction LR
+    HOST[Authenticate, authorize, and bind]
+    CONTROLLER[Controller action]
+    HOST --> CONTROLLER
+  end
+
+  subgraph APPLICATION[Application]
+    direction LR
+    PROVIDER[Provider use case]
+    REPOSITORY[Repository]
+    PROVIDER -->|Read or stage write| REPOSITORY
+  end
+
+  subgraph PERSISTENCE[Persistence]
+    direction LR
+    CONTEXT[DbContext]
+    DATABASE[(Database)]
+    CONTEXT -->|Execute command| DATABASE
+  end
+
+  RESULT[View or committed result]
+  RESPONSE[Serialized response]
+
+  CLIENT -->|HTTP request| HOST
+  CONTROLLER --> PROVIDER
+  REPOSITORY -->|Query or track| CONTEXT
+  DATABASE --> RESULT
+  RESULT --> RESPONSE
+  RESPONSE --> CLIENT
+
+  style HTTP fill:#f8fbff,stroke:#93c5fd,stroke-width:2px,color:#1e3a8a
+  style APPLICATION fill:#faf5ff,stroke:#c084fc,stroke-width:2px,color:#581c87
+  style PERSISTENCE fill:#f7fcf7,stroke:#86efac,stroke-width:2px,color:#14532d
+
+  classDef boundaryNode fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#0f172a
+  classDef applicationNode fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#0f172a
+  classDef persistenceNode fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#0f172a
+  classDef resultNode fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#0f172a
+
+  class CLIENT,HOST,CONTROLLER boundaryNode
+  class PROVIDER,REPOSITORY applicationNode
+  class CONTEXT,DATABASE persistenceNode
+  class RESULT,RESPONSE resultNode
 ```
+
+The result returns through the same application and HTTP boundaries even though the flowchart condenses those return mappings into the final result and response stages.
 
 ## Define the contract and models
 
