@@ -1,142 +1,50 @@
-# 1. Paradigm.Enterprise.CodeGenerator
+# Code generation
 
-The CodeGenerator project is a utility library that provides code generation capabilities for the Paradigm.Enterprise framework. It automates the creation of boilerplate code for entities, repositories, providers, controllers, and other components, increasing developer productivity and ensuring consistency across the codebase.
+`Paradigm.Enterprise.CodeGenerator` is a standalone executable project for System.Text.Json contexts, stored-procedure mappers, and an Angular TypeScript client. It is not packaged as a .NET tool. Run it from a source checkout or publish it through the team's release process.
 
-## 1.1. Key Components
-
-### 1.1.1. Code Generators
-
-The project includes various code generators for different aspects of the application:
-
-- **EntityGenerator** - Generates entity classes from database schema or model definitions
-- **RepositoryGenerator** - Creates repository implementations for entities
-- **ProviderGenerator** - Generates provider classes with standard CRUD operations
-- **ControllerGenerator** - Creates API controllers with standard endpoints
-- **DtoGenerator** - Generates Data Transfer Objects for view and edit operations
-
-### 1.1.2. Templates
-
-The CodeGenerator uses a templating system to generate code:
-
-- **T4 Templates** - Text template transformation toolkit templates
-- **Handlebars Templates** - Logic-less templates for code generation
-- **Razor Templates** - Syntax for embedding C# in templates
-
-### 1.1.3. Model Discovery
-
-The project includes utilities for discovering and analyzing existing code:
-
-- **SchemaAnalyzer** - Analyzes database schema for entity generation
-- **CodeAnalyzer** - Parses existing code for relationship discovery
-- **TypeScanner** - Scans assemblies for relevant types
-
-### 1.1.4. Configuration
-
-Configuration options for code generation:
-
-- **CodeGenOptions** - Configuration for code generation behavior
-- **NamingConventions** - Rules for naming generated artifacts
-- **TemplateSettings** - Customization options for templates
-
-## 1.2. Usage Example
-
-### 1.2.1. Command Line Interface
-
-```shell
-# Generate a complete set of components for an entity
-dotnet run --project src/Paradigm.Enterprise.CodeGenerator -- generate entity Product --properties "Name:string,Description:string,Price:decimal,CategoryId:int" --output ./src/MyApp
-
-# Generate a controller for an existing entity
-dotnet run --project src/Paradigm.Enterprise.CodeGenerator -- generate controller Product --namespace MyApp.Controllers --output ./src/MyApp.Api
+```powershell
+dotnet run `
+  --project src/Paradigm.Enterprise.CodeGenerator `
+  -- --help
 ```
 
-### 1.2.2. Programmatic Usage
+## Current limitations
 
-```csharp
-// Example of programmatic usage
-var generator = new EntityGenerator
-{
-    EntityName = "Customer",
-    Namespace = "MyApp.Domain.Entities",
-    Properties = new[]
-    {
-        new PropertyDefinition { Name = "FirstName", Type = "string" },
-        new PropertyDefinition { Name = "LastName", Type = "string" },
-        new PropertyDefinition { Name = "Email", Type = "string" },
-        new PropertyDefinition { Name = "IsActive", Type = "bool", DefaultValue = "true" }
-    },
-    OutputDirectory = "./src/MyApp.Domain"
-};
+Do not treat the JSON-context and stored-procedure modes as working generation paths in the current release. Each mode uses its assembly argument in two incompatible ways: it passes the value to `Assembly.LoadFrom`, which requires a DLL path, and also appends an output directory to the same value. A DLL path cannot also be an output directory. Both generators catch and log the resulting exception, so the process may continue without producing the expected files.
 
-generator.Generate();
+The executable does not expose a switch for running only one generator. Until assembly input and source output are represented by separate options, keep existing generated JSON contexts and mappers under source control and maintain them through the application-local generation process. Verify their contents during review instead of assuming a successful process exit means every generator ran.
 
-// Generate a complete set of components
-var projectGenerator = new ProjectGenerator
-{
-    EntityName = "Order",
-    BaseNamespace = "MyApp",
-    Properties = new[]
-    {
-        new PropertyDefinition { Name = "OrderDate", Type = "DateTime" },
-        new PropertyDefinition { Name = "CustomerId", Type = "int" },
-        new PropertyDefinition { Name = "TotalAmount", Type = "decimal" },
-        new PropertyDefinition { Name = "Status", Type = "string" }
-    },
-    OutputDirectory = "./src/MyApp",
-    GenerateEntity = true,
-    GenerateRepository = true,
-    GenerateProvider = true,
-    GenerateController = true,
-    GenerateDtos = true
-};
+The stored-procedure generator is also SQL Server-specific. It emits SQL Server parameter mappers and registration through `SqlParameterMapperFactory`. PostgreSQL applications must implement `INpgsqlParameterMapper` and register each parameters type with `NpgsqlParameterMapperFactory` until PostgreSQL generation is implemented.
 
-projectGenerator.Generate();
+## JSON contexts
+
+Source-generated JSON metadata must cover every request, response, nested generic argument, and framework DTO that the host serializes. Add generated contexts to MVC's `TypeInfoResolverChain` and regenerate or update them whenever a provider or controller signature changes.
+
+Review the resulting `[JsonSerializable]` declarations before disabling reflection-based metadata. Missing metadata is usually discovered only when the affected endpoint serializes.
+
+## Stored-procedure mappers
+
+Stored-procedure parameter and result types must be available in a successfully built Data assembly. A mapper implementation translates parameters into provider commands or reads a result row into the declared CLR type. Register each mapper before the first procedure execution.
+
+For SQL Server, use `ISqlParameterMapper` with `SqlParameterMapperFactory`. For PostgreSQL, use `INpgsqlParameterMapper` with `NpgsqlParameterMapperFactory`. Data-reader mapping is shared through `IDataReaderMapper` and `DataReaderMapperFactory`.
+
+## OpenAPI client
+
+The OpenAPI client generator can still run after the two earlier generators log their failures because those exceptions are swallowed. This is not a clean standalone mode, so inspect the log and output file rather than relying on the exit code alone.
+
+Before invoking it, build the application assemblies, start the intended API profile, and confirm its OpenAPI document contains only the expected endpoints. The configured output directory must already contain the `base-client.ts` extension file expected by the bundled settings.
+
+```powershell
+dotnet run `
+  --project src/Paradigm.Enterprise.CodeGenerator `
+  -- `
+  --ProjectName Sample `
+  --ProvidersAssemblyPath C:/work/Sample.Providers/bin/Debug/net10.0/Sample.Providers.dll `
+  --DataAssemblyPath C:/work/Sample.Data/bin/Debug/net10.0/Sample.Data.dll `
+  --ProxiesOutput C:/work/client/src/generated `
+  --SwaggerUrl https://localhost:7001/swagger/v1/swagger.json
 ```
 
-## 1.3. Generated Code Structure
+Use actual DLL paths for the assembly arguments. Expect the JSON and stored-procedure steps to report their current path errors before client generation runs. Generate only from a trusted OpenAPI endpoint, then review the resulting client diff.
 
-The CodeGenerator produces a consistent structure for generated code:
-
-```shell
-MyApp/
-├── Domain/
-│   └── Entities/
-│       └── Product.cs
-├── Data/
-│   └── Repositories/
-│       └── ProductRepository.cs
-├── Api/
-│   ├── Dtos/
-│   │   ├── ProductViewDto.cs
-│   │   └── ProductEditDto.cs
-│   ├── Providers/
-│   │   ├── IProductProvider.cs
-│   │   └── ProductProvider.cs
-│   └── Controllers/
-│       └── ProductsController.cs
-```
-
-## 1.4. Customization
-
-The CodeGenerator provides several ways to customize the generated code:
-
-1. **Template Overrides** - Custom templates for specific components
-2. **Configuration Files** - JSON configuration for generation rules
-3. **Extension Points** - Hooks for custom code generation logic
-4. **Post-Processors** - Custom processing of generated code
-
-## 1.5. NuGet Package (Development Tool)
-
-The CodeGenerator is typically used as a development tool rather than a runtime dependency:
-
-```shell
-dotnet tool install --global Paradigm.Enterprise.CodeGenerator
-```
-
-## 1.6. Benefits
-
-1. **Consistency** - Ensures consistent implementation of design patterns
-2. **Productivity** - Reduces boilerplate code writing
-3. **Best Practices** - Enforces framework conventions and best practices
-4. **Maintainability** - Generated code follows consistent patterns
-5. **Flexibility** - Customizable templates for specific project needs
+The Visual Studio template also contains an application-local generator scaffold. Keep that scaffold aligned with the application's generated files, and treat the current library source as the authority for runtime contracts.

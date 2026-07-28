@@ -14,7 +14,7 @@ public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBas
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadRepositoryBase{TEntity, TContext}" /> class.
+    /// Initializes a new instance of the <see cref="ReadRepositoryBase{TEntity, TContext, TId}" /> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected ReadRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)

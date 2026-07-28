@@ -18,7 +18,7 @@ public class PostgreSqlDbConnectionProvider : DbContextConnectionProvider
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SqlServerDbContextConnectionProvider"/> class.
+    /// Initializes a new instance of the <see cref="PostgreSqlDbConnectionProvider"/> class.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
     public PostgreSqlDbConnectionProvider(IConfiguration configuration) : base(configuration)

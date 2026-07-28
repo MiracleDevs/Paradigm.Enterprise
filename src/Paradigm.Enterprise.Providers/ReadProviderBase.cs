@@ -27,7 +27,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadProviderBase{TEntity, TDto, TRepository}"/> class.
+    /// Initializes a new instance of the <see cref="ReadProviderBase{TInterface, TView, TViewRepository, TId}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected ReadProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)

@@ -1,0 +1,74 @@
+items:
+  - name: Start here
+    href: index.md
+    items:
+      - name: Framework overview
+        href: overview.md
+      - name: Architecture
+        href: architecture.md
+      - name: Packages
+        href: reference/packages.md
+  - name: Tutorials
+    items:
+      - name: Create a solution
+        href: tutorials/create-solution.md
+      - name: Understand the generated solution
+        href: tutorials/generated-solution.md
+      - name: Scaffold from a database
+        href: tutorials/database-first.md
+      - name: Build a vertical slice
+        href: sample-application.md
+  - name: Fundamentals
+    items:
+      - name: Contracts and identities
+        href: interfaces.md
+      - name: Domain model
+        href: domain.md
+      - name: Data access
+        href: data.md
+      - name: Database providers
+        href: data-providers.md
+      - name: Providers
+        href: providers.md
+      - name: Web API
+        href: webapi.md
+  - name: Guides
+    items:
+      - name: Dependency registration
+        href: guides/dependency-registration.md
+      - name: Transactions
+        href: guides/transactions.md
+      - name: Validation and errors
+        href: guides/validation-and-errors.md
+      - name: Secure host configuration
+        href: guides/security-and-host.md
+      - name: Services
+        href: services.md
+      - name: Table files
+        href: table-reader.md
+      - name: Code generation
+        href: code-generator.md
+      - name: Testing
+        href: tests.md
+      - name: Operations
+        href: guides/operations.md
+      - name: Troubleshooting
+        href: guides/troubleshooting.md
+  - name: Reference
+    items:
+      - name: Package matrix
+        href: reference/packages.md
+      - name: Conventions
+        href: reference/conventions.md
+      - name: API reference
+        href: reference/api.md
+  - name: Contributing
+    items:
+      - name: Documentation
+        href: contributing/documentation.md
+      - name: Visual Studio template
+        href: contributing/template-maintenance.md
+      - name: RFC process
+        href: https://github.com/MiracleDevs/Paradigm.Enterprise/tree/main/docs/rfc
+      - name: Engineering rules
+        href: https://github.com/MiracleDevs/Paradigm.Enterprise/tree/main/docs/rules

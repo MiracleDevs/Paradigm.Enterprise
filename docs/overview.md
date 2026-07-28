@@ -1,59 +1,25 @@
-# 1. Paradigm.Enterprise Framework Overview
+# Framework overview
 
-The Paradigm.Enterprise framework is a comprehensive set of .NET libraries designed to accelerate the development of enterprise web applications, particularly WebAPIs. The framework provides a solid foundation for implementing best practices, common design patterns, and standardized application paths.
+Paradigm.Enterprise exists to make a familiar backend architecture consistent across projects. It is not a general-purpose application framework and it does not hide ASP.NET Core or Entity Framework Core. Instead, it gives teams shared contracts and base implementations for the parts of a layered API that otherwise drift between solutions.
 
-## 1.1. Core Concepts
+The central design choice is to separate protocol, orchestration, domain behavior, and persistence. Controllers translate HTTP concerns. Providers coordinate application use cases and can be reused from a controller, worker, or message handler. Entities protect business invariants. Repositories express persistence operations. A Unit of Work coordinates commits without giving providers direct access to a `DbContext`.
 
-The framework is built around several key concepts:
+This separation is useful only when the boundaries remain explicit. A thin controller is not a goal by itself; it is evidence that HTTP details have not leaked into the use case. A small repository is not wasted ceremony; it keeps query and storage choices out of domain code. A provider is not a second place for entity rules; it coordinates work that spans collaborators.
 
-1. **Clean Architecture** - The framework follows a clean architecture approach with clear separation of concerns between layers.
-2. **Domain-Driven Design** - Provides base classes for entities, repositories, and services.
-3. **Repository Pattern** - Standardized data access through repository abstractions.
-4. **Unit of Work** - Manages transactions and data persistence.
-5. **Provider Pattern** - Simplifies business logic implementation and service orchestration.
-6. **CQRS Principles** - Separate read and write operations for better scalability.
+## Read and write models
 
-## 1.2. Framework Structure
+The libraries support separate table-backed entities and read-oriented views. A write provider receives a view, maps it to an entity, asks the entity to validate itself, persists through an edit repository, commits, and then reads the result through the view repository. A query can use a database view, projection, or stored procedure without changing the entity used for writes.
 
-The framework is organized into several NuGet packages, each targeting specific functionality:
+This split is a library convention, not a claim that every endpoint needs a database view. A simple application may use similar shapes for both paths. The distinction becomes valuable when queries need joins, calculated fields, or performance characteristics that do not belong in the aggregate.
 
-### 1.2.1. Core Libraries
+## Packages as building blocks
 
-- **Interfaces** - Core interfaces used throughout the framework
-- **Domain** - Base domain models, entities, and value objects
-- **Data** - Database access abstractions and implementations
-- **Providers** - Business logic implementation patterns
+The core dependency chain begins with `Interfaces`, continues through `Domain`, `Data`, and `Providers`, and ends at `WebApi`. SQL Server and PostgreSQL packages supply database-specific connection and stored-procedure support. Service packages for caching, email, blob storage, and tabular files can be adopted independently.
 
-### 1.2.2. Database Providers
+Installing `Paradigm.Enterprise.WebApi` brings the main dependency chain transitively, but an application should still reference packages in the projects that use their types. See the [package matrix](reference/packages.md) for target frameworks and responsibilities.
 
-- **Data.SqlServer** - Microsoft SQL Server implementation
-- **Data.PostgreSql** - PostgreSQL implementation
+## A deliberate amount of convention
 
-### 1.2.3. Service Libraries
+Several registration helpers discover types by reflection. A public `OrderProvider` is expected to implement `IOrderProvider`; the same naming rule applies to repositories. This is executable behavior, not a cosmetic naming preference. Generated interfaces, partial entity classes, JSON serializer contexts, and mapper registration add other conventions that must be understood before regeneration.
 
-- **Services.Core** - Base service interfaces and implementations
-- **Services.BlobStorage** - File/blob storage abstractions
-- **Services.Cache** - Caching mechanisms
-- **Services.Email** - Email service abstractions
-
-### 1.2.4. API Libraries
-
-- **WebApi** - API controllers, filters, and middleware
-
-## 1.3. Getting Started
-
-To get started with the Paradigm.Enterprise framework, add the relevant NuGet packages to your project:
-
-```csharp
-Install-Package Paradigm.Enterprise.WebApi
-```
-
-This will bring in all the necessary dependencies for a typical WebAPI project.
-
-## 1.4. Versioning and Compatibility
-
-The framework follows semantic versioning. The current version is 1.0.11.
-
-## 1.5. License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+The [conventions reference](reference/conventions.md) collects these rules. The tutorials introduce each convention when it first matters.

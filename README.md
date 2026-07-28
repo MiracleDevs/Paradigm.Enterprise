@@ -1,86 +1,64 @@
 # Paradigm.Enterprise
 
-A comprehensive framework that provides base classes and utilities for building .NET WebApi applications following enterprise best practices and design patterns.
+Paradigm.Enterprise is a set of .NET libraries for building layered, domain-driven APIs with consistent entities, repositories, providers, transactions, controllers, exception handling, database integrations, and infrastructure services.
+
+The framework supplies reusable mechanics. Each application still owns its domain model, authorization rules, database design, configuration, and operational policy.
 
 ## Documentation
 
-For detailed documentation about each component of the framework, please visit the following documentation pages:
+Read the [documentation site](https://miracledevs.github.io/Paradigm.Enterprise/) for the guided experience, or start with the Markdown sources:
 
-- [Overview](docs/overview.md) - Framework overview and core concepts
-- [Architecture](docs/architecture.md) - Detailed architectural overview and design decisions
-- [Interfaces](docs/interfaces.md) - Core interfaces
-- [Domain](docs/domain.md) - Domain entities and business logic
-- [Data](docs/data.md) - Data access and repositories
-- [Data Providers](docs/data-providers.md) - Database-specific implementations
-- [Providers](docs/providers.md) - Business logic providers
-- [Services](docs/services.md) - Service abstractions (Cache, Email, BlobStorage, TableReader)
-- [WebApi](docs/webapi.md) - API controllers and middleware
-- [Tests](docs/tests.md) - Testing infrastructure and examples
-- [Code Generator](docs/code-generator.md) - Automated code generation utilities
-- [Sample Application](docs/sample-application.md) - Complete example application using the framework
+- [Framework overview](docs/overview.md)
+- [Architecture](docs/architecture.md)
+- [Create a solution](docs/tutorials/create-solution.md)
+- [Build a vertical slice](docs/sample-application.md)
+- [Package reference](docs/reference/packages.md)
+- [API reference](https://miracledevs.github.io/Paradigm.Enterprise/reference/api.html)
 
-## Request for Comments (RFC)
+To build and preview the site locally:
 
-For significant changes to the framework, we follow a Request for Comments (RFC) process. This ensures proper consideration, documentation and team collaboration on important architectural decisions.
-
-- [RFC Process](docs/rfc/README.md) - Our RFC process documentation
-- [RFC Template](docs/rfc/template.md) - Template for creating new RFCs
-- [Sample RFC](docs/rfc/2023-07-01-sample-rfc.md) - Example RFC document
-
-If you're planning to propose a significant change to the framework, please follow the RFC process to ensure it's properly reviewed and documented.
-
-## Nuget Packages
-
-| Library              | Nuget                                                                                                                                                             | Install                                                          |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Data                 | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Data.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Data/)                                 | `Install-Package Paradigm.Enterprise.Data`                       |
-| Data.SqlServer       | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Data.SqlServer.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Data.SqlServer/)             | `Install-Package Paradigm.Enterprise.Data.SqlServer`             |
-| Data.PostgreSql      | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Data.PostgreSql.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Data.PostgreSql/)           | `Install-Package Paradigm.Enterprise.Data.PostgreSql`            |
-| Domain               | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Domain.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Domain/)                             | `Install-Package Paradigm.Enterprise.Domain`                     |
-| Interfaces           | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Interfaces.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Interfaces/)                     | `Install-Package Paradigm.Enterprise.Interfaces`                 |
-| Providers            | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Providers.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Providers/)                       | `Install-Package Paradigm.Enterprise.Providers`                  |
-| Services.BlobStorage | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.BlobStorage.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.BlobStorage/) | `Install-Package Paradigm.Enterprise.Services.BlobStorage`       |
-| Services.Cache       | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.Cache.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.Cache/)             | `Install-Package Paradigm.Enterprise.Services.Cache`             |
-| Services.Email       | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.Email.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.Email/)             | `Install-Package Paradigm.Enterprise.Services.Email`             |
-| Services.TableReader | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.TableReader.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.TableReader/) | `Install-Package Paradigm.Enterprise.Services.TableReader`       |
-| Services.Core        | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.Services.Core.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.Services.Core/)               | `Install-Package Paradigm.Enterprise.Services.Core`              |
-| WebApi               | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.WebApi.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.WebApi/)                             | `Install-Package Paradigm.Enterprise.WebApi`                     |
-| CodeGenerator        | [![NuGet](https://img.shields.io/nuget/v/Paradigm.Enterprise.CodeGenerator.svg)](https://www.nuget.org/packages/Paradigm.Enterprise.CodeGenerator/)               | `dotnet tool install --global Paradigm.Enterprise.CodeGenerator` |
-
-## Getting Started
-
-To get started with the Paradigm.Enterprise framework, add the relevant NuGet packages to your project:
-
-```shell
-Install-Package Paradigm.Enterprise.WebApi
+```powershell
+dotnet tool restore
+dotnet restore src/Paradigm.Enterprise.slnx
+dotnet build src/Paradigm.Enterprise.slnx --configuration Release --property:GenerateDocumentationFile=true --property:NoWarn=1591%3B1572%3B1573%3B1574
+dotnet docfx docs/docfx.json --serve
 ```
 
-This will bring in all the necessary dependencies for a typical WebAPI project.
+## Packages
 
-See the [Sample Application](docs/sample-application.md) for a complete example of using the framework.
+| Area | Packages |
+| --- | --- |
+| Application stack | `Paradigm.Enterprise.Interfaces`, `Domain`, `Data`, `Providers`, `WebApi` |
+| Databases | `Paradigm.Enterprise.Data.SqlServer`, `Data.PostgreSql` |
+| Infrastructure | `Paradigm.Enterprise.Services.Cache`, `Email`, `BlobStorage`, `TableReader` |
+| Tooling | `Paradigm.Enterprise.CodeGenerator` |
 
-## Nuget publish process
+Install only the package required by the owning project:
 
-After modifying the solution you can change the version by executing:
-
-```shell
-$ cd ./build
-$ ./increment.version.sh "1.0.0" "1.0.1"
+```powershell
+dotnet add package Paradigm.Enterprise.WebApi
 ```
 
-where the first argument ("1.0.0") is the current version and the second one ("1.0.1") is the new version number.
+Use a consistent package version across the application. The [package matrix](docs/reference/packages.md) lists responsibilities and target frameworks.
 
-To publish to nuget you need to execute the following script:
+## Start a new API
 
-```shell
-$ cd ./build
-$ ./publish.nuget.sh "{nuget-secret-key}"
+The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, host composition root, and code-generation tool. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
+
+The repository's [example](example/README.md) targets a historical package line and is retained as a compatibility sample. It is not the canonical guide for current APIs.
+
+## Build and test
+
+```powershell
+dotnet restore src/Paradigm.Enterprise.slnx
+dotnet build src/Paradigm.Enterprise.slnx
+dotnet test src/Paradigm.Enterprise.slnx
 ```
 
-## Changelog
+## Contributing
 
-See [CHANGELOG.md](CHANGELOG.md) for the complete version history and release notes.
+Read the [contribution guide](.github/CONTRIBUTING.md), [documentation guide](docs/contributing/documentation.md), and [RFC process](docs/rfc/README.md) before proposing a substantial change. Engineering rules used by automated review remain under [docs/rules](docs/rules/).
 
-## License
+## Release history and license
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+See [CHANGELOG.md](CHANGELOG.md) for package history. The project is licensed under the [MIT License](LICENSE).

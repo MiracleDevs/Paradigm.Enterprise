@@ -5,7 +5,7 @@
     <Project Path="Paradigm.Enterprise.Providers/Paradigm.Enterprise.Providers.csproj" />
   </Folder>
   <Folder Name="/01.Data/">
-    <Project Path="Paradigm.Enterprise.Data.PostgreSQL/Paradigm.Enterprise.Data.PostgreSql.csproj" />
+    <Project Path="Paradigm.Enterprise.Data.PostgreSql/Paradigm.Enterprise.Data.PostgreSql.csproj" />
     <Project Path="Paradigm.Enterprise.Data.SqlServer/Paradigm.Enterprise.Data.SqlServer.csproj" />
     <Project Path="Paradigm.Enterprise.Data/Paradigm.Enterprise.Data.csproj" />
   </Folder>
