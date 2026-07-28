@@ -1,0 +1,67 @@
+:root {
+  --pe-navy: #172554;
+  --pe-blue: #2563eb;
+  --pe-blue-soft: #dbeafe;
+  --pe-teal: #0f766e;
+  --pe-teal-soft: #ccfbf1;
+  --pe-violet: #7c3aed;
+  --pe-violet-soft: #ede9fe;
+}
+
+body {
+  --bs-link-color-rgb: 37, 99, 235;
+  --bs-link-hover-color-rgb: 30, 64, 175;
+}
+
+article {
+  line-height: 1.72;
+}
+
+article h1,
+article h2,
+article h3 {
+  color: var(--pe-navy);
+  letter-spacing: -0.015em;
+}
+
+article h1 {
+  font-weight: 720;
+}
+
+article h2 {
+  margin-top: 2.4rem;
+}
+
+article pre {
+  border-radius: 0.65rem;
+}
+
+article table {
+  display: table;
+  width: 100%;
+}
+
+.navbar-brand img {
+  border-radius: 0.35rem;
+}
+
+html[data-bs-theme="dark"] article h1,
+html[data-bs-theme="dark"] article h2,
+html[data-bs-theme="dark"] article h3 {
+  color: #dbeafe;
+}
+
+@media (max-width: 767.98px) {
+  article table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-bs-theme]) article h1,
+  html:not([data-bs-theme]) article h2,
+  html:not([data-bs-theme]) article h3 {
+    color: #dbeafe;
+  }
+}

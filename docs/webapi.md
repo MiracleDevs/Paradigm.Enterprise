@@ -1,143 +1,55 @@
-# 1. Paradigm.Enterprise.WebApi
+# Web API
 
-The WebApi project provides a comprehensive set of components for building RESTful APIs using ASP.NET Core. It includes base controllers, middleware, exception handling, and other utilities to accelerate API development while following best practices.
+`Paradigm.Enterprise.WebApi` supplies controller bases, exception middleware, endpoint-exposure filtering, model-binding attributes, and convention-based dependency registration. It reduces repeated HTTP plumbing, but the application host still owns routing policy, security, serialization, and middleware ordering.
 
-## 1.1. Key Components
+## Controller bases
 
-### 1.1.1. Base Controllers
-
-The WebApi project includes base controllers to simplify API development:
-
-- **ApiControllerBase** - Base controller with common functionality
-- **ApiControllerCrudBase** - Controller with CRUD operations for entities
+`ApiControllerBase<TProvider>` exposes the provider to a custom controller. `ReadApiControllerBase` adds `POST search` and `GET get-by-id`. `EditApiControllerBase` adds `POST` for save and `DELETE` for delete. The read and edit bases require the identifier type explicitly.
 
 ```csharp
-[AllowAnonymous]
-[ApiController]
-public abstract class ApiControllerBase<TProvider> : ControllerBase
-    where TProvider : IProvider
+[Route("catalog-items")]
+public sealed class CatalogItemsController
+    : EditApiControllerBase<
+        ICatalogItemProvider,
+        CatalogItemView,
+        CatalogItemSearch,
+        Guid>
 {
-    protected ILogger Logger { get; }
-    protected TProvider Provider { get; }
-
-    public ApiControllerBase(ILogger<ApiControllerBase<TProvider>> logger, TProvider provider)
-    {
-        Logger = logger;
-        Provider = provider;
-    }
-}
-
-[AllowAnonymous]
-[ApiController]
-public abstract class ApiControllerBase<TProvider, TView, TParameters> : ControllerBase
-    where TProvider : IReadProvider<TView>
-    where TParameters : FilterTextPaginatedParameters
-{
-    protected ILogger Logger { get; }
-    protected TProvider Provider { get; }
-
-    public ApiControllerBase(ILogger<ApiControllerBase<TProvider, TView, TParameters>> logger, TProvider provider)
-    {
-        Logger = logger;
-        Provider = provider;
-    }
-
-    [HttpPost("search")]
-    public virtual async Task<PaginatedResultDto<TView>> SearchAsync([FromBody, Required] TParameters parameters)
-    {
-        return await Provider.SearchPaginatedAsync(parameters);
-    }
-}
-```
-
-### 1.1.2. Middleware
-
-Custom middleware components for common API concerns:
-
-- **ExceptionHandlingMiddleware** - Captures and formats exceptions
-- **RequestLoggingMiddleware** - Logs incoming requests and responses
-- **ApiKeyAuthenticationMiddleware** - Validates API keys for authentication
-
-### 1.1.3. Filters
-
-Action filters for cross-cutting concerns:
-
-- **ValidationFilter** - Validates model state
-- **LoggingActionFilter** - Logs action execution
-- **CacheFilter** - Enables response caching
-
-### 1.1.4. Exception Handling
-
-Standardized exception handling and error responses:
-
-- **ApiException** - Base exception for API errors
-- **ValidationException** - Exception for model validation failures
-- **NotFoundException** - Exception for not found resources
-- **ForbiddenException** - Exception for authorization failures
-
-### 1.1.5. Extensions
-
-Extension methods for ASP.NET Core integration:
-
-- **ApplicationBuilderExtensions** - Extensions for IApplicationBuilder
-- **ServiceCollectionExtensions** - Extensions for IServiceCollection
-
-## 1.2. Usage Example
-
-```csharp
-// Sample API controller using the base classes
-[ApiController]
-[Route("api/[controller]")]
-public class ProductsController : ApiControllerCrudBase<IProductProvider, ProductView, ProductEdit, ProductSearchParameters>
-{
-    public ProductsController(
-        ILogger<ProductsController> logger,
-        IProductProvider provider)
+    public CatalogItemsController(
+        ILogger<CatalogItemsController> logger,
+        ICatalogItemProvider provider)
         : base(logger, provider)
     {
     }
-
-    // Additional custom endpoints
-    [HttpGet("featured")]
-    public async Task<IActionResult> GetFeaturedProducts()
-    {
-        // Custom implementation
-        return Ok(await Provider.GetFeaturedProductsAsync());
-    }
 }
-
-// Register services in Program.cs
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container
-builder.Services.AddParadigmWebApi(options =>
-{
-    options.EnableExceptionHandling = true;
-    options.EnableRequestLogging = true;
-    options.EnableModelValidation = true;
-});
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline
-app.UseParadigmWebApi();
-
-app.MapControllers();
-
-app.Run();
 ```
 
-## 1.3. Key Features
+The library bases inherit `AllowAnonymous` metadata. ASP.NET Core skips authorization for an endpoint when that metadata is present. Adding `Authorize` to a derived controller or action, or configuring a fallback policy, does not override it. Use these bases only for endpoints that are intentionally anonymous. For authenticated or authorized endpoints, derive directly from ASP.NET Core's `ControllerBase`, inject the provider, and apply the host's authorization policy there.
 
-1. **Standardized API Structure** - Consistent API design with base controllers
-2. **Built-in CRUD Operations** - Ready-to-use CRUD endpoints
-3. **Exception Handling** - Consistent error responses
-4. **Request Validation** - Automatic model validation
-5. **Logging** - Request and response logging
-6. **Performance** - Optimized JSON serialization
+## Endpoint exposure
 
-## 1.4. NuGet Package
+The base endpoints carry `ExposeEndpoint`, but the attribute has no restricting effect by itself. Exposure control becomes active only when MVC is configured with `AddEndpointExposureControl`.
 
-```shell
-Install-Package Paradigm.Enterprise.WebApi
+```csharp
+builder.Services
+    .AddControllers()
+    .AddEndpointExposureControl();
 ```
+
+Once enabled, actions without `ExposeEndpoint` return a not-found result. This reduces accidental route exposure. It is not authentication or authorization, and it must not be used as a security boundary.
+
+## Exception handling
+
+`UseOwnExceptionHandler` adds the library middleware. The middleware delegates exception translation to an `IExceptionHandler`, whose matchers can recognize provider, domain, Entity Framework, or application-specific exceptions.
+
+Register the handler and its matchers deliberately. A bare handler cannot know how every database or business exception should be presented. Place the middleware early enough to cover the components whose exceptions it should translate, while respecting the host's diagnostics and security requirements.
+
+## Serialization
+
+Applications can disable reflection-based System.Text.Json metadata and register generated `JsonSerializerContext` instances. This is useful for predictable serialization and native-AOT preparation, but every request, response, and nested type must be present in a registered context.
+
+When an endpoint fails because metadata is missing, add the type to the application-local generated context or a hand-written context, register it with MVC JSON options, and rebuild. The standalone generator's JSON mode currently has a path-handling defect, and the library does not discover missing JSON types at startup.
+
+## Multipart requests
+
+`MultipartFormDataAttribute` validates the content type. `DisableFormValueModelBindingAttribute` removes default form value providers so a controller can stream a large request. These attributes do not set upload limits or validate file contents. Configure limits and content inspection in the host.

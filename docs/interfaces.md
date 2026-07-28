@@ -1,105 +1,24 @@
-# 1. Paradigm.Enterprise.Interfaces
+# Contracts and identities
 
-The Interfaces project defines the core contracts used throughout the Paradigm.Enterprise framework. These interfaces establish the foundation for the framework's architecture and ensure consistent implementation across different components.
+`Paradigm.Enterprise.Interfaces` contains the smallest shared entity contracts. It targets `netstandard2.0` so domain contracts can be consumed without pulling in the rest of the framework.
 
-## 1.1. Key Interfaces
-
-### 1.1.1. IEntity
-
-The `IEntity` interface is the base contract for all domain entities in the framework:
+`IEntity` is a marker. `IEntity<TId>` adds a strongly typed identifier, where `TId` is a value type implementing `IEquatable<TId>`. The generic identifier is carried through entities, repositories, providers, and controllers, preventing a repository for one identifier type from being paired accidentally with another.
 
 ```csharp
-public interface IEntity
+using Paradigm.Enterprise.Interfaces;
+
+public interface ICatalogItem : IEntity<Guid>
 {
-    int Id { get; }
-    bool IsNew();
+    string Name { get; set; }
 }
 ```
 
-- **Id** - Unique identifier for the entity
-- **IsNew()** - Determines if the entity is a new instance or an existing one from persistence
+`IAuditableEntity<TId>` adds the creation and modification user identifiers. `IAuditableEntity<TDate, TId>` adds creation and modification timestamps using the selected date type. Auditing is opt-in: implementing the interface makes an entity visible to the audit logic in `DbContextBase<TId>`.
 
-### 1.1.2. IAuditableEntity
+## Generated application interfaces
 
-The `IAuditableEntity` interface extends `IEntity` with auditing capabilities. In version 1.0.6, this interface was refactored to support both `DateTime` and `DateTimeOffset` types:
+The Visual Studio template includes an analyzer project that inspects domain entities and generates application interfaces. The Domain project references that generator as an analyzer, which explains the unusual dependency from Domain toward the Interfaces project.
 
-```csharp
-public interface IAuditableEntity : IEntity
-{
-    int? CreatedByUserId { get; set; }
-    int? ModifiedByUserId { get; set; }
-}
+Generated interfaces reduce repetitive contracts but make generation rules part of the development model. Entity names, base types, scalar properties, navigation collections, and identifier types influence the generated result. Do not edit generated output. Add behavior and mapping in partial classes, then regenerate from the authoritative domain and database model.
 
-public interface IAuditableEntity<TDate> : IAuditableEntity where TDate : struct
-{
-    TDate CreationDate { get; set; }
-    TDate? ModificationDate { get; set; }
-}
-```
-
-This interface hierarchy adds properties for tracking:
-
-- Who created the entity
-- When it was created
-- Who last modified it
-- When it was last modified
-
-The generic type parameter `TDate` allows for using either `DateTime` or `DateTimeOffset` as the date type.
-
-## 1.2. Usage
-
-These interfaces are implemented by domain entities throughout the application:
-
-```csharp
-// Example of a domain entity implementing IEntity
-public class Product : EntityBase, IEntity
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public decimal Price { get; set; }
-
-    public bool IsNew() => Id == default;
-}
-
-// Example of an auditable entity with DateTime
-public class Customer : EntityBase, IAuditableEntity<DateTime>
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-
-    public int? CreatedByUserId { get; set; }
-    public int? ModifiedByUserId { get; set; }
-    public DateTime CreationDate { get; set; }
-    public DateTime? ModificationDate { get; set; }
-
-    public bool IsNew() => Id == default;
-}
-
-// Example of an auditable entity with DateTimeOffset
-public class Order : EntityBase, IAuditableEntity<DateTimeOffset>
-{
-    public int Id { get; set; }
-    public decimal Total { get; set; }
-
-    public int? CreatedByUserId { get; set; }
-    public int? ModifiedByUserId { get; set; }
-    public DateTimeOffset CreationDate { get; set; }
-    public DateTimeOffset? ModificationDate { get; set; }
-
-    public bool IsNew() => Id == default;
-}
-```
-
-## 1.3. Integration with Other Components
-
-The interfaces defined in this project are used extensively throughout other components of the framework:
-
-- **Domain** - Provides base implementations of these interfaces
-- **Data** - Uses these interfaces for repository and data access operations
-- **Providers** - Uses these interfaces for CRUD operations and business logic
-
-## 1.4. NuGet Package
-
-```shell
-Install-Package Paradigm.Enterprise.Interfaces
-```
+The generator defaults to `int` only when it cannot infer another identifier from the supported entity base forms. New documentation and new application code should make the identifier type explicit.
