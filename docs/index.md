@@ -6,11 +6,15 @@ The framework is deliberately opinionated. A request normally enters through a c
 
 If you are starting a new API, begin with [Create a solution](tutorials/create-solution.md). If you are joining an existing application, read the [architecture](architecture.md) and then follow the [vertical slice tutorial](sample-application.md). The [package matrix](reference/packages.md) helps when you need only one part of the framework.
 
+The [Domain model](domain.md) guide explains how generated entities, hand-written behavior, invariants, aggregate boundaries, state transitions, and auditing fit together. [Design principles](design-principles.md) places the framework layers in a broader application architecture without presenting optional distributed-system patterns as library features.
+
 ## What the framework does not decide
 
 Paradigm.Enterprise does not provide an authentication system, choose authorization rules, create database schemas, or make permissive host settings safe for production. The Visual Studio template contains integration points and development defaults, but those are starting points for an application team to review.
 
 The generated [API reference](reference/api.md) describes the current public surface. These guides explain why the surface exists and how the pieces work together.
+
+Production readiness extends beyond package APIs. [Secure host configuration](guides/security-and-host.md) covers runtime HTTP policy, while [Secure delivery](guides/secure-delivery.md) covers reviewed changes, supply-chain controls, artifact promotion, operational evidence, and recovery responsibilities.
 
 ## Documentation sources
 

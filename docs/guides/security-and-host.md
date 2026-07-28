@@ -1,6 +1,12 @@
 # Secure host configuration
 
-Paradigm.Enterprise supplies integration points, not a complete security model. The host must choose authentication, define authorization policy, protect configuration, and test negative cases.
+Paradigm.Enterprise supplies integration points, not a complete security model. The host must choose authentication, define authorization policy, protect configuration, and test negative cases. Security should be designed around the application's assets, actors, trust boundaries, and data flows rather than added after endpoint implementation.
+
+## Threat model and responsibility
+
+Identify where untrusted data enters, where caller identity is established, which actions cross a privilege boundary, and where sensitive information is stored or transmitted. Revisit that model when an endpoint, integration, or deployment boundary changes.
+
+The framework can bind a request, call a provider, persist data, and translate exceptions. It does not decide who may perform a use case, which fields are sensitive, whether a repeated request is safe, or how an uploaded file is inspected. Turn those decisions into host policy, provider checks, domain rules, and negative tests at the boundary that owns them.
 
 ## Controller authorization
 
@@ -28,14 +34,22 @@ Keep database, Redis, storage, and email credentials out of source-controlled se
 
 When a service supports both a connection string and managed identity, document which source takes precedence. The cache service uses a named connection string when present and otherwise attempts its managed-identity configuration.
 
+Apply least privilege to the host identity, database account, service credentials, deployment identity, and operational access. Private networking and encrypted transport reduce exposure, but they do not replace authentication or authorization. Rotate and revoke secrets through the owning platform rather than embedding credential lifecycle logic in providers.
+
 ## Serialization and input handling
 
 Source-generated JSON metadata reduces reflection and makes the serialized surface explicit. It does not validate business meaning. Combine transport validation, domain validation, request-size limits, content-type checks, and file-content inspection where appropriate.
 
 For multipart streaming, configure server and proxy limits together. The library attributes do not scan uploads or make arbitrary file content safe.
 
+Minimize the fields accepted and returned by each contract. A persistence entity is rarely an appropriate public request or response merely because it serializes successfully. Treat mass assignment, overexposure, replay, and resource exhaustion as design concerns, then verify the chosen protections with integration tests.
+
 ## Safe failures and telemetry
 
 Return stable, minimal error information and keep detailed exceptions in protected logs. Avoid logging tokens, connection strings, personal data, file content, or full request bodies by default.
 
 Health endpoints should reveal only the information required by the intended caller. The template's HTML health response is a presentation example, not a safe public diagnostic contract.
+
+Defense in depth may also require rate limits, request timeouts, network policy, encryption, audit records, and platform monitoring. These are host or platform controls. Paradigm.Enterprise does not enable them automatically.
+
+The [Secure delivery](secure-delivery.md) guide explains how threat modeling, pipeline controls, artifact promotion, observability, and recovery fit around the running host.

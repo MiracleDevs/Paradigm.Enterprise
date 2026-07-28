@@ -2,6 +2,8 @@
 
 Validation occurs at several boundaries because each boundary protects a different concern. HTTP model binding checks request shape. Domain entities protect invariants. Providers perform checks that need repositories or services. Database constraints remain the final persistence guard.
 
+Validation is also part of the threat model. Apply request-size, content-type, file inspection, normalization, and rate controls at the host or platform boundary where appropriate. A request that is structurally valid can still expose too much data, request an unauthorized action, or consume unreasonable resources.
+
 ## Domain validation
 
 The generic edit provider calls `Validate` after mapping a view into an entity and before staging the repository operation. `DomainValidator` can collect several failures and throw one `DomainException`.
@@ -42,6 +44,10 @@ The matcher types in this example are application types. Create them around the 
 
 Use a fallback that returns a safe message and logs the original exception. Do not send stack traces, SQL, connection data, or internal type names to callers.
 
+Keep error contracts stable enough for callers to handle without revealing implementation details. Record the trace or correlation identifier needed for support, but do not echo credentials, tokens, personal data, request bodies, or sensitive domain values.
+
 ## Middleware placement
 
 Call `UseOwnExceptionHandler` before middleware and endpoints whose exceptions it must translate. Authentication middleware can have its own challenge and forbid behavior, so review the order against the chosen authentication stack rather than copying a template mechanically.
+
+Exception translation is not authorization and should not turn a forbidden operation into an apparently successful response. Test unauthenticated, unauthorized, invalid, missing, conflicting, and unexpected cases through the complete host pipeline.
