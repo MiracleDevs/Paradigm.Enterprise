@@ -13,7 +13,7 @@ public interface ICatalogItem : IEntity<Guid>
 }
 ```
 
-`IAuditableEntity<TId>` adds the creation and modification user identifiers. `IAuditableEntity<TDate, TId>` adds creation and modification timestamps using the selected date type. Auditing is opt-in: implementing the interface makes an entity visible to the audit logic in `DbContextBase<TId>`.
+`IAuditableEntity<TId>` adds the creation and modification user identifiers. `IAuditableEntity<TDate, TId>` adds creation and modification timestamps using the selected date type. Implementing either contract makes an entity visible to the audit scan in `DbContextBase<TId>`, but the current audit extension mutates only `IAuditableEntity<DateTime, TId>` and `IAuditableEntity<DateTimeOffset, TId>`. The base user-identifier contract by itself, and timestamped contracts using another date type, receive no automatic values from that extension. Automatic auditing also requires the registered logged-user service to return an authenticated user.
 
 ## Generated application interfaces
 

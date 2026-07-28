@@ -2,6 +2,8 @@
 
 The architecture follows the direction of a request while keeping dependencies pointed toward domain contracts. An HTTP controller depends on a provider contract. A provider coordinates repositories and infrastructure services. Repositories use an Entity Framework context. Domain entities do not depend on ASP.NET Core or data-access implementations.
 
+These layers separate code by reason to change. They are not a requirement to create a pass-through class at every boundary. Each layer should own a clear decision and expose a contract that prevents its implementation details from leaking outward. The broader reasoning is covered in [Design principles](design-principles.md).
+
 ```mermaid
 flowchart LR
   CLIENT[Client] --> CONTROLLER[Controller]
@@ -40,6 +42,8 @@ The domain project holds entities, contracts used by repository and provider lay
 
 Aggregate roots define consistency boundaries. A repository for an aggregate root may remove child entities through the protected aggregate-removal helpers, but callers should not acquire separate repositories merely to bypass the aggregate.
 
+The library supplies mechanics rather than a finished domain model. Meaningful language, behavior, value objects, invariants, aggregate boundaries, and lifecycle rules remain application responsibilities. Database-generated entity classes can gain this behavior through partial classes. Read [Domain model](domain.md) before treating a generated persistence shape as the write model.
+
 ## Data
 
 Repositories isolate Entity Framework operations. `ReadRepositoryBase` supplies common reads and delegates paginated search to a protected function. `EditRepositoryBase` supplies add, update, and delete behavior. `RepositoryBase` resolves its context and registers that context with the current Unit of Work.
@@ -63,3 +67,11 @@ Interfaces
 ```
 
 Database-specific packages depend on `Data`. Infrastructure service packages depend on `Services.Core`. Application projects may introduce additional contracts, but lower layers must not take a dependency on the Web API host.
+
+## Application and platform decisions
+
+The architecture does not decide whether an application is a modular monolith or a set of independently deployed services. Begin with the smallest deployment model that satisfies ownership, scaling, isolation, and lifecycle needs. A distributed boundary adds network failure, versioned contracts, independent data ownership, and operational coordination.
+
+Read and write repositories support different model shapes, but they do not create a complete CQRS system or asynchronous projection pipeline. The Unit of Work coordinates supported persistence work, but it does not make external systems transactional. Patterns such as an outbox, saga, idempotency key, retry policy, or circuit breaker belong to an application or platform design when its failure model requires them.
+
+Authentication, authorization, CORS, endpoint exposure, telemetry, health responses, deployment topology, and recovery policy also belong to the host or platform. The template provides starting points for some of these concerns, not production policy. See [Secure host configuration](guides/security-and-host.md), [Operations and health](guides/operations.md), and [Secure delivery](guides/secure-delivery.md).

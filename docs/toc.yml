@@ -24,6 +24,8 @@ items:
         href: interfaces.md
       - name: Domain model
         href: domain.md
+      - name: Design principles
+        href: design-principles.md
       - name: Data access
         href: data.md
       - name: Database providers
@@ -42,6 +44,8 @@ items:
         href: guides/validation-and-errors.md
       - name: Secure host configuration
         href: guides/security-and-host.md
+      - name: Secure delivery
+        href: guides/secure-delivery.md
       - name: Services
         href: services.md
       - name: Table files

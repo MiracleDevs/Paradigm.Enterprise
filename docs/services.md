@@ -2,6 +2,8 @@
 
 The service packages wrap common infrastructure without moving application workflows out of providers. They share the marker contract `IService`, which allows convention registration, but several packages require explicit configuration and should not be discovered as default singletons.
 
+An infrastructure wrapper does not define the reliability policy for a use case. The host or application must decide timeouts, retries, health behavior, telemetry, and whether failure is allowed to degrade the request. Apply those choices according to the semantics of each operation.
+
 ## Cache
 
 `AddCacheAsync` registers Redis and `ICacheService`. It uses a named connection string when available, otherwise it builds Azure managed-identity options from `RedisCacheConfiguration`.
@@ -34,6 +36,8 @@ Use `RegisterBlobStorageAccountUsingConnectionString` only when a connection str
 
 That behavior makes email best suited to notifications that should not fail the main transaction. A workflow that requires delivery guarantees needs an explicit queue, outbox, or retry design outside this wrapper.
 
+A provider should not assume that a successful database commit guarantees email delivery. Durable delivery requires application-owned state, duplicate handling, monitoring, and a repair path.
+
 ## Table files
 
 The table service reads CSV, Excel, JSON, and XML through one row-oriented API and writes CSV, Excel, or XML from typed data. See [Table files](table-reader.md) for configuration and streaming guidance.
@@ -41,3 +45,5 @@ The table service reads CSV, Excel, JSON, and XML through one row-oriented API a
 ## Registration choices
 
 `RegisterServices` discovers public concrete `IService` implementations as singletons. Put configured or scoped services in its ignore list and register them with their package extension or an application factory. Do not allow discovery to replace an intentional lifetime decision.
+
+Keep credentials in the deployment platform's secret store and prefer managed identity where the package supports it. The application and platform remain responsible for least privilege, network controls, key rotation, dependency monitoring, and recovery. See [Secure host configuration](guides/security-and-host.md), [Operations and health](guides/operations.md), and [Secure delivery](guides/secure-delivery.md).

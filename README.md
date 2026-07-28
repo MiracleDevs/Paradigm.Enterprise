@@ -10,8 +10,12 @@ Read the [documentation site](https://miracledevs.github.io/Paradigm.Enterprise/
 
 - [Framework overview](docs/overview.md)
 - [Architecture](docs/architecture.md)
+- [Domain model](docs/domain.md)
+- [Design principles](docs/design-principles.md)
 - [Create a solution](docs/tutorials/create-solution.md)
 - [Build a vertical slice](docs/sample-application.md)
+- [Secure host configuration](docs/guides/security-and-host.md)
+- [Secure delivery](docs/guides/secure-delivery.md)
 - [Package reference](docs/reference/packages.md)
 - [API reference](https://miracledevs.github.io/Paradigm.Enterprise/reference/api.html)
 

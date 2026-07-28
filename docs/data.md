@@ -25,7 +25,7 @@ public sealed class ApplicationDbContext
 }
 ```
 
-During `SaveChangesAsync`, the context finds entities implementing `IAuditableEntity<TId>`. If `ILoggedUserService<TId>` returns an authenticated user, the context applies audit values before saving. Applications using auditable entities must register the logged-user service or provide their own implementation.
+During `SaveChangesAsync`, the context finds entities implementing `IAuditableEntity<TId>`. If `ILoggedUserService<TId>` returns an authenticated user for an added or modified entry, the context calls the audit extension before saving. The current extension applies UTC timestamps and user identifiers only to `IAuditableEntity<DateTime, TId>` and `IAuditableEntity<DateTimeOffset, TId>`. An entity implementing only `IAuditableEntity<TId>`, or using another timestamp type, is discovered but is not mutated by the automatic path. Applications using automatic auditing must register the logged-user service and use one of the supported timestamped contracts.
 
 ## Read repositories
 
@@ -59,5 +59,7 @@ Repository methods should express data access. Domain decisions remain in entiti
 ## Unit of Work
 
 `RepositoryBase` resolves its context and registers it with `IUnitOfWork` when the repository is constructed. `CommitChangesAsync` then commits every registered context. Basic edit-provider operations call this automatically.
+
+The Unit of Work awaits registered commiteable objects sequentially in registration order. Without an active compatible transaction, an earlier context may already be persisted when a later context fails. Registering several contexts in one Unit of Work does not make their saves atomic by itself.
 
 An explicit transaction is needed when several persistence operations must succeed or fail together. See [Transactions](guides/transactions.md) for the required ordering and limitations.
