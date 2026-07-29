@@ -38,7 +38,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EditProviderBase{TEntity, TDto, TRepository}"/> class.
+    /// Initializes a new instance of the <see cref="EditProviderBase{TInterface, TEntity, TView, TRepository, TViewRepository, TId}"/> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected EditProviderBase(IServiceProvider serviceProvider) : base(serviceProvider)
@@ -281,7 +281,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     #region Protected Methods
 
     /// <summary>
-    /// Executed on add operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// Executed on add operation before the <typeparamref name="TView"/> is mapped to <typeparamref name="TEntity"/>.
     /// </summary>
     /// <param name="view">The view.</param>
     protected virtual async Task BeforeAddAsync(TView view)
@@ -290,7 +290,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on update operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
+    /// Executed on add operation after the <typeparamref name="TEntity"/> is mapped from <typeparamref name="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task BeforeAddAsync(TEntity entity)
@@ -308,7 +308,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on update operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// Executed on update operation before the <typeparamref name="TView"/> is mapped to <typeparamref name="TEntity"/>.
     /// </summary>
     /// <param name="view">The view.</param>
     protected virtual async Task BeforeUpdateAsync(TView view)
@@ -317,7 +317,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on update operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
+    /// Executed on update operation after the <typeparamref name="TEntity"/> is mapped from <typeparamref name="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task BeforeUpdateAsync(TEntity entity)
@@ -335,7 +335,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on save operation before the <see cref="TView"/> is mapped to <see cref="TEntity"/>.
+    /// Executed on save operation before the <typeparamref name="TView"/> is mapped to <typeparamref name="TEntity"/>.
     /// </summary>
     /// <param name="view">The view.</param>
     protected virtual async Task BeforeSaveAsync(TView view)
@@ -344,7 +344,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executed on save operation after the <see cref="TEntity"/> is mapped from <see cref="TView"/>.
+    /// Executed on save operation after the <typeparamref name="TEntity"/> is mapped from <typeparamref name="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task BeforeSaveAsync(TEntity entity)

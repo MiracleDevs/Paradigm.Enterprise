@@ -13,7 +13,7 @@ public abstract class EditRepositoryBase<TEntity, TContext, TId> : ReadRepositor
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EditRepositoryBase{TEntity, TContext}" /> class.
+    /// Initializes a new instance of the <see cref="EditRepositoryBase{TEntity, TContext, TId}" /> class.
     /// </summary>
     /// <param name="serviceProvider">The service provider.</param>
     protected EditRepositoryBase(IServiceProvider serviceProvider) : base(serviceProvider)

@@ -18,7 +18,7 @@ public abstract class ReadApiControllerBase<TProvider, TView, TParameters, TId> 
     #region Constructor
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ReadApiControllerBase{TProvider, TView, TParameters}"/> class.
+    /// Initializes a new instance of the <see cref="ReadApiControllerBase{TProvider, TView, TParameters, TId}"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="provider">The provider.</param>

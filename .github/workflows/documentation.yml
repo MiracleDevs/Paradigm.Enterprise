@@ -1,0 +1,93 @@
+name: Documentation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".config/dotnet-tools.json"
+      - ".github/workflows/documentation.yml"
+      - "build/**"
+      - "docs/**"
+      - "example/**"
+      - "src/**"
+      - "README.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".config/dotnet-tools.json"
+      - ".github/workflows/documentation.yml"
+      - "build/**"
+      - "docs/**"
+      - "example/**"
+      - "src/**"
+      - "README.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Restore libraries
+        run: dotnet restore src/Paradigm.Enterprise.slnx
+
+      - name: Build libraries
+        run: dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore --property:GenerateDocumentationFile=true --property:NoWarn=1591%3B1572%3B1573%3B1574
+
+      - name: Test libraries
+        run: dotnet test src/Paradigm.Enterprise.Tests/Paradigm.Enterprise.Tests.csproj --configuration Release --no-build
+
+      - name: Restore compatibility example
+        run: dotnet restore example/ExampleApp.sln
+
+      - name: Build compatibility example
+        run: dotnet build example/ExampleApp.sln --configuration Release --no-restore
+
+      - name: Build documentation
+        run: dotnet docfx docs/docfx.json --warningsAsErrors
+
+      - name: Configure Pages
+        if: github.event_name == 'push'
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/_site
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

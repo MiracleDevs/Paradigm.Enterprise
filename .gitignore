@@ -353,3 +353,7 @@ MigrationBackup/
 
 .nuget
 nuget.exe
+
+# Docfx generated content
+/docs/api/
+/docs/_site/

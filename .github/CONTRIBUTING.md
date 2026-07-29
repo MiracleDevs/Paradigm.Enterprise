@@ -91,7 +91,7 @@ See the [RFC Process documentation](../docs/rfc/README.md) for detailed instruct
 
 To run tests:
 ```bash
-./test.sh
+bash build/test.sh
 ```
 
 ## Documentation
@@ -110,4 +110,4 @@ When reporting issues, please include:
 4. Version information
 5. Any relevant logs or screenshots
 
-Thank you for contributing to the Paradigm Framework! 
+Thank you for contributing to the Paradigm Framework!

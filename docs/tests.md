@@ -1,133 +1,51 @@
-# 1. Paradigm.Enterprise.Tests
+# Testing applications
 
-The Tests project provides a collection of unit and integration tests for the Paradigm.Enterprise framework. It ensures the functionality, reliability, and performance of the framework components through automated testing.
+The framework's base classes remove repetitive code but do not remove the need to test application behavior. Tests should focus on domain invariants, provider workflows, persistence contracts, HTTP policy, and configuration conventions.
 
-## 1.1. Key Components
+Use the smallest test boundary that can prove the behavior. Fast domain tests give precise feedback about rules. Provider tests verify orchestration. Relational integration tests verify mappings and transaction semantics. Host tests verify the assembled HTTP and security pipeline. A smaller test is not automatically better when it replaces the infrastructure behavior that the test is meant to validate.
 
-### 1.1.1. Test Fixtures
+## Domain tests
 
-The project includes various test fixtures to set up test environments for different test scenarios:
+Domain tests should construct entities directly, invoke behavior, and verify both valid state and rejected transitions. These tests do not need Entity Framework, HTTP, or dependency injection.
 
-- **ProviderTestBase** - Base class for provider testing
-- **EntityTestBase** - Base class for entity testing
-- **ServiceTestBase** - Base class for service testing
+Test `Validate` with meaningful combinations rather than one assertion per property. For aggregate roots, verify that callers cannot leave child collections in an invalid state.
 
-### 1.1.2. Unit Tests
+Test intention-revealing methods and value-object construction directly. Verify allowed and rejected state transitions, and confirm that a failed transition does not leave partial state changes. When an aggregate uses `DomainTracker`, verify the manual added, edited, and removed entries as well as the visible collection.
 
-Unit tests for core framework components:
+## Provider tests
 
-- **EntityTests** - Tests for domain entities and their behavior (e.g., ValidatableEntityTests)
-- **RepositoryTests** - Tests for repository implementations
-- **ProviderTests** - Tests for provider implementations (e.g., ReadProviderBaseTests, EditProviderBaseTests)
-- **ServiceTests** - Tests for service implementations (e.g., EmailServiceTests)
-- **DtoTests** - Tests for data transfer objects (e.g., PaginatedResultDtoTests)
+Provider tests replace repository and infrastructure contracts with test doubles, register them in a small `ServiceCollection`, and exercise the use case through its provider interface. Verify mapping, validation, lifecycle hooks, commit count, and rollback behavior.
 
-### 1.1.3. Integration Tests
+When testing a generic edit provider, remember that a successful single save reads the resulting view through the view repository. Configure that result instead of asserting only that the edit repository was called.
 
-Integration tests that verify the interaction between components:
+## Repository tests
 
-- **DataAccessTests** - Tests for data access and persistence
-- **WebApiTests** - Tests for API controllers and endpoints
-- **End-to-EndTests** - Tests that cover complete application flows
+Use a relational database compatible with production semantics when testing provider-specific queries, transactions, constraints, or stored procedures. Entity Framework's in-memory provider is useful for simple collaboration tests, but it does not reproduce relational behavior.
 
-### 1.1.4. Mocks and Test Doubles
+Test custom search functions with empty results, paging boundaries, invalid filter values, and realistic data volume. Test generated stored-procedure mappers against each result-set shape they consume.
 
-The project includes mock implementations for testing:
+## API tests
 
-- **Mock Repository** - Uses Moq to create repository mocks
-- **Mock DataContext** - Uses EF Core InMemory database provider
-- **Mock Providers** - Simplified provider implementations for testing
-- **Test Entities** - Sample entity implementations for tests
+Use an ASP.NET Core test host to verify route shape, model binding, serialization contexts, exception translation, middleware order, authentication, authorization, and endpoint exposure.
 
-## 1.2. Test Patterns
+Include negative cases. For protected custom controllers, confirm that anonymous and underprivileged callers are rejected. Test library-based controllers as intentionally anonymous because their inherited `AllowAnonymous` metadata bypasses `Authorize` and fallback policies. Also confirm that hidden endpoints return not found only when exposure control is enabled, invalid domain state produces the intended safe response, and missing resources map consistently.
 
-The Tests project follows these testing patterns:
+Threat-driven tests should also cover malformed and oversized input, unexpected content types, replay or duplicate requests where relevant, overexposed response fields, and safe error output. A successful authorized request does not prove that another caller, tenant, or role is correctly denied.
 
-1. **Arrange-Act-Assert (AAA)** - Clear separation between test setup, execution, and verification
-2. **Test Data Builders** - Fluent builders for creating test data
-3. **Object Mother Pattern** - Factory methods for common test objects
-4. **Test Categories** - Tests are organized by component type
+## Delivery and operational tests
 
-## 1.3. Usage Example
+Build the deployable artifact from a clean checkout and test the same configuration shape used by the deployment pipeline. Validate source-generated serialization metadata, startup configuration, dependency registration, database migrations, and health behavior before promotion.
 
-```csharp
-// Example of a repository unit test
-[TestMethod]
-public async Task GetByIdAsync_ExistingEntity_ReturnsEntity()
-{
-    // Arrange
-    var context = new MockDataContext();
-    var entity = new TestProduct { Id = 1, Name = "Test Product" };
-    context.Products.Add(entity);
-    context.SaveChanges();
+Contract tests are useful for independently deployed callers or dependencies. Resilience tests can verify timeout, cancellation, retry, and degraded behavior when those policies are part of the host. Performance tests should use realistic query shapes and data volume when latency or throughput is an architectural requirement.
 
-    var repository = new RepositoryBase<TestProduct>(context);
+Backup restoration, deployment rollback, and disaster recovery are platform exercises rather than library unit tests. They still form part of the evidence required for a service whose recovery objectives depend on them. See [Secure delivery](guides/secure-delivery.md).
 
-    // Act
-    var result = await repository.GetByIdAsync(1);
+## Running this repository
 
-    // Assert
-    Assert.IsNotNull(result);
-    Assert.AreEqual(1, result.Id);
-    Assert.AreEqual("Test Product", result.Name);
-}
+Run the library test project through the solution:
 
-// Example of a provider test with mocks
-[TestMethod]
-public async Task CreateAsync_ValidModel_CreatesEntityAndReturnsView()
-{
-    // Arrange
-    var mockRepository = new Mock<IRepository<Product>>();
-    var mockUnitOfWork = new Mock<IUnitOfWork>();
-    var serviceProvider = new ServiceCollection().BuildServiceProvider();
-
-    mockRepository.Setup(r => r.CreateAsync(It.IsAny<Product>()))
-                 .ReturnsAsync((Product p) => p);
-    mockUnitOfWork.Setup(u => u.CommitAsync())
-                 .ReturnsAsync(true);
-
-    var provider = new ProductProvider(
-        mockRepository.Object,
-        mockUnitOfWork.Object,
-        serviceProvider);
-
-    var model = new ProductEditDto { Name = "New Product", Price = 10.99m };
-
-    // Act
-    var result = await provider.CreateAsync(model);
-
-    // Assert
-    Assert.IsNotNull(result);
-    Assert.AreEqual("New Product", result.Name);
-    mockRepository.Verify(r => r.CreateAsync(It.IsAny<Product>()), Times.Once);
-    mockUnitOfWork.Verify(u => u.CommitAsync(), Times.Once);
-}
+```powershell
+dotnet test src/Paradigm.Enterprise.slnx
 ```
 
-## 1.4. Test Configuration
-
-The Tests project includes configuration for various test frameworks and tools:
-
-- **MSTest** - The primary test framework (v3.8.3)
-- **Moq** - For creating mock objects (v4.20.70)
-- **Microsoft.NET.Test.Sdk** - Testing infrastructure (v17.13.0)
-- **EF Core InMemory** - For in-memory database testing
-
-## 1.5. Running Tests
-
-Tests can be executed using the following command:
-
-```shell
-dotnet test src/Paradigm.Enterprise.Tests
-```
-
-The project targets .NET 9.0, so ensure you have the appropriate SDK installed.
-
-## 1.6. Continuous Integration
-
-The Tests project is configured for continuous integration, providing:
-
-1. **Automatic Test Execution** - Tests run on each build/pull request
-2. **Code Coverage Reports** - Tracks code coverage of the tests
-3. **Test Result Reporting** - Generates reports of test results
-4. **Performance Metrics** - Monitors test execution performance
+The checked-in example solution is pinned to an older package line and serves as a compatibility sample. Its successful build does not validate current source APIs.
