@@ -1,11 +1,9 @@
 name: Documentation
 
 on:
-  # TODO: After PR #33 is merged, target main for validation and publishing,
-  # then remove agent-skills from the github-pages environment branch policy.
   pull_request:
     branches:
-      - agent-skills
+      - main
     paths:
       - ".config/dotnet-tools.json"
       - ".github/workflows/documentation.yml"
@@ -16,7 +14,7 @@ on:
       - "README.md"
   push:
     branches:
-      - agent-skills
+      - main
     paths:
       - ".config/dotnet-tools.json"
       - ".github/workflows/documentation.yml"
