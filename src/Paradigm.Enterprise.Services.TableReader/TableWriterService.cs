@@ -6,6 +6,19 @@ using Paradigm.Enterprise.Services.TableReader.Writers.Xml;
 
 namespace Paradigm.Enterprise.Services.TableReader;
 
+/// <summary>
+/// Writes CSV, Excel, or XML table documents.
+/// </summary>
+/// <remarks>
+/// The service never disposes the target stream. Stream-based writes require a writable, seekable
+/// stream because successful writes rewind it to position zero.
+/// </remarks>
+/// <example>
+/// <code>
+/// services.AddSingleton&lt;ITableWriterService, TableWriterService&gt;();
+/// </code>
+/// See <see cref="ITableWriterService"/> for a complete stream-writing example.
+/// </example>
 public class TableWriterService : ITableWriterService
 {
     /// <summary>
@@ -14,7 +27,10 @@ public class TableWriterService : ITableWriterService
     /// <typeparam name="T">The type of the data items.</typeparam>
     /// <param name="targetStream">The target stream to write to.</param>
     /// <param name="parameters">The writer parameters.</param>
-    /// <returns></returns>
+    /// <returns>A task that completes after writing and rewinding the target stream.</returns>
+    /// <exception cref="ArgumentNullException">A required argument or parameter property is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><see cref="TableWriterParameters{T}.Format"/> is unsupported.</exception>
+    /// <remarks>The caller retains ownership of <paramref name="targetStream"/>.</remarks>
     public async Task WriteToStreamAsync<T>(Stream targetStream, TableWriterParameters<T> parameters)
     {
         if (targetStream is null)
@@ -55,7 +71,9 @@ public class TableWriterService : ITableWriterService
     /// </summary>
     /// <typeparam name="T">The type of the data items.</typeparam>
     /// <param name="parameters">The writer parameters.</param>
-    /// <returns></returns>
+    /// <returns>The complete serialized table document.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="parameters"/> or one of its required properties is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><see cref="TableWriterParameters{T}.Format"/> is unsupported.</exception>
     public async Task<byte[]> WriteToBytesAsync<T>(TableWriterParameters<T> parameters)
     {
         if (parameters is null)

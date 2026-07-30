@@ -6,6 +6,40 @@ using System.Data;
 
 namespace Paradigm.Enterprise.Data.Uow
 {
+    /// <summary>
+    /// Wraps an Entity Framework transaction and enlists compatible contexts and commands in it.
+    /// </summary>
+    /// <remarks>
+    /// Enlisted contexts must use the same connection as the originating context. After a successful
+    /// commit, rollback, or transaction disposal, all contexts enlisted through this wrapper are detached.
+    /// If the underlying operation throws, detachment is skipped.
+    /// </remarks>
+    /// <example>
+    /// Applications receive this wrapper through <see cref="ICommiteable.CreateTransaction"/> rather
+    /// than constructing it directly:
+    /// <code>
+    /// using ITransaction transaction = unitOfWork.CreateTransaction();
+    /// try
+    /// {
+    ///     await repository.UpdateAsync(entity);
+    ///     await unitOfWork.CommitChangesAsync();
+    ///     transaction.Commit();
+    /// }
+    /// catch
+    /// {
+    ///     if (transaction.IsActive)
+    ///         transaction.Rollback();
+    ///     throw;
+    /// }
+    /// </code>
+    /// A raw command can participate after its connection has been set to the same connection:
+    /// <code>
+    /// command.Connection = context.Database.GetDbConnection();
+    /// unitOfWork.UseTransaction(command);
+    /// await command.ExecuteNonQueryAsync();
+    /// </code>
+    /// This type is not a distributed transaction coordinator and cannot enlist unrelated connections.
+    /// </example>
     public class DbContextTransaction : ITransaction
     {
         #region Properties
@@ -53,8 +87,12 @@ namespace Paradigm.Enterprise.Data.Uow
         #region Public Methods
 
         /// <summary>
-        /// Commits this instance.
+        /// Commits the underlying transaction and, on success, detaches enlisted contexts.
         /// </summary>
+        /// <remarks>
+        /// A commit does not call <see cref="ICommiteable.CommitChangesAsync"/>. Save staged context
+        /// changes before invoking this method.
+        /// </remarks>
         public void Commit()
         {
             Transaction.Commit();
@@ -62,7 +100,7 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Rollbacks this instance.
+        /// Rolls back the underlying transaction and, on success, detaches enlisted contexts.
         /// </summary>
         public void Rollback()
         {
@@ -71,8 +109,9 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// Disposes the underlying transaction and, on success, detaches enlisted contexts.
         /// </summary>
+        /// <remarks>Disposal does not commit staged or transactional work.</remarks>
         public void Dispose()
         {
             Transaction.Dispose();
@@ -80,9 +119,13 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Adds the commiteable.
+        /// Enlists a compatible Entity Framework context in the transaction.
         /// </summary>
-        /// <param name="commiteable">The commiteable.</param>
+        /// <param name="commiteable">The participant to inspect and enlist.</param>
+        /// <remarks>
+        /// Participants that are not <see cref="DbContext"/> instances are ignored. A context is
+        /// attached only once and must use the same connection as the underlying transaction.
+        /// </remarks>
         public void AddCommiteable(ICommiteable commiteable)
         {
             if (commiteable is DbContext dbContext && !AttachedDbContexts.Contains(dbContext))
@@ -93,9 +136,12 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Adds the command.
+        /// Associates a database command with the underlying transaction.
         /// </summary>
-        /// <param name="command">The command.</param>
+        /// <param name="command">
+        /// The command to enlist. Its connection must match the transaction's connection.
+        /// </param>
+        /// <remarks>This method replaces any transaction currently assigned to the command.</remarks>
         public void AddCommand(IDbCommand command)
         {
             command.Transaction = Transaction.GetDbTransaction();

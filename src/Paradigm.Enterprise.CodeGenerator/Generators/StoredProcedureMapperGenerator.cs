@@ -104,7 +104,7 @@ internal class StoredProcedureMapperGenerator
     /// Generates the data reader mappers.
     /// </summary>
     /// <param name="storedProcedureTypes">The stored procedure types.</param>
-    /// <returns></returns>
+    /// <returns>The fully qualified result type names for which a data reader mapper was generated.</returns>
     private List<string> GenerateDataReaderMappers(IEnumerable<Type> storedProcedureTypes)
     {
         _logger.LogInformation("Starting DataReader mappers generation.");
@@ -229,7 +229,7 @@ internal partial class {mapperClassName} : DataReaderMapperBase
     /// Generates the SQL parameter mappers.
     /// </summary>
     /// <param name="storedProcedureTypes">The stored procedure types.</param>
-    /// <returns></returns>
+    /// <returns>The fully qualified parameter type names for which a SQL parameter mapper was generated.</returns>
     private List<string> GenerateSqlParameterMappers(IEnumerable<Type> storedProcedureTypes)
     {
         _logger.LogInformation("Starting SqlParameter mappers generation.");

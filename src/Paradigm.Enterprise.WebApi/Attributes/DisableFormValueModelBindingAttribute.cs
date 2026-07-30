@@ -3,6 +3,13 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Paradigm.Enterprise.WebApi.Attributes;
 
+/// <summary>
+/// Prevents ASP.NET Core from buffering multipart form values before an action reads the request body.
+/// </summary>
+/// <remarks>
+/// Use this attribute for streaming upload endpoints. The action is responsible for parsing and
+/// validating the request body because the form, file, and jQuery form value providers are removed.
+/// </remarks>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public class DisableFormValueModelBindingAttribute : Attribute, IResourceFilter
 {

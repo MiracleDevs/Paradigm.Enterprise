@@ -17,7 +17,6 @@ internal class AzureBlobStorageHealthCheck : IHealthCheck
     /// <summary>
     /// Initializes a new instance of the <see cref="AzureBlobStorageHealthCheck"/> class.
     /// </summary>
-    /// <param name="blobClient">The BLOB client.</param>
     /// <param name="healthCheckOptions">The health check options.</param>
     public AzureBlobStorageHealthCheck(AzureBlobStorageHealthCheckOptions healthCheckOptions)
     {

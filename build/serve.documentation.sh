@@ -42,8 +42,7 @@ dotnet build \
     src/Paradigm.Enterprise.slnx \
     --configuration Release \
     --no-restore \
-    --property:GenerateDocumentationFile=true \
-    --property:NoWarn=1591%3B1572%3B1573%3B1574
+    --property:GenerateDocumentationFile=true
 
 block "Serve Documentation at http://${DOCS_HOST}:${DOCS_PORT}"
 exec dotnet docfx \

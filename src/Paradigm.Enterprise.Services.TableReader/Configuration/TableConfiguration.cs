@@ -1,5 +1,8 @@
 ﻿namespace Paradigm.Enterprise.Services.TableReader.Configuration;
 
+/// <summary>
+/// Selects a table format and supplies format-specific parser or writer options.
+/// </summary>
 public class TableConfiguration
 {
     /// <summary>

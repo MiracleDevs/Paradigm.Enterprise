@@ -1,5 +1,8 @@
 namespace Paradigm.Enterprise.Services.TableReader.Readers;
 
+/// <summary>
+/// Describes a column's zero-based position, display name, and value type.
+/// </summary>
 public interface IColumn
 {
     /// <summary>

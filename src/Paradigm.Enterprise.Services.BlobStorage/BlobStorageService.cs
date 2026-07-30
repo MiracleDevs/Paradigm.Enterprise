@@ -6,6 +6,35 @@ using Paradigm.Enterprise.Services.BlobStorage.Configuration;
 
 namespace Paradigm.Enterprise.Services.BlobStorage;
 
+/// <summary>
+/// Connects to an Azure Blob Storage account using a connection string or managed identity.
+/// </summary>
+/// <remarks>
+/// Prefer the <see cref="BlobStorageConfiguration"/> factory overloads so retry settings are
+/// applied consistently. Managed identity uses <see cref="DefaultAzureCredential"/>; connection
+/// string authentication stores the supplied connection string in <see cref="ConnectionString"/>.
+/// Container wrappers do not require disposal.
+/// </remarks>
+/// <example>
+/// Upload a caller-owned stream with managed identity:
+/// <code>
+/// var storage = BlobStorageService.CreateUsingManagedIdentity(
+///     new BlobStorageConfiguration
+///     {
+///         StorageConnection = "https://contoso.blob.core.windows.net"
+///     });
+///
+/// var container = storage.GetBlobStorageContainer("exports");
+/// await using var content = File.OpenRead("daily.csv");
+/// var blobUri = await container.UploadFileAsync(
+///     "daily.csv",
+///     content,
+///     "text/csv",
+///     cancellationToken);
+/// </code>
+/// <see cref="AzureBlobStorage.IAzureBlobStorageContainer.UploadFileAsync"/> leaves
+/// <c>content</c> open; the caller disposes it.
+/// </example>
 public class BlobStorageService : IBlobStorageService
 {
     #region Properties
@@ -64,10 +93,10 @@ public class BlobStorageService : IBlobStorageService
     #region Public Methods
 
     /// <summary>
-    /// Creates the using managed identity.
+    /// Creates a service using a storage account URI and managed identity.
     /// </summary>
     /// <param name="storageAccountUri">The storage account URI.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
     [Obsolete("Use CreateUsingManagedIdentity(BlobStorageConfiguration configuration) instead.")]
     public static BlobStorageService CreateUsingManagedIdentity(string storageAccountUri)
     {
@@ -78,17 +107,20 @@ public class BlobStorageService : IBlobStorageService
     /// Creates the service using managed identity.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><see cref="BlobStorageConfiguration.StorageConnection"/> is empty.</exception>
+    /// <exception cref="UriFormatException"><see cref="BlobStorageConfiguration.StorageConnection"/> is not an absolute storage account URI.</exception>
     public static BlobStorageService CreateUsingManagedIdentity(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, false);
     }
 
     /// <summary>
-    /// Creates the using connection string.
+    /// Creates a service using a storage account connection string.
     /// </summary>
     /// <param name="connectionString">The connection string.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
     [Obsolete("Use CreateUsingConnectionString(BlobStorageConfiguration configuration) instead.")]
     public static BlobStorageService CreateUsingConnectionString(string connectionString)
     {
@@ -99,7 +131,9 @@ public class BlobStorageService : IBlobStorageService
     /// Creates the service using connection string.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><see cref="BlobStorageConfiguration.StorageConnection"/> is empty.</exception>
     public static BlobStorageService CreateUsingConnectionString(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, true);
@@ -110,7 +144,7 @@ public class BlobStorageService : IBlobStorageService
     /// </summary>
     /// <param name="containerName">Name of the container.</param>
     /// <param name="metadata">Extra metadata properties to tag the container.</param>
-    /// <returns></returns>
+    /// <returns>A wrapper for the newly created container.</returns>
     /// <exception cref="Exception">Unable to create the container.</exception>
     public async Task<IAzureBlobStorageContainer> CreateBlobStorageContainerAsync(string containerName, IDictionary<string, string>? metadata = null)
     {
@@ -123,7 +157,7 @@ public class BlobStorageService : IBlobStorageService
     /// Gets the BLOB storage container.
     /// </summary>
     /// <param name="containerName">Name of the container.</param>
-    /// <returns></returns>
+    /// <returns>A wrapper for the named container; the container is not created by this call.</returns>
     public IAzureBlobStorageContainer GetBlobStorageContainer(string containerName)
     {
         var containerClient = _serviceClient.GetBlobContainerClient(containerName);
@@ -133,7 +167,7 @@ public class BlobStorageService : IBlobStorageService
     /// <summary>
     /// Gets all containers.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>All containers visible to the account, including metadata.</returns>
     public async Task<List<BlobContainerItem>> GetAllContainersAsync()
     {
         var containers = new List<BlobContainerItem>();
@@ -152,7 +186,7 @@ public class BlobStorageService : IBlobStorageService
     /// Gets the BLOB client options.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>Azure SDK client options with normalized retry values.</returns>
     private BlobClientOptions GetBlobClientOptions(BlobStorageConfiguration configuration)
     {
         var options = new BlobClientOptions

@@ -68,7 +68,7 @@ internal class CsvTableReader : TableReaderBase
     /// <param name="content">The content.</param>
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>A CSV reader over the supplied document bytes.</returns>
     public static ITableReader OpenFromContent(byte[] content, bool sourceHasHeader, CsvParserConfiguration? configuration = null)
     {
         var defaultConfiguration = CsvParserConfiguration.Default;
@@ -87,7 +87,8 @@ internal class CsvTableReader : TableReaderBase
     /// <param name="contentStream">The content stream.</param>
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>A CSV reader that leaves <paramref name="contentStream"/> open when disposed.</returns>
+    /// <remarks>The caller must keep <paramref name="contentStream"/> open until reading is complete.</remarks>
     public static ITableReader OpenFromStream(Stream contentStream, bool sourceHasHeader, CsvParserConfiguration? configuration = null)
     {
         var defaultConfiguration = CsvParserConfiguration.Default;

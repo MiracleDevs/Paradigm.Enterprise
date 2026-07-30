@@ -23,6 +23,7 @@ internal class XmlRow : RowBase
     /// Initializes a new instance of the <see cref="XmlRow"/> class.
     /// </summary>
     /// <param name="tableSchema">The table schema.</param>
+    /// <param name="xmlNavigator">The navigator positioned at the XML row collection.</param>
     public XmlRow(ITableSchema tableSchema, XPathNavigator xmlNavigator) : base(tableSchema)
     {
         XmlNavigator = xmlNavigator;
@@ -35,7 +36,7 @@ internal class XmlRow : RowBase
     /// <summary>
     /// Reads a new row.
     /// </summary>
-    /// <returns></returns>
+    /// <returns><see langword="true"/> when a non-empty row was read; otherwise <see langword="false"/>.</returns>
     public override bool Read()
     {
         if (string.IsNullOrEmpty(XmlNavigator.Name))

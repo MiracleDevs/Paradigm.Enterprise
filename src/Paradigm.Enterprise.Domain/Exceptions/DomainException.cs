@@ -1,5 +1,8 @@
 ﻿namespace Paradigm.Enterprise.Domain.Exceptions;
 
+/// <summary>
+/// Represents one or more violations of domain rules.
+/// </summary>
 public class DomainException : Exception
 {
     /// <summary>

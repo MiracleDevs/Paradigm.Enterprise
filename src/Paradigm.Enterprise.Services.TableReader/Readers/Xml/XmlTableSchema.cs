@@ -35,7 +35,7 @@ internal class XmlTableSchema : TableSchemaBase
     /// <summary>
     /// Gets the table schema columns.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The columns inferred from the XML row elements.</returns>
     protected override IList<IColumn> GetTableSchemaColumns()
     {
         var columnsList = new List<IColumn>();

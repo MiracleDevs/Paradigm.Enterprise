@@ -35,7 +35,7 @@ internal class JsonTableSchema : TableSchemaBase
     /// <summary>
     /// Gets the table schema columns.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The columns inferred from the JSON object properties.</returns>
     protected override IList<IColumn> GetTableSchemaColumns()
     {
         if (Items.Count == 0)

@@ -24,12 +24,7 @@ internal abstract class TableReaderBase : ITableReader
 
     #region Public Methods
 
-    /// <summary>
-    /// Reads a new row of data.
-    /// </summary>
-    /// <returns>
-    /// A row of data.
-    /// </returns>
+    /// <inheritdoc/>
     public virtual Task<bool> ReadRowAsync()
     {
         if (CurrentRow is null)
@@ -38,12 +33,7 @@ internal abstract class TableReaderBase : ITableReader
         return Task.FromResult(CurrentRow.Read());
     }
 
-    /// <summary>
-    /// Gets the current row.
-    /// </summary>
-    /// <returns>
-    /// Current row
-    /// </returns>
+    /// <inheritdoc/>
     public IRow GetCurrentRow() => CurrentRow ?? throw new ArgumentNullException(nameof(CurrentRow));
 
     /// <summary>

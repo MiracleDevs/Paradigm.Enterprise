@@ -2,6 +2,9 @@ using Paradigm.Enterprise.WebApi.Filters;
 
 namespace Paradigm.Enterprise.WebApi.Extensions;
 
+/// <summary>
+/// Adds Paradigm-specific filters to an MVC application.
+/// </summary>
 public static class MvcBuilderExtensions
 {
     /// <summary>
@@ -9,8 +12,19 @@ public static class MvcBuilderExtensions
     /// This will ensure that only endpoints marked with [ExposeEndpoint] are accessible.
     /// </summary>
     /// <param name="builder">The MVC builder.</param>
-    /// <param name="requireExplicitExposure">When true, all endpoints must be explicitly marked with [ExposeEndpoint] to be accessible.</param>
     /// <returns>The MVC builder for chaining.</returns>
+    /// <example>
+    /// <code>
+    /// services.AddControllers().AddEndpointExposureControl();
+    /// </code>
+    /// Actions without <c>[ExposeEndpoint]</c> then return HTTP 404.
+    /// </example>
+    /// <remarks>
+    /// Exposure is not authorization. An exposed action remains anonymous when its controller
+    /// inherits <see cref="Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute"/> unless a
+    /// separate filter such as <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>
+    /// enforces access.
+    /// </remarks>
     public static IMvcBuilder AddEndpointExposureControl(this IMvcBuilder builder)
     {
         builder.Services.AddSingleton<EndpointExposureFilter>();

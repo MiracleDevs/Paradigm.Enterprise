@@ -35,7 +35,7 @@ internal class XlsTableSchema : TableSchemaBase
     /// <summary>
     /// Gets the table schema columns.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The columns inferred from the workbook header or first row.</returns>
     protected override IList<IColumn> GetTableSchemaColumns()
     {
         var columnsList = new List<XlsColumn>();

@@ -1,5 +1,8 @@
 ﻿namespace Paradigm.Enterprise.Services.BlobStorage.Configuration;
 
+/// <summary>
+/// Configures Azure Blob Storage credentials and retry behavior.
+/// </summary>
 public class BlobStorageConfiguration
 {
     /// <summary>

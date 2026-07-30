@@ -4,6 +4,34 @@ using Microsoft.Extensions.Logging;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
+/// <summary>
+/// Provides logging support for Paradigm API controllers.
+/// </summary>
+/// <remarks>
+/// This base class is decorated with <see cref="AllowAnonymousAttribute"/>. Derived controllers
+/// therefore permit anonymous requests unless they apply and enforce a separate authorization
+/// mechanism, such as <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>.
+/// Endpoint exposure and request authorization are independent concerns.
+/// </remarks>
+/// <example>
+/// A protected controller opts into both endpoint exposure and API-key authorization:
+/// <code>
+/// [Route("api/status")]
+/// [ApiAuthorization]
+/// public sealed class StatusController : ApiControllerBase
+/// {
+///     public StatusController(ILogger&lt;ApiControllerBase&gt; logger)
+///         : base(logger)
+///     {
+///     }
+///
+///     [HttpGet]
+///     [ExposeEndpoint]
+///     public IActionResult Get() => Ok(new { Status = "Healthy" });
+/// }
+/// </code>
+/// Configure <c>ClientSecrets</c> and add endpoint exposure control before using this pattern.
+/// </example>
 [AllowAnonymous]
 [ApiController]
 public abstract class ApiControllerBase : ControllerBase
@@ -25,7 +53,7 @@ public abstract class ApiControllerBase : ControllerBase
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiControllerBase"/> class.
     /// </summary>
-    /// <param name="logger">The logger.</param>
+    /// <param name="logger">The logger retained for use by the controller and derived types.</param>
     public ApiControllerBase(ILogger<ApiControllerBase> logger)
     {
         Logger = logger;
@@ -34,6 +62,17 @@ public abstract class ApiControllerBase : ControllerBase
     #endregion
 }
 
+/// <summary>
+/// Provides logging and a provider dependency for Paradigm API controllers.
+/// </summary>
+/// <typeparam name="TProvider">The application provider used by the controller.</typeparam>
+/// <remarks>
+/// The anonymous-access behavior inherited from <see cref="ApiControllerBase"/> also applies to
+/// this class. Standard <c>[Authorize]</c> metadata and fallback policies do not override the inherited
+/// anonymous-access metadata. Secure derived controllers with an independently enforced filter such as
+/// <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>, or use a base
+/// controller that does not apply <see cref="AllowAnonymousAttribute"/>.
+/// </remarks>
 public abstract class ApiControllerBase<TProvider> : ApiControllerBase
 {
     #region Properties
@@ -50,8 +89,8 @@ public abstract class ApiControllerBase<TProvider> : ApiControllerBase
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiControllerBase{TProvider}"/> class.
     /// </summary>
-    /// <param name="logger">The logger.</param>
-    /// <param name="provider">The provider.</param>
+    /// <param name="logger">The logger retained by the base controller.</param>
+    /// <param name="provider">The provider retained for derived actions.</param>
     protected ApiControllerBase(ILogger<ApiControllerBase> logger, TProvider provider)
         : base(logger)
     {

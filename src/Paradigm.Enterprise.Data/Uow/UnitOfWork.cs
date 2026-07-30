@@ -3,28 +3,70 @@ using System.Data;
 
 namespace Paradigm.Enterprise.Data.Uow
 {
+    /// <summary>
+    /// Coordinates commits and an optional shared transaction across registered persistence participants.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="CommitChangesAsync"/> invokes participants in registration order. It does not create
+    /// a transaction automatically; call <see cref="CreateTransaction"/> when atomicity is required.
+    /// </remarks>
+    /// <example>
+    /// Register the unit of work as scoped so repositories resolved in one request share it:
+    /// <code>
+    /// services.AddScoped&lt;IUnitOfWork, UnitOfWork&gt;();
+    /// services.AddDbContext&lt;SalesDbContext&gt;(...);
+    /// services.AddScoped&lt;IOrderRepository, OrderRepository&gt;();
+    /// </code>
+    /// Repository constructors register their contexts automatically. Stage all work before committing:
+    /// <code>
+    /// await orderRepository.AddAsync(order);
+    /// await auditRepository.AddAsync(auditEntry);
+    /// await unitOfWork.CommitChangesAsync();
+    /// </code>
+    /// To coordinate compatible participants in one relational transaction, explicitly create and
+    /// complete the transaction:
+    /// <code>
+    /// using var transaction = unitOfWork.CreateTransaction();
+    /// try
+    /// {
+    ///     await orderRepository.UpdateAsync(order);
+    ///     await auditRepository.AddAsync(auditEntry);
+    ///     await unitOfWork.CommitChangesAsync();
+    ///     transaction.Commit();
+    /// }
+    /// catch
+    /// {
+    ///     if (transaction.IsActive)
+    ///         transaction.Rollback();
+    ///     throw;
+    /// }
+    /// </code>
+    /// Creating the transaction does not save or commit staged changes. All enlisted contexts and
+    /// commands must use a connection compatible with the transaction created by the first participant.
+    /// </example>
     public class UnitOfWork : IUnitOfWork
     {
         #region Properties
 
         /// <summary>
-        /// Gets a value indicating whether this instance has active transaction.
+        /// Gets whether the transaction created by this unit of work is still active.
         /// </summary>
         /// <value>
-        /// <c>true</c> if this instance has active transaction; otherwise, <c>false</c>.
+        /// <see langword="true"/> when the current transaction exists and reports itself active;
+        /// otherwise, <see langword="false"/>.
         /// </value>
         public bool HasActiveTransaction => CurrentTransaction?.IsActive ?? false;
 
         /// <summary>
-        /// Gets the commiteable repositories.
+        /// Gets the persistence participants in registration order.
         /// </summary>
         private List<ICommiteable> Commiteables { get; }
 
         /// <summary>
-        /// Gets or sets the current transaction.
+        /// Gets or sets the transaction created by this unit of work.
         /// </summary>
         /// <value>
-        /// The current transaction.
+        /// The current transaction, or <see langword="null"/> before one is created.
         /// </value>
         private ITransaction? CurrentTransaction { get; set; }
 
@@ -45,8 +87,15 @@ namespace Paradigm.Enterprise.Data.Uow
         #region Public Methods
 
         /// <summary>
-        /// Commits the changes.
+        /// Persists staged changes for every registered participant, sequentially in registration order.
         /// </summary>
+        /// <returns>A task that completes after every participant's save method has completed.</returns>
+        /// <remarks>
+        /// This method does not commit or create the database transaction itself. With an active
+        /// transaction, saved changes remain subject to its later commit or rollback. If a participant
+        /// fails, later participants are not invoked and the exception is propagated to the caller;
+        /// earlier participants may already have saved.
+        /// </remarks>
         public async Task CommitChangesAsync()
         {
             foreach (var commiteable in Commiteables)
@@ -54,10 +103,14 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Registers the commiteable.
+        /// Registers a persistence participant for future commits and transaction enlistment.
         /// </summary>
-        /// <param name="commiteable">The commiteable.</param>
-        /// <exception cref="ArgumentNullException">commiteable</exception>
+        /// <param name="commiteable">
+        /// The participant to register. A participant already contained according to equality is not
+        /// added again; when a transaction is already active, the supplied participant is still offered
+        /// to that transaction for enlistment.
+        /// </param>
+        /// <exception cref="ArgumentNullException"><paramref name="commiteable"/> is <see langword="null"/>.</exception>
         public void RegisterCommiteable(ICommiteable commiteable)
         {
             if (commiteable is null)
@@ -71,11 +124,18 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Creates the transaction.
+        /// Begins a transaction through the first registered participant and enlists the remaining participants.
         /// </summary>
         /// <returns>
-        /// A new transaction.
+        /// The newly created active transaction.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// No persistence participants are registered, or a transaction created by this unit of work is already active.
+        /// </exception>
+        /// <remarks>
+        /// All participants must be compatible with the transaction created by the first registered participant.
+        /// The method does not commit staged changes.
+        /// </remarks>
         public ITransaction CreateTransaction()
         {
             if (!Commiteables.Any())
@@ -94,9 +154,10 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Uses the current transaction.
+        /// Re-enlists every registered participant in the transaction created by this unit of work.
         /// </summary>
-        /// <exception cref="InvalidOperationException">No transaction is active.</exception>
+        /// <returns>The current active transaction.</returns>
+        /// <exception cref="InvalidOperationException">This unit of work has no active current transaction.</exception>
         public ITransaction UseCurrentTransaction()
         {
             if (CurrentTransaction is null || !HasActiveTransaction)
@@ -107,9 +168,13 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Uses the transaction.
+        /// Enlists every registered participant in the supplied transaction.
         /// </summary>
-        /// <param name="transaction">The transaction.</param>
+        /// <param name="transaction">The transaction that receives the registered participants.</param>
+        /// <remarks>
+        /// This overload does not assign <paramref name="transaction"/> as the unit of work's current
+        /// transaction; consequently it does not change <see cref="HasActiveTransaction"/>.
+        /// </remarks>
         public void UseTransaction(ITransaction transaction)
         {
             foreach (var commiteable in Commiteables)
@@ -117,9 +182,13 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Uses the transaction.
+        /// Associates a database command with the current transaction when that transaction is active.
         /// </summary>
-        /// <param name="command">The command.</param>
+        /// <param name="command">The command to enlist in the current transaction.</param>
+        /// <remarks>
+        /// When there is no active current transaction, the command is left unchanged.
+        /// The command and transaction must use compatible database connections.
+        /// </remarks>
         public void UseTransaction(IDbCommand command)
         {
             if (!HasActiveTransaction) return;
@@ -127,8 +196,14 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// Disposes disposable participants in registration order and then disposes the current transaction.
         /// </summary>
+        /// <remarks>
+        /// Disposal does not commit staged changes. The implementation does not clear registrations or guarantee
+        /// idempotency; callers should dispose the unit of work once, after its repositories are no longer needed.
+        /// If a participant throws during disposal, later participants and the current transaction are not disposed
+        /// by this call, and the exception is propagated.
+        /// </remarks>
         public void Dispose()
         {
             foreach (var commiteable in Commiteables)

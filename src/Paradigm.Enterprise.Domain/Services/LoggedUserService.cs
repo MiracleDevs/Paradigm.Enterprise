@@ -19,8 +19,8 @@ internal class LoggedUserService<TId> : ILoggedUserService<TId>
     /// <summary>
     /// Authenticates the specified user.
     /// </summary>
-    /// <param name="version">The version.</param>
-    /// <param name="user">The user.</param>
+    /// <typeparam name="TUser">The entity type representing a user.</typeparam>
+    /// <param name="user">The authenticated user, or <see langword="null"/> to clear authentication.</param>
     public void Authenticate<TUser>(TUser? user) where TUser : IEntity<TId>
     {
         User = user;
@@ -30,15 +30,17 @@ internal class LoggedUserService<TId> : ILoggedUserService<TId>
     /// Tries to get the authenticated user.
     /// </summary>
     /// <typeparam name="TUser">The type of the user.</typeparam>
-    /// <returns></returns>
+    /// <returns>The current user, or <see langword="null"/> when no user has been authenticated.</returns>
+    /// <exception cref="InvalidCastException">The stored user is not assignable to <typeparamref name="TUser"/>.</exception>
     public TUser? TryGetAuthenticatedUser<TUser>() where TUser : IEntity<TId> => (TUser?)User;
 
     /// <summary>
     /// Gets the authenticated user.
     /// </summary>
     /// <typeparam name="TUser">The type of the user.</typeparam>
-    /// <returns></returns>
-    /// <exception cref="NotAuthorizedException"></exception>
+    /// <returns>The current authenticated user.</returns>
+    /// <exception cref="InvalidCastException">The stored user is not assignable to <typeparamref name="TUser"/>.</exception>
+    /// <exception cref="UnauthorizedAccessException">No user has been authenticated.</exception>
     public TUser GetAuthenticatedUser<TUser>() where TUser : IEntity<TId> => TryGetAuthenticatedUser<TUser>() ?? throw new UnauthorizedAccessException();
 
     #endregion

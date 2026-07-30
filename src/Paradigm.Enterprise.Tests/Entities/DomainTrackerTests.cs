@@ -200,11 +200,12 @@ public class DomainTrackerTests
         // Arrange
         var tracker = new DomainTracker<TestEntity>();
 
-        // Act & Assert
+        // Act & Assert: any exception fails the test.
+                // Act & Assert
         try
         {
             tracker.Reset();
-            Assert.IsTrue(true, "Reset should not throw when tracker is empty");
+            Assert.IsTrue(tracker.IsEmpty(), "Reset should not throw when tracker is empty");
         }
         catch (Exception ex)
         {

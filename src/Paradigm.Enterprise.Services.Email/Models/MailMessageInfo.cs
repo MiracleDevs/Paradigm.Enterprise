@@ -1,5 +1,8 @@
 ﻿namespace Paradigm.Enterprise.Services.Email.Models;
 
+/// <summary>
+/// Describes the recipients, subject, and HTML body of an outgoing email.
+/// </summary>
 public class MailMessageInfo
 {
     #region Properties

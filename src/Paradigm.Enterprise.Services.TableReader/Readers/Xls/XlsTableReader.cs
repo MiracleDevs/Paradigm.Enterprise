@@ -43,7 +43,7 @@ internal class XlsTableReader : TableReaderBase
     /// </summary>
     /// <param name="content">The content.</param>
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
-    /// <returns></returns>
+    /// <returns>An Excel reader over the supplied workbook bytes.</returns>
     public static ITableReader OpenFromContent(byte[] content, bool sourceHasHeader)
     {
         return new XlsTableReader(new MemoryStream(content), sourceHasHeader);
@@ -54,7 +54,8 @@ internal class XlsTableReader : TableReaderBase
     /// </summary>
     /// <param name="contentStream">The content stream.</param>
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
-    /// <returns></returns>
+    /// <returns>An Excel reader that leaves <paramref name="contentStream"/> open when disposed.</returns>
+    /// <remarks>The caller must keep <paramref name="contentStream"/> open until reading is complete.</remarks>
     public static ITableReader OpenFromStream(Stream contentStream, bool sourceHasHeader)
     {
         return new XlsTableReader(contentStream, sourceHasHeader);

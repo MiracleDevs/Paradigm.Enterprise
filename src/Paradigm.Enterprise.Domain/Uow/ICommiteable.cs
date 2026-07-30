@@ -1,17 +1,20 @@
 ﻿namespace Paradigm.Enterprise.Domain.Uow
 {
+    /// <summary>
+    /// Defines a persistence participant whose staged changes can be committed and whose connection can begin a transaction.
+    /// </summary>
     public interface ICommiteable
     {
         /// <summary>
-        /// Commits the changes.
+        /// Persists the participant's currently staged changes.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A task that completes when persistence finishes.</returns>
         Task CommitChangesAsync();
 
         /// <summary>
-        /// Creates the transaction.
+        /// Begins a transaction owned by this persistence participant.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The active transaction wrapper.</returns>
         ITransaction CreateTransaction();
     }
 }

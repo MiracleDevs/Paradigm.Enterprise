@@ -3,6 +3,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Paradigm.Enterprise.Providers.Utils;
 
+/// <summary>
+/// Starts fire-and-forget work in a fresh dependency-injection scope and logs unhandled failures.
+/// </summary>
+/// <remarks>
+/// <see cref="Execute"/> returns immediately and does not expose completion or cancellation.
+/// Use it only when the caller does not need to observe the outcome.
+/// </remarks>
 public sealed class AsyncProcessManager
 {
     #region Properties

@@ -6,6 +6,21 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Paradigm.Enterprise.Services.Cache;
 
+/// <summary>
+/// Implements resilient JSON caching over <see cref="IDistributedCache"/>.
+/// </summary>
+/// <remarks>
+/// Cache failures are logged and suppressed unless <c>RedisCacheConfiguration:ThrowExceptions</c>
+/// is enabled. Disabled caching invokes factories directly and skips read/write/remove operations.
+/// </remarks>
+/// <example>
+/// Register the singleton and its Redis dependency with:
+/// <code>
+/// await services.AddCacheAsync(configuration, connectionStringName: "Redis");
+/// </code>
+/// Consume <see cref="ICacheService"/> rather than constructing this type directly so the
+/// distributed-cache fallback and configured failure policy are applied.
+/// </example>
 public class CacheService : ICacheService, IDisposable
 {
     #region Properties
@@ -58,6 +73,11 @@ public class CacheService : ICacheService, IDisposable
     /// <summary>
     /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
     /// </summary>
+    /// <remarks>
+    /// The dependency-injection registration creates this service as a singleton. Dispose the
+    /// containing service provider to dispose this instance; callers resolving
+    /// <see cref="ICacheService"/> do not dispose individual references.
+    /// </remarks>
     public void Dispose()
     {
         _semaphore.Dispose();
@@ -66,12 +86,12 @@ public class CacheService : ICacheService, IDisposable
     /// <summary>
     /// Gets the value from the cache or creates it.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The value type to deserialize or create.</typeparam>
     /// <param name="key">The cache key.</param>
     /// <param name="factory">The factory.</param>
     /// <param name="jsonTypeInfo">The json type information.</param>
     /// <param name="expiration">The cache expiration.</param>
-    /// <returns></returns>
+    /// <returns>The cached or newly created value.</returns>
     public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null)
     {
         if (_cacheConfiguration.Disabled) return await factory();
@@ -130,10 +150,10 @@ public class CacheService : ICacheService, IDisposable
     /// <summary>
     /// Gets a value from the cache.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The cached value type.</typeparam>
     /// <param name="key">The key.</param>
-    /// <param name="jsonTypeInfo"></param>
-    /// <returns></returns>
+    /// <param name="jsonTypeInfo">Source-generated JSON metadata for <typeparamref name="T"/>.</param>
+    /// <returns>The cached value, or <see langword="null"/>/the default value when unavailable.</returns>
     public async Task<T?> GetAsync<T>(string key, JsonTypeInfo<T> jsonTypeInfo)
     {
         if (_cacheConfiguration.Disabled) return default;
@@ -163,10 +183,10 @@ public class CacheService : ICacheService, IDisposable
     /// <summary>
     /// Sets the value in the cache.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The cached value type.</typeparam>
     /// <param name="key">The key.</param>
     /// <param name="value">The value.</param>
-    /// <param name="jsonTypeInfo"></param>
+    /// <param name="jsonTypeInfo">Source-generated JSON metadata for <typeparamref name="T"/>.</param>
     /// <param name="expiration">The expiration.</param>
     public async Task SetAsync<T>(string key, T value, JsonTypeInfo<T> jsonTypeInfo, TimeSpan? expiration = null)
     {

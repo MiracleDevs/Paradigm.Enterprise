@@ -2,14 +2,21 @@
 
 namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage;
 
+/// <summary>
+/// Provides blob, folder, metadata, and container operations for one Azure Blob Storage container.
+/// </summary>
 public interface IAzureBlobStorageContainer
 {
     /// <summary>
-    /// Creates the transaction for a file asynchronously.
+    /// Creates a transaction wrapper for a blob and acquires a lease when the blob already exists.
     /// </summary>
     /// <param name="blobName">Name of the BLOB.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A blob transaction wrapper. For an existing blob, asynchronous disposal breaks the lease acquired by this method.</returns>
+    /// <remarks>
+    /// The wrapper's download and upload operations do not send the acquired lease identifier.
+    /// Callers must not assume those operations are authorized by or protected by the lease.
+    /// </remarks>
     Task<IAzureBlobStorageBlobTransaction> CreateTransactionForFileAsync(string blobName, CancellationToken cancellationToken);
 
     /// <summary>
@@ -20,7 +27,8 @@ public interface IAzureBlobStorageContainer
     /// <param name="contentType">The file content type.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="blobName">An optional blob name.</param>
-    /// <returns></returns>
+    /// <returns>The absolute URI of the uploaded blob.</returns>
+    /// <remarks>The caller retains ownership of <paramref name="fileStream"/>.</remarks>
     Task<Uri> UploadFileAsync(string fileName, Stream fileStream, string contentType, CancellationToken cancellationToken, string? blobName = null);
 
     /// <summary>
@@ -29,7 +37,7 @@ public interface IAzureBlobStorageContainer
     /// <param name="content">The json content.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="blobName">An optional blob name.</param>
-    /// <returns></returns>
+    /// <returns>The absolute URI of the uploaded JSON blob.</returns>
     Task<Uri> UploadJsonAsync(string content, CancellationToken cancellationToken, string? blobName = null);
 
     /// <summary>
@@ -37,7 +45,11 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="blobName">Name of the BLOB.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A task that completes after the best-effort deletion pass.</returns>
+    /// <remarks>
+    /// Listing and individual deletion failures are suppressed. Successful task completion does not
+    /// prove that a matching blob existed or that every matching blob was deleted.
+    /// </remarks>
     Task DeleteBlobAsync(string blobName, CancellationToken cancellationToken);
 
     /// <summary>
@@ -46,7 +58,11 @@ public interface IAzureBlobStorageContainer
     /// <param name="from">From.</param>
     /// <param name="to">To.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
+    /// <remarks>
+    /// Each source receives an infinite lease that is broken after copy initiation succeeds. Cancellation
+    /// or another exception after lease acquisition can leave that source lease held.
+    /// </remarks>
     Task CopyFolderAsync(string from, string to, CancellationToken cancellationToken);
 
     /// <summary>
@@ -56,21 +72,25 @@ public interface IAzureBlobStorageContainer
     /// <param name="to">To.</param>
     /// <param name="destinationContainer">The destination container.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
+    /// <remarks>
+    /// Each source receives an infinite lease that is broken after copy initiation succeeds. Cancellation
+    /// or another exception after lease acquisition can leave that source lease held.
+    /// </remarks>
     Task CopyFolderBetweenContainersAsync(string from, string to, IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken);
 
     /// <summary>
     /// Checks if the BLOB exists.
     /// </summary>
     /// <param name="blobName">Name of the file.</param>
-    /// <returns></returns>
+    /// <returns><see langword="true"/> when the named blob exists.</returns>
     Task<bool> BlobExistsAsync(string blobName);
 
     /// <summary>
     /// Checks if the BLOB exists.
     /// </summary>
     /// <param name="blobUri">The BLOB URI.</param>
-    /// <returns></returns>
+    /// <returns><see langword="true"/> when the referenced blob exists.</returns>
     Task<bool> BlobExistsAsync(Uri blobUri);
 
     /// <summary>
@@ -78,7 +98,7 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="blobName">Name of the file.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A readable response stream. The caller must dispose the returned stream.</returns>
     Task<Stream> DownloadAsync(string blobName, CancellationToken cancellationToken);
 
     /// <summary>
@@ -86,7 +106,7 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="blobUri">The BLOB URI.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A readable response stream. The caller must dispose the returned stream.</returns>
     Task<Stream> DownloadAsync(Uri blobUri, CancellationToken cancellationToken);
 
     /// <summary>
@@ -94,7 +114,7 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="metadata">The metadata.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A task that represents the metadata update.</returns>
     Task UpdateMetadataAsync(Dictionary<string, string> metadata, CancellationToken cancellationToken);
 
     /// <summary>
@@ -102,7 +122,8 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="blobName">Name of the BLOB.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A dictionary containing <c>ContentType</c>, <c>ContentHash</c>,
+    /// <c>ContentLength</c>, <c>ETag</c>, and <c>LastModified</c>.</returns>
     Task<Dictionary<string, object>> GetPropertiesAsync(string blobName, CancellationToken cancellationToken);
 
     /// <summary>
@@ -110,19 +131,20 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="blobUri">The BLOB URI.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A dictionary containing <c>ContentType</c>, <c>ContentHash</c>,
+    /// <c>ContentLength</c>, <c>ETag</c>, and <c>LastModified</c>.</returns>
     Task<Dictionary<string, object>> GetPropertiesAsync(Uri blobUri, CancellationToken cancellationToken);
 
     /// <summary>
     /// Checks if the container exists.
     /// </summary>
-    /// <returns></returns>
+    /// <returns><see langword="true"/> when the container exists.</returns>
     Task<bool> ExistsAsync();
 
     /// <summary>
     /// Deletes the container.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A task that represents deleting the container.</returns>
     Task DeleteAsync();
 
     /// <summary>
@@ -130,20 +152,24 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="destinationContainer">The destination container.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns></returns>
+    /// <returns>A task that completes after a server-side copy has been initiated for every source blob.</returns>
+    /// <remarks>
+    /// Each source receives an infinite lease that is broken after copy initiation succeeds. Cancellation
+    /// or another exception after lease acquisition can leave that source lease held.
+    /// </remarks>
     Task CopyAsync(IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken);
 
     /// <summary>
     /// Return a blob client from the container
     /// </summary>
-    /// <param name="blobName"></param>
-    /// <returns></returns>
+    /// <param name="blobName">The blob name relative to this container.</param>
+    /// <returns>The Azure SDK client for the named blob.</returns>
     BlobClient GetBlobClient(string blobName);
 
     /// <summary>
     /// Return a blob client from the provided URI
     /// </summary>
     /// <param name="blobUri">The BLOB URI.</param>
-    /// <returns></returns>
+    /// <returns>The Azure SDK client for the referenced blob.</returns>
     BlobClient GetBlobClient(Uri blobUri);
 }

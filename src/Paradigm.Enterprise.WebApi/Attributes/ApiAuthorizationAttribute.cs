@@ -3,6 +3,14 @@ using Paradigm.Enterprise.WebApi.Filters;
 
 namespace Paradigm.Enterprise.WebApi.Attributes;
 
+/// <summary>
+/// Requires a request to pass the Paradigm API-key authorization filter.
+/// </summary>
+/// <remarks>
+/// Apply this attribute to an action or controller that must validate the
+/// <c>x-api-auth</c> header against the configured <c>ClientSecrets</c> entries.
+/// A new executable filter is constructed for each request using the request service provider.
+/// </remarks>
 public class ApiAuthorizationAttribute : Attribute, IFilterFactory
 {
     /// <summary>

@@ -8,6 +8,40 @@ using Paradigm.Enterprise.WebApi.Attributes;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
+/// <summary>
+/// Adds conventional save and delete actions to a read API controller.
+/// </summary>
+/// <typeparam name="TProvider">The edit provider that performs persistence operations.</typeparam>
+/// <typeparam name="TView">The entity view accepted and returned by the controller.</typeparam>
+/// <typeparam name="TParameters">The pagination parameters accepted by inherited searches.</typeparam>
+/// <typeparam name="TId">The value-type entity identifier.</typeparam>
+/// <remarks>
+/// The inherited and declared actions allow anonymous access. Standard <c>[Authorize]</c> metadata
+/// on a derived controller does not override the inherited <see cref="AllowAnonymousAttribute"/>.
+/// Protected mutations require an independently enforced mechanism such as
+/// <see cref="ApiAuthorizationAttribute"/>, or a different base controller that does not allow
+/// anonymous access.
+/// </remarks>
+/// <example>
+/// A derived controller exposes the inherited search, lookup, save, and delete routes:
+/// <code>
+/// [Route("api/products")]
+/// [ApiAuthorization]
+/// public sealed class ProductsController
+///     : EditApiControllerBase&lt;IProductProvider, ProductView, ProductSearch, int&gt;
+/// {
+///     public ProductsController(
+///         ILogger&lt;ReadApiControllerBase&lt;IProductProvider, ProductView, ProductSearch, int&gt;&gt; logger,
+///         IProductProvider provider)
+///         : base(logger, provider)
+///     {
+///     }
+/// }
+/// </code>
+/// In this example, <c>IProductProvider</c> implements <c>IEditProvider&lt;ProductView, int&gt;</c>,
+/// <c>ProductView</c> derives from <c>EntityBase&lt;int&gt;</c>, and <c>ProductSearch</c> derives
+/// from <see cref="PaginationParametersBase"/>.
+/// </example>
 [AllowAnonymous]
 [ApiController]
 public abstract class EditApiControllerBase<TProvider, TView, TParameters, TId> : ReadApiControllerBase<TProvider, TView, TParameters, TId>
@@ -34,8 +68,8 @@ public abstract class EditApiControllerBase<TProvider, TView, TParameters, TId> 
     /// <summary>
     /// Saves the entity.
     /// </summary>
-    /// <param name="view">The view.</param>
-    /// <returns></returns>
+    /// <param name="view">The entity state to create or update.</param>
+    /// <returns>The persisted view returned by the provider.</returns>
     [HttpPost]
     [ExposeEndpoint]
     public virtual async Task<TView> SaveAsync([FromBody] TView view)

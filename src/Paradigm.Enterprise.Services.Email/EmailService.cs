@@ -7,6 +7,22 @@ using Paradigm.Enterprise.Services.Email.Models;
 
 namespace Paradigm.Enterprise.Services.Email;
 
+/// <summary>
+/// Sends email through Azure Communication Services using a connection string or managed identity.
+/// </summary>
+/// <remarks>
+/// Configuration is bound from <c>EmailConfiguration</c>. A connection string takes precedence
+/// over managed identity. Invalid configuration and send failures are logged and suppressed.
+/// </remarks>
+/// <example>
+/// Register the service once for the application:
+/// <code>
+/// services.AddSingleton&lt;IEmailService, EmailService&gt;();
+/// </code>
+/// The application configuration must provide <c>EmailConfiguration:MailFrom</c> and either
+/// <c>EmailConfiguration:ConnectionString</c> or
+/// <c>EmailConfiguration:ManagedIdentity:Endpoint</c>.
+/// </example>
 public class EmailService : IEmailService
 {
     #region Properties
@@ -28,8 +44,8 @@ public class EmailService : IEmailService
     /// <summary>
     /// Initializes a new instance of the <see cref="EmailService" /> class.
     /// </summary>
-    /// <param name="configuration">The configuration.</param>
-    /// <param name="logger">The logger.</param>
+    /// <param name="configuration">The application configuration containing <c>EmailConfiguration</c>.</param>
+    /// <param name="logger">The logger used for invalid configuration and send failures.</param>
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _emailConfiguration = new();
@@ -44,16 +60,20 @@ public class EmailService : IEmailService
     /// <summary>
     /// Sends the e-mail.
     /// </summary>
-    /// <param name="messageInfo"></param>
+    /// <param name="messageInfo">The recipients, subject, and HTML body to send.</param>
     public void SendMail(MailMessageInfo messageInfo)
     {
         SendMails([messageInfo]);
     }
 
     /// <summary>
-    /// Sends the mails.
+    /// Requests delivery for messages in enumeration order.
     /// </summary>
-    /// <param name="messages">The email information.</param>
+    /// <param name="messages">The messages to submit.</param>
+    /// <remarks>
+    /// One error boundary surrounds the complete batch. The first configuration or send failure stops
+    /// enumeration; the error is logged and suppressed, and later messages are not attempted.
+    /// </remarks>
     public void SendMails(IEnumerable<MailMessageInfo> messages)
     {
         try
@@ -92,7 +112,7 @@ public class EmailService : IEmailService
     /// <summary>
     /// Builds the email client.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A configured email client, or <see langword="null"/> when configuration is invalid.</returns>
     private EmailClient? BuildEmailClient()
     {
         var strategy = GetClientCreationStrategy();

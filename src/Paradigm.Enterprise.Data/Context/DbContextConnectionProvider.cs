@@ -2,10 +2,16 @@
 
 namespace Paradigm.Enterprise.Data.Context
 {
+    /// <summary>
+    /// Provides configuration access to database-connection implementations and a disposal extension point.
+    /// </summary>
     public class DbContextConnectionProvider : IDisposable
     {
         #region Properties
 
+        /// <summary>
+        /// The application configuration used by derived connection providers.
+        /// </summary>
         protected readonly IConfiguration _configuration;
 
         #endregion
