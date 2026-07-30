@@ -35,7 +35,7 @@ internal abstract class TableSchemaBase : ITableSchema
     /// <summary>
     /// Gets the table schema columns.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The columns discovered from the source format.</returns>
     protected abstract IList<IColumn> GetTableSchemaColumns();
 
     #endregion
@@ -133,7 +133,7 @@ internal abstract class TableSchemaBase : ITableSchema
     /// Gets the name of the generated column.
     /// </summary>
     /// <param name="index">The index.</param>
-    /// <returns></returns>
+    /// <returns>A deterministic fallback name for the zero-based column index.</returns>
     protected string GetGeneratedColumnName(int index)
     {
         if (GeneratedColumnNames is null)

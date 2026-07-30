@@ -3,6 +3,9 @@ using Paradigm.Enterprise.Services.Email.Models;
 
 namespace Paradigm.Enterprise.Services.Email;
 
+/// <summary>
+/// Sends HTML email through the configured Azure Communication Services account.
+/// </summary>
 public interface IEmailService : IService
 {
     /// <summary>

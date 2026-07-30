@@ -4,6 +4,9 @@ using Paradigm.Enterprise.Services.BlobStorage.Extensions;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage;
 
+/// <summary>
+/// Implements download and overwrite operations for a blob and tracks an optional lease client.
+/// </summary>
 public class AzureBlobStorageBlobTransaction : IAzureBlobStorageBlobTransaction
 {
     #region Properties
@@ -54,7 +57,8 @@ public class AzureBlobStorageBlobTransaction : IAzureBlobStorageBlobTransaction
     /// <summary>
     /// Disposes the instance asynchronously.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A task that completes after the associated lease is broken, or immediately when no lease was acquired.</returns>
+    /// <remarks>Download and upload requests made by this wrapper do not attach the lease identifier.</remarks>
     public async ValueTask DisposeAsync()
     {
         if (BlobLeaseClient is not null && !Disposed)
@@ -67,8 +71,7 @@ public class AzureBlobStorageBlobTransaction : IAzureBlobStorageBlobTransaction
     /// <summary>
     /// Downloads the blob asynchronously.
     /// </summary>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <returns>A readable Azure response stream that the caller must dispose.</returns>
     public async Task<Stream> DownloadAsync()
     {
         return (await BlobClient.DownloadAsync()).Value.Content;
@@ -87,7 +90,7 @@ public class AzureBlobStorageBlobTransaction : IAzureBlobStorageBlobTransaction
     /// <summary>
     /// Checks if the file Exists.
     /// </summary>
-    /// <returns></returns>
+    /// <returns><see langword="true"/> when the blob exists.</returns>
     public async Task<bool> ExistsAsync()
     {
         return await BlobClient.ExistsAsync();

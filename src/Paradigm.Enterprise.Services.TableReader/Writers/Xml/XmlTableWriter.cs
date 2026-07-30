@@ -17,6 +17,7 @@ internal static class XmlTableWriter
     /// <param name="includeHeader">if set to <c>true</c> [include header].</param>
     /// <param name="getColumnValues">The delegate function that extracts column values from each item.</param>
     /// <param name="columnNames">The column names.</param>
+    /// <param name="configuration">Optional XML formatting and encoding settings.</param>
     public static async Task WriteToStreamAsync<T>(Stream targetStream, IEnumerable<T> data, bool includeHeader, Func<T, IEnumerable<string?>> getColumnValues, IEnumerable<string>? columnNames, XmlParserConfiguration? configuration)
     {
         // Determine column count and names

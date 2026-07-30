@@ -7,6 +7,11 @@ using System.Data.Common;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
+/// <summary>
+/// Resolves a scoped Entity Framework context and registers it with the current unit of work.
+/// </summary>
+/// <typeparam name="TContext">The Entity Framework context used by the repository.</typeparam>
+/// <typeparam name="TId">The value type used for entity identifiers.</typeparam>
 public abstract class RepositoryBase<TContext, TId> : IRepository
     where TContext : DbContextBase<TId>
     where TId : struct, IEquatable<TId>
@@ -80,14 +85,14 @@ public abstract class RepositoryBase<TContext, TId> : IRepository
     /// <summary>
     /// Gets the database connection.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The database connection owned by the repository context.</returns>
     protected virtual DbConnection GetDbConnection() => EntityContext.Database.GetDbConnection();
 
     /// <summary>
     /// Gets the repository.
     /// </summary>
     /// <typeparam name="TRepository">The type of the repository.</typeparam>
-    /// <returns></returns>
+    /// <returns>The repository resolved from the current service scope.</returns>
     protected TRepository GetRepository<TRepository>() where TRepository : IRepository
     {
         return ServiceProvider.GetRequiredService<TRepository>();

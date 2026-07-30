@@ -6,6 +6,22 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
+/// <summary>
+/// Coordinates mapping, validation, repository changes, commits, and lifecycle hooks for editable views.
+/// </summary>
+/// <typeparam name="TInterface">The interface shared by entity and view.</typeparam>
+/// <typeparam name="TEntity">The persisted domain entity.</typeparam>
+/// <typeparam name="TView">The application-facing view model.</typeparam>
+/// <typeparam name="TRepository">The editable entity repository.</typeparam>
+/// <typeparam name="TViewRepository">The repository used to return views.</typeparam>
+/// <typeparam name="TId">The value type used for identifiers.</typeparam>
+/// <remarks>
+/// For add and update operations, the view hooks run before mapping; the entity hooks run after
+/// mapping and validation but before repository staging. The unit of work then commits once before
+/// the after-save and operation-specific after hooks run. For deletes, <see cref="BeforeDeleteAsync"/>
+/// runs before repository staging, <see cref="AfterDeleteAsync"/> runs after staging, and the unit
+/// of work commits last.
+/// </remarks>
 public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, TViewRepository, TId>
     : ReadProviderBase<TInterface, TView, TViewRepository, TId>, IEditProvider<TView, TId>
     where TId : struct, IEquatable<TId>
@@ -55,7 +71,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Adds a new entity.
     /// </summary>
     /// <param name="view">The dto.</param>
-    /// <returns></returns>
+    /// <returns>The committed view loaded back from the view repository.</returns>
     public virtual async Task<TView> AddAsync(TView view)
     {
         await BeforeAddAsync(view);
@@ -81,7 +97,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Adds new entities.
     /// </summary>
     /// <param name="views">The dtos.</param>
-    /// <returns></returns>
+    /// <returns>The committed views mapped from the added entities.</returns>
     public virtual async Task<IEnumerable<TView>> AddAsync(List<TView> views)
     {
         var entities = new List<TEntity>();
@@ -117,7 +133,8 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Updates the entity.
     /// </summary>
     /// <param name="view">The dto.</param>
-    /// <returns></returns>
+    /// <returns>The committed view loaded back from the view repository.</returns>
+    /// <exception cref="NotFoundException">The view does not identify an accessible entity.</exception>
     public virtual async Task<TView> UpdateAsync(TView view)
     {
         var entity = await Repository.GetByIdAsync(view.Id)
@@ -145,7 +162,8 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Updates a new entities.
     /// </summary>
     /// <param name="views">The dtos.</param>
-    /// <returns></returns>
+    /// <returns>The committed views mapped from the updated entities.</returns>
+    /// <exception cref="NotFoundException">A view does not identify an accessible entity.</exception>
     public virtual async Task<IEnumerable<TView>> UpdateAsync(List<TView> views)
     {
         var entities = new List<TEntity>();
@@ -183,7 +201,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Adds or updates the entity.
     /// </summary>
     /// <param name="view">The dto.</param>
-    /// <returns></returns>
+    /// <returns>The view returned by the selected add or update operation.</returns>
     public virtual async Task<TView> SaveAsync(TView view)
     {
         return view.IsNew() ?
@@ -195,7 +213,8 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Adds or updates the entities.
     /// </summary>
     /// <param name="views">The dto.</param>
-    /// <returns></returns>
+    /// <returns>The committed views mapped from the added and updated entities.</returns>
+    /// <exception cref="NotFoundException">An existing view does not identify an accessible entity.</exception>
     public virtual async Task<IEnumerable<TView>> SaveAsync(IEnumerable<TView> views)
     {
         var entities = new List<(bool, TEntity)>();
@@ -347,6 +366,16 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     /// Executed on save operation after the <typeparamref name="TEntity"/> is mapped from <typeparamref name="TView"/>.
     /// </summary>
     /// <param name="entity">The entity.</param>
+    /// <example>
+    /// A derived provider can stamp an entity immediately before it is staged:
+    /// <code>
+    /// protected override Task BeforeSaveAsync(Order entity)
+    /// {
+    ///     entity.ModifiedAt = DateTimeOffset.UtcNow;
+    ///     return Task.CompletedTask;
+    /// }
+    /// </code>
+    /// </example>
     protected virtual async Task BeforeSaveAsync(TEntity entity)
     {
         await Task.CompletedTask;
@@ -371,7 +400,7 @@ public abstract class EditProviderBase<TInterface, TEntity, TView, TRepository, 
     }
 
     /// <summary>
-    /// Executes after an entity has been deleted.
+    /// Executes after deletion is staged in the repository and before the unit of work commits.
     /// </summary>
     /// <param name="entity">The entity.</param>
     protected virtual async Task AfterDeleteAsync(TEntity entity)

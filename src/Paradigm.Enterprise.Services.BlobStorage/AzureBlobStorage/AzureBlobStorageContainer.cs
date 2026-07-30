@@ -6,6 +6,9 @@ using System.Web;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
 {
+    /// <summary>
+    /// Wraps an Azure <see cref="BlobContainerClient"/> with higher-level blob and folder operations.
+    /// </summary>
     public class AzureBlobStorageContainer : IAzureBlobStorageContainer
     {
         #region Properties
@@ -33,11 +36,12 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         #region Public Methods
 
         /// <summary>
-        /// Creates the transaction for a file asynchronously.
+        /// Creates a transaction wrapper and acquires a lease when the blob already exists.
         /// </summary>
         /// <param name="blobName">Name of the BLOB.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A blob transaction wrapper associated with the acquired lease, if any.</returns>
+        /// <remarks>The wrapper's download and upload operations do not attach the acquired lease identifier.</remarks>
         public async Task<IAzureBlobStorageBlobTransaction> CreateTransactionForFileAsync(string blobName, CancellationToken cancellationToken)
         {
             var blob = GetBlobClient(blobName);
@@ -59,7 +63,8 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="contentType">The file content type.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <param name="blobName">An optional blob name.</param>
-        /// <returns></returns>
+        /// <returns>The absolute URI of the uploaded blob.</returns>
+        /// <remarks>The caller retains ownership of <paramref name="fileStream"/>.</remarks>
         public async Task<Uri> UploadFileAsync(string fileName, Stream fileStream, string contentType, CancellationToken cancellationToken, string? blobName = null)
         {
             var newBlobName = blobName ?? $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
@@ -77,7 +82,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="content">The json content.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <param name="blobName">An optional blob name.</param>
-        /// <returns></returns>
+        /// <returns>The absolute URI of the uploaded JSON blob.</returns>
         public async Task<Uri> UploadJsonAsync(string content, CancellationToken cancellationToken, string? blobName = null)
         {
             var newBlobName = blobName ?? $"{Guid.NewGuid()}.json";
@@ -126,6 +131,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="from">From.</param>
         /// <param name="to">To.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
         public async Task CopyFolderAsync(string from, string to, CancellationToken cancellationToken)
         {
             var blobClients = await GetBlobClientsAsync(from, cancellationToken);
@@ -151,14 +157,14 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// Checks if the BLOB exists.
         /// </summary>
         /// <param name="blobName">Name of the file.</param>
-        /// <returns></returns>
+        /// <returns><see langword="true"/> when the named blob exists.</returns>
         public async Task<bool> BlobExistsAsync(string blobName) => await GetBlobClient(blobName).ExistsAsync();
 
         /// <summary>
         /// Checks if the BLOB exists.
         /// </summary>
         /// <param name="blobUri">The BLOB URI.</param>
-        /// <returns></returns>
+        /// <returns><see langword="true"/> when the referenced blob exists.</returns>
         public async Task<bool> BlobExistsAsync(Uri blobUri) => await GetBlobClient(blobUri).ExistsAsync();
 
         /// <summary>
@@ -166,7 +172,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="blobName">Name of the blob.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A readable response stream that the caller must dispose.</returns>
         public async Task<Stream> DownloadAsync(string blobName, CancellationToken cancellationToken)
         {
             var blob = GetBlobClient(blobName);
@@ -178,7 +184,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="blobUri">The BLOB URI.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A readable response stream that the caller must dispose.</returns>
         public async Task<Stream> DownloadAsync(Uri blobUri, CancellationToken cancellationToken)
         {
             var blob = GetBlobClient(blobUri);
@@ -190,7 +196,8 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="blobName">Name of the BLOB.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A dictionary containing <c>ContentType</c>, <c>ContentHash</c>,
+        /// <c>ContentLength</c>, <c>ETag</c>, and <c>LastModified</c>.</returns>
         public async Task<Dictionary<string, object>> GetPropertiesAsync(string blobName, CancellationToken cancellationToken) => await GetPropertiesAsync(GetBlobClient(blobName), cancellationToken);
 
         /// <summary>
@@ -198,19 +205,20 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="blobUri">The BLOB URI.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A dictionary containing <c>ContentType</c>, <c>ContentHash</c>,
+        /// <c>ContentLength</c>, <c>ETag</c>, and <c>LastModified</c>.</returns>
         public async Task<Dictionary<string, object>> GetPropertiesAsync(Uri blobUri, CancellationToken cancellationToken) => await GetPropertiesAsync(GetBlobClient(blobUri), cancellationToken);
 
         /// <summary>
         /// Checks if the container exists.
         /// </summary>
-        /// <returns></returns>
+        /// <returns><see langword="true"/> when the container exists.</returns>
         public async Task<bool> ExistsAsync() => await _containerClient.ExistsAsync();
 
         /// <summary>
         /// Deletes the container.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A task that represents deleting the container.</returns>
         public async Task DeleteAsync() => await _containerClient.DeleteAsync();
 
         /// <summary>
@@ -218,6 +226,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="destinationContainer">The destination container.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A task that completes after a server-side copy has been initiated for every source blob.</returns>
         /// <exception cref="Exception">Wrong container type.</exception>
         public async Task CopyAsync(IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken)
         {
@@ -264,6 +273,8 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="from">From.</param>
         /// <param name="to">To.</param>
         /// <param name="destinationContainer">>The destination container</param>
+        /// <param name="cancellationToken">The token used to cancel listing, leasing, and copy operations.</param>
+        /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
         public async Task CopyFolderBetweenContainersAsync(string from, string to, IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken)
         {
             if (destinationContainer is not AzureBlobStorageContainer container)
@@ -291,15 +302,15 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <summary>
         /// Return a blob client from the container
         /// </summary>
-        /// <param name="blobName"></param>
-        /// <returns></returns>
+        /// <param name="blobName">The blob name relative to this container.</param>
+        /// <returns>The Azure SDK client for the named blob.</returns>
         public BlobClient GetBlobClient(string blobName) => _containerClient.GetBlobClient(blobName);
 
         /// <summary>
         /// Return a blob client from the provided URI
         /// </summary>
         /// <param name="blobUri">The BLOB URI.</param>
-        /// <returns></returns>
+        /// <returns>The Azure SDK client for the referenced blob.</returns>
         public BlobClient GetBlobClient(Uri blobUri)
         {
             var segments = blobUri.AbsolutePath.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
@@ -320,7 +331,8 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// Gets the blob clients.
         /// </summary>
         /// <param name="from">From.</param>
-        /// <returns></returns>
+        /// <param name="cancellationToken">The token used to cancel recursive listing.</param>
+        /// <returns>All blob clients below the supplied prefix.</returns>
         private async Task<List<BlobClient>> GetBlobClientsAsync(string from, CancellationToken cancellationToken)
         {
             var blobPages = _containerClient.GetBlobsByHierarchyAsync(
@@ -346,7 +358,8 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="client">The client.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A dictionary containing <c>ContentType</c>, <c>ContentHash</c>,
+        /// <c>ContentLength</c>, <c>ETag</c>, and <c>LastModified</c>.</returns>
         private async Task<Dictionary<string, object>> GetPropertiesAsync(BlobClient client, CancellationToken cancellationToken)
         {
             BlobProperties properties = await client.GetPropertiesAsync(cancellationToken: cancellationToken);
@@ -366,7 +379,7 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="blob">The BLOB.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
+        /// <returns>A readable Azure response stream that the caller must dispose.</returns>
         private async Task<Stream> DownloadBlobAsync(BlobClient blob, CancellationToken cancellationToken)
         {
             return (await blob.DownloadAsync(cancellationToken)).Value.Content;

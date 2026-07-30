@@ -7,15 +7,17 @@ using Paradigm.Enterprise.Services.TableReader.Readers.Xml;
 
 namespace Paradigm.Enterprise.Services.TableReader;
 
+/// <summary>
+/// Selects a CSV, Excel, XML, or JSON table reader from a <see cref="TableConfiguration"/>.
+/// </summary>
 public class TableReaderService : ITableReaderService
 {
-    /// <summary>
-    /// Gets the reader instance.
-    /// </summary>
-    /// <param name="sourceStream">The source stream.</param>
-    /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
-    /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <inheritdoc/>
+    /// <exception cref="ArgumentNullException"><paramref name="sourceStream"/> is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// A seekable stream is rewound before parsing. The caller retains ownership of the stream and
+    /// must keep it open while the reader is in use; disposing the reader leaves the stream open.
+    /// </remarks>
     public ITableReader GetReaderInstance(Stream? sourceStream, bool sourceHasHeader, TableConfiguration configuration)
     {
         if (sourceStream is null)
@@ -43,14 +45,9 @@ public class TableReaderService : ITableReaderService
         throw new Exception("TableReader not found.");
     }
 
-    /// <summary>
-    /// Gets the reader instance.
-    /// </summary>
-    /// <param name="sourceBytes">The source bytes.</param>
-    /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
-    /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
-    /// <exception cref="Exception">TableReader not found.</exception>
+    /// <inheritdoc/>
+    /// <exception cref="ArgumentNullException"><paramref name="sourceBytes"/> is <see langword="null"/>.</exception>
+    /// <exception cref="Exception"><see cref="TableConfiguration.TableFileType"/> is not supported.</exception>
     public ITableReader GetReaderInstance(byte[]? sourceBytes, bool sourceHasHeader, TableConfiguration configuration)
     {
         if (sourceBytes is null)

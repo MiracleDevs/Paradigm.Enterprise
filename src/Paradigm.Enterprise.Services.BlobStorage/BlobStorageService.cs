@@ -6,6 +6,9 @@ using Paradigm.Enterprise.Services.BlobStorage.Configuration;
 
 namespace Paradigm.Enterprise.Services.BlobStorage;
 
+/// <summary>
+/// Connects to an Azure Blob Storage account using a connection string or managed identity.
+/// </summary>
 public class BlobStorageService : IBlobStorageService
 {
     #region Properties
@@ -64,10 +67,10 @@ public class BlobStorageService : IBlobStorageService
     #region Public Methods
 
     /// <summary>
-    /// Creates the using managed identity.
+    /// Creates a service using a storage account URI and managed identity.
     /// </summary>
     /// <param name="storageAccountUri">The storage account URI.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
     [Obsolete("Use CreateUsingManagedIdentity(BlobStorageConfiguration configuration) instead.")]
     public static BlobStorageService CreateUsingManagedIdentity(string storageAccountUri)
     {
@@ -78,17 +81,17 @@ public class BlobStorageService : IBlobStorageService
     /// Creates the service using managed identity.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
     public static BlobStorageService CreateUsingManagedIdentity(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, false);
     }
 
     /// <summary>
-    /// Creates the using connection string.
+    /// Creates a service using a storage account connection string.
     /// </summary>
     /// <param name="connectionString">The connection string.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
     [Obsolete("Use CreateUsingConnectionString(BlobStorageConfiguration configuration) instead.")]
     public static BlobStorageService CreateUsingConnectionString(string connectionString)
     {
@@ -99,7 +102,7 @@ public class BlobStorageService : IBlobStorageService
     /// Creates the service using connection string.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>A configured blob storage service.</returns>
     public static BlobStorageService CreateUsingConnectionString(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, true);
@@ -110,7 +113,7 @@ public class BlobStorageService : IBlobStorageService
     /// </summary>
     /// <param name="containerName">Name of the container.</param>
     /// <param name="metadata">Extra metadata properties to tag the container.</param>
-    /// <returns></returns>
+    /// <returns>A wrapper for the newly created container.</returns>
     /// <exception cref="Exception">Unable to create the container.</exception>
     public async Task<IAzureBlobStorageContainer> CreateBlobStorageContainerAsync(string containerName, IDictionary<string, string>? metadata = null)
     {
@@ -123,7 +126,7 @@ public class BlobStorageService : IBlobStorageService
     /// Gets the BLOB storage container.
     /// </summary>
     /// <param name="containerName">Name of the container.</param>
-    /// <returns></returns>
+    /// <returns>A wrapper for the named container; the container is not created by this call.</returns>
     public IAzureBlobStorageContainer GetBlobStorageContainer(string containerName)
     {
         var containerClient = _serviceClient.GetBlobContainerClient(containerName);
@@ -133,7 +136,7 @@ public class BlobStorageService : IBlobStorageService
     /// <summary>
     /// Gets all containers.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>All containers visible to the account, including metadata.</returns>
     public async Task<List<BlobContainerItem>> GetAllContainersAsync()
     {
         var containers = new List<BlobContainerItem>();
@@ -152,7 +155,7 @@ public class BlobStorageService : IBlobStorageService
     /// Gets the BLOB client options.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>Azure SDK client options with normalized retry values.</returns>
     private BlobClientOptions GetBlobClientOptions(BlobStorageConfiguration configuration)
     {
         var options = new BlobClientOptions

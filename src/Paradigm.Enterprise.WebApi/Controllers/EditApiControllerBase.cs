@@ -8,6 +8,20 @@ using Paradigm.Enterprise.WebApi.Attributes;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
+/// <summary>
+/// Adds conventional save and delete actions to a read API controller.
+/// </summary>
+/// <typeparam name="TProvider">The edit provider that performs persistence operations.</typeparam>
+/// <typeparam name="TView">The entity view accepted and returned by the controller.</typeparam>
+/// <typeparam name="TParameters">The pagination parameters accepted by inherited searches.</typeparam>
+/// <typeparam name="TId">The value-type entity identifier.</typeparam>
+/// <remarks>
+/// The inherited and declared actions allow anonymous access. Standard <c>[Authorize]</c> metadata
+/// on a derived controller does not override the inherited <see cref="AllowAnonymousAttribute"/>.
+/// Protected mutations require an independently enforced mechanism such as
+/// <see cref="ApiAuthorizationAttribute"/>, or a different base controller that does not allow
+/// anonymous access.
+/// </remarks>
 [AllowAnonymous]
 [ApiController]
 public abstract class EditApiControllerBase<TProvider, TView, TParameters, TId> : ReadApiControllerBase<TProvider, TView, TParameters, TId>
@@ -34,8 +48,8 @@ public abstract class EditApiControllerBase<TProvider, TView, TParameters, TId> 
     /// <summary>
     /// Saves the entity.
     /// </summary>
-    /// <param name="view">The view.</param>
-    /// <returns></returns>
+    /// <param name="view">The entity state to create or update.</param>
+    /// <returns>The persisted view returned by the provider.</returns>
     [HttpPost]
     [ExposeEndpoint]
     public virtual async Task<TView> SaveAsync([FromBody] TView view)

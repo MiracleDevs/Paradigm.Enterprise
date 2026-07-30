@@ -1,5 +1,8 @@
 namespace Paradigm.Enterprise.Services.TableReader.Readers;
 
+/// <summary>
+/// Provides name- and index-based access to a table's columns.
+/// </summary>
 public interface ITableSchema
 {
     /// <summary>

@@ -4,6 +4,13 @@ using Paradigm.Enterprise.Data.Context;
 
 namespace Paradigm.Enterprise.Data.SqlServer.Context;
 
+/// <summary>
+/// Provides and reuses named <see cref="SqlConnection"/> instances for Entity Framework contexts.
+/// </summary>
+/// <remarks>
+/// Connections are created lazily from the corresponding named connection string and are owned by
+/// this provider. Disposing the provider disposes every connection it created.
+/// </remarks>
 public class SqlServerDbContextConnectionProvider : DbContextConnectionProvider
 {
     #region Properties
@@ -20,7 +27,7 @@ public class SqlServerDbContextConnectionProvider : DbContextConnectionProvider
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlServerDbContextConnectionProvider"/> class.
     /// </summary>
-    /// <param name="configuration">The configuration.</param>
+    /// <param name="configuration">The configuration containing the named SQL Server connection strings.</param>
     public SqlServerDbContextConnectionProvider(IConfiguration configuration) : base(configuration)
     {
         _connections = [];
@@ -31,7 +38,7 @@ public class SqlServerDbContextConnectionProvider : DbContextConnectionProvider
     #region Public Methods
 
     /// <summary>
-    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// Disposes all cached SQL Server connections.
     /// </summary>
     public override void Dispose()
     {
@@ -46,8 +53,7 @@ public class SqlServerDbContextConnectionProvider : DbContextConnectionProvider
     /// <value>
     /// The <see cref="SqlConnection"/>.
     /// </value>
-    /// <param name="name">The name.</param>
-    /// <returns></returns>
+    /// <param name="name">The configuration connection-string name.</param>
     public SqlConnection this[string name]
     {
         get

@@ -7,6 +7,10 @@ using Paradigm.Enterprise.Services.Email.Models;
 
 namespace Paradigm.Enterprise.Services.Email;
 
+/// <summary>
+/// Sends email through Azure Communication Services using a connection string or managed identity.
+/// </summary>
+/// <remarks>Invalid configuration and send failures are logged and suppressed.</remarks>
 public class EmailService : IEmailService
 {
     #region Properties
@@ -44,7 +48,7 @@ public class EmailService : IEmailService
     /// <summary>
     /// Sends the e-mail.
     /// </summary>
-    /// <param name="messageInfo"></param>
+    /// <param name="messageInfo">The recipients, subject, and HTML body to send.</param>
     public void SendMail(MailMessageInfo messageInfo)
     {
         SendMails([messageInfo]);
@@ -92,7 +96,7 @@ public class EmailService : IEmailService
     /// <summary>
     /// Builds the email client.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A configured email client, or <see langword="null"/> when configuration is invalid.</returns>
     private EmailClient? BuildEmailClient()
     {
         var strategy = GetClientCreationStrategy();

@@ -2,6 +2,10 @@
 
 namespace Paradigm.Enterprise.Interfaces;
 
+/// <summary>
+/// Defines an entity that records the users responsible for its creation and latest modification.
+/// </summary>
+/// <typeparam name="TId">The value type used for entity and user identifiers.</typeparam>
 public interface IAuditableEntity<TId> : IEntity<TId>
     where TId : struct, IEquatable<TId>
 {
@@ -22,6 +26,15 @@ public interface IAuditableEntity<TId> : IEntity<TId>
     TId? ModifiedByUserId { get; set; }
 }
 
+/// <summary>
+/// Defines an auditable entity that records both responsible users and audit timestamps.
+/// </summary>
+/// <typeparam name="TDate">The value type used to represent audit timestamps.</typeparam>
+/// <typeparam name="TId">The value type used for entity and user identifiers.</typeparam>
+/// <remarks>
+/// The concrete application determines the clock representation. The domain audit extensions provide
+/// built-in UTC handling for <see cref="DateTime"/> and <see cref="DateTimeOffset"/>.
+/// </remarks>
 public interface IAuditableEntity<TDate, TId> : IAuditableEntity<TId>
     where TDate : struct
     where TId : struct, IEquatable<TId>

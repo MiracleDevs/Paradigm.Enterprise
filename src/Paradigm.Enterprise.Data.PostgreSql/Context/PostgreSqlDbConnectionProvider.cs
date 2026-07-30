@@ -4,6 +4,13 @@ using Paradigm.Enterprise.Data.Context;
 
 namespace Paradigm.Enterprise.Data.PostgreSql.Context;
 
+/// <summary>
+/// Provides and reuses named <see cref="NpgsqlConnection"/> instances for Entity Framework contexts.
+/// </summary>
+/// <remarks>
+/// Connections are created lazily from the corresponding named connection string and are owned by
+/// this provider. Disposing the provider disposes every connection it created.
+/// </remarks>
 public class PostgreSqlDbConnectionProvider : DbContextConnectionProvider
 {
     #region Properties
@@ -20,7 +27,7 @@ public class PostgreSqlDbConnectionProvider : DbContextConnectionProvider
     /// <summary>
     /// Initializes a new instance of the <see cref="PostgreSqlDbConnectionProvider"/> class.
     /// </summary>
-    /// <param name="configuration">The configuration.</param>
+    /// <param name="configuration">The configuration containing the named PostgreSQL connection strings.</param>
     public PostgreSqlDbConnectionProvider(IConfiguration configuration) : base(configuration)
     {
         _connections = [];
@@ -31,7 +38,7 @@ public class PostgreSqlDbConnectionProvider : DbContextConnectionProvider
     #region Public Methods
 
     /// <summary>
-    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// Disposes all cached PostgreSQL connections.
     /// </summary>
     public override void Dispose()
     {
@@ -46,8 +53,7 @@ public class PostgreSqlDbConnectionProvider : DbContextConnectionProvider
     /// <value>
     /// The <see cref="NpgsqlConnection"/>.
     /// </value>
-    /// <param name="name">The name.</param>
-    /// <returns></returns>
+    /// <param name="name">The configuration connection-string name.</param>
     public NpgsqlConnection this[string name]
     {
         get

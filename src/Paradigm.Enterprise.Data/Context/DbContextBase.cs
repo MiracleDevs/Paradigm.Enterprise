@@ -8,6 +8,15 @@ using Paradigm.Enterprise.Interfaces;
 
 namespace Paradigm.Enterprise.Data.Context
 {
+    /// <summary>
+    /// Extends an Entity Framework context with unit-of-work participation and automatic entity auditing.
+    /// </summary>
+    /// <typeparam name="TId">The value type used for entity and logged-user identifiers.</typeparam>
+    /// <remarks>
+    /// Before saving, added and modified <see cref="IAuditableEntity{TId}"/> entries are audited when
+    /// an authenticated user is available from the current service scope. Changes are persisted only
+    /// when <see cref="SaveChangesAsync(CancellationToken)"/> or <see cref="CommitChangesAsync"/> is called.
+    /// </remarks>
     public class DbContextBase<TId> : DbContext, ICommiteable
         where TId : struct, IEquatable<TId>
     {
@@ -22,6 +31,11 @@ namespace Paradigm.Enterprise.Data.Context
 
         #region Constructor
 
+        /// <summary>
+        /// Initializes the context with its scoped services and Entity Framework options.
+        /// </summary>
+        /// <param name="serviceProvider">The scoped provider used to resolve the logged-user service.</param>
+        /// <param name="options">The options that configure this context.</param>
         public DbContextBase(IServiceProvider serviceProvider, DbContextOptions options)
             : base(options)
         {
@@ -45,6 +59,11 @@ namespace Paradigm.Enterprise.Data.Context
         /// </summary>
         public ITransaction CreateTransaction() => new DbContextTransaction(Database);
 
+        /// <summary>
+        /// Audits eligible tracked entities and then persists all tracked changes.
+        /// </summary>
+        /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
+        /// <returns>The number of state entries written to the database.</returns>
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             IEntity<TId>? loggedUser = null;

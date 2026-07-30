@@ -1,5 +1,8 @@
 ﻿namespace Paradigm.Enterprise.Providers.Exceptions;
 
+/// <summary>
+/// Indicates that a requested application resource could not be found or exposed to the caller.
+/// </summary>
 public class NotFoundException : Exception
 {
     /// <summary>

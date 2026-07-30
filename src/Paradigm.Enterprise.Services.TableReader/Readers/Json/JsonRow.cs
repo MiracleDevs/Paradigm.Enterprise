@@ -36,7 +36,7 @@ internal class JsonRow : RowBase
     /// <summary>
     /// Reads a new row.
     /// </summary>
-    /// <returns></returns>
+    /// <returns><see langword="true"/> when a row was read; otherwise <see langword="false"/>.</returns>
     public override bool Read()
     {
         if (Index >= Items.Count)

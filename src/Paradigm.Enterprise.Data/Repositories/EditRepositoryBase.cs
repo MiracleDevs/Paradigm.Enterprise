@@ -5,6 +5,13 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace Paradigm.Enterprise.Data.Repositories;
 
+/// <summary>
+/// Implements Entity Framework change staging for an entity and provides aggregate-removal hooks.
+/// </summary>
+/// <typeparam name="TEntity">The entity managed by the repository.</typeparam>
+/// <typeparam name="TContext">The Entity Framework context used to stage changes.</typeparam>
+/// <typeparam name="TId">The value type used for entity identifiers.</typeparam>
+/// <remarks>Add, update, and delete operations do not save the context; commit through the unit of work.</remarks>
 public abstract class EditRepositoryBase<TEntity, TContext, TId> : ReadRepositoryBase<TEntity, TContext, TId>, IEditRepository<TEntity, TId>
     where TEntity : EntityBase<TId>
      where TContext : DbContextBase<TId>
@@ -28,7 +35,7 @@ public abstract class EditRepositoryBase<TEntity, TContext, TId> : ReadRepositor
     /// Adds a new entity.
     /// </summary>
     /// <param name="entity">The entity.</param>
-    /// <returns></returns>
+    /// <returns>The entity now tracked in the added state.</returns>
     public virtual async Task<TEntity> AddAsync(TEntity entity)
     {
         await GetDbSet().AddAsync(entity);
@@ -48,7 +55,7 @@ public abstract class EditRepositoryBase<TEntity, TContext, TId> : ReadRepositor
     /// Updates the entity.
     /// </summary>
     /// <param name="entity">The entity.</param>
-    /// <returns></returns>
+    /// <returns>The entity now tracked in the modified state.</returns>
     public virtual async Task<TEntity> UpdateAsync(TEntity entity)
     {
         DeleteRemovedAggregates(entity);
@@ -95,7 +102,7 @@ public abstract class EditRepositoryBase<TEntity, TContext, TId> : ReadRepositor
     /// <summary>
     /// Gets the database set.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The Entity Framework set used to stage changes for <typeparamref name="TEntity"/>.</returns>
     protected virtual DbSet<TEntity> GetDbSet() => EntityContext.Set<TEntity>();
 
     /// <summary>

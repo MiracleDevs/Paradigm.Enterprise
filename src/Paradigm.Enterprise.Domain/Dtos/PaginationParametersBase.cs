@@ -1,14 +1,17 @@
 ﻿namespace Paradigm.Enterprise.Domain.Dtos
 {
+    /// <summary>
+    /// Provides common page and sort inputs for repository searches.
+    /// </summary>
     public abstract class PaginationParametersBase
     {
         /// <summary>
-        /// The default page size
+        /// The number of items requested per page when no other size is supplied.
         /// </summary>
         public const int DefaultPageSize = 10;
 
         /// <summary>
-        /// Gets or sets the size of the page.
+        /// Gets or sets the requested number of items per page.
         /// </summary>
         /// <value>
         /// The size of the page.
@@ -16,7 +19,7 @@
         public int? PageSize { get; set; } = DefaultPageSize;
 
         /// <summary>
-        /// Gets or sets the sort by.
+        /// Gets or sets the implementation-defined member used for sorting.
         /// </summary>
         /// <value>
         /// The sort by.
@@ -24,7 +27,7 @@
         public string? SortBy { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the sort direction.
+        /// Gets or sets the implementation-defined sort direction.
         /// </summary>
         /// <value>
         /// The sort direction.
@@ -32,7 +35,7 @@
         public string? SortDirection { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the page number.
+        /// Gets or sets the requested one-based page number.
         /// </summary>
         /// <value>
         /// The page number.

@@ -8,6 +8,14 @@ using System.Reflection;
 
 namespace Paradigm.Enterprise.WebApi.Extensions
 {
+    /// <summary>
+    /// Discovers and registers Paradigm providers, repositories, services, mappers, entities, and DTOs.
+    /// </summary>
+    /// <remarks>
+    /// Discovery includes the supplied assemblies and their directly referenced assemblies. Assemblies
+    /// that cannot be loaded are skipped. Provider, repository, and mapper registration is transient;
+    /// service registration is singleton.
+    /// </remarks>
     public static class ServiceCollectionExtensions
     {
         #region Public Methods
@@ -17,6 +25,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="assemblies">The assemblies.</param>
+        /// <returns>The same service collection for chaining.</returns>
         public static IServiceCollection RegisterProviders(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(IProvider).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -44,6 +53,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="assemblies">The assemblies.</param>
+        /// <returns>The same service collection for chaining.</returns>
         public static IServiceCollection RegisterRepositories(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(IRepository).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -66,7 +76,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// <param name="services">The services.</param>
         /// <param name="ignore">The ignore.</param>
         /// <param name="assemblies">The assemblies.</param>
-        /// <returns></returns>
+        /// <returns>The same service collection for chaining.</returns>
         public static IServiceCollection RegisterServices(this IServiceCollection services, Type[] ignore, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(IService).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -91,7 +101,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// </summary>
         /// <param name="services">The services.</param>
         /// <param name="assemblies">The assemblies.</param>
-        /// <returns></returns>
+        /// <returns>The same service collection for chaining.</returns>
         public static IServiceCollection RegisterMappers(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(IMapper).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -112,7 +122,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// </summary>
         /// <param name="services">The services.</param>
         /// <param name="assemblies">The assemblies.</param>
-        /// <returns></returns>
+        /// <returns>The same service collection for chaining.</returns>
         public static IServiceCollection RegisterEntities(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(EntityBase).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -128,7 +138,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// </summary>
         /// <param name="services">The services.</param>
         /// <param name="assemblies">The assemblies.</param>
-        /// <returns></returns>
+        /// <returns>The same service collection for chaining.</returns>
         public static IServiceCollection RegisterDtos(this IServiceCollection services, params Assembly[] assemblies)
         {
             var types = GetTypes(x => typeof(DtoBase).IsAssignableFrom(x) && x is { IsAbstract: false, IsPublic: true }, assemblies);
@@ -148,7 +158,7 @@ namespace Paradigm.Enterprise.WebApi.Extensions
         /// </summary>
         /// <param name="filter">Function to filter the types.</param>
         /// <param name="assemblies">Optional assemblies to use as entry point. If no assembly is provided, the system will use the entry assembly. By default the system will use the entry assembly.</param>
-        /// <returns></returns>
+        /// <returns>The distinct matching types discovered in loadable assemblies.</returns>
         private static IEnumerable<TypeInfo> GetTypes(Func<TypeInfo, bool> filter, params Assembly?[] assemblies)
         {
             if (assemblies is null || assemblies.Length == 0)

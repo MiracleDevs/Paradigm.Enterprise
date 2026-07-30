@@ -1,12 +1,17 @@
 ﻿namespace Paradigm.Enterprise.Providers.Extensions;
 
+/// <summary>
+/// Reads the remaining content of a stream into memory.
+/// </summary>
+/// <remarks>All operations start at the stream's current position.</remarks>
 public static class StreamExtensions
 {
     /// <summary>
-    /// Converts to array.
+    /// Asynchronously reads the remaining bytes into a new array.
     /// </summary>
-    /// <param name="stream">The stream.</param>
-    /// <returns></returns>
+    /// <param name="stream">The readable stream to consume from its current position.</param>
+    /// <returns>A new array containing all bytes read from the current position.</returns>
+    /// <remarks>This method leaves <paramref name="stream"/> open.</remarks>
     public static async Task<byte[]> ToArrayAsync(this Stream stream)
     {
         var buffer = new byte[1024 * 1024];
@@ -20,10 +25,11 @@ public static class StreamExtensions
     }
 
     /// <summary>
-    /// Converts to array.
+    /// Reads the remaining bytes into a new array.
     /// </summary>
-    /// <param name="stream">The stream.</param>
-    /// <returns></returns>
+    /// <param name="stream">The readable stream to consume from its current position.</param>
+    /// <returns>A new array containing all bytes read from the current position.</returns>
+    /// <remarks>This method leaves <paramref name="stream"/> open.</remarks>
     public static byte[] ToArray(this Stream stream)
     {
         var buffer = new byte[1024 * 1024];
@@ -37,12 +43,11 @@ public static class StreamExtensions
     }
 
     /// <summary>
-    /// Converts to string.
+    /// Reads the remaining text synchronously using the default <see cref="StreamReader"/> encoding.
     /// </summary>
-    /// <param name="stream">The stream.</param>
-    /// <returns>
-    /// A <see cref="string" /> that represents this instance.
-    /// </returns>
+    /// <param name="stream">The readable stream to consume from its current position.</param>
+    /// <returns>The decoded text from the current position through the end of the stream.</returns>
+    /// <remarks>Disposing the internal reader also disposes <paramref name="stream"/>.</remarks>
     public static string ConvertToString(this Stream stream)
     {
         using var reader = new StreamReader(stream);
@@ -50,12 +55,11 @@ public static class StreamExtensions
     }
 
     /// <summary>
-    /// Converts to string.
+    /// Reads the remaining text asynchronously using the default <see cref="StreamReader"/> encoding.
     /// </summary>
-    /// <param name="stream">The stream.</param>
-    /// <returns>
-    /// A <see cref="string" /> that represents this instance.
-    /// </returns>
+    /// <param name="stream">The readable stream to consume from its current position.</param>
+    /// <returns>The decoded text from the current position through the end of the stream.</returns>
+    /// <remarks>Disposing the internal reader also disposes <paramref name="stream"/>.</remarks>
     public static async Task<string> ConvertToStringAsync(this Stream stream)
     {
         using var reader = new StreamReader(stream);

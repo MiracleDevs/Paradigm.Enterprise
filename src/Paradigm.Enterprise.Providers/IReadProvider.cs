@@ -2,6 +2,11 @@
 
 namespace Paradigm.Enterprise.Providers;
 
+/// <summary>
+/// Defines application-facing read and search operations for a view model.
+/// </summary>
+/// <typeparam name="TView">The view model returned to callers.</typeparam>
+/// <typeparam name="TId">The value type used for identifiers.</typeparam>
 public interface IReadProvider<TView, TId> : IProvider
     where TId : struct, IEquatable<TId>
 {
@@ -9,20 +14,21 @@ public interface IReadProvider<TView, TId> : IProvider
     /// Gets the entity identifier.
     /// </summary>
     /// <param name="id">The identifier.</param>
-    /// <returns></returns>
+    /// <returns>The matching view.</returns>
+    /// <exception cref="Exceptions.NotFoundException">The view does not exist or is not visible to the caller.</exception>
     Task<TView> GetByIdAsync(TId id);
 
     /// <summary>
     /// Gets the entities by ids.
     /// </summary>
     /// <param name="ids">The ids.</param>
-    /// <returns></returns>
+    /// <returns>The matching views; identifiers with no match are omitted.</returns>
     Task<IEnumerable<TView>> GetByIdsAsync(IEnumerable<TId> ids);
 
-    ///// <summary>
-    ///// Gets all the entities.
-    ///// </summary>
-    ///// <returns></returns>
+    /// <summary>
+    /// Gets all view models available to the caller.
+    /// </summary>
+    /// <returns>All view models exposed by the provider.</returns>
     Task<IEnumerable<TView>> GetAllAsync();
 
     /// <summary>
@@ -30,14 +36,14 @@ public interface IReadProvider<TView, TId> : IProvider
     /// </summary>
     /// <typeparam name="TParameters">The type of the parameters.</typeparam>
     /// <param name="parameters">The parameters.</param>
-    /// <returns></returns>
+    /// <returns>The requested views and their pagination metadata.</returns>
     Task<PaginatedResultDto<TView>> SearchAsync<TParameters>(TParameters parameters) where TParameters : PaginationParametersBase;
 
     /// <summary>
     /// Gets the results paginated.
     /// </summary>
     /// <param name="parameters">The parameters.</param>
-    /// <returns></returns>
+    /// <returns>The requested views and their pagination metadata.</returns>
     [Obsolete("Use SearchAsync<TParameters> instead")]
     Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters);
 }

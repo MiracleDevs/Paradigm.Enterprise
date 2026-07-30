@@ -7,6 +7,9 @@ using StackExchange.Redis;
 
 namespace Paradigm.Enterprise.Services.Cache.Extensions;
 
+/// <summary>
+/// Registers Redis-backed cache services using a connection string or Azure managed identity.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
@@ -16,8 +19,12 @@ public static class ServiceCollectionExtensions
     /// <param name="configuration">The configuration.</param>
     /// <param name="connectionStringName">Name of the connection string.</param>
     /// <param name="instanceName">Name of the instance.</param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <returns>A task that completes after the initial Redis connection and registrations.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> or <paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// When configured not to throw, supported Redis startup failures register a no-op distributed
+    /// cache so application startup can continue.
+    /// </remarks>
     public static async Task AddCacheAsync(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -65,7 +72,7 @@ public static class ServiceCollectionExtensions
     /// Builds the managed identity configuration options.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <returns></returns>
+    /// <returns>Redis connection options configured with an Azure access-token credential.</returns>
     /// <exception cref="ArgumentException">Connection string not found and managed identity host is missing in 'RedisCacheConfiguration:ManagedIdentity:Host'.</exception>
     private static async Task<ConfigurationOptions> BuildManagedIdentityConfigurationOptionsAsync(IConfiguration configuration)
     {

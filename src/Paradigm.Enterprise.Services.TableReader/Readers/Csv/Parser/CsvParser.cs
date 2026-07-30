@@ -78,7 +78,7 @@ internal class CsvParser
     /// <summary>
     /// Parses the specified csv text.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The scalar fields in the next CSV record.</returns>
     public List<string> ParseNextLine()
     {
         if (string.IsNullOrEmpty(_configuration.RowDelimiter))
@@ -177,7 +177,7 @@ internal class CsvParser
     /// <summary>
     /// Processes the quotation.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The unescaped contents of the quoted field.</returns>
     /// <exception cref="Exception">The string was not terminated.</exception>
     private string ProcessQuotation()
     {
@@ -234,7 +234,7 @@ internal class CsvParser
     /// <summary>
     /// Processes the escape.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The character represented by the escape sequence.</returns>
     /// <exception cref="Exception">The escaped character is not recognized as valid escapable character.</exception>
     private char ProcessEscape()
     {
@@ -284,7 +284,7 @@ internal class CsvParser
     /// Converts to literal.
     /// </summary>
     /// <param name="input">The input.</param>
-    /// <returns></returns>
+    /// <returns>A C#-style literal representation of <paramref name="input"/>.</returns>
     private static string ToLiteral(string input)
     {
         var builder = new StringBuilder();

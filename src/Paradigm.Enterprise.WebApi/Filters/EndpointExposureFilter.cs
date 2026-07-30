@@ -13,7 +13,6 @@ public class EndpointExposureFilter : IActionFilter
     /// <summary>
     /// Initializes a new instance of the <see cref="EndpointExposureFilter"/> class.
     /// </summary>
-    /// <param name="requireExplicitExposure">When true, endpoints must have the ExposeEndpoint attribute to be accessible.</param>
     public EndpointExposureFilter()
     {
     }

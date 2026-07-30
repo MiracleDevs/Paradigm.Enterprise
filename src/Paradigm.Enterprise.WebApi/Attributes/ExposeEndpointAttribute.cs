@@ -3,9 +3,14 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace Paradigm.Enterprise.WebApi.Attributes;
 
 /// <summary>
-/// Attribute used to mark API endpoints that should be exposed to external systems.
-/// When not applied to an endpoint, the endpoint will remain internal and not publicly accessible.
+/// Marks an API action as eligible for exposure when endpoint-exposure filtering is enabled.
 /// </summary>
+/// <remarks>
+/// This attribute is a marker: its <see cref="IActionFilter"/> callbacks perform no enforcement.
+/// The application must register <c>AddEndpointExposureControl()</c> to install the global filter
+/// that returns HTTP 404 for unmarked actions. The marker is not an authentication or authorization
+/// mechanism.
+/// </remarks>
 [AttributeUsage(AttributeTargets.Method)]
 public class ExposeEndpointAttribute : Attribute, IActionFilter
 {

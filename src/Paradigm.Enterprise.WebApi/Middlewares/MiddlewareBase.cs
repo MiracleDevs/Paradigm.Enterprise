@@ -2,6 +2,9 @@
 
 namespace Paradigm.Enterprise.WebApi.Middlewares;
 
+/// <summary>
+/// Provides the next request delegate for custom ASP.NET Core middleware.
+/// </summary>
 public abstract class MiddlewareBase
 {
     #region Properties
@@ -18,6 +21,11 @@ public abstract class MiddlewareBase
 
     #region Constructor
 
+    /// <summary>
+    /// Initializes the middleware with the next component in the pipeline.
+    /// </summary>
+    /// <param name="next">The next request delegate.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="next"/> is <see langword="null"/>.</exception>
     protected MiddlewareBase(RequestDelegate next)
     {
         Next = next ?? throw new ArgumentNullException(nameof(next));
@@ -30,8 +38,8 @@ public abstract class MiddlewareBase
     /// <summary>
     /// Invokes the specified context.
     /// </summary>
-    /// <param name="context">The context.</param>
-    /// <returns></returns>
+    /// <param name="context">The current HTTP context.</param>
+    /// <returns>A task that represents processing the request.</returns>
     public abstract Task Invoke(HttpContext context);
 
     #endregion

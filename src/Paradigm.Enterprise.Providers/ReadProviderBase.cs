@@ -6,6 +6,13 @@ using Paradigm.Enterprise.Providers.Exceptions;
 
 namespace Paradigm.Enterprise.Providers;
 
+/// <summary>
+/// Implements application-facing reads by delegating to a view repository.
+/// </summary>
+/// <typeparam name="TInterface">The interface shared by the domain entity and view.</typeparam>
+/// <typeparam name="TView">The view model returned to callers.</typeparam>
+/// <typeparam name="TViewRepository">The repository used to retrieve views.</typeparam>
+/// <typeparam name="TId">The value type used for identifiers.</typeparam>
 public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> : ProviderBase, IReadProvider<TView, TId>
     where TId : struct, IEquatable<TId>
     where TInterface : Interfaces.IEntity<TId>
@@ -43,7 +50,8 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     /// Gets the entity identifier.
     /// </summary>
     /// <param name="id">The identifier.</param>
-    /// <returns></returns>
+    /// <returns>The matching view.</returns>
+    /// <exception cref="NotFoundException">The view does not exist or is not visible to the caller.</exception>
     public virtual async Task<TView> GetByIdAsync(TId id)
     {
         return await ViewRepository.GetByIdAsync(id)
@@ -54,7 +62,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     /// Gets the entities by ids.
     /// </summary>
     /// <param name="ids">The ids.</param>
-    /// <returns></returns>
+    /// <returns>The matching views; identifiers with no match are omitted.</returns>
     public virtual async Task<IEnumerable<TView>> GetByIdsAsync(IEnumerable<TId> ids)
     {
         return await ViewRepository.GetByIdsAsync(ids);
@@ -63,7 +71,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     /// <summary>
     /// Gets all the entities.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>All views exposed by the repository.</returns>
     public virtual async Task<IEnumerable<TView>> GetAllAsync()
     {
         return await ViewRepository.GetAllAsync();
@@ -74,7 +82,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     /// </summary>
     /// <typeparam name="TParameters">The type of the parameters.</typeparam>
     /// <param name="parameters">The parameters.</param>
-    /// <returns></returns>
+    /// <returns>The requested views and their pagination metadata.</returns>
     public virtual async Task<PaginatedResultDto<TView>> SearchAsync<TParameters>(TParameters parameters)
         where TParameters : PaginationParametersBase
     {
@@ -85,7 +93,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     /// Gets the results paginated.
     /// </summary>
     /// <param name="parameters">The parameters.</param>
-    /// <returns></returns>
+    /// <returns>The requested views and their pagination metadata.</returns>
     [Obsolete("Use SearchAsync<TParameters> instead")]
     public virtual async Task<PaginatedResultDto<TView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters)
     {

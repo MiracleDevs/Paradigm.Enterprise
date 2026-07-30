@@ -2,6 +2,13 @@
 
 namespace Paradigm.Enterprise.Domain.Uow
 {
+    /// <summary>
+    /// Coordinates a database transaction across compatible persistence participants and commands.
+    /// </summary>
+    /// <remarks>
+    /// Attached contexts and commands must be able to use the same underlying database transaction
+    /// and connection. Implementations are not distributed transaction coordinators.
+    /// </remarks>
     public interface ITransaction : IDisposable
     {
         /// <summary>
@@ -13,25 +20,25 @@ namespace Paradigm.Enterprise.Domain.Uow
         bool IsActive { get; }
 
         /// <summary>
-        /// Commits this instance.
+        /// Commits the underlying database transaction and detaches participating contexts.
         /// </summary>
         void Commit();
 
         /// <summary>
-        /// Rollbacks this instance.
+        /// Rolls back the underlying database transaction and detaches participating contexts.
         /// </summary>
         void Rollback();
 
         /// <summary>
-        /// Adds the commiteable.
+        /// Enlists a compatible persistence participant in this transaction.
         /// </summary>
-        /// <param name="commiteable">The commiteable.</param>
+        /// <param name="commiteable">The participant to enlist.</param>
         void AddCommiteable(ICommiteable commiteable);
 
         /// <summary>
-        /// Adds the command.
+        /// Associates a database command with this transaction.
         /// </summary>
-        /// <param name="command">The command.</param>
+        /// <param name="command">The command to enlist. Its connection must be compatible with the transaction.</param>
         void AddCommand(IDbCommand command);
     }
 }

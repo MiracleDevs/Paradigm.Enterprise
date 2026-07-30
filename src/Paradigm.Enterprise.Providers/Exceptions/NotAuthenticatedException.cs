@@ -1,5 +1,8 @@
 ﻿namespace Paradigm.Enterprise.Providers.Exceptions;
 
+/// <summary>
+/// Indicates that an operation requires an authenticated user but none is available.
+/// </summary>
 public class NotAuthenticatedException : Exception
 {
     /// <summary>

@@ -42,7 +42,7 @@ internal class JsonTableReader : TableReaderBase
     /// </summary>
     /// <param name="content">The content.</param>
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
-    /// <returns></returns>
+    /// <returns>A JSON reader over <paramref name="content"/>.</returns>
     public static ITableReader OpenFromContent(byte[] content, bool sourceHasHeader)
     {
         return new JsonTableReader(new MemoryStream(content), sourceHasHeader);
@@ -53,7 +53,8 @@ internal class JsonTableReader : TableReaderBase
     /// </summary>
     /// <param name="contentStream">The content stream.</param>
     /// <param name="sourceHasHeader">if set to <c>true</c> [source has header].</param>
-    /// <returns></returns>
+    /// <returns>A JSON reader that leaves <paramref name="contentStream"/> open.</returns>
+    /// <remarks>The JSON document is loaded during this call; the source stream is not retained.</remarks>
     public static ITableReader OpenFromStream(Stream contentStream, bool sourceHasHeader)
     {
         return new JsonTableReader(contentStream, sourceHasHeader);

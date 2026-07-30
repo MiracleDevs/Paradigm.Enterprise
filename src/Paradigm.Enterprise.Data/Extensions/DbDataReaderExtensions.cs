@@ -4,16 +4,23 @@ using System.Data.Common;
 
 namespace Paradigm.Enterprise.Data.Extensions;
 
+/// <summary>
+/// Materializes primitives, mapped objects, and lists from the current result set of a data reader.
+/// </summary>
+/// <remarks>
+/// Object types require a mapper registered with <see cref="DataReaderMapperFactory"/>.
+/// These methods consume rows but do not dispose or close the reader.
+/// </remarks>
 public static class DbDataReaderExtensions
 {
     #region Public Methods
 
     /// <summary>
-    /// Translates the reader to a list of the specified type.
+    /// Materializes the current result set as a primitive, mapped object, or list.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="reader">The reader.</param>
-    /// <returns></returns>
+    /// <typeparam name="T">The result type to materialize.</typeparam>
+    /// <param name="reader">The reader positioned before the first row of the current result set.</param>
+    /// <returns>The materialized value, or the default value when a scalar or object result has no row.</returns>
     public static async Task<T?> TranslateAsync<T>(this DbDataReader reader)
     {
         var resultType = typeof(T);
@@ -28,11 +35,11 @@ public static class DbDataReaderExtensions
     }
 
     /// <summary>
-    /// Translates the and move.
+    /// Materializes the current result set and then advances to the next result set.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="reader">The reader.</param>
-    /// <returns></returns>
+    /// <typeparam name="T">The result type to materialize.</typeparam>
+    /// <param name="reader">The reader positioned before the first row of the current result set.</param>
+    /// <returns>The materialized value, or the default value when a scalar or object result has no row.</returns>
     public static async Task<T?> TranslateAndMoveAsync<T>(this DbDataReader reader)
     {
         var result = await reader.TranslateAsync<T>();
@@ -47,10 +54,10 @@ public static class DbDataReaderExtensions
     /// <summary>
     /// Translates a single entity.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The object type to materialize.</typeparam>
     /// <param name="reader">The reader.</param>
     /// <param name="resultType">Type of the result.</param>
-    /// <returns></returns>
+    /// <returns>The mapped first row, or the default value when the result set is empty.</returns>
     private static async Task<T?> TranslateSingleAsync<T>(DbDataReader reader, Type resultType)
     {
         var objectMapper = DataReaderMapperFactory.GetMapper<T>();
@@ -63,11 +70,11 @@ public static class DbDataReaderExtensions
     /// <summary>
     /// Translates a list of entities.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The concrete list type to create.</typeparam>
     /// <param name="reader">The reader.</param>
     /// <param name="resultType">Type of the result.</param>
-    /// <returns></returns>
-    /// <exception cref="Exception">Couldn't instantiate the type {resultType.Name}</exception>
+    /// <returns>The list containing all mapped rows.</returns>
+    /// <exception cref="Exception">The requested list type cannot be instantiated.</exception>
     private static async Task<T> TranslateListAsync<T>(DbDataReader reader, Type resultType)
     {
         var listItemType = resultType.GetGenericArguments().First();
@@ -85,8 +92,9 @@ public static class DbDataReaderExtensions
     /// <summary>
     /// Translates a primitive.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The primitive type to read.</typeparam>
     /// <param name="reader">The reader.</param>
+    /// <returns>The first column of the first row, or the default value when the result set is empty.</returns>
     private static async Task<T?> TranslatePrimitiveAsync<T>(DbDataReader reader)
     {
         if (await reader.ReadAsync())

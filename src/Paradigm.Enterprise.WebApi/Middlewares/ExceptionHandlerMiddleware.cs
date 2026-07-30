@@ -9,10 +9,22 @@ using System.Text;
 
 namespace Paradigm.Enterprise.WebApi.Middlewares;
 
+/// <summary>
+/// Converts unhandled request exceptions into JSON error responses and logs the failure.
+/// </summary>
+/// <remarks>
+/// Known provider exceptions map to 401, 403, or 404; all other exceptions map to 500.
+/// Set <c>PARADIGM_EXPAND_EXCEPTIONS=true</c> to include inner-exception messages in responses.
+/// Do not enable expanded messages where they could disclose sensitive implementation details.
+/// </remarks>
 public class ExceptionHandlerMiddleware : MiddlewareBase
 {
     #region Constructor
 
+    /// <summary>
+    /// Initializes the exception-handling middleware.
+    /// </summary>
+    /// <param name="next">The next request delegate.</param>
     public ExceptionHandlerMiddleware(RequestDelegate next) : base(next)
     {
     }
@@ -24,7 +36,7 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
     /// <summary>
     /// Invokes the specified context.
     /// </summary>
-    /// <param name="context">The context.</param>
+    /// <param name="context">The current HTTP context.</param>
     public override async Task Invoke(HttpContext context)
     {
         try
@@ -76,7 +88,7 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
     /// </summary>
     /// <param name="exception">The exception.</param>
     /// <param name="tabs">The tabs.</param>
-    /// <returns></returns>
+    /// <returns>The flattened message text.</returns>
     private string GetErrorMessage(Exception exception, string tabs = "")
     {
         var builder = new StringBuilder();
@@ -97,6 +109,9 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
 
     #region Nested Types
 
+    /// <summary>
+    /// Represents the JSON error body returned to a client.
+    /// </summary>
     public class Error
     {
         /// <summary>
@@ -107,6 +122,10 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
         /// </value>
         public string Message { get; set; }
 
+        /// <summary>
+        /// Initializes an error body with its client-facing message.
+        /// </summary>
+        /// <param name="message">The message serialized into the response.</param>
         public Error(string message)
         {
             Message = message;

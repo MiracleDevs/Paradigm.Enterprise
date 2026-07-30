@@ -6,6 +6,13 @@ using System.Data;
 
 namespace Paradigm.Enterprise.Data.Uow
 {
+    /// <summary>
+    /// Wraps an Entity Framework transaction and enlists compatible contexts and commands in it.
+    /// </summary>
+    /// <remarks>
+    /// Enlisted contexts must use the same connection as the originating context. Commit, rollback,
+    /// and disposal detach all contexts that were enlisted through this wrapper.
+    /// </remarks>
     public class DbContextTransaction : ITransaction
     {
         #region Properties

@@ -2,6 +2,9 @@
 
 namespace Paradigm.Enterprise.Providers;
 
+/// <summary>
+/// Provides dependency-injection access shared by application-layer providers.
+/// </summary>
 public abstract class ProviderBase : IProvider
 {
     #region Properties
@@ -35,7 +38,7 @@ public abstract class ProviderBase : IProvider
     /// Gets the provider.
     /// </summary>
     /// <typeparam name="TProvider">The type of the provider.</typeparam>
-    /// <returns></returns>
+    /// <returns>The provider resolved from the current service scope.</returns>
     protected virtual TProvider GetProvider<TProvider>() where TProvider : IProvider
     {
         return ServiceProvider.GetRequiredService<TProvider>();

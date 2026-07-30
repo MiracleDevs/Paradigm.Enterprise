@@ -2,12 +2,15 @@
 
 namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures.Mappers;
 
+/// <summary>
+/// Converts an application parameter object into SQL Server command parameters.
+/// </summary>
 public interface ISqlParameterMapper : IDisposable
 {
     /// <summary>
-    /// Maps the specified parameters.
+    /// Maps an application parameter object to SQL Server parameters.
     /// </summary>
-    /// <param name="parameters">The parameters.</param>
-    /// <returns></returns>
+    /// <param name="parameters">The application parameter object to map.</param>
+    /// <returns>The parameters to add to a SQL Server command.</returns>
     SqlParameter[] Map(object parameters);
 }

@@ -1,5 +1,8 @@
 namespace Paradigm.Enterprise.Services.TableReader.Readers.Csv.Parser;
 
+/// <summary>
+/// Tracks a one-based line and character position while parsing CSV text.
+/// </summary>
 public class Cursor
 {
     /// <summary>
@@ -40,7 +43,7 @@ public class Cursor
     /// <summary>
     /// Copies this instance.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A new cursor with the same line and character values.</returns>
     public Cursor Copy()
     {
         return new Cursor(Line, Character);

@@ -4,6 +4,9 @@ using Paradigm.Enterprise.Services.BlobStorage.Configuration;
 
 namespace Paradigm.Enterprise.Services.BlobStorage.Extensions;
 
+/// <summary>
+/// Registers an Azure Blob Storage account in dependency injection.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
@@ -11,7 +14,8 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The services.</param>
     /// <param name="storageAccountUriSection">The storage account URI section.</param>
-    /// <returns></returns>
+    /// <returns>The same service collection for chaining.</returns>
+    /// <exception cref="ArgumentException">The configured storage account URI is missing.</exception>
     public static IServiceCollection RegisterBlobStorageAccountUsingManagedIdentity(this IServiceCollection services, string storageAccountUriSection)
     {
         return services.AddScoped<IBlobStorageService>(serviceProvider =>
@@ -31,7 +35,8 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The services.</param>
     /// <param name="connectionStringName">Name of the connection string.</param>
-    /// <returns></returns>
+    /// <returns>The same service collection for chaining.</returns>
+    /// <exception cref="ArgumentException">The named connection string is missing.</exception>
     public static IServiceCollection RegisterBlobStorageAccountUsingConnectionString(this IServiceCollection services, string connectionStringName)
     {
         return services.AddScoped<IBlobStorageService>(serviceProvider =>

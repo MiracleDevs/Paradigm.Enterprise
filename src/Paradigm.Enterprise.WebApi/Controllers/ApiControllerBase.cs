@@ -4,6 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Paradigm.Enterprise.WebApi.Controllers;
 
+/// <summary>
+/// Provides logging support for Paradigm API controllers.
+/// </summary>
+/// <remarks>
+/// This base class is decorated with <see cref="AllowAnonymousAttribute"/>. Derived controllers
+/// therefore permit anonymous requests unless they apply and enforce a separate authorization
+/// mechanism, such as <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>.
+/// Endpoint exposure and request authorization are independent concerns.
+/// </remarks>
 [AllowAnonymous]
 [ApiController]
 public abstract class ApiControllerBase : ControllerBase
@@ -34,6 +43,14 @@ public abstract class ApiControllerBase : ControllerBase
     #endregion
 }
 
+/// <summary>
+/// Provides logging and a provider dependency for Paradigm API controllers.
+/// </summary>
+/// <typeparam name="TProvider">The application provider used by the controller.</typeparam>
+/// <remarks>
+/// The anonymous-access behavior inherited from <see cref="ApiControllerBase"/> also applies to
+/// this class. Secure derived controllers explicitly with the application's authorization policy.
+/// </remarks>
 public abstract class ApiControllerBase<TProvider> : ApiControllerBase
 {
     #region Properties

@@ -2,23 +2,36 @@ using System.Resources;
 
 namespace Paradigm.Enterprise.WebApi.Exceptions.Handlers;
 
+/// <summary>
+/// Translates matching exceptions with messages obtained from a resource type.
+/// </summary>
 public class ExceptionHandler : IExceptionHandler
 {
     private readonly List<IExceptionMatcher> _matchers;
 
     private readonly ResourceManager _resourceManager;
 
+    /// <summary>
+    /// Initializes a handler using the specified resource type for localized messages.
+    /// </summary>
+    /// <param name="resourceType">The type whose resource manager supplies translated messages.</param>
     public ExceptionHandler(Type resourceType)
     {
         _resourceManager = new ResourceManager(resourceType);
         _matchers = [];
     }
 
+    /// <inheritdoc/>
     public void AddMatcher(IExceptionMatcher matcher)
     {
         _matchers.Add(matcher);
     }
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// For an <see cref="AggregateException"/>, inner exceptions are inspected in order. For other
+    /// exceptions, each matcher walks the inner-exception chain before the next matcher is tried.
+    /// </remarks>
     public Exception Handle(Exception ex)
     {
         if (ex is not AggregateException collectionException)

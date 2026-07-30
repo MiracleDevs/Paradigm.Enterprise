@@ -5,14 +5,22 @@ using Paradigm.Enterprise.Data.SqlServer.Context;
 
 namespace Paradigm.Enterprise.Data.SqlServer.Extensions;
 
+/// <summary>
+/// Provides dependency-injection registration for SQL Server Entity Framework contexts.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers the context.
+    /// Registers a scoped Entity Framework context configured to use a named SQL Server connection.
     /// </summary>
-    /// <typeparam name="TContext">The type of the context.</typeparam>
-    /// <param name="services">The services.</param>
-    /// <param name="connectionStringName">Name of the connection string.</param>
+    /// <typeparam name="TContext">The <see cref="DbContext"/> implementation to register.</typeparam>
+    /// <param name="services">The service collection to add registrations to.</param>
+    /// <param name="connectionStringName">The connection-string name resolved by <see cref="SqlServerDbContextConnectionProvider"/>.</param>
+    /// <returns>The same service collection so that additional registrations can be chained.</returns>
+    /// <remarks>
+    /// The context uses the scoped connection supplied by <see cref="SqlServerDbContextConnectionProvider"/>
+    /// and enables translation of provider exceptions through EntityFramework.Exceptions.
+    /// </remarks>
     public static IServiceCollection RegisterContext<TContext>(this IServiceCollection services, string connectionStringName) where TContext : DbContext
     {
         services.AddScoped(serviceProvider =>
