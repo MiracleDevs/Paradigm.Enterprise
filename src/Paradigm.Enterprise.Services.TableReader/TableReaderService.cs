@@ -26,9 +26,11 @@ public class TableReaderService : ITableReaderService
     /// <inheritdoc/>
     /// <exception cref="ArgumentNullException"><paramref name="sourceStream"/> is <see langword="null"/>.</exception>
     /// <remarks>
-    /// A seekable stream is rewound before parsing. The caller retains ownership of the stream and
-    /// must keep it open while the reader is in use; disposing the reader leaves the stream open.
+    /// A seekable stream is rewound before parsing. The caller retains ownership and the returned
+    /// reader leaves the stream open. CSV and XLS readers retain the stream and require it to remain
+    /// open while reading; JSON and XML readers fully load it before this method returns.
     /// </remarks>
+    /// <exception cref="Exception"><see cref="TableConfiguration.TableFileType"/> is not supported.</exception>
     public ITableReader GetReaderInstance(Stream? sourceStream, bool sourceHasHeader, TableConfiguration configuration)
     {
         if (sourceStream is null)

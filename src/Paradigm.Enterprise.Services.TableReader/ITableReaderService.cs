@@ -27,11 +27,16 @@ public interface ITableReaderService : IService
     /// <summary>
     /// Gets the reader instance.
     /// </summary>
-    /// <param name="sourceStream">The readable source stream. The caller retains ownership and must keep it open while the reader is in use.</param>
+    /// <param name="sourceStream">The readable source stream. The caller retains ownership.</param>
     /// <param name="sourceHasHeader"><see langword="true"/> when the first record contains column names.</param>
     /// <param name="configuration">The format and format-specific parser settings.</param>
     /// <returns>A format-specific reader positioned before its first row.</returns>
-    /// <remarks>Disposing the returned reader releases parser resources but leaves <paramref name="sourceStream"/> open.</remarks>
+    /// <remarks>
+    /// CSV and XLS readers retain the source and require it to remain open while the reader is used.
+    /// JSON and XML readers fully load the source during this call, so it may be closed afterward.
+    /// Disposing any returned reader leaves the caller-owned stream open.
+    /// </remarks>
+    /// <exception cref="Exception"><see cref="TableConfiguration.TableFileType"/> is not supported.</exception>
     ITableReader GetReaderInstance(Stream sourceStream, bool sourceHasHeader, TableConfiguration configuration);
 
     /// <summary>
@@ -41,5 +46,6 @@ public interface ITableReaderService : IService
     /// <param name="sourceHasHeader"><see langword="true"/> when the first record contains column names.</param>
     /// <param name="configuration">The format and format-specific parser settings.</param>
     /// <returns>A format-specific reader positioned before its first row.</returns>
+    /// <exception cref="Exception"><see cref="TableConfiguration.TableFileType"/> is not supported.</exception>
     ITableReader GetReaderInstance(byte[] sourceBytes, bool sourceHasHeader, TableConfiguration configuration);
 }

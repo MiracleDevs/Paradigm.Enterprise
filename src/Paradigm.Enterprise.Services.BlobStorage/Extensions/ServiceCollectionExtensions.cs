@@ -19,7 +19,11 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The services.</param>
     /// <param name="storageAccountUriSection">The storage account URI section.</param>
     /// <returns>The same service collection for chaining.</returns>
-    /// <exception cref="ArgumentException">The configured storage account URI is missing.</exception>
+    /// <remarks>
+    /// Registration itself does not read the configured URI. The scoped factory throws
+    /// <see cref="ArgumentException"/> later if <see cref="IBlobStorageService"/> is resolved without
+    /// that configuration value.
+    /// </remarks>
     /// <example>
     /// Given <c>Storage:AccountUri</c> in configuration:
     /// <code>
@@ -46,7 +50,11 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The services.</param>
     /// <param name="connectionStringName">Name of the connection string.</param>
     /// <returns>The same service collection for chaining.</returns>
-    /// <exception cref="ArgumentException">The named connection string is missing.</exception>
+    /// <remarks>
+    /// Registration itself does not read the connection string. The scoped factory throws
+    /// <see cref="ArgumentException"/> later if <see cref="IBlobStorageService"/> is resolved without
+    /// the named value.
+    /// </remarks>
     /// <example>
     /// Given a <c>BlobStorage</c> entry in <c>ConnectionStrings</c>:
     /// <code>

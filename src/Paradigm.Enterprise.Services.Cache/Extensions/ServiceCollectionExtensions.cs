@@ -26,6 +26,10 @@ public static class ServiceCollectionExtensions
     /// <param name="instanceName">Name of the instance.</param>
     /// <returns>A task that completes after the initial Redis connection and registrations.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="services"/> or <paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// Neither the named connection string nor
+    /// <c>RedisCacheConfiguration:ManagedIdentity:Host</c> is configured.
+    /// </exception>
     /// <remarks>
     /// When configured not to throw, supported Redis startup failures register a no-op distributed
     /// cache so application startup can continue.

@@ -43,7 +43,7 @@ namespace Paradigm.Enterprise.Providers;
 /// PaginatedResultDto&lt;ProductView&gt; page =
 ///     await productProvider.SearchAsync(new ProductSearchParameters
 ///     {
-///         Page = 1,
+///         PageNumber = 1,
 ///         PageSize = 25,
 ///         FilterText = "monitor"
 ///     });
@@ -125,7 +125,7 @@ public abstract class ReadProviderBase<TInterface, TView, TViewRepository, TId> 
     /// <code>
     /// var parameters = new ProductSearchParameters
     /// {
-    ///     Page = 2,
+    ///     PageNumber = 2,
     ///     PageSize = 50
     /// };
     ///

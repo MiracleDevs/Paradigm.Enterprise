@@ -9,7 +9,7 @@ namespace Paradigm.Enterprise.WebApi.Attributes;
 /// <remarks>
 /// Apply this attribute to an action or controller that must validate the
 /// <c>x-api-auth</c> header against the configured <c>ClientSecrets</c> entries.
-/// The executable filter is resolved for each request.
+/// A new executable filter is constructed for each request using the request service provider.
 /// </remarks>
 public class ApiAuthorizationAttribute : Attribute, IFilterFactory
 {

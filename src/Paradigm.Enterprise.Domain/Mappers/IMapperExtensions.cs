@@ -3,6 +3,29 @@
 /// <summary>
 /// Creates destination instances and maps individual values or sequences through an <see cref="IMapper{TFrom,TTo}"/>.
 /// </summary>
+/// <remarks>
+/// The overloads allocate destinations with their public parameterless constructors and then delegate
+/// to the supplied mapper. Sequence overloads enumerate the source once and eagerly materialize a
+/// <see cref="List{T}"/> in source order. Mapping, validation, and persistence remain separate concerns:
+/// these helpers neither validate mapped domain objects nor stage repository changes.
+/// </remarks>
+/// <example>
+/// <code>
+/// IMapper&lt;Order, OrderView&gt; mapper = new OrderMapper();
+///
+/// OrderView view = mapper.MapTo(order);
+/// List&lt;OrderView&gt; views = mapper.MapTo(orders);
+///
+/// Order entity = mapper.MapFrom(view);
+/// entity.Validate();                    // Explicit domain validation.
+/// await repository.UpdateAsync(entity); // Stage the change.
+/// await unitOfWork.CommitChangesAsync(); // Persist the staged work.
+/// </code>
+/// To preserve a tracked destination instance, call the two-argument interface method instead:
+/// <code>
+/// mapper.MapFrom(trackedOrder, incomingView);
+/// </code>
+/// </example>
 public static class IMapperExtensions
 {
     /// <summary>

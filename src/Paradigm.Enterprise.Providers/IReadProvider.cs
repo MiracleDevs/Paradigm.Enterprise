@@ -24,7 +24,7 @@ public interface IReadProvider<TView, TId> : IProvider
     where TId : struct, IEquatable<TId>
 {
     /// <summary>
-    /// Gets the entity identifier.
+    /// Gets the matching view by identifier.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <returns>The matching view.</returns>

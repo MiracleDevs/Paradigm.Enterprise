@@ -67,9 +67,13 @@ public class EmailService : IEmailService
     }
 
     /// <summary>
-    /// Sends the mails.
+    /// Requests delivery for messages in enumeration order.
     /// </summary>
-    /// <param name="messages">The email information.</param>
+    /// <param name="messages">The messages to submit.</param>
+    /// <remarks>
+    /// One error boundary surrounds the complete batch. The first configuration or send failure stops
+    /// enumeration; the error is logged and suppressed, and later messages are not attempted.
+    /// </remarks>
     public void SendMails(IEnumerable<MailMessageInfo> messages)
     {
         try

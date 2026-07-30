@@ -10,8 +10,9 @@ namespace Paradigm.Enterprise.Data.Uow
     /// Wraps an Entity Framework transaction and enlists compatible contexts and commands in it.
     /// </summary>
     /// <remarks>
-    /// Enlisted contexts must use the same connection as the originating context. Commit, rollback,
-    /// and disposal detach all contexts that were enlisted through this wrapper.
+    /// Enlisted contexts must use the same connection as the originating context. After a successful
+    /// commit, rollback, or transaction disposal, all contexts enlisted through this wrapper are detached.
+    /// If the underlying operation throws, detachment is skipped.
     /// </remarks>
     /// <example>
     /// Applications receive this wrapper through <see cref="ICommiteable.CreateTransaction"/> rather
@@ -86,7 +87,7 @@ namespace Paradigm.Enterprise.Data.Uow
         #region Public Methods
 
         /// <summary>
-        /// Commits the underlying transaction and detaches enlisted contexts.
+        /// Commits the underlying transaction and, on success, detaches enlisted contexts.
         /// </summary>
         /// <remarks>
         /// A commit does not call <see cref="ICommiteable.CommitChangesAsync"/>. Save staged context
@@ -99,7 +100,7 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Rolls back the underlying transaction and detaches enlisted contexts.
+        /// Rolls back the underlying transaction and, on success, detaches enlisted contexts.
         /// </summary>
         public void Rollback()
         {
@@ -108,7 +109,7 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Disposes the underlying transaction and detaches enlisted contexts.
+        /// Disposes the underlying transaction and, on success, detaches enlisted contexts.
         /// </summary>
         /// <remarks>Disposal does not commit staged or transactional work.</remarks>
         public void Dispose()

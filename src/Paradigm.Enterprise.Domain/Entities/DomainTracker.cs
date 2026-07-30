@@ -46,7 +46,9 @@
 /// await unitOfWork.CommitChangesAsync();
 /// order.Lines.Reset(); // Clear only after the commit succeeds.
 /// </code>
-/// If the commit throws, leave the tracker intact so the caller can inspect or retry the staged work.
+/// If the commit throws, leave the tracker intact for inspection and recovery. Do not blindly
+/// re-consume its registrations: repositories may still track them, and an earlier unit-of-work
+/// participant may already have committed before a later participant failed.
 /// </example>
 public class DomainTracker<TEntity> where TEntity : Interfaces.IEntity
 {

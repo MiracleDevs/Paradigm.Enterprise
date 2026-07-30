@@ -68,7 +68,10 @@ public abstract class ApiControllerBase : ControllerBase
 /// <typeparam name="TProvider">The application provider used by the controller.</typeparam>
 /// <remarks>
 /// The anonymous-access behavior inherited from <see cref="ApiControllerBase"/> also applies to
-/// this class. Secure derived controllers explicitly with the application's authorization policy.
+/// this class. Standard <c>[Authorize]</c> metadata and fallback policies do not override the inherited
+/// anonymous-access metadata. Secure derived controllers with an independently enforced filter such as
+/// <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>, or use a base
+/// controller that does not apply <see cref="AllowAnonymousAttribute"/>.
 /// </remarks>
 public abstract class ApiControllerBase<TProvider> : ApiControllerBase
 {

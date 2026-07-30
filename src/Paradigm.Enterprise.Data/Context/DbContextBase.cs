@@ -13,9 +13,14 @@ namespace Paradigm.Enterprise.Data.Context
     /// </summary>
     /// <typeparam name="TId">The value type used for entity and logged-user identifiers.</typeparam>
     /// <remarks>
-    /// Before saving, added and modified <see cref="IAuditableEntity{TId}"/> entries are audited when
-    /// an authenticated user is available from the current service scope. Changes are persisted only
-    /// when <see cref="SaveChangesAsync(CancellationToken)"/> or <see cref="CommitChangesAsync"/> is called.
+    /// When <see cref="SaveChangesAsync(CancellationToken)"/> is used, the audit hook is invoked for
+    /// added and modified <see cref="IAuditableEntity{TId}"/> entries when an authenticated user is
+    /// available from the current service scope. The default hook populates fields only for entities
+    /// that also implement <see cref="IAuditableEntity{TDate,TId}"/> with <see cref="DateTime"/> or
+    /// <see cref="DateTimeOffset"/> timestamps.
+    /// Changes are persisted only when a save or <see cref="CommitChangesAsync"/> is called.
+    /// The inherited synchronous <c>SaveChanges()</c> and <c>SaveChangesAsync(bool, CancellationToken)</c>
+    /// overloads are not overridden here and therefore bypass this audit path.
     /// The context is normally scoped to a request and registered with the same identifier type used by
     /// the application's entities and <see cref="ILoggedUserService{TId}"/>.
     /// </remarks>
@@ -45,7 +50,7 @@ namespace Paradigm.Enterprise.Data.Context
     /// services.AddDbContext&lt;SalesDbContext&gt;(
     ///     options =&gt; options.UseSqlServer(connectionString));
     /// services.AddScoped&lt;IUnitOfWork, UnitOfWork&gt;();
-    /// services.AddScoped&lt;ILoggedUserService&lt;int&gt;, LoggedUserService&gt;();
+    /// services.RegisterLoggedUserService();
     /// </code>
     /// Repositories stage changes in this context. A provider can then persist all registered contexts
     /// through <c>await unitOfWork.CommitChangesAsync()</c>. Calling <see cref="SaveChangesAsync(CancellationToken)"/>
@@ -112,9 +117,10 @@ namespace Paradigm.Enterprise.Data.Context
         /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
         /// <returns>The number of state entries written to the database.</returns>
         /// <remarks>
-        /// For each added or modified auditable entity, the logged-user service is resolved lazily and
-        /// queried for the authenticated user. If it returns <see langword="null"/>, the entity is saved
-        /// without an audit update. Deleted and unchanged entities are not audited by this method.
+        /// The context enumerates every tracked auditable entity and performs the authenticated-user
+        /// lookup before checking the entry state. Only added and modified entries are mutated. If a
+        /// lookup returns <see langword="null"/>, that entry is not audit-mutated and the lookup may be
+        /// repeated for later auditable entries.
         /// Exceptions from auditing, service resolution, or Entity Framework are propagated.
         /// </remarks>
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -149,7 +155,9 @@ namespace Paradigm.Enterprise.Data.Context
         /// <param name="loggedUserId">The identifier of the authenticated user performing the change.</param>
         /// <remarks>
         /// The default implementation calls the domain <c>Audit</c> extension for
-        /// <see cref="IAuditableEntity{TId}"/>.
+        /// <see cref="IAuditableEntity{TId}"/>. That extension populates standard fields only when
+        /// <paramref name="entity"/> also implements the <see cref="DateTime"/> or
+        /// <see cref="DateTimeOffset"/> timestamp audit contract; other timestamp contracts are unchanged.
         /// Override this hook to add application-specific audit behavior, and call the base implementation
         /// when the entity's standard audit fields should still be populated.
         /// </remarks>

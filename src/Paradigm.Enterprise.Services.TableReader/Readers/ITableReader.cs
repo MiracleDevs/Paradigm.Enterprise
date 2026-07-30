@@ -10,7 +10,7 @@ namespace Paradigm.Enterprise.Services.TableReader.Readers;
 public interface ITableReader : IDisposable
 {
     /// <summary>
-    /// Gets or sets the table schema.
+    /// Gets the table schema.
     /// </summary>
     /// <value>
     /// The schema.
@@ -18,14 +18,17 @@ public interface ITableReader : IDisposable
     ITableSchema Schema { get; }
 
     /// <summary>
-    /// Reads a new row of data.
+    /// Advances to and processes the next row.
     /// </summary>
-    /// <returns>A row of data.</returns>
+    /// <returns>
+    /// <see langword="true"/> when a non-empty row was processed; <see langword="false"/> at the
+    /// end of the source or when the underlying row reports itself empty.
+    /// </returns>
     Task<bool> ReadRowAsync();
 
     /// <summary>
-    /// Gets the current row.
+    /// Gets the accessor for the current row.
     /// </summary>
-    /// <returns>Current row</returns>
+    /// <returns>The current row accessor.</returns>
     IRow GetCurrentRow();
 }

@@ -26,6 +26,11 @@ public interface IEmailService : IService
     /// Requests delivery for each message.
     /// </summary>
     /// <param name="messages">The messages to submit in enumeration order.</param>
+    /// <remarks>
+    /// The default service processes messages in enumeration order. Its first configuration or
+    /// delivery-start failure stops the batch; the failure is logged and suppressed, so later messages
+    /// are not attempted and the caller receives no exception.
+    /// </remarks>
     void SendMails(IEnumerable<MailMessageInfo> messages);
 
     /// <summary>

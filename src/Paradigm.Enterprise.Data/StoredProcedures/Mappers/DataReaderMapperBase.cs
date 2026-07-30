@@ -75,7 +75,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <remarks>
     /// Loading occurs only while the cache is empty. Reusing one mapper instance with a different
     /// result shape therefore retains the first successfully loaded set of names. Schema-read failures
-    /// are ignored and leave the cache empty or partially populated.
+    /// are ignored and leave the cache unchanged.
     /// </remarks>
     protected void LoadReaderFields(IDataReader reader)
     {
@@ -251,6 +251,7 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     /// <summary>
     /// Gets the array.
     /// </summary>
+    /// <typeparam name="T">The element type expected in the provider array.</typeparam>
     /// <param name="reader">The reader.</param>
     /// <param name="name">The name.</param>
     /// <returns>The typed array stored in the field, or <see langword="null"/> when its runtime type differs.</returns>

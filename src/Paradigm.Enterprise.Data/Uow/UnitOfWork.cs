@@ -89,10 +89,12 @@ namespace Paradigm.Enterprise.Data.Uow
         /// <summary>
         /// Persists staged changes for every registered participant, sequentially in registration order.
         /// </summary>
-        /// <returns>A task that completes after every participant has committed its changes.</returns>
+        /// <returns>A task that completes after every participant's save method has completed.</returns>
         /// <remarks>
-        /// This method does not commit or create the database transaction itself. If a participant fails,
-        /// later participants are not invoked and the exception is propagated to the caller.
+        /// This method does not commit or create the database transaction itself. With an active
+        /// transaction, saved changes remain subject to its later commit or rollback. If a participant
+        /// fails, later participants are not invoked and the exception is propagated to the caller;
+        /// earlier participants may already have saved.
         /// </remarks>
         public async Task CommitChangesAsync()
         {
@@ -104,8 +106,9 @@ namespace Paradigm.Enterprise.Data.Uow
         /// Registers a persistence participant for future commits and transaction enlistment.
         /// </summary>
         /// <param name="commiteable">
-        /// The participant to register. The same instance is stored only once; when a transaction is
-        /// already active, the participant is also offered to that transaction for enlistment.
+        /// The participant to register. A participant already contained according to equality is not
+        /// added again; when a transaction is already active, the supplied participant is still offered
+        /// to that transaction for enlistment.
         /// </param>
         /// <exception cref="ArgumentNullException"><paramref name="commiteable"/> is <see langword="null"/>.</exception>
         public void RegisterCommiteable(ICommiteable commiteable)
@@ -193,11 +196,13 @@ namespace Paradigm.Enterprise.Data.Uow
         }
 
         /// <summary>
-        /// Disposes all disposable participants in registration order and then disposes the current transaction.
+        /// Disposes disposable participants in registration order and then disposes the current transaction.
         /// </summary>
         /// <remarks>
         /// Disposal does not commit staged changes. The implementation does not clear registrations or guarantee
         /// idempotency; callers should dispose the unit of work once, after its repositories are no longer needed.
+        /// If a participant throws during disposal, later participants and the current transaction are not disposed
+        /// by this call, and the exception is propagated.
         /// </remarks>
         public void Dispose()
         {

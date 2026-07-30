@@ -12,7 +12,7 @@ namespace Paradigm.Enterprise.Data.PostgreSql.StoredProcedures;
 /// <typeparam name="TParameters">The application type that supplies stored-procedure parameters.</typeparam>
 /// <remarks>
 /// A mapper for <typeparamref name="TParameters"/> must be registered with
-/// <see cref="NpgsqlParameterMapperFactory"/> before execution.
+/// <see cref="NpgsqlParameterMapperFactory"/> before executing with a non-null parameter object.
 /// </remarks>
 /// <example>
 /// Define the parameter contract, its mapper, and the procedure together:
@@ -49,7 +49,9 @@ namespace Paradigm.Enterprise.Data.PostgreSql.StoredProcedures;
 ///     protected override int? ExecutionTimeout =&gt; 30;
 /// }
 /// </code>
-/// The supplied connection remains caller-owned. It stays open when <c>unitOfWork</c> has an active transaction.
+/// The supplied connection remains caller-owned. On success it stays open with an active transaction;
+/// without one, ordinary execution closes it even when it was already open on entry. A failure before
+/// the success-path close can leave it open.
 /// </example>
 public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 {
@@ -60,9 +62,15 @@ public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
     /// <param name="parameters">The application parameter object to map, or <see langword="null"/> for no parameters.</param>
     /// <param name="unitOfWork">The optional unit of work whose active transaction is attached to the command.</param>
     /// <returns>A task that completes when the command finishes.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// A non-null parameter object is supplied and no PostgreSQL parameter mapper is registered for
+    /// <typeparamref name="TParameters"/>.
+    /// </exception>
     /// <remarks>
-    /// Without an active unit-of-work transaction, the connection is opened if necessary and closed
-    /// after execution. With an active transaction, the command enlists and the connection remains open.
+    /// On success without an active unit-of-work transaction, the connection is closed even if it was
+    /// already open on entry. With an active transaction, the command enlists and the connection remains
+    /// open. A mapping or execution failure can leave the connection open; the caller owns recovery
+    /// and disposal.
     /// </remarks>
     public async Task ExecuteAsync(DbConnection connection, TParameters? parameters, IUnitOfWork? unitOfWork = null)
     {
@@ -74,9 +82,11 @@ public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 /// Provides command execution and result-set and cursor mapping for PostgreSQL stored procedures.
 /// </summary>
 /// <remarks>
-/// The caller owns the supplied connection. Without an active unit-of-work transaction, execution
-/// opens the connection when necessary and closes it afterward. With an active transaction, the
-/// command enlists in it and connection lifetime remains with the transaction owner.
+/// The caller owns the supplied connection. On successful ordinary execution without an active
+/// unit-of-work transaction, the method closes the connection even if it was already open on entry.
+/// With an active transaction, the command enlists and the connection remains open. Cursor-based
+/// multi-result execution always leaves the connection open. An exception can leave the connection
+/// open; the caller owns recovery and disposal.
 /// </remarks>
 /// <example>
 /// Define a procedure with no application parameters and choose connection lifetime through transaction use:
@@ -85,7 +95,7 @@ public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 /// {
 ///     var procedure = new RefreshReportingProcedure();
 ///
-///     // Without an active transaction, ExecuteAsync closes the connection after the command.
+///     // On success without an active transaction, ExecuteAsync closes the connection.
 ///     await procedure.ExecuteAsync(connection);
 ///
 ///     // An active unit-of-work transaction owns connection lifetime and receives the command.
@@ -114,18 +124,20 @@ public abstract class StoredProcedureBase
     #region Properties
 
     /// <summary>
-    /// Gets the name of the stored procedure.
+    /// Gets the provider command text identifying the stored procedure to execute.
     /// </summary>
     /// <value>
-    /// The name of the stored procedure.
+    /// The schema-qualified or provider-resolvable stored-procedure name assigned to
+    /// <see cref="DbCommand.CommandText"/>.
     /// </value>
     protected abstract string StoredProcedureName { get; }
 
     /// <summary>
-    /// Gets the execution timeout in seconds.
+    /// Gets the optional command timeout in seconds.
     /// </summary>
     /// <value>
-    /// The execution timeout.
+    /// The timeout assigned to <see cref="DbCommand.CommandTimeout"/>, or <see langword="null"/> to
+    /// retain the provider command's default timeout.
     /// </value>
     protected virtual int? ExecutionTimeout { get; }
 
@@ -140,8 +152,9 @@ public abstract class StoredProcedureBase
     /// <param name="unitOfWork">The optional unit of work whose active transaction is attached to the command.</param>
     /// <returns>A task that completes when the command finishes.</returns>
     /// <remarks>
-    /// Without an active unit-of-work transaction, the connection is closed after execution. With an
-    /// active transaction, connection lifetime remains with the transaction owner.
+    /// On success without an active unit-of-work transaction, the connection is closed even if it was
+    /// open on entry. With an active transaction, connection lifetime remains with the transaction
+    /// owner. An execution failure can leave the connection open.
     /// </remarks>
     public async Task ExecuteAsync(DbConnection connection, IUnitOfWork? unitOfWork = null)
     {
@@ -158,6 +171,14 @@ public abstract class StoredProcedureBase
     /// <typeparam name="TParameters">The application parameter type with a registered mapper.</typeparam>
     /// <param name="parameters">The parameter object to map, or <see langword="null"/>.</param>
     /// <returns>The mapped provider parameters, or <see langword="null"/> when <paramref name="parameters"/> is null.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="parameters"/> is non-null and no mapper is registered for
+    /// <typeparamref name="TParameters"/>.
+    /// </exception>
+    /// <remarks>
+    /// The mapper is disposed immediately after mapping. Its returned parameters must remain usable
+    /// independently and are later detached from the command on successful execution.
+    /// </remarks>
     protected NpgsqlParameter[]? GetSqlParameters<TParameters>(TParameters? parameters)
     {
         if (parameters is null) return null;
@@ -166,11 +187,16 @@ public abstract class StoredProcedureBase
     }
 
     /// <summary>
-    /// Executes the stored procedure.
+    /// Executes the stored procedure without consuming a result set.
     /// </summary>
-    /// <param name="connection">The connection.</param>
-    /// <param name="parameters">The parameters.</param>
-    /// <param name="unitOfWork">The unit of work.</param>
+    /// <param name="connection">The caller-owned connection used by the command.</param>
+    /// <param name="parameters">The provider parameters to attach, or <see langword="null"/> for none.</param>
+    /// <param name="unitOfWork">The optional unit of work whose active transaction receives the command.</param>
+    /// <remarks>
+    /// Parameters are cleared from the command only on success. On success without an active
+    /// transaction, the connection is closed regardless of its entry state; with one, it remains open.
+    /// An exception can leave the connection open.
+    /// </remarks>
     protected async Task ExecuteAsync(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
     {
         if (connection.State == ConnectionState.Closed)
@@ -200,14 +226,19 @@ public abstract class StoredProcedureBase
     }
 
     /// <summary>
-    /// Executes the stored procedure.
+    /// Executes the stored procedure and delegates result consumption.
     /// </summary>
     /// <typeparam name="T">The value produced while consuming the command results.</typeparam>
-    /// <param name="connection">The connection.</param>
-    /// <param name="parameters">The parameters.</param>
-    /// <param name="readerExecutedAction">The reader executed action.</param>
-    /// <param name="unitOfWork">The unit of work.</param>
+    /// <param name="connection">The caller-owned connection used by the command.</param>
+    /// <param name="parameters">The provider parameters to attach, or <see langword="null"/> for none.</param>
+    /// <param name="readerExecutedAction">The delegate that consumes the open data reader.</param>
+    /// <param name="unitOfWork">The optional unit of work whose active transaction receives the command.</param>
     /// <returns>The value produced by the supplied result-processing delegate.</returns>
+    /// <remarks>
+    /// The reader and command are disposed by this method. Parameters are cleared and a nontransactional
+    /// connection is closed only on success. A command, reader, or delegate failure can leave the
+    /// caller-owned connection open.
+    /// </remarks>
     protected async Task<T> ExecuteAsync<T>(DbConnection connection, NpgsqlParameter[]? parameters, Func<DbDataReader, Task<T>> readerExecutedAction, IUnitOfWork? unitOfWork = null)
     {
         if (connection.State == ConnectionState.Closed)
@@ -255,6 +286,16 @@ public abstract class StoredProcedureBase
     /// <param name="count">The number of cursor names expected from the command.</param>
     /// <returns>The value produced by the supplied result-processing delegate.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// The connection is opened before <paramref name="unitOfWork"/> is validated. This method never
+    /// closes it; after a successful open it remains caller-owned and open, while an open failure leaves
+    /// provider-defined state. If the unit of work has no active transaction, this method creates one
+    /// from its first registered participant; that participant and the supplied connection must use the
+    /// same underlying connection. The local transaction is never committed and is disposed only after
+    /// successful cursor mapping, which normally rolls it back. Failures can leave it undisposed.
+    /// Cursor procedures that need durable writes require an already-active transaction committed by
+    /// its owner.
+    /// </remarks>
     protected async Task<T> ExecuteMultipleAsync<T>(DbConnection connection, NpgsqlParameter[]? parameters, Func<List<string>, Task<T>> cursorAction, IUnitOfWork? unitOfWork, int count)
     {
         if (connection.State == ConnectionState.Closed)
@@ -311,7 +352,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The optional unit of work whose active transaction is attached to the command.</param>
-    /// <returns>The mapped value, or <see langword="null"/> when the result set contains no row.</returns>
+    /// <returns>The mapped value. An empty scalar or mapped-object result returns <see langword="null"/> for a reference type or the default for a value type; a concrete <c>IList</c> result returns an empty list.</returns>
     protected async Task<TR1?> ExecuteAsync<TR1>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
     {
         return await ExecuteAsync(connection, parameters, async reader => await reader.TranslateAsync<TR1>(), unitOfWork);
@@ -325,7 +366,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 2 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?)> ExecuteAsync<TR1, TR2>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -344,7 +385,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 3 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?)> ExecuteAsync<TR1, TR2, TR3>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -365,7 +406,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 4 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?)> ExecuteAsync<TR1, TR2, TR3, TR4>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -388,7 +429,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 5 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -413,7 +454,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 6 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -440,7 +481,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 7 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -469,7 +510,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 8 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -500,7 +541,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 9 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -533,7 +574,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 10 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -568,7 +609,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 11 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?, TR11?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10, TR11>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -605,7 +646,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 12 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?, TR11?, TR12?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10, TR11, TR12>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -644,7 +685,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 13 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?, TR11?, TR12?, TR13?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10, TR11, TR12, TR13>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -685,7 +726,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 14 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?, TR11?, TR12?, TR13?, TR14?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10, TR11, TR12, TR13, TR14>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -728,7 +769,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 15 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?, TR11?, TR12?, TR13?, TR14?, TR15?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10, TR11, TR12, TR13, TR14, TR15>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)
@@ -773,7 +814,7 @@ public abstract class StoredProcedureBase
     /// <param name="connection">The caller-supplied database connection. The connection is not disposed.</param>
     /// <param name="parameters">The provider parameters to add to the command, or <see langword="null"/> for none.</param>
     /// <param name="unitOfWork">The required unit of work that owns the cursor transaction.</param>
-    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty cursors produce null reference values or default value-type values.</returns>
+    /// <returns>A tuple whose positions follow the implementation-defined enumeration of distinct cursor names; empty scalar or mapped-object cursor results produce null reference values or default value-type values, while concrete <c>IList</c> result types produce empty lists.</returns>
     /// <remarks>The command must return 16 distinct cursor names. Tuple positions do not promise database return order.</remarks>
     /// <exception cref="ArgumentNullException"><paramref name="unitOfWork"/> is <see langword="null"/>.</exception>
     protected async Task<(TR1?, TR2?, TR3?, TR4?, TR5?, TR6?, TR7?, TR8?, TR9?, TR10?, TR11?, TR12?, TR13?, TR14?, TR15?, TR16?)> ExecuteAsync<TR1, TR2, TR3, TR4, TR5, TR6, TR7, TR8, TR9, TR10, TR11, TR12, TR13, TR14, TR15, TR16>(DbConnection connection, NpgsqlParameter[]? parameters, IUnitOfWork? unitOfWork = null)

@@ -45,7 +45,11 @@ public interface IAzureBlobStorageContainer
     /// </summary>
     /// <param name="blobName">Name of the BLOB.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the delete operation.</returns>
+    /// <returns>A task that completes after the best-effort deletion pass.</returns>
+    /// <remarks>
+    /// Listing and individual deletion failures are suppressed. Successful task completion does not
+    /// prove that a matching blob existed or that every matching blob was deleted.
+    /// </remarks>
     Task DeleteBlobAsync(string blobName, CancellationToken cancellationToken);
 
     /// <summary>
@@ -55,6 +59,10 @@ public interface IAzureBlobStorageContainer
     /// <param name="to">To.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
+    /// <remarks>
+    /// Each source receives an infinite lease that is broken after copy initiation succeeds. Cancellation
+    /// or another exception after lease acquisition can leave that source lease held.
+    /// </remarks>
     Task CopyFolderAsync(string from, string to, CancellationToken cancellationToken);
 
     /// <summary>
@@ -65,6 +73,10 @@ public interface IAzureBlobStorageContainer
     /// <param name="destinationContainer">The destination container.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
+    /// <remarks>
+    /// Each source receives an infinite lease that is broken after copy initiation succeeds. Cancellation
+    /// or another exception after lease acquisition can leave that source lease held.
+    /// </remarks>
     Task CopyFolderBetweenContainersAsync(string from, string to, IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken);
 
     /// <summary>
@@ -141,6 +153,10 @@ public interface IAzureBlobStorageContainer
     /// <param name="destinationContainer">The destination container.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that completes after a server-side copy has been initiated for every source blob.</returns>
+    /// <remarks>
+    /// Each source receives an infinite lease that is broken after copy initiation succeeds. Cancellation
+    /// or another exception after lease acquisition can leave that source lease held.
+    /// </remarks>
     Task CopyAsync(IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken);
 
     /// <summary>

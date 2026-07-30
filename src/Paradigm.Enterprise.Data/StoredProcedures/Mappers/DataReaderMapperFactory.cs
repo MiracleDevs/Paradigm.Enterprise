@@ -3,12 +3,14 @@
 namespace Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 
 /// <summary>
-/// Maintains thread-safe factories for result types materialized from data readers.
+/// Maintains a thread-safe registry of factories for result types materialized from data readers.
 /// </summary>
 /// <remarks>
 /// Registration is process-wide and first-registration-wins. Register mappers during application
 /// startup, before executing stored procedures. The delegate controls mapper lifetime; this matters
 /// for <see cref="DataReaderMapperBase"/> because it caches the first result-set schema it observes.
+/// Registry operations are thread-safe; mapper instances and factory delegates are thread-safe only
+/// when their own implementations provide that guarantee.
 /// </remarks>
 /// <example>
 /// Register a factory for every non-primitive stored-procedure result type:
@@ -18,7 +20,9 @@ namespace Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 ///
 /// // Stored-procedure result translation now resolves OrderSummaryMapper.
 /// OrderSummary? order = await procedure.ExecuteAsync(
-///     new GetOrderParameters(orderId));
+///     connection,
+///     new GetOrderParameters(orderId),
+///     unitOfWork);
 /// </code>
 /// Returning a new mapper from the factory isolates cached schema metadata between executions.
 /// A shared mapper is suitable only when all uses have the same schema and its implementation is

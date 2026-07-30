@@ -10,7 +10,8 @@ namespace Paradigm.Enterprise.Providers;
 /// <remarks>
 /// Implementations decide their transaction and mapping boundaries. The standard
 /// <see cref="EditProviderBase{TInterface,TEntity,TView,TRepository,TViewRepository,TId}"/>
-/// stages repository changes and commits them through one unit of work per method call.
+/// stages repository changes and calls the unit of work's save method once per operation. When an
+/// external transaction is active, those saves remain subject to its later commit or rollback.
 /// </remarks>
 /// <example>
 /// <code>
@@ -36,21 +37,21 @@ public interface IEditProvider<TView, TId> : IReadProvider<TView, TId>
     /// Adds a new entity.
     /// </summary>
     /// <param name="entity">The entity.</param>
-    /// <returns>The persisted view, including its assigned identifier.</returns>
+    /// <returns>The saved view, including its assigned identifier.</returns>
     Task<TView> AddAsync(TView entity);
 
     /// <summary>
     /// Adds a new entities.
     /// </summary>
     /// <param name="dtos">The dtos.</param>
-    /// <returns>The persisted views in input order.</returns>
+    /// <returns>The saved views in input order.</returns>
     Task<IEnumerable<TView>> AddAsync(List<TView> dtos);
 
     /// <summary>
     /// Updates the entity.
     /// </summary>
     /// <param name="entity">The entity.</param>
-    /// <returns>The persisted updated view.</returns>
+    /// <returns>The saved updated view.</returns>
     /// <exception cref="Exceptions.NotFoundException">The view does not identify an accessible entity.</exception>
     Task<TView> UpdateAsync(TView entity);
 
@@ -58,7 +59,7 @@ public interface IEditProvider<TView, TId> : IReadProvider<TView, TId>
     /// Updates a new entities.
     /// </summary>
     /// <param name="dtos">The dtos.</param>
-    /// <returns>The persisted updated views in input order.</returns>
+    /// <returns>The saved updated views in input order.</returns>
     /// <exception cref="Exceptions.NotFoundException">A view does not identify an accessible entity.</exception>
     Task<IEnumerable<TView>> UpdateAsync(List<TView> dtos);
 
@@ -66,14 +67,14 @@ public interface IEditProvider<TView, TId> : IReadProvider<TView, TId>
     /// Adds or updates the entity.
     /// </summary>
     /// <param name="entity">The entity.</param>
-    /// <returns>The added or updated persisted view.</returns>
+    /// <returns>The added or updated saved view.</returns>
     Task<TView> SaveAsync(TView entity);
 
     /// <summary>
     /// Saves the entities.
     /// </summary>
     /// <param name="dtos">The dtos.</param>
-    /// <returns>The added or updated persisted views in input order.</returns>
+    /// <returns>The added or updated saved views in input order.</returns>
     /// <exception cref="Exceptions.NotFoundException">An existing view does not identify an accessible entity.</exception>
     Task<IEnumerable<TView>> SaveAsync(IEnumerable<TView> dtos);
 
@@ -87,6 +88,9 @@ public interface IEditProvider<TView, TId> : IReadProvider<TView, TId>
     /// Deletes the entities.
     /// </summary>
     /// <param name="ids">The ids.</param>
-    /// <returns>A task that completes after the matching entities have been deleted and committed.</returns>
+    /// <returns>
+    /// A task that completes after the matching deletions have been saved by the unit-of-work
+    /// participants. An active transaction still requires an explicit commit.
+    /// </returns>
     Task DeleteAsync(IEnumerable<TId> ids);
 }

@@ -6,6 +6,10 @@ namespace Paradigm.Enterprise.Interfaces;
 /// Defines an entity that records the users responsible for its creation and latest modification.
 /// </summary>
 /// <typeparam name="TId">The value type used for entity and user identifiers.</typeparam>
+/// <remarks>
+/// The interface stores audit data but does not populate it. Applications can assign the members
+/// directly or use the Domain package's <c>Audit</c> extensions for supported timestamp types.
+/// </remarks>
 public interface IAuditableEntity<TId> : IEntity<TId>
     where TId : struct, IEquatable<TId>
 {

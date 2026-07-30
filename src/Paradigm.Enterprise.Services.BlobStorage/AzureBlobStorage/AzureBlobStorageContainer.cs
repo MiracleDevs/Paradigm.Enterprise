@@ -99,6 +99,10 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// </summary>
         /// <param name="blobName">Name of the BLOB.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
+        /// <remarks>
+        /// This is a best-effort operation. Listing and individual deletion failures are suppressed;
+        /// completion does not prove that every matching blob was deleted.
+        /// </remarks>
         public async Task DeleteBlobAsync(string blobName, CancellationToken cancellationToken)
         {
             try
@@ -132,6 +136,10 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="to">To.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
+        /// <remarks>
+        /// An infinite source lease is broken only after copy initiation succeeds. Cancellation or
+        /// another exception after acquisition can leave the lease held.
+        /// </remarks>
         public async Task CopyFolderAsync(string from, string to, CancellationToken cancellationToken)
         {
             var blobClients = await GetBlobClientsAsync(from, cancellationToken);
@@ -227,6 +235,10 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="destinationContainer">The destination container.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task that completes after a server-side copy has been initiated for every source blob.</returns>
+        /// <remarks>
+        /// An infinite source lease is broken only after copy initiation succeeds. Cancellation or
+        /// another exception after acquisition can leave the lease held.
+        /// </remarks>
         /// <exception cref="Exception">Wrong container type.</exception>
         public async Task CopyAsync(IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken)
         {
@@ -275,6 +287,10 @@ namespace Paradigm.Enterprise.Services.BlobStorage.AzureBlobStorage
         /// <param name="destinationContainer">>The destination container</param>
         /// <param name="cancellationToken">The token used to cancel listing, leasing, and copy operations.</param>
         /// <returns>A task that completes after a server-side copy has been initiated for each source blob.</returns>
+        /// <remarks>
+        /// An infinite source lease is broken only after copy initiation succeeds. Cancellation or
+        /// another exception after acquisition can leave the lease held.
+        /// </remarks>
         public async Task CopyFolderBetweenContainersAsync(string from, string to, IAzureBlobStorageContainer destinationContainer, CancellationToken cancellationToken)
         {
             if (destinationContainer is not AzureBlobStorageContainer container)

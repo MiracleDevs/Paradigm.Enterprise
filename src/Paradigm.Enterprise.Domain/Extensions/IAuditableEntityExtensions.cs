@@ -5,6 +5,36 @@ namespace Paradigm.Enterprise.Domain.Extensions;
 /// <summary>
 /// Applies creation or modification audit values to supported auditable entities.
 /// </summary>
+/// <remarks>
+/// Audit classification uses <see cref="IEntity.IsNew"/> at the moment the extension is called. Apply
+/// auditing before a repository or database assigns a new identifier; otherwise a newly inserted entity
+/// may be stamped as modified. The overload accepting <see cref="IAuditableEntity{TId}"/> dispatches
+/// only to the built-in <see cref="DateTime"/> and <see cref="DateTimeOffset"/> timestamp contracts.
+/// </remarks>
+/// <example>
+/// Call <c>Audit</c> from a provider's pre-staging entity hook:
+/// <code>
+/// public sealed class Order : EntityBase&lt;Guid&gt;, IAuditableEntity&lt;DateTimeOffset, Guid&gt;
+/// {
+///     public Guid? CreatedByUserId { get; set; }
+///     public Guid? ModifiedByUserId { get; set; }
+///     public DateTimeOffset CreationDate { get; set; }
+///     public DateTimeOffset? ModificationDate { get; set; }
+/// }
+///
+/// protected override Task BeforeSaveAsync(Order entity)
+/// {
+///     Guid? userId = loggedUsers.TryGetAuthenticatedUser&lt;User&gt;()?.Id;
+///     entity.Audit(userId);
+///     return Task.CompletedTask;
+/// }
+///
+/// // A new order receives CreationDate and CreatedByUserId.
+/// // Once Id is assigned, the same call updates ModificationDate and ModifiedByUserId.
+/// </code>
+/// Passing a null or default user identifier still applies the timestamp but leaves the user fields
+/// unchanged.
+/// </example>
 public static class IAuditableEntityExtensions
 {
     /// <summary>
