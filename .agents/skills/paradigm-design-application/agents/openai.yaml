@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Paradigm Application"
+  short_description: "Design Paradigm application layers and boundaries"
+  default_prompt: "Use $paradigm-design-application to design this Paradigm.Enterprise application."

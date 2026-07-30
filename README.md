@@ -18,6 +18,8 @@ Read the [documentation site](https://miracledevs.github.io/Paradigm.Enterprise/
 - [Secure delivery](docs/guides/secure-delivery.md)
 - [Package reference](docs/reference/packages.md)
 - [API reference](https://miracledevs.github.io/Paradigm.Enterprise/reference/api.html)
+- [Agent Skills](docs/agent-skills.md)
+- [Paradigm CLI](docs/cli.md)
 
 To build and preview the site locally:
 
@@ -34,7 +36,7 @@ The site is served at `http://localhost:8080`. Pass a different port as the firs
 | Application stack | `Paradigm.Enterprise.Interfaces`, `Domain`, `Data`, `Providers`, `WebApi` |
 | Databases | `Paradigm.Enterprise.Data.SqlServer`, `Data.PostgreSql` |
 | Infrastructure | `Paradigm.Enterprise.Services.Cache`, `Email`, `BlobStorage`, `TableReader` |
-| Tooling | `Paradigm.Enterprise.CodeGenerator` |
+| Tooling | `Paradigm.Enterprise.CodeGenerator`, `Paradigm.Enterprise.Cli` |
 
 Install only the package required by the owning project:
 
@@ -43,6 +45,16 @@ dotnet add package Paradigm.Enterprise.WebApi
 ```
 
 Use a consistent package version across the application. The [package matrix](docs/reference/packages.md) lists responsibilities and target frameworks.
+
+Install the read-only diagnostic CLI through a repository-local tool manifest:
+
+```powershell
+dotnet new tool-manifest
+dotnet tool install Paradigm.Enterprise.Cli --version 1.0.33
+dotnet tool run paradigm doctor --project src/Paradigm.Enterprise.slnx
+```
+
+AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills) together with the version-aware CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
 
 ## Start a new API
 

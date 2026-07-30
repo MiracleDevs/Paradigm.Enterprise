@@ -8,6 +8,8 @@ items:
         href: architecture.md
       - name: Packages
         href: reference/packages.md
+      - name: Agent Skills
+        href: agent-skills.md
   - name: Tutorials
     items:
       - name: Create a solution
@@ -52,6 +54,8 @@ items:
         href: table-reader.md
       - name: Code generation
         href: code-generator.md
+      - name: Paradigm CLI
+        href: cli.md
       - name: Testing
         href: tests.md
       - name: Operations

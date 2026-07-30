@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 Version `1.0.33`
 
 - Added fix in `Services.Cache` package crashing when Redis connection failed.
+- Added the read-only `Paradigm.Enterprise.Cli` .NET tool for restored-package API discovery and application diagnostics.
+- Added installable Agent Skills for guided application design, implementation, security, and review.
 
 Version `1.0.32`
 

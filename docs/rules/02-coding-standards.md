@@ -108,13 +108,13 @@ Scope: All C#
 
 Rule
 
-Reflection must not be used.
+Application/runtime business code must use explicit contracts instead of ad hoc reflection. Reviewed framework convention discovery, source tooling, tests that verify discovery, and metadata-only inspection tools may use reflection.
 
 Forbidden
 
-- Assembly.GetTypes
-- Activator.CreateInstance
-- MethodInfo.Invoke
+- Reflection that executes untrusted assemblies.
+- Reflection used to bypass application contracts or authorization.
+- Unbounded runtime scanning in business workflows.
 
 ---
 

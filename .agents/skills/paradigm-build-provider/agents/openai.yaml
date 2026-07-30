@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Paradigm Provider"
+  short_description: "Implement Paradigm application orchestration"
+  default_prompt: "Use $paradigm-build-provider to implement this Paradigm.Enterprise provider."

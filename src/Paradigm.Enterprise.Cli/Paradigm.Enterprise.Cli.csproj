@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>1.0.33</Version>
+    <Authors>Miracle Devs</Authors>
+    <Company>Miracle Devs</Company>
+    <Product>Paradigm Enterprise CLI</Product>
+    <Description>Read-only API discovery and application diagnostics for Paradigm.Enterprise.</Description>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>paradigm</ToolCommandName>
+    <PackageId>Paradigm.Enterprise.Cli</PackageId>
+    <PackageProjectUrl>https://github.com/MiracleDevs/Paradigm.Enterprise</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
+    <PackageTags>paradigm enterprise cli diagnostics agent</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Reflection.MetadataLoadContext" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

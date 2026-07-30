@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Paradigm Feature"
+  short_description: "Build an end-to-end Paradigm vertical slice"
+  default_prompt: "Use $paradigm-build-feature to implement this Paradigm.Enterprise feature."

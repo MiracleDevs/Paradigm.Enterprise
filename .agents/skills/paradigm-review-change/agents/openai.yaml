@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Paradigm Change"
+  short_description: "Review Paradigm code and architecture compliance"
+  default_prompt: "Use $paradigm-review-change to review this Paradigm.Enterprise change."
