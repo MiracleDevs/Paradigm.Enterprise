@@ -10,6 +10,17 @@ namespace Paradigm.Enterprise.Services.TableReader;
 /// <summary>
 /// Selects a CSV, Excel, XML, or JSON table reader from a <see cref="TableConfiguration"/>.
 /// </summary>
+/// <remarks>
+/// Register this implementation behind <see cref="ITableReaderService"/>. Readers are disposable;
+/// caller-provided streams remain caller-owned and are left open.
+/// </remarks>
+/// <example>
+/// <code>
+/// services.AddSingleton&lt;ITableReaderService, TableReaderService&gt;();
+/// </code>
+/// See <see cref="ITableReaderService.GetReaderInstance(Stream, bool, TableConfiguration)"/> for
+/// sequential reading and stream-lifetime usage.
+/// </example>
 public class TableReaderService : ITableReaderService
 {
     /// <inheritdoc/>

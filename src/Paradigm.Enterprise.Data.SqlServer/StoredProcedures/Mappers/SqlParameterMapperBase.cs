@@ -7,6 +7,24 @@ namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures.Mappers;
 /// Provides a base implementation for building SQL Server parameters from an application object.
 /// </summary>
 /// <remarks>A mapper instance is intended for one mapping operation and clears its accumulated parameters when disposed.</remarks>
+/// <example>
+/// Define a mapper for a strongly typed application parameter object:
+/// <code>
+/// sealed record ArchiveOrderParameters(int OrderId, string? Reason);
+///
+/// sealed class ArchiveOrderParameterMapper : SqlParameterMapperBase
+/// {
+///     protected override void AddSqlParameters(object parameters)
+///     {
+///         var value = (ArchiveOrderParameters)parameters;
+///         AddSqlParameter("@OrderId", value.OrderId);
+///         AddSqlParameter("@Reason", value.Reason);
+///     }
+/// }
+/// </code>
+/// <see cref="AddSqlParameter(string, object)"/> translates a null <c>Reason</c> to
+/// <see cref="DBNull.Value"/> before the command executes.
+/// </example>
 public abstract class SqlParameterMapperBase : ISqlParameterMapper
 {
     #region Properties

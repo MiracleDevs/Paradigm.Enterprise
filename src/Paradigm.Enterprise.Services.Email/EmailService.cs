@@ -10,7 +10,19 @@ namespace Paradigm.Enterprise.Services.Email;
 /// <summary>
 /// Sends email through Azure Communication Services using a connection string or managed identity.
 /// </summary>
-/// <remarks>Invalid configuration and send failures are logged and suppressed.</remarks>
+/// <remarks>
+/// Configuration is bound from <c>EmailConfiguration</c>. A connection string takes precedence
+/// over managed identity. Invalid configuration and send failures are logged and suppressed.
+/// </remarks>
+/// <example>
+/// Register the service once for the application:
+/// <code>
+/// services.AddSingleton&lt;IEmailService, EmailService&gt;();
+/// </code>
+/// The application configuration must provide <c>EmailConfiguration:MailFrom</c> and either
+/// <c>EmailConfiguration:ConnectionString</c> or
+/// <c>EmailConfiguration:ManagedIdentity:Endpoint</c>.
+/// </example>
 public class EmailService : IEmailService
 {
     #region Properties
@@ -32,8 +44,8 @@ public class EmailService : IEmailService
     /// <summary>
     /// Initializes a new instance of the <see cref="EmailService" /> class.
     /// </summary>
-    /// <param name="configuration">The configuration.</param>
-    /// <param name="logger">The logger.</param>
+    /// <param name="configuration">The application configuration containing <c>EmailConfiguration</c>.</param>
+    /// <param name="logger">The logger used for invalid configuration and send failures.</param>
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _emailConfiguration = new();

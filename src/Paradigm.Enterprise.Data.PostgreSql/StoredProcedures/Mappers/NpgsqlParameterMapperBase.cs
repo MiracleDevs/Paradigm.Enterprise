@@ -7,6 +7,26 @@ namespace Paradigm.Enterprise.Data.PostgreSql.StoredProcedures.Mappers;
 /// Provides a base implementation for building PostgreSQL parameters from an application object.
 /// </summary>
 /// <remarks>A mapper instance is intended for one mapping operation and clears its accumulated parameters when disposed.</remarks>
+/// <example>
+/// Define a mapper and centralize the prefix expected by the stored procedure:
+/// <code>
+/// sealed record ArchiveOrderParameters(int OrderId, string? Reason);
+///
+/// sealed class ArchiveOrderParameterMapper : NpgsqlParameterMapperBase
+/// {
+///     protected override string ParameterPrefix =&gt; "p_";
+///
+///     protected override void AddNpgsqlParameter(object parameters)
+///     {
+///         var value = (ArchiveOrderParameters)parameters;
+///         AddNpgsqlParameter(nameof(value.OrderId), value.OrderId);
+///         AddNpgsqlParameter(nameof(value.Reason), value.Reason);
+///     }
+/// }
+/// </code>
+/// The generated names are <c>p_OrderId</c> and <c>p_Reason</c>; a null value is translated
+/// to <see cref="DBNull.Value"/>.
+/// </example>
 public abstract class NpgsqlParameterMapperBase : INpgsqlParameterMapper
 {
     #region Properties

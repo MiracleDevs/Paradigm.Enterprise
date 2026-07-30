@@ -7,6 +7,19 @@ namespace Paradigm.Enterprise.Providers;
 /// </summary>
 /// <typeparam name="TView">The view model returned to callers.</typeparam>
 /// <typeparam name="TId">The value type used for identifiers.</typeparam>
+/// <example>
+/// A controller or application service depends on the closed provider interface rather than a
+/// repository:
+/// <code>
+/// public sealed class ProductQueries(IReadProvider&lt;ProductView, int&gt; products)
+/// {
+///     public Task&lt;ProductView&gt; GetAsync(int id) =&gt; products.GetByIdAsync(id);
+///
+///     public Task&lt;PaginatedResultDto&lt;ProductView&gt;&gt; SearchAsync(
+///         ProductSearchParameters parameters) =&gt; products.SearchAsync(parameters);
+/// }
+/// </code>
+/// </example>
 public interface IReadProvider<TView, TId> : IProvider
     where TId : struct, IEquatable<TId>
 {

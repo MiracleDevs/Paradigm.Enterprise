@@ -6,6 +6,18 @@ namespace Paradigm.Enterprise.Data.PostgreSql.StoredProcedures;
 /// <summary>
 /// Stores factories used to create PostgreSQL parameter mappers for application parameter types.
 /// </summary>
+/// <example>
+/// Register mappers during application startup, before any procedure uses the parameter type:
+/// <code>
+/// NpgsqlParameterMapperFactory.RegisterMapper&lt;ArchiveOrderParameters&gt;(
+///     () =&gt; new ArchiveOrderParameterMapper());
+///
+/// using INpgsqlParameterMapper mapper =
+///     NpgsqlParameterMapperFactory.GetMapper&lt;ArchiveOrderParameters&gt;();
+/// NpgsqlParameter[] parameters = mapper.Map(new ArchiveOrderParameters(42, null));
+/// </code>
+/// Registration is first-wins. Register the intended mapper once instead of attempting to replace it later.
+/// </example>
 public static class NpgsqlParameterMapperFactory
 {
     private static readonly ConcurrentDictionary<Type, Func<INpgsqlParameterMapper>> MapperFactories = new ConcurrentDictionary<Type, Func<INpgsqlParameterMapper>>();

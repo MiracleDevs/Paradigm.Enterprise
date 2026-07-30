@@ -13,6 +13,14 @@ namespace Paradigm.Enterprise.Services.Cache;
 /// Cache failures are logged and suppressed unless <c>RedisCacheConfiguration:ThrowExceptions</c>
 /// is enabled. Disabled caching invokes factories directly and skips read/write/remove operations.
 /// </remarks>
+/// <example>
+/// Register the singleton and its Redis dependency with:
+/// <code>
+/// await services.AddCacheAsync(configuration, connectionStringName: "Redis");
+/// </code>
+/// Consume <see cref="ICacheService"/> rather than constructing this type directly so the
+/// distributed-cache fallback and configured failure policy are applied.
+/// </example>
 public class CacheService : ICacheService, IDisposable
 {
     #region Properties
@@ -65,6 +73,11 @@ public class CacheService : ICacheService, IDisposable
     /// <summary>
     /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
     /// </summary>
+    /// <remarks>
+    /// The dependency-injection registration creates this service as a singleton. Dispose the
+    /// containing service provider to dispose this instance; callers resolving
+    /// <see cref="ICacheService"/> do not dispose individual references.
+    /// </remarks>
     public void Dispose()
     {
         _semaphore.Dispose();

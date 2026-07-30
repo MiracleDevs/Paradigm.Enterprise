@@ -8,6 +8,30 @@ namespace Paradigm.Enterprise.Data.PostgreSql.StoredProcedures;
 /// </summary>
 /// <typeparam name="TParameters">The application type mapped to command parameters.</typeparam>
 /// <typeparam name="TResult">The value mapped from result set 1.</typeparam>
+/// <example>
+/// A single-result PostgreSQL procedure maps its ordinary first result set and does not use the
+/// multi-cursor path:
+/// <code>
+/// static async Task&lt;OrderView?&gt; FindAsync(
+///     FindOrderProcedure procedure,
+///     DbConnection connection,
+///     FindOrderParameters parameters,
+///     IUnitOfWork unitOfWork)
+/// {
+///     return await procedure.ExecuteAsync(connection, parameters, unitOfWork);
+/// }
+///
+/// sealed record FindOrderParameters(int OrderId);
+/// sealed record OrderView(int OrderId, string Status);
+///
+/// sealed class FindOrderProcedure :
+///     ResultStoredProcedureBase&lt;FindOrderParameters, OrderView&gt;
+/// {
+///     protected override string StoredProcedureName =&gt; "find_order";
+/// }
+/// </code>
+/// Register the <c>FindOrderParameters</c> mapper before calling the procedure.
+/// </example>
 public abstract class ResultStoredProcedureBase<TParameters, TResult> : StoredProcedureBase
 {
     /// <summary>
@@ -52,6 +76,9 @@ public abstract class ResultStoredProcedureBase<TParameters, TResult> : StoredPr
 ///
 ///     if (customer is null || address is null)
 ///         return;
+///
+///     // A transaction is required for refcursor fetches. Cursor-to-tuple positions use
+///     // implementation-defined distinct-name enumeration, not database return order.
 /// }
 /// </code>
 /// </example>

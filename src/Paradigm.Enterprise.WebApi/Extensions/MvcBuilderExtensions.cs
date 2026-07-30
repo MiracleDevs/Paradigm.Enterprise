@@ -19,6 +19,12 @@ public static class MvcBuilderExtensions
     /// </code>
     /// Actions without <c>[ExposeEndpoint]</c> then return HTTP 404.
     /// </example>
+    /// <remarks>
+    /// Exposure is not authorization. An exposed action remains anonymous when its controller
+    /// inherits <see cref="Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute"/> unless a
+    /// separate filter such as <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>
+    /// enforces access.
+    /// </remarks>
     public static IMvcBuilder AddEndpointExposureControl(this IMvcBuilder builder)
     {
         builder.Services.AddSingleton<EndpointExposureFilter>();

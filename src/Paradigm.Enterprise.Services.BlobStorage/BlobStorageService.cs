@@ -9,6 +9,32 @@ namespace Paradigm.Enterprise.Services.BlobStorage;
 /// <summary>
 /// Connects to an Azure Blob Storage account using a connection string or managed identity.
 /// </summary>
+/// <remarks>
+/// Prefer the <see cref="BlobStorageConfiguration"/> factory overloads so retry settings are
+/// applied consistently. Managed identity uses <see cref="DefaultAzureCredential"/>; connection
+/// string authentication stores the supplied connection string in <see cref="ConnectionString"/>.
+/// Container wrappers do not require disposal.
+/// </remarks>
+/// <example>
+/// Upload a caller-owned stream with managed identity:
+/// <code>
+/// var storage = BlobStorageService.CreateUsingManagedIdentity(
+///     new BlobStorageConfiguration
+///     {
+///         StorageConnection = "https://contoso.blob.core.windows.net"
+///     });
+///
+/// var container = storage.GetBlobStorageContainer("exports");
+/// await using var content = File.OpenRead("daily.csv");
+/// var blobUri = await container.UploadFileAsync(
+///     "daily.csv",
+///     content,
+///     "text/csv",
+///     cancellationToken);
+/// </code>
+/// <see cref="AzureBlobStorage.IAzureBlobStorageContainer.UploadFileAsync"/> leaves
+/// <c>content</c> open; the caller disposes it.
+/// </example>
 public class BlobStorageService : IBlobStorageService
 {
     #region Properties
@@ -82,6 +108,9 @@ public class BlobStorageService : IBlobStorageService
     /// </summary>
     /// <param name="configuration">The configuration.</param>
     /// <returns>A configured blob storage service.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><see cref="BlobStorageConfiguration.StorageConnection"/> is empty.</exception>
+    /// <exception cref="UriFormatException"><see cref="BlobStorageConfiguration.StorageConnection"/> is not an absolute storage account URI.</exception>
     public static BlobStorageService CreateUsingManagedIdentity(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, false);
@@ -103,6 +132,8 @@ public class BlobStorageService : IBlobStorageService
     /// </summary>
     /// <param name="configuration">The configuration.</param>
     /// <returns>A configured blob storage service.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><see cref="BlobStorageConfiguration.StorageConnection"/> is empty.</exception>
     public static BlobStorageService CreateUsingConnectionString(BlobStorageConfiguration configuration)
     {
         return new BlobStorageService(configuration, true);

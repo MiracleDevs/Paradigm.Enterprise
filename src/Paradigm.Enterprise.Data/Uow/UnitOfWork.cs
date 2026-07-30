@@ -11,11 +11,38 @@ namespace Paradigm.Enterprise.Data.Uow
     /// a transaction automatically; call <see cref="CreateTransaction"/> when atomicity is required.
     /// </remarks>
     /// <example>
+    /// Register the unit of work as scoped so repositories resolved in one request share it:
+    /// <code>
+    /// services.AddScoped&lt;IUnitOfWork, UnitOfWork&gt;();
+    /// services.AddDbContext&lt;SalesDbContext&gt;(...);
+    /// services.AddScoped&lt;IOrderRepository, OrderRepository&gt;();
+    /// </code>
+    /// Repository constructors register their contexts automatically. Stage all work before committing:
+    /// <code>
+    /// await orderRepository.AddAsync(order);
+    /// await auditRepository.AddAsync(auditEntry);
+    /// await unitOfWork.CommitChangesAsync();
+    /// </code>
+    /// To coordinate compatible participants in one relational transaction, explicitly create and
+    /// complete the transaction:
     /// <code>
     /// using var transaction = unitOfWork.CreateTransaction();
-    /// await unitOfWork.CommitChangesAsync();
-    /// transaction.Commit();
+    /// try
+    /// {
+    ///     await orderRepository.UpdateAsync(order);
+    ///     await auditRepository.AddAsync(auditEntry);
+    ///     await unitOfWork.CommitChangesAsync();
+    ///     transaction.Commit();
+    /// }
+    /// catch
+    /// {
+    ///     if (transaction.IsActive)
+    ///         transaction.Rollback();
+    ///     throw;
+    /// }
     /// </code>
+    /// Creating the transaction does not save or commit staged changes. All enlisted contexts and
+    /// commands must use a connection compatible with the transaction created by the first participant.
     /// </example>
     public class UnitOfWork : IUnitOfWork
     {

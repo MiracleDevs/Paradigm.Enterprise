@@ -11,15 +11,36 @@ namespace Paradigm.Enterprise.Domain.Mappers;
 /// <remarks>
 /// <see cref="RegisterCustomConfigurations"/> runs from the base constructor before the derived
 /// constructor body. Overrides must therefore avoid depending on derived-instance initialization.
+/// Configuration is registered in <see cref="TypeAdapterConfig.GlobalSettings"/> and consequently
+/// affects other Mapster mappings in the process. Use <see cref="HasCustomConfigurationRegistered{TSource,TDestination}"/>
+/// to avoid registering the same pair repeatedly when mapper instances are scoped or transient.
 /// </remarks>
 /// <example>
-/// A mapper can use the default Mapster behavior and map into an existing destination:
+/// A mapper can customize both directions once and then update existing objects or create destinations
+/// with the <see cref="IMapperExtensions"/> helpers:
 /// <code>
 /// public sealed class OrderMapper : MapperBase&lt;Order, OrderView&gt;
 /// {
+///     protected override void RegisterCustomConfigurations()
+///     {
+///         if (!HasCustomConfigurationRegistered&lt;Order, OrderView&gt;())
+///         {
+///             TypeAdapterConfig&lt;Order, OrderView&gt;.NewConfig()
+///                 .Map(view =&gt; view.DisplayNumber, order =&gt; order.Number);
+///         }
+///
+///         if (!HasCustomConfigurationRegistered&lt;OrderView, Order&gt;())
+///         {
+///             TypeAdapterConfig&lt;OrderView, Order&gt;.NewConfig()
+///                 .Map(order =&gt; order.Number, view =&gt; view.DisplayNumber);
+///         }
+///     }
 /// }
 ///
-/// var view = new OrderMapper().MapTo(order, new OrderView());
+/// IMapper&lt;Order, OrderView&gt; mapper = new OrderMapper();
+/// OrderView existingView = mapper.MapTo(order, new OrderView());
+/// OrderView newView = mapper.MapTo(order);
+/// List&lt;OrderView&gt; views = mapper.MapTo(orders);
 /// </code>
 /// </example>
 public abstract class MapperBase<TFrom, TTo> : IMapper<TFrom, TTo>
@@ -81,6 +102,10 @@ public abstract class MapperBase<TFrom, TTo> : IMapper<TFrom, TTo>
     /// Registers custom Mapster configuration during mapper construction.
     /// The base implementation performs no work.
     /// </summary>
+    /// <remarks>
+    /// This virtual member is invoked by the base constructor. Do not read fields initialized by the
+    /// derived constructor, and guard global registrations when multiple instances may be constructed.
+    /// </remarks>
     protected virtual void RegisterCustomConfigurations()
     {
     }

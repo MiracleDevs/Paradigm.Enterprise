@@ -10,6 +10,11 @@ namespace Paradigm.Enterprise.Services.Cache.Extensions;
 /// <summary>
 /// Registers Redis-backed cache services using a connection string or Azure managed identity.
 /// </summary>
+/// <remarks>
+/// The method registers a singleton <see cref="ICacheService"/>. When Redis is available it also
+/// registers the connection multiplexer and distributed cache; supported startup failures can
+/// instead install a no-op distributed cache according to configuration.
+/// </remarks>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
@@ -25,6 +30,16 @@ public static class ServiceCollectionExtensions
     /// When configured not to throw, supported Redis startup failures register a no-op distributed
     /// cache so application startup can continue.
     /// </remarks>
+    /// <example>
+    /// Use the <c>Redis</c> connection string when present; otherwise the method reads managed
+    /// identity settings from <c>RedisCacheConfiguration:ManagedIdentity</c>:
+    /// <code>
+    /// await services.AddCacheAsync(
+    ///     configuration,
+    ///     connectionStringName: "Redis",
+    ///     instanceName: "orders:");
+    /// </code>
+    /// </example>
     public static async Task AddCacheAsync(this IServiceCollection services, IConfiguration configuration, string connectionStringName, string? instanceName = null)
     {
         ArgumentNullException.ThrowIfNull(services);

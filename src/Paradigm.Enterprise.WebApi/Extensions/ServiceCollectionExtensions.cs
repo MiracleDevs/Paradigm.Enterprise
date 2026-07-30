@@ -16,6 +16,23 @@ namespace Paradigm.Enterprise.WebApi.Extensions
     /// that cannot be loaded are skipped. Provider, repository, and mapper registration is transient;
     /// service registration is singleton.
     /// </remarks>
+    /// <example>
+    /// Register application conventions from an explicit assembly:
+    /// <code>
+    /// var applicationAssembly = typeof(OrdersProvider).Assembly;
+    ///
+    /// services
+    ///     .RegisterProviders(applicationAssembly)
+    ///     .RegisterRepositories(applicationAssembly)
+    ///     .RegisterMappers(applicationAssembly)
+    ///     .RegisterEntities(applicationAssembly)
+    ///     .RegisterDtos(applicationAssembly);
+    ///
+    /// services.RegisterServices([], applicationAssembly);
+    /// </code>
+    /// A provider or service interface is registered by convention only when it is named after its
+    /// implementation, for example <c>IOrdersProvider</c>/<c>OrdersProvider</c>.
+    /// </example>
     public static class ServiceCollectionExtensions
     {
         #region Public Methods

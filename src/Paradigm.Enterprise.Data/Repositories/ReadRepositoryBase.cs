@@ -12,6 +12,54 @@ namespace Paradigm.Enterprise.Data.Repositories;
 /// <typeparam name="TEntity">The entity returned by the repository.</typeparam>
 /// <typeparam name="TContext">The Entity Framework context used for queries.</typeparam>
 /// <typeparam name="TId">The value type used for entity identifiers.</typeparam>
+/// <remarks>
+/// <see cref="AsQueryable"/> is the source for identifier and full-list queries and may be overridden
+/// to add eager loading, tenant filters, projections, or no-tracking behavior. Paginated search is
+/// intentionally application-specific: override <see cref="GetSearchPaginatedFunction"/> before calling
+/// <see cref="SearchAsync{TParameters}(TParameters)"/>.
+/// </remarks>
+/// <example>
+/// The following repository adds no-tracking reads and implements a simple paginated search:
+/// <code>
+/// public sealed class OrderRepository
+///     : ReadRepositoryBase&lt;Order, SalesDbContext, int&gt;
+/// {
+///     public OrderRepository(IServiceProvider services) : base(services) { }
+///
+///     protected override IQueryable&lt;Order&gt; AsQueryable() =&gt;
+///         EntityContext.Orders.AsNoTracking();
+///
+///     protected override Func&lt;PaginationParametersBase,
+///         Task&lt;(PaginationInfo, List&lt;Order&gt;)&gt;&gt;
+///         GetSearchPaginatedFunction(PaginationParametersBase parameters)
+///     {
+///         return async input =&gt;
+///         {
+///             var pageNumber = input.PageNumber ?? 1;
+///             var pageSize = input.PageSize ?? PaginationParametersBase.DefaultPageSize;
+///             var query = AsQueryable().OrderBy(order =&gt; order.Id);
+///             var count = await query.CountAsync();
+///             var rows = await query
+///                 .Skip((pageNumber - 1) * pageSize)
+///                 .Take(pageSize)
+///                 .ToListAsync();
+///
+///             return (new PaginationInfo
+///             {
+///                 ItemsCount = count,
+///                 PageNumber = pageNumber,
+///                 TotalPages = (int)Math.Ceiling(count / (double)pageSize)
+///             }, rows);
+///         };
+///     }
+/// }
+///
+/// var page = await repository.SearchAsync(
+///     new OrderSearchParameters { PageNumber = 2, PageSize = 25 });
+/// </code>
+/// Validate page and sort inputs in the application-specific implementation when values originate
+/// from an untrusted request.
+/// </example>
 public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBase<TContext, TId>, IReadRepository<TEntity, TId>
     where TEntity : EntityBase<TId>
     where TContext : DbContextBase<TId>
@@ -32,23 +80,31 @@ public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBas
     #region Public Methods
 
     /// <summary>
-    /// Gets all the entities.
+    /// Materializes all entities from <see cref="AsQueryable"/>.
     /// </summary>
     /// <returns>All entities produced by the repository query.</returns>
+    /// <remarks>
+    /// This method does not apply pagination. Override it or <see cref="AsQueryable"/> when the application
+    /// requires filters, includes, ordering, or no-tracking behavior.
+    /// </remarks>
     public virtual async Task<IEnumerable<TEntity>> GetAllAsync() => await AsQueryable().ToListAsync();
 
     /// <summary>
-    /// Gets the entity by identifier.
+    /// Returns the first entity whose identifier equals the supplied value.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <returns>The matching entity, or <see langword="null"/> when it does not exist.</returns>
     public virtual async Task<TEntity?> GetByIdAsync(TId id) => await AsQueryable().FirstOrDefaultAsync(x => x.Id.Equals(id));
 
     /// <summary>
-    /// Gets the entities by their identifiers.
+    /// Returns the entities whose identifiers occur in the supplied sequence.
     /// </summary>
     /// <param name="ids">The identifiers.</param>
     /// <returns>The matching entities; identifiers with no match are omitted.</returns>
+    /// <remarks>
+    /// The result order is determined by the database query and is not guaranteed to match
+    /// <paramref name="ids"/>. Large identifier sets are passed to the provider as one query.
+    /// </remarks>
     public virtual async Task<IEnumerable<TEntity>> GetByIdsAsync(IEnumerable<TId> ids)
     {
         // todo: look for the IN(...) limit, and separate the request into chunks.
@@ -56,11 +112,14 @@ public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBas
     }
 
     /// <summary>
-    /// Executes the search using the specified parameters.
+    /// Executes the application-specific paginated search selected for the supplied parameters.
     /// </summary>
     /// <typeparam name="TParameters">The type of the parameters.</typeparam>
     /// <param name="parameters">The parameters.</param>
     /// <returns>The requested entities and their pagination metadata.</returns>
+    /// <exception cref="NotImplementedException">
+    /// The repository does not override <see cref="GetSearchPaginatedFunction"/>.
+    /// </exception>
     public async Task<PaginatedResultDto<TEntity>> SearchAsync<TParameters>(TParameters parameters)
         where TParameters : PaginationParametersBase
     {
@@ -85,17 +144,26 @@ public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBas
     #region Protected Methods
 
     /// <summary>
-    /// Gets the entity set as queryable.
+    /// Creates the base query used by the built-in read operations.
     /// </summary>
     /// <returns>The base query used by read operations.</returns>
+    /// <remarks>
+    /// The default query tracks returned entities. Override this member to use <c>AsNoTracking()</c>,
+    /// add includes, or enforce a query-wide application filter.
+    /// </remarks>
     protected virtual IQueryable<TEntity> AsQueryable() => EntityContext.Set<TEntity>();
 
     /// <summary>
-    /// Gets the method to be executed for filter entities.
+    /// Selects the function that executes an application-specific paginated query.
     /// </summary>
     /// <param name="parameters">The parameters used to select a search implementation.</param>
     /// <returns>A function that executes the application-specific paginated query.</returns>
     /// <exception cref="NotImplementedException">A derived repository does not provide a search implementation.</exception>
+    /// <remarks>
+    /// The default implementation always throws. Derived repositories may inspect
+    /// <paramref name="parameters"/> to select among several search functions; the returned function
+    /// receives the same parameter object when invoked by <see cref="SearchAsync{TParameters}(TParameters)"/>.
+    /// </remarks>
     protected virtual Func<PaginationParametersBase, Task<(PaginationInfo, List<TEntity>)>> GetSearchPaginatedFunction(PaginationParametersBase parameters) => throw new NotImplementedException();
 
     #endregion

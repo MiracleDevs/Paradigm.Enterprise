@@ -14,6 +14,41 @@ namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 /// A mapper for <typeparamref name="TParameters"/> must be registered with
 /// <see cref="SqlParameterMapperFactory"/> before execution.
 /// </remarks>
+/// <example>
+/// Define the parameter contract, its mapper, and the procedure together:
+/// <code>
+/// static async Task RunAsync(DbConnection connection, IUnitOfWork unitOfWork)
+/// {
+///     SqlParameterMapperFactory.RegisterMapper&lt;ArchiveOrderParameters&gt;(
+///         () =&gt; new ArchiveOrderParameterMapper());
+///
+///     var procedure = new ArchiveOrderProcedure();
+///     await procedure.ExecuteAsync(
+///         connection,
+///         new ArchiveOrderParameters(42, "Customer request"),
+///         unitOfWork);
+/// }
+///
+/// sealed record ArchiveOrderParameters(int OrderId, string? Reason);
+///
+/// sealed class ArchiveOrderParameterMapper : SqlParameterMapperBase
+/// {
+///     protected override void AddSqlParameters(object parameters)
+///     {
+///         var value = (ArchiveOrderParameters)parameters;
+///         AddSqlParameter("@OrderId", value.OrderId);
+///         AddSqlParameter("@Reason", value.Reason);
+///     }
+/// }
+///
+/// sealed class ArchiveOrderProcedure : StoredProcedureBase&lt;ArchiveOrderParameters&gt;
+/// {
+///     protected override string StoredProcedureName =&gt; "dbo.ArchiveOrder";
+///     protected override int? ExecutionTimeout =&gt; 30;
+/// }
+/// </code>
+/// The supplied connection remains caller-owned. It stays open when <c>unitOfWork</c> has an active transaction.
+/// </example>
 public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 {
     /// <summary>
@@ -41,6 +76,37 @@ public abstract class StoredProcedureBase<TParameters> : StoredProcedureBase
 /// opens the connection when necessary and closes it afterward. With an active transaction, the
 /// command enlists in it and connection lifetime remains with the transaction owner.
 /// </remarks>
+/// <example>
+/// Define a procedure with no application parameters and choose connection lifetime through transaction use:
+/// <code>
+/// static async Task RunAsync(DbConnection connection, IUnitOfWork unitOfWork)
+/// {
+///     var procedure = new RefreshReportingProcedure();
+///
+///     // Without an active transaction, ExecuteAsync closes the connection after the command.
+///     await procedure.ExecuteAsync(connection);
+///
+///     // An active unit-of-work transaction owns connection lifetime and receives the command.
+///     using ITransaction transaction = unitOfWork.CreateTransaction();
+///     try
+///     {
+///         await procedure.ExecuteAsync(connection, unitOfWork);
+///         transaction.Commit();
+///     }
+///     catch
+///     {
+///         transaction.Rollback();
+///         throw;
+///     }
+/// }
+///
+/// sealed class RefreshReportingProcedure : StoredProcedureBase
+/// {
+///     protected override string StoredProcedureName =&gt; "dbo.RefreshReporting";
+/// }
+/// </code>
+/// The transaction and command must use compatible connections; this API is not a distributed transaction coordinator.
+/// </example>
 public abstract class StoredProcedureBase
 {
     #region Properties

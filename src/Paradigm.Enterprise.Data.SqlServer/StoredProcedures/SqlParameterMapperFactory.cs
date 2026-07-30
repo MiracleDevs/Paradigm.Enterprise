@@ -6,6 +6,18 @@ namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 /// <summary>
 /// Stores factories used to create SQL Server parameter mappers for application parameter types.
 /// </summary>
+/// <example>
+/// Register mappers during application startup, before any procedure uses the parameter type:
+/// <code>
+/// SqlParameterMapperFactory.RegisterMapper&lt;ArchiveOrderParameters&gt;(
+///     () =&gt; new ArchiveOrderParameterMapper());
+///
+/// using ISqlParameterMapper mapper =
+///     SqlParameterMapperFactory.GetMapper&lt;ArchiveOrderParameters&gt;();
+/// SqlParameter[] parameters = mapper.Map(new ArchiveOrderParameters(42, null));
+/// </code>
+/// Registration is first-wins. Register the intended mapper once instead of attempting to replace it later.
+/// </example>
 public static class SqlParameterMapperFactory
 {
     private static readonly ConcurrentDictionary<Type, Func<ISqlParameterMapper>> MapperFactories = new ConcurrentDictionary<Type, Func<ISqlParameterMapper>>();

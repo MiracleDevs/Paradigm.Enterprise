@@ -7,14 +7,33 @@ namespace Paradigm.Enterprise.Domain.Exceptions;
 /// </summary>
 /// <remarks>
 /// Assertions do not throw immediately. Call <see cref="ThrowIfAny"/> after evaluating related rules
-/// to present all accumulated messages together.
+/// to present all accumulated messages together. A validator is intended for one validation pass:
+/// <see cref="ThrowIfAny"/> does not clear accumulated messages.
 /// </remarks>
 /// <example>
+/// A domain entity can report several correctable problems in one failure:
 /// <code>
-/// var validator = new DomainValidator();
-/// validator.Assert(order.Lines.Count != 0, "An order requires at least one line.");
-/// validator.Assert(order.Total &gt;= 0, "The order total cannot be negative.");
-/// validator.ThrowIfAny();
+/// public override void Validate()
+/// {
+///     var rules = new DomainValidator();
+///     rules.Assert(Lines.Count != 0, "An order requires at least one line.");
+///     rules.Assert(Total &gt;= 0, "The order total cannot be negative.");
+///
+///     if (CustomerIsOnHold)
+///         rules.AddError("The customer account is on hold.");
+///
+///     rules.ThrowIfAny();
+/// }
+///
+/// try
+/// {
+///     order.Validate();
+/// }
+/// catch (DomainException exception)
+/// {
+///     // exception.Message contains every failed rule, separated by line breaks.
+///     validationProblem = exception.Message;
+/// }
 /// </code>
 /// </example>
 public class DomainValidator

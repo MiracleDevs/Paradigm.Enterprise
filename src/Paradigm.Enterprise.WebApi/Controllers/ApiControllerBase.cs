@@ -13,6 +13,25 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 /// mechanism, such as <see cref="Paradigm.Enterprise.WebApi.Attributes.ApiAuthorizationAttribute"/>.
 /// Endpoint exposure and request authorization are independent concerns.
 /// </remarks>
+/// <example>
+/// A protected controller opts into both endpoint exposure and API-key authorization:
+/// <code>
+/// [Route("api/status")]
+/// [ApiAuthorization]
+/// public sealed class StatusController : ApiControllerBase
+/// {
+///     public StatusController(ILogger&lt;ApiControllerBase&gt; logger)
+///         : base(logger)
+///     {
+///     }
+///
+///     [HttpGet]
+///     [ExposeEndpoint]
+///     public IActionResult Get() => Ok(new { Status = "Healthy" });
+/// }
+/// </code>
+/// Configure <c>ClientSecrets</c> and add endpoint exposure control before using this pattern.
+/// </example>
 [AllowAnonymous]
 [ApiController]
 public abstract class ApiControllerBase : ControllerBase
@@ -34,7 +53,7 @@ public abstract class ApiControllerBase : ControllerBase
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiControllerBase"/> class.
     /// </summary>
-    /// <param name="logger">The logger.</param>
+    /// <param name="logger">The logger retained for use by the controller and derived types.</param>
     public ApiControllerBase(ILogger<ApiControllerBase> logger)
     {
         Logger = logger;
@@ -67,8 +86,8 @@ public abstract class ApiControllerBase<TProvider> : ApiControllerBase
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiControllerBase{TProvider}"/> class.
     /// </summary>
-    /// <param name="logger">The logger.</param>
-    /// <param name="provider">The provider.</param>
+    /// <param name="logger">The logger retained by the base controller.</param>
+    /// <param name="provider">The provider retained for derived actions.</param>
     protected ApiControllerBase(ILogger<ApiControllerBase> logger, TProvider provider)
         : base(logger)
     {

@@ -8,6 +8,29 @@ namespace Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 /// </summary>
 /// <typeparam name="TParameters">The application type mapped to command parameters.</typeparam>
 /// <typeparam name="TResult">The value mapped from result set 1.</typeparam>
+/// <example>
+/// Derive a procedure for the database contract, then handle an empty result explicitly:
+/// <code>
+/// static async Task&lt;OrderView?&gt; FindAsync(
+///     FindOrderProcedure procedure,
+///     DbConnection connection,
+///     FindOrderParameters parameters,
+///     IUnitOfWork unitOfWork)
+/// {
+///     return await procedure.ExecuteAsync(connection, parameters, unitOfWork);
+/// }
+///
+/// sealed record FindOrderParameters(int OrderId);
+/// sealed record OrderView(int OrderId, string Status);
+///
+/// sealed class FindOrderProcedure :
+///     ResultStoredProcedureBase&lt;FindOrderParameters, OrderView&gt;
+/// {
+///     protected override string StoredProcedureName =&gt; "dbo.FindOrder";
+/// }
+/// </code>
+/// Register the <c>FindOrderParameters</c> mapper before calling the procedure.
+/// </example>
 public abstract class ResultStoredProcedureBase<TParameters, TResult> : StoredProcedureBase
 {
     /// <summary>
@@ -52,6 +75,8 @@ public abstract class ResultStoredProcedureBase<TParameters, TResult> : StoredPr
 ///
 ///     if (customer is null || address is null)
 ///         return;
+///
+///     // Result sets are consumed in their database order.
 /// }
 /// </code>
 /// </example>

@@ -22,6 +22,26 @@ namespace Paradigm.Enterprise.WebApi.Controllers;
 /// <see cref="ApiAuthorizationAttribute"/>, or a different base controller that does not allow
 /// anonymous access.
 /// </remarks>
+/// <example>
+/// A derived controller exposes the inherited search, lookup, save, and delete routes:
+/// <code>
+/// [Route("api/products")]
+/// [ApiAuthorization]
+/// public sealed class ProductsController
+///     : EditApiControllerBase&lt;IProductProvider, ProductView, ProductSearch, int&gt;
+/// {
+///     public ProductsController(
+///         ILogger&lt;ReadApiControllerBase&lt;IProductProvider, ProductView, ProductSearch, int&gt;&gt; logger,
+///         IProductProvider provider)
+///         : base(logger, provider)
+///     {
+///     }
+/// }
+/// </code>
+/// In this example, <c>IProductProvider</c> implements <c>IEditProvider&lt;ProductView, int&gt;</c>,
+/// <c>ProductView</c> derives from <c>EntityBase&lt;int&gt;</c>, and <c>ProductSearch</c> derives
+/// from <see cref="PaginationParametersBase"/>.
+/// </example>
 [AllowAnonymous]
 [ApiController]
 public abstract class EditApiControllerBase<TProvider, TView, TParameters, TId> : ReadApiControllerBase<TProvider, TView, TParameters, TId>

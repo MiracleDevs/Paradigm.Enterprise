@@ -9,6 +9,16 @@ namespace Paradigm.Enterprise.Services.TableReader;
 /// <summary>
 /// Writes CSV, Excel, or XML table documents.
 /// </summary>
+/// <remarks>
+/// The service never disposes the target stream. Stream-based writes require a writable, seekable
+/// stream because successful writes rewind it to position zero.
+/// </remarks>
+/// <example>
+/// <code>
+/// services.AddSingleton&lt;ITableWriterService, TableWriterService&gt;();
+/// </code>
+/// See <see cref="ITableWriterService"/> for a complete stream-writing example.
+/// </example>
 public class TableWriterService : ITableWriterService
 {
     /// <summary>

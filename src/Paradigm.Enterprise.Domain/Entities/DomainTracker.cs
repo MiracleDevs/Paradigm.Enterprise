@@ -7,15 +7,46 @@
 /// <remarks>
 /// Tracking is in memory only. Calling <see cref="Add"/>, <see cref="Edit"/>, or <see cref="Remove"/>
 /// does not persist data and does not move an entity out of another collection. Duplicate registrations
-/// are retained. A repository or aggregate mapper is responsible for consuming the collections.
+/// are retained. A repository or aggregate mapper is responsible for consuming the collections and
+/// deciding when to call <see cref="Reset"/>. In particular, resetting the tracker does not commit or
+/// roll back a database transaction; it only forgets the staged registrations.
 /// </remarks>
 /// <example>
+/// An aggregate can expose a tracker while keeping persistence outside the domain model:
 /// <code>
-/// var tracker = new DomainTracker&lt;OrderLine&gt;();
-/// tracker.Add(newLine);
-/// tracker.Remove(discontinuedLine);
-/// tracker.Reset();
+/// public sealed class Order : EntityBase&lt;Guid&gt;
+/// {
+///     public DomainTracker&lt;OrderLine&gt; Lines { get; } = new();
+///
+///     public void AddLine(OrderLine line)
+///     {
+///         Lines.Add(line); // Records intent; no database command runs here.
+///     }
+///
+///     public void ChangeQuantity(OrderLine line, int quantity)
+///     {
+///         line.Quantity = quantity;
+///         Lines.Edit(line);
+///     }
+///
+///     public void RemoveLine(OrderLine line)
+///     {
+///         Lines.Remove(line);
+///     }
+/// }
+///
+/// // An application service or repository consumes all three collections.
+/// foreach (var line in order.Lines.Added)
+///     await lineRepository.AddAsync(line);
+/// foreach (var line in order.Lines.Edited)
+///     await lineRepository.UpdateAsync(line);
+/// foreach (var line in order.Lines.Removed)
+///     await lineRepository.DeleteAsync(line);
+///
+/// await unitOfWork.CommitChangesAsync();
+/// order.Lines.Reset(); // Clear only after the commit succeeds.
 /// </code>
+/// If the commit throws, leave the tracker intact so the caller can inspect or retry the staged work.
 /// </example>
 public class DomainTracker<TEntity> where TEntity : Interfaces.IEntity
 {
@@ -105,6 +136,10 @@ public class DomainTracker<TEntity> where TEntity : Interfaces.IEntity
     /// <summary>
     /// Clears the <see cref="Added"/>, <see cref="Edited"/>, and <see cref="Removed"/> collections.
     /// </summary>
+    /// <remarks>
+    /// Call this only when the consumer no longer needs the staged registrations, normally after a
+    /// successful commit. This method has no effect on any repository, context, or transaction.
+    /// </remarks>
     public void Reset()
     {
         _addedList.Clear();

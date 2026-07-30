@@ -7,6 +7,27 @@ namespace Paradigm.Enterprise.Providers;
 /// </summary>
 /// <typeparam name="TView">The view model accepted and returned by the provider.</typeparam>
 /// <typeparam name="TId">The value type used for identifiers.</typeparam>
+/// <remarks>
+/// Implementations decide their transaction and mapping boundaries. The standard
+/// <see cref="EditProviderBase{TInterface,TEntity,TView,TRepository,TViewRepository,TId}"/>
+/// stages repository changes and commits them through one unit of work per method call.
+/// </remarks>
+/// <example>
+/// <code>
+/// public sealed class OrderApplicationService(IEditProvider&lt;OrderView, Guid&gt; orders)
+/// {
+///     public Task&lt;OrderView&gt; CreateAsync(OrderView draft) =&gt; orders.AddAsync(draft);
+///
+///     public Task&lt;OrderView&gt; RenameAsync(OrderView order, string number)
+///     {
+///         order.Number = number;
+///         return orders.UpdateAsync(order);
+///     }
+///
+///     public Task DeleteAsync(Guid id) =&gt; orders.DeleteAsync(id);
+/// }
+/// </code>
+/// </example>
 public interface IEditProvider<TView, TId> : IReadProvider<TView, TId>
     where TId : struct, IEquatable<TId>
     where TView : EntityBase<TId>, new()

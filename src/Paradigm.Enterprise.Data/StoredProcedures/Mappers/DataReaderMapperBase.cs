@@ -13,6 +13,33 @@ namespace Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 /// The cached-name lookup is case-insensitive, but schema-table confirmation compares the requested
 /// name with <c>ColumnName</c> using case-sensitive ordinal equality.
 /// </remarks>
+/// <example>
+/// Implement <see cref="Map"/> for one row and load the schema before testing optional columns:
+/// <code>
+/// public sealed class OrderSummaryMapper : DataReaderMapperBase
+/// {
+///     public override object Map(IDataReader reader)
+///     {
+///         LoadReaderFields(reader);
+///
+///         return new OrderSummary
+///         {
+///             Id = GetInt32(reader, "Id"),
+///             Number = GetString(reader, "Number"),
+///             CustomerName = FieldIsValid(reader, "CustomerName")
+///                 ? GetString(reader, "CustomerName")
+///                 : null
+///         };
+///     }
+/// }
+///
+/// DataReaderMapperFactory.RegisterMapper&lt;OrderSummary&gt;(
+///     () =&gt; new OrderSummaryMapper());
+/// </code>
+/// The stored-procedure translation helpers advance the reader before calling <see cref="Map"/>.
+/// The mapper must not call <c>Read</c>, <c>NextResult</c>, close, or dispose the reader. Call
+/// <see cref="FieldIsValid"/> before a typed getter when a column may be absent or database-null.
+/// </example>
 public abstract class DataReaderMapperBase : IDataReaderMapper
 {
     #region Properties
@@ -27,10 +54,14 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     #region Public Methods
 
     /// <summary>
-    /// Maps the specified reader.
+    /// Maps the data reader's current row to an application object.
     /// </summary>
-    /// <param name="reader">The reader.</param>
+    /// <param name="reader">The reader positioned on the row to map.</param>
     /// <returns>The application object mapped from the current row.</returns>
+    /// <remarks>
+    /// Implementations should call <see cref="LoadReaderFields"/> before using
+    /// <see cref="FieldIsValid"/>. Do not advance or dispose <paramref name="reader"/>.
+    /// </remarks>
     public abstract object Map(IDataReader reader);
 
     #endregion
@@ -38,9 +69,14 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     #region Protected Methods
 
     /// <summary>
-    /// Loads the reader fields.
+    /// Caches the names exposed by a reader schema for optional-field checks.
     /// </summary>
-    /// <param name="reader">The reader.</param>
+    /// <param name="reader">The reader whose current result-set schema is inspected.</param>
+    /// <remarks>
+    /// Loading occurs only while the cache is empty. Reusing one mapper instance with a different
+    /// result shape therefore retains the first successfully loaded set of names. Schema-read failures
+    /// are ignored and leave the cache empty or partially populated.
+    /// </remarks>
     protected void LoadReaderFields(IDataReader reader)
     {
         if (_fields.Any() || reader.FieldCount <= 0)
@@ -62,10 +98,10 @@ public abstract class DataReaderMapperBase : IDataReaderMapper
     }
 
     /// <summary>
-    /// Checks if the fields the is valid to map.
+    /// Determines whether a named field exists and contains a non-database-null value.
     /// </summary>
-    /// <param name="reader">The reader.</param>
-    /// <param name="name">The name.</param>
+    /// <param name="reader">The reader positioned on the row to inspect.</param>
+    /// <param name="name">The database column name.</param>
     /// <returns>
     /// <see langword="true"/> when the named field exists and is not database null; otherwise,
     /// <see langword="false"/>.
