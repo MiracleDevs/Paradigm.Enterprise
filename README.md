@@ -69,10 +69,10 @@ The repository's [example](example/README.md) targets the current package line a
 ```powershell
 dotnet restore src/Paradigm.Enterprise.slnx
 dotnet build src/Paradigm.Enterprise.slnx
-dotnet test src/Paradigm.Enterprise.slnx
+dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 ```
 
-The test wrapper is also available as `bash build/test.sh`.
+The fast test wrapper is also available as `bash build/test.sh`. Run `bash build/quality.sh` for the complete suite, including integration tests against the packed and installed CLI.
 
 ## Contributing
 

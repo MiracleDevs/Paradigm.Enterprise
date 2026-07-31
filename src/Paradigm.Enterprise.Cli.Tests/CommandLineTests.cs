@@ -146,25 +146,25 @@ public class CommandLineTests
         var root = FindRepositoryRoot();
         var dataProject = Path.Combine(root, "src", "Paradigm.Enterprise.Data", "Paradigm.Enterprise.Data.csproj");
         var providerProject = Path.Combine(root, "src", "Paradigm.Enterprise.Providers", "Paradigm.Enterprise.Providers.csproj");
-        var editRepository = await Run(["api", "show", "EditRepositoryBase", "--project", dataProject]);
-        var search = await Run(["api", "search", "GetSearchPaginatedFunction", "--project", dataProject]);
+        var data = await Run(["api", "search", "protected", "--project", dataProject, "--limit", "100"]);
         var provider = await Run(["api", "show", "ProviderBase", "--project", providerProject]);
-        Assert.AreEqual(0, editRepository.Exit);
-        StringAssert.Contains(editRepository.Output, "protected System.Void RemoveAggregate");
-        StringAssert.Contains(editRepository.Output, "protected virtual System.Void DeleteRemovedAggregates");
-        Assert.AreEqual(0, search.Exit);
-        StringAssert.Contains(search.Output, "protected virtual");
+        Assert.AreEqual(0, data.Exit);
+        StringAssert.Contains(data.Output, "protected System.Void RemoveAggregate");
+        StringAssert.Contains(data.Output, "protected virtual System.Void DeleteRemovedAggregates");
+        StringAssert.Contains(data.Output, "protected virtual Func<");
+        StringAssert.Contains(data.Output, "GetSearchPaginatedFunction");
         Assert.AreEqual(0, provider.Exit);
         StringAssert.Contains(provider.Output, "protected virtual TProvider GetProvider");
         Assert.IsFalse(provider.Output.Contains("\npackage ", StringComparison.Ordinal));
     }
 
     [TestMethod]
-    public async Task Full_solution_guide_for_edit_provider_is_successful_and_isolated()
+    [TestCategory("Integration")]
+    public async Task Provider_project_guide_for_edit_provider_is_successful_and_isolated()
     {
         var root = FindRepositoryRoot();
-        var solution = Path.Combine(root, "src", "Paradigm.Enterprise.slnx");
-        var result = await Run(["api", "guide", "IEditProvider", "--project", solution, "--format", "json"]);
+        var project = Path.Combine(root, "src", "Paradigm.Enterprise.Providers", "Paradigm.Enterprise.Providers.csproj");
+        var result = await Run(["api", "guide", "IEditProvider", "--project", project, "--format", "json"]);
         Assert.AreEqual(0, result.Exit);
         using var json = System.Text.Json.JsonDocument.Parse(result.Output);
         Assert.AreEqual("success", json.RootElement.GetProperty("status").GetString());

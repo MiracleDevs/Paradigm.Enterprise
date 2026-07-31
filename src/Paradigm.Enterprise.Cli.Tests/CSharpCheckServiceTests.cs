@@ -3,8 +3,15 @@ using Paradigm.Enterprise.Checks.CSharp;
 namespace Paradigm.Enterprise.Cli.Tests;
 
 [TestClass]
+[TestCategory("Integration")]
 public class CSharpCheckServiceTests
 {
+    #region Fields
+
+    private static readonly Lazy<IReadOnlyList<CSharpCheckDiagnostic>> goodPracticesDiagnostics = new(() => CSharpCheckService.Analyze(new(FixtureProject("GoodPractices", "GoodPractices.csproj"), "net10.0")));
+
+    #endregion
+
     #region Public Methods
 
     [TestMethod]
@@ -44,7 +51,7 @@ public class CSharpCheckServiceTests
 
     #region Private Methods
 
-    private static IReadOnlyList<CSharpCheckDiagnostic> AnalyzeGoodPracticesFixture() => CSharpCheckService.Analyze(new(FixtureProject("GoodPractices", "GoodPractices.csproj"), "net10.0"));
+    private static IReadOnlyList<CSharpCheckDiagnostic> AnalyzeGoodPracticesFixture() => goodPracticesDiagnostics.Value;
     private static string FixtureProject(string directory, string project)
     {
         var repository = FindRepositoryRoot();

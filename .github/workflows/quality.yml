@@ -23,19 +23,21 @@ jobs:
       - name: Build and test source
         run: |
           dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore
-          dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build
+          dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --filter "TestCategory!=Integration"
       - name: Pack current release and build example
         run: |
           dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
           dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
           dotnet build example/ExampleApp.sln --configuration Release --no-restore
           dotnet test example/ExampleApp.sln --configuration Release --no-build
-      - name: Pack and install the Paradigm CLI
+      - name: Install and test the packed Paradigm CLI
         shell: pwsh
         run: |
           $version = ([xml](Get-Content -Raw build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
-          dotnet pack src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj --configuration Release --no-build --output artifacts
           dotnet tool install --tool-path .paradigm/tools --add-source artifacts --no-cache Paradigm.Enterprise.Cli --version $version
+          $env:PARADIGM_CLI_INTEGRATION_PACKAGE = (Resolve-Path "artifacts/Paradigm.Enterprise.Cli.$version.nupkg").Path
+          $env:PARADIGM_CLI_INTEGRATION_EXECUTABLE = (Resolve-Path ".paradigm/tools/paradigm").Path
+          dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"
       - name: Deterministic quality checks
         run: |
           .paradigm/tools/paradigm packages check --project src/Paradigm.Enterprise.slnx

@@ -58,24 +58,27 @@ dotnet restore src/Paradigm.Enterprise.slnx
 
 step "Build and test source"
 dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore
-#dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build
+dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --filter "TestCategory!=Integration"
 
 step "Pack current release and build example"
 dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output "$ARTIFACTS_DIRECTORY"
 dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources="$ARTIFACTS_DIRECTORY"
 dotnet build example/ExampleApp.sln --configuration Release --no-restore
-#dotnet test example/ExampleApp.sln --configuration Release --no-build
+dotnet test example/ExampleApp.sln --configuration Release --no-build
 
-step "Pack and install the Paradigm CLI"
+step "Install and test the packed Paradigm CLI"
 VERSION="$("$POWERSHELL" -NoProfile -NonInteractive -Command '([xml](Get-Content -Raw "build/Paradigm.Version.props")).Project.PropertyGroup.ParadigmEnterpriseVersion')"
 VERSION="${VERSION//$'\r'/}"
-dotnet pack src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj --configuration Release --no-build --output "$ARTIFACTS_DIRECTORY"
 dotnet tool install --tool-path "$TOOLS_DIRECTORY" --add-source "$ARTIFACTS_DIRECTORY" --no-cache Paradigm.Enterprise.Cli --version "$VERSION"
 
 PARADIGM="$TOOLS_DIRECTORY/paradigm"
 if [[ -f "${PARADIGM}.exe" ]]; then
     PARADIGM="${PARADIGM}.exe"
 fi
+
+export PARADIGM_CLI_INTEGRATION_PACKAGE="$ARTIFACTS_DIRECTORY/Paradigm.Enterprise.Cli.$VERSION.nupkg"
+export PARADIGM_CLI_INTEGRATION_EXECUTABLE="$PARADIGM"
+dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"
 
 step "Deterministic quality checks"
 "$PARADIGM" packages check --project src/Paradigm.Enterprise.slnx

@@ -3,6 +3,7 @@ using System.Diagnostics;
 namespace Paradigm.Enterprise.Cli.Tests;
 
 [TestClass]
+[TestCategory("Integration")]
 public class ArtifactResolutionTests
 {
     #region Public Methods

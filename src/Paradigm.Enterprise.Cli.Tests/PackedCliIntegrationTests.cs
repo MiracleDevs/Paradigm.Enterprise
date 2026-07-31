@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Cli.Tests;
 
 [TestClass]
+[TestCategory("Integration")]
 [DoNotParallelize]
 public class PackedCliIntegrationTests
 {
@@ -20,7 +20,6 @@ public class PackedCliIntegrationTests
     private static string repository = null!;
     private static string temporary = null!;
     private static string executable = null!;
-    private static string solution = null!;
     private static string providerProject = null!;
     private static string metadataProject = null!;
     private static string auditProject = null!;
@@ -32,25 +31,14 @@ public class PackedCliIntegrationTests
     #region Public Methods
 
     [ClassInitialize]
-    public static async Task Initialize(TestContext _)
+    public static void Initialize(TestContext _)
     {
         repository = FindRepositoryRoot();
         temporary = Path.Combine(Path.GetTempPath(), $"paradigm-packed-cli-{Guid.NewGuid():N}");
-        var packages = Path.Combine(temporary, "packages");
-        var tools = Path.Combine(temporary, "tools");
-        Directory.CreateDirectory(packages);
+        Directory.CreateDirectory(temporary);
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
         version = CentralVersion(repository);
-        var integrationVersion = $"{version}-integration-{Guid.NewGuid():N}";
-        var cliProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli", "Paradigm.Enterprise.Cli.csproj");
-        var dotnet = Path.Combine(new DirectoryInfo(RuntimeEnvironment.GetRuntimeDirectory()).Parent!.Parent!.Parent!.FullName, OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet");
-        Assert.IsTrue(File.Exists(dotnet), $"Could not resolve the real dotnet host at '{dotnet}'.");
-        var pack = await RunProcess(dotnet, ["pack", cliProject, "--configuration", configuration, "--no-build", "--output", packages, $"-p:PackageVersion={integrationVersion}"], repository);
-        Assert.AreEqual(0, pack.ExitCode, pack.Error);
-        var install = await RunProcess(dotnet, ["tool", "install", "--tool-path", tools, "--add-source", packages, "--ignore-failed-sources", "--no-cache", "--version", integrationVersion, "Paradigm.Enterprise.Cli"], repository);
-        Assert.AreEqual(0, install.ExitCode, install.Error);
-        executable = Path.Combine(tools, OperatingSystem.IsWindows() ? "paradigm.exe" : "paradigm");
-        solution = Path.Combine(repository, "src", "Paradigm.Enterprise.slnx");
+        executable = RequiredFile("PARADIGM_CLI_INTEGRATION_EXECUTABLE");
         providerProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Providers", "Paradigm.Enterprise.Providers.csproj");
         metadataProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Tests", "Paradigm.Enterprise.Tests.csproj");
         auditProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli.Tests", "Paradigm.Enterprise.Cli.Tests.csproj");
@@ -118,7 +106,7 @@ public class PackedCliIntegrationTests
         var generationOutput = Path.Combine(temporary, "generated");
         using var generation = AssertJson(await Run("generate", "json", "--project-name", "GoodPractices", "--assembly", generationAssembly, "--output", generationOutput, "--format", "json"), "generate json");
         Assert.IsTrue(Directory.Exists(Path.Combine(generationOutput, "JsonSerializerContexts")));
-        using var packageCheck = AssertJson(await Run("packages", "check", "--project", solution, "--format", "json"), "packages check");
+        using var packageCheck = AssertJson(await Run("packages", "check", "--project", providerProject, "--format", "json"), "packages check");
         Assert.IsTrue(packageCheck.RootElement.GetProperty("results").GetArrayLength() > 0);
         using var packageAudit = AssertJson(await Run(new Dictionary<string, string?> { ["PATH"] = auditShimDirectory + Path.PathSeparator + Environment.GetEnvironmentVariable("PATH") }, "packages", "audit", "--project", auditProject, "--format", "json"), "packages audit");
         Assert.AreEqual(0, packageAudit.RootElement.GetProperty("diagnostics").GetArrayLength());
@@ -185,6 +173,15 @@ public class PackedCliIntegrationTests
         const string start = "<ParadigmEnterpriseVersion>";
         var index = text.IndexOf(start, StringComparison.Ordinal) + start.Length;
         return text[index..text.IndexOf("</ParadigmEnterpriseVersion>", index, StringComparison.Ordinal)];
+    }
+
+    private static string RequiredFile(string variable)
+    {
+        var path = Environment.GetEnvironmentVariable(variable);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(path), $"Set {variable} to the absolute path prepared by build/quality.sh or the PR quality workflow before running Integration tests.");
+        Assert.IsTrue(Path.IsPathFullyQualified(path), $"{variable} must contain an absolute path, but was '{path}'.");
+        Assert.IsTrue(File.Exists(path), $"{variable} points to missing file '{path}'. Run build/quality.sh to prepare and execute the complete suite.");
+        return path;
     }
 
     private static string FindRepositoryRoot()

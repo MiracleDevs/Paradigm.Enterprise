@@ -45,8 +45,10 @@ Backup restoration, deployment rollback, and disaster recovery are platform exer
 Run the library test project through the solution:
 
 ```powershell
-dotnet test src/Paradigm.Enterprise.slnx
+dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 ```
+
+This is the fast developer loop. Run `bash build/quality.sh` for the complete repository suite, including integration tests that consume the prepared CLI package and installed executable.
 
 The checked-in example solution references the current source projects. Build and test it separately to validate the documented application patterns as well as the framework solution:
 
