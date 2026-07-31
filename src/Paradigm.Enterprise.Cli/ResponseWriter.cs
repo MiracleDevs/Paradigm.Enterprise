@@ -1,15 +1,16 @@
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Cli;
-
 internal static class ResponseWriter
 {
+#region Fields
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
-
+#endregion
+#region Public Methods
     public static async Task WriteAsync(CommandResponse response, OutputFormat format, TextWriter output)
     {
         if (format == OutputFormat.Json)
@@ -29,12 +30,7 @@ internal static class ResponseWriter
         if (!response.Command.StartsWith("api ", StringComparison.Ordinal))
             foreach (var package in response.Packages)
                 await output.WriteLineAsync($"package {package.Name} {package.Version} [{Path.GetFileName(package.Project)}]");
-        IReadOnlyList<ResultItem> textResults = response.Command == "packages check"
-            ? response.Results
-                .DistinctBy(result => (result.Kind, result.Name, result.Detail, result.Package, result.Version))
-                .Take(50)
-                .ToArray()
-            : response.Results;
+        IReadOnlyList<ResultItem> textResults = response.Command == "packages check" ? response.Results.DistinctBy(result => (result.Kind, result.Name, result.Detail, result.Package, result.Version)).Take(50).ToArray() : response.Results;
         foreach (var result in textResults)
         {
             var owner = result.Package is null ? "" : $" [{result.Package} {result.Version}]";
@@ -42,10 +38,9 @@ internal static class ResponseWriter
             foreach (var line in result.Detail.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 await output.WriteLineAsync($"  {line}");
         }
+
         if (response.Command == "packages check" && textResults.Count < response.Results.Count)
-            await output.WriteLineAsync(
-                $"... {response.Results.Count - textResults.Count} duplicate or additional package entries omitted; " +
-                "use --format json for the complete result.");
+            await output.WriteLineAsync($"... {response.Results.Count - textResults.Count} duplicate or additional package entries omitted; " + "use --format json for the complete result.");
         foreach (var diagnostic in response.Diagnostics)
             await output.WriteLineAsync($"{diagnostic.Code} {diagnostic.Severity}: {diagnostic.Message}{(diagnostic.Location is null ? "" : $" [{diagnostic.Location}]")}");
         if (response.Guide is not null)
@@ -61,9 +56,12 @@ internal static class ResponseWriter
         }
     }
 
+#endregion
+#region Private Methods
     private static async Task WriteLines(string label, IEnumerable<string> values, TextWriter output)
     {
         foreach (var value in values)
             await output.WriteLineAsync($"  {label}: {value}");
     }
+#endregion
 }

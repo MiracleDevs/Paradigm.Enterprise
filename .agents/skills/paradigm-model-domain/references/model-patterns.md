@@ -8,7 +8,7 @@ Keep generated properties and mappings replaceable. Add `partial class` behavior
 
 Use private/protected setters. Put state transitions behind behavior methods and test success and rejection paths. Keep entity contracts getter-only. Let request/view models remain mutable when binding or serialization requires it.
 
-Entity-owned mapping may copy identity according to the installed framework contract, but it must call behavior such as `Rename` or `Activate` for transition-sensitive state.
+Entity-owned mapping may copy identity according to the installed contract, but it must call behavior such as `Rename` or `Activate` for transition-sensitive state.
 
 ## Separate read and write shapes
 

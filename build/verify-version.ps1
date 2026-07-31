@@ -9,9 +9,6 @@ if ([string]::IsNullOrWhiteSpace($version)) {
 
 $expectedText = @{
     (Join-Path $repositoryRoot ".codex-plugin/plugin.json") = "`"version`": `"$version`""
-    (Join-Path $repositoryRoot ".paradigm/config.json") = "`"version`": `"$version`""
-    (Join-Path $repositoryRoot "README.md") = "Paradigm.Enterprise.Cli --version $version"
-    (Join-Path $repositoryRoot "docs/cli.md") = "Paradigm.Enterprise.Cli --version $version"
     (Join-Path $repositoryRoot "CHANGELOG.md") = "Version ``$version``"
 }
 

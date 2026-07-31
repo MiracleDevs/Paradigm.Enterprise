@@ -1,12 +1,8 @@
 namespace Paradigm.Enterprise.Cli.Tests;
-
 internal static class TestCliApplication
 {
-    public static Task<int> RunAsync(
-        string[] args,
-        TextWriter output,
-        TextWriter error,
-        CancellationToken cancellationToken = default)
+#region Public Methods
+    public static Task<int> RunAsync(string[] args, TextWriter output, TextWriter error, CancellationToken cancellationToken = default)
     {
         IProjectResolutionService projects = new ProjectResolutionService();
         IAssetService assets = new AssetService();
@@ -27,14 +23,16 @@ internal static class TestCliApplication
             new ApiGuideCommandHandler(metadataLoader, api, new ApiGuideService()),
             new InspectCommandHandler(metadataLoader, validation),
             new ValidateCommandHandler(metadataLoader, validation, configuration),
-            new ChecksListCommandHandler(projects, configuration),
-            new ChecksRunCommandHandler(projects, assets, configuration, new CheckPackRunner()),
+            new ChecksListCommandHandler(),
+            new ChecksRunCommandHandler(projects, assets, configuration),
+            new GenerateCommandHandler("generate json", Paradigm.Enterprise.CodeGenerator.CodeGenerationMode.Json),
+            new GenerateCommandHandler("generate mappers", Paradigm.Enterprise.CodeGenerator.CodeGenerationMode.Mappers),
+            new GenerateCommandHandler("generate client", Paradigm.Enterprise.CodeGenerator.CodeGenerationMode.Client),
             new PackagesCheckCommandHandler(projects, assets, configuration, new PackagePolicyService()),
-            new PackagesAuditCommandHandler(
-                projects, assets, configuration, new PackagePolicyService(), new DotNetPackageAuditor())
+            new PackagesAuditCommandHandler(projects, assets, configuration, new PackagePolicyService(), new DotNetPackageAuditor())
         };
-        var application = new CliApplication(
-            new CommandRouter(handlers), responseWriter, exitPolicy, output, error);
+        var application = new CliApplication(new CommandRouter(handlers), responseWriter, exitPolicy, output, error);
         return application.RunAsync(args, cancellationToken);
     }
+#endregion
 }

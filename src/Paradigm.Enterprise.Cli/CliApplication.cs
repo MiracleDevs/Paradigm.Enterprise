@@ -1,15 +1,8 @@
 namespace Paradigm.Enterprise.Cli;
-
-internal sealed class CliApplication(
-    CommandRouter router,
-    IResponseWriter responseWriter,
-    IExitPolicy exitPolicy,
-    TextWriter output,
-    TextWriter error)
+internal sealed class CliApplication(CommandRouter router, IResponseWriter responseWriter, IExitPolicy exitPolicy, TextWriter output, TextWriter error)
 {
-    public async Task<int> RunAsync(
-        string[] args,
-        CancellationToken cancellationToken)
+#region Public Methods
+    public async Task<int> RunAsync(string[] args, CancellationToken cancellationToken)
     {
         if (!CommandLine.TryParse(args, out var command, out var parseError))
         {
@@ -27,34 +20,29 @@ internal sealed class CliApplication(
         catch (ArgumentException exception)
         {
             if (command!.Format == OutputFormat.Json)
-                await responseWriter.WriteAsync(
-                    ResponseFactory.Create(command!.Name, [], [], [new("PE0002", "error", exception.Message)]),
-                    command.Format, output, cancellationToken);
+                await responseWriter.WriteAsync(ResponseFactory.Create(command!.Name, [], [], [new("PE0002", "error", exception.Message)]), command.Format, output, cancellationToken);
             else
                 await error.WriteLineAsync(exception.Message);
             return 2;
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)when (cancellationToken.IsCancellationRequested)
         {
-            var response = ResponseFactory.Create(command!.Name, [], [],
-                [new("PE5002", "error", "The command was canceled.")]);
+            var response = ResponseFactory.Create(command!.Name, [], [], [new("PE5002", "error", "The command was canceled.")]);
             await responseWriter.WriteAsync(response, command.Format, output, CancellationToken.None);
             return 1;
         }
-        catch (Exception exception) when (exception is AssetsException or DirectoryNotFoundException
-                                              or FileNotFoundException or BadImageFormatException)
+        catch (Exception exception)when (exception is AssetsException or DirectoryNotFoundException or FileNotFoundException or BadImageFormatException)
         {
-            var response = ResponseFactory.Create(command!.Name, [], [],
-                [new("PE1002", "error", exception.Message)]);
+            var response = ResponseFactory.Create(command!.Name, [], [], [new("PE1002", "error", exception.Message)]);
             await responseWriter.WriteAsync(response, command.Format, output, cancellationToken);
             return 3;
         }
         catch (Exception exception)
         {
-            var response = ResponseFactory.Create(command!.Name, [], [],
-                [new("PE1002", "error", $"Metadata resolution failed: {exception.Message}")]);
+            var response = ResponseFactory.Create(command!.Name, [], [], [new("PE1002", "error", $"Metadata resolution failed: {exception.Message}")]);
             await responseWriter.WriteAsync(response, command.Format, output, cancellationToken);
             return 3;
         }
     }
+#endregion
 }

@@ -1,0 +1,4 @@
+using System.Text.Json.Serialization;
+
+namespace Paradigm.Enterprise.Cli;
+internal sealed record GuideInfo([property: JsonPropertyName("symbol")] string Symbol, [property: JsonPropertyName("recommendedPattern")] string RecommendedPattern, [property: JsonPropertyName("genericParameters")] IReadOnlyList<string> GenericParameters, [property: JsonPropertyName("requiredMembers")] IReadOnlyList<string> RequiredMembers, [property: JsonPropertyName("optionalHooks")] IReadOnlyList<string> OptionalHooks, [property: JsonPropertyName("discoveryAndRegistration")] IReadOnlyList<string> DiscoveryAndRegistration, [property: JsonPropertyName("cautions")] IReadOnlyList<string> Cautions, [property: JsonPropertyName("verification")] IReadOnlyList<string> Verification, [property: JsonPropertyName("api")] ApiTypeModel Api);

@@ -1,19 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "checkPacks": [
-    {
-      "id": "csharp",
-      "version": "1.1.0",
-      "executable": ".paradigm/tools/paradigm-checks-csharp",
-      "diagnosticPrefix": "PE31",
-      "timeoutSeconds": 60,
-      "maxOutputBytes": 1048576
-    }
-  ],
   "packagePolicy": {
-    "minimumVersions": {
-      "Paradigm.Enterprise.Cli": "1.1.0"
-    },
     "includePrerelease": false
   },
   "suppressions": []

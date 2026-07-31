@@ -5,6 +5,8 @@ description: Implement or review Paradigm.Enterprise providers for application u
 
 # Build a Paradigm provider
 
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+
 ## Choose the smallest base
 
 - Use read/edit generic bases for conventional CRUD/search behavior.

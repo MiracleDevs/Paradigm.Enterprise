@@ -16,8 +16,7 @@ Choose packages by the layer or infrastructure capability that consumes them. Th
 | `Paradigm.Enterprise.Services.Email` | `net9.0`, `net10.0` | Azure Communication Services email wrapper |
 | `Paradigm.Enterprise.Services.BlobStorage` | `net9.0`, `net10.0` | Azure Blob Storage wrapper and health check |
 | `Paradigm.Enterprise.Services.TableReader` | `net9.0`, `net10.0` | Tabular file readers and writers |
-| `Paradigm.Enterprise.CodeGenerator` | `net10.0` | JSON, stored-procedure, and OpenAPI client generation tool |
-| `Paradigm.Enterprise.Cli` | `net10.0` | Read-only restored-package API discovery and application diagnostics |
+| `Paradigm.Enterprise.Cli` | `net10.0` | Installable API discovery, diagnostics, C# checks, dependency audit, and source-generation tool |
 
 Install a package with the .NET CLI:
 
@@ -35,4 +34,4 @@ A library or worker can use Domain, Data, Providers, or a service package withou
 
 See the [generated API reference](api.md) for the complete public surface.
 
-The CLI is a .NET tool, not a transitive runtime dependency. Install it through a local tool manifest as described in [Paradigm CLI](../cli.md).
+The CLI is one .NET tool, not a transitive runtime dependency. Its internal analyzer and generator assemblies are included automatically; consumers do not install separate tooling packages. Install it through a local tool manifest as described in [Paradigm CLI](../cli.md).

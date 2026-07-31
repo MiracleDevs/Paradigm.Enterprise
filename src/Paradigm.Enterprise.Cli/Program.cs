@@ -1,4 +1,5 @@
 using Paradigm.Enterprise.Cli;
+using Paradigm.Enterprise.CodeGenerator;
 
 IProjectResolutionService projects = new ProjectResolutionService();
 IAssetService assets = new AssetService();
@@ -19,8 +20,11 @@ var handlers = new ICliCommandHandler[]
     new ApiGuideCommandHandler(metadataLoader, api, new ApiGuideService()),
     new InspectCommandHandler(metadataLoader, validation),
     new ValidateCommandHandler(metadataLoader, validation, configuration),
-    new ChecksListCommandHandler(projects, configuration),
-    new ChecksRunCommandHandler(projects, assets, configuration, new CheckPackRunner()),
+    new ChecksListCommandHandler(),
+    new ChecksRunCommandHandler(projects, assets, configuration),
+    new GenerateCommandHandler("generate json", CodeGenerationMode.Json),
+    new GenerateCommandHandler("generate mappers", CodeGenerationMode.Mappers),
+    new GenerateCommandHandler("generate client", CodeGenerationMode.Client),
     new PackagesCheckCommandHandler(projects, assets, configuration, new PackagePolicyService()),
     new PackagesAuditCommandHandler(
         projects, assets, configuration, new PackagePolicyService(), new DotNetPackageAuditor())

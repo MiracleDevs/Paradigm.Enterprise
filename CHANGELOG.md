@@ -4,12 +4,12 @@ All notable changes to this project will be documented in this file.
 
 Version `1.1.0`
 
-- Refactored `Paradigm.Enterprise.Cli` into routed command handlers and focused services while preserving legacy text, JSON, diagnostic ordering, and exit behavior.
-- Added version-aware `api guide`, built-in `PE3101`/`PE3102` validation, offline package policy checks, network-backed dependency audits, and explicitly configured process-isolated check packs.
-- Added the separately installed `Paradigm.Enterprise.Checks.CSharp` tool with semantic `PE3103` pagination and `PE3104` entity-mutation diagnostics.
-- Added protocol, version, timeout, cancellation, output-limit, diagnostic-ownership, canonical-path, and deterministic-order enforcement for check packs.
-- Added SemVer 2 package/CLI alignment, minimum-version, prerelease, vulnerability, deprecation, and outdated-package policy handling.
-- Strengthened repository, domain-model, feature, and review skills; added the governed `paradigm-evolve-guidance` skill and plugin packaging metadata.
+- Consolidated diagnostics, semantic C# checks, and JSON/mapper/OpenAPI generation behind one installable `Paradigm.Enterprise.Cli` tool; analyzer and generator projects are internal package components rather than separate tools.
+- Added built-in `PE3103`/`PE3104` semantic checks plus deterministic `PE3105` one-type-per-file and `PE3106` member-region/order checks with generated-code exclusions.
+- Removed unreleased CLI/framework lockstep, check-pack versions, executable configuration, minimum-version branches, and legacy API-shape guidance while retaining ordinary NuGet release metadata and installed-package inspection.
+- Split generator assembly input from source output, exposed independent generation modes, and made generation failures return nonzero `PE8001` results instead of being swallowed.
+- Added canonical Paradigm Good Coding Practices covering member order/regions, semantic file layout, domain folders/contexts, least visibility, immutability, browser security, dependency approval/licensing, and API observability/health.
+- Strengthened every Paradigm skill and deterministic skill validation to reference the canonical practices.
 - Updated ExampleApp to .NET 10, current generic identifier APIs, behavior-owned entity transitions, and aligned Paradigm 1.1.0 packages.
 - Added PR and scheduled dependency workflows, Copilot review guidance, centralized release-version validation, expanded CLI/tool fixtures, and warning-as-error documentation validation.
 

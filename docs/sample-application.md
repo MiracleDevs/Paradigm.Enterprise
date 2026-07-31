@@ -127,7 +127,7 @@ public interface ICatalogItemViewRepository
 }
 
 public sealed class CatalogItemRepository
-    : EditRepositoryBase<CatalogItem, ApplicationDbContext, Guid>,
+    : EditRepositoryBase<CatalogItem, CatalogDbContext, Guid>,
       ICatalogItemRepository
 {
     public CatalogItemRepository(IServiceProvider serviceProvider)
@@ -137,7 +137,7 @@ public sealed class CatalogItemRepository
 }
 
 public sealed class CatalogItemViewRepository
-    : ReadRepositoryBase<CatalogItemView, ApplicationDbContext, Guid>,
+    : ReadRepositoryBase<CatalogItemView, CatalogDbContext, Guid>,
       ICatalogItemViewRepository
 {
     public CatalogItemViewRepository(IServiceProvider serviceProvider)
@@ -226,7 +226,7 @@ Register the connection provider and context before repositories are resolved. U
 
 ```csharp
 builder.Services.AddScoped<SqlServerDbContextConnectionProvider>();
-builder.Services.RegisterContext<ApplicationDbContext>("ApplicationDatabase");
+builder.Services.RegisterContext<CatalogDbContext>("CatalogDatabase");
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.RegisterLoggedUserService();
 

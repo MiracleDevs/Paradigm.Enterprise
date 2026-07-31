@@ -5,6 +5,8 @@ description: Implement or review Paradigm.Enterprise Web API controllers, routes
 
 # Build a Paradigm Web API
 
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source. Re-check current primary security guidance when authentication, browser token handling, or another security feature is in scope.
+
 ## Choose security before a base
 
 For protected endpoints, derive directly from ASP.NET Core `ControllerBase`, inject the Provider interface, and apply/test the host's authorization policy.
@@ -27,9 +29,11 @@ Prefer purpose-built request/command types for writes. Do not bind persistence e
 - Register exception matchers and safe fallback responses; do not disclose stack traces, SQL, secrets, or personal data.
 - If reflection JSON metadata is disabled, add every request, response, and nested type to a registered application `JsonSerializerContext`.
 - Configure request sizes, content types, streaming, and file inspection in the host.
+- Prefer an encrypted `Secure`/`HttpOnly` authentication cookie and CSRF protection for browser clients instead of storing tokens in `localStorage`; use bearer tokens when a non-browser client or API threat model requires them.
+- Configure structured logging, standard trace propagation, useful metrics, and separate liveness/readiness health checks. Prefer framework and already-approved host integrations.
 
 Framework reflection-based discovery is permitted. Avoid ad hoc reflection in runtime business code.
 
 ## Verify
 
-Run `dotnet tool run paradigm validate --project <solution>`. Pass request cancellation only to Provider methods whose contracts accept a token; current generic CRUD methods do not. Integration-test anonymous, underprivileged, valid, invalid, missing, concurrent, conflicting, oversized, cancelled custom operations, and unexpected-error cases through the real middleware pipeline.
+Run `dotnet tool run paradigm validate --project <solution>` and `dotnet tool run paradigm checks run --project <solution>`. Pass request cancellation only to Provider methods whose contracts accept a token; current generic CRUD methods do not. Integration-test anonymous, underprivileged, valid, invalid, missing, concurrent, conflicting, oversized, cancelled custom operations, CSRF defenses for cookie-authenticated writes, trace propagation, health states, and unexpected-error cases through the real middleware pipeline.

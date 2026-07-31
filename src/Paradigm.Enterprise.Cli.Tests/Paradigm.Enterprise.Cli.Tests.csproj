@@ -14,10 +14,12 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Cli\Paradigm.Enterprise.Cli.csproj" />
-    <ProjectReference Include="..\Paradigm.Enterprise.Checks.CSharp\Paradigm.Enterprise.Checks.CSharp.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Checks.CSharp\Paradigm.Enterprise.Checks.CSharp.csproj" />
     <ProjectReference Include="..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Paradigm.Enterprise.Providers\Paradigm.Enterprise.Providers.csproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="Fixtures\SemanticViolations\SemanticViolations.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures\SemanticViolations\SemanticViolations.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
+    <ProjectReference Include="Fixtures\GoodPractices\GoodPractices.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
+    <ProjectReference Include="Fixtures\DotNetAuditFixture\DotNetAuditFixture.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

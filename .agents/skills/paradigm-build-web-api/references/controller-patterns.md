@@ -6,7 +6,7 @@ Use `[ApiController]`, route metadata, application authorization metadata, and `
 
 ## Deliberately anonymous generic CRUD
 
-Use the exact read/edit base for the installed framework version and carry the same identifier type. Enable endpoint exposure control. Document why anonymous access is intentional and test it.
+Use the exact read/edit base exposed by the installed packages and carry the same identifier type. Enable endpoint exposure control. Document why anonymous access is intentional and test it.
 
 ## Independently filtered Paradigm base
 

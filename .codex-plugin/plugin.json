@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Paradigm Enterprise",
     "shortDescription": "Build correct Paradigm.Enterprise applications.",
-    "longDescription": "Concise, version-aware workflows for designing, implementing, securing, and reviewing Paradigm.Enterprise applications.",
+    "longDescription": "Concise workflows for designing, implementing, securing, and reviewing Paradigm.Enterprise applications with canonical coding practices.",
     "developerName": "Miracle Devs",
     "category": "Developer Tools",
     "capabilities": [],

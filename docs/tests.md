@@ -48,4 +48,9 @@ Run the library test project through the solution:
 dotnet test src/Paradigm.Enterprise.slnx
 ```
 
-The checked-in example solution is pinned to an older package line and serves as a compatibility sample. Its successful build does not validate current source APIs.
+The checked-in example solution references the current source projects. Build and test it separately to validate the documented application patterns as well as the framework solution:
+
+```powershell
+dotnet test example/ExampleApp.sln
+dotnet run --project src/Paradigm.Enterprise.Cli -- checks run --project example/ExampleApp.sln
+```

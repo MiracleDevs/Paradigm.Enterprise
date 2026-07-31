@@ -8,12 +8,22 @@ namespace ExampleApp.WebApi.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
+    #region Fields
+
     private readonly IProductProvider _productProvider;
+
+    #endregion
+
+    #region Constructors
 
     public ProductsController(IProductProvider productProvider)
     {
         _productProvider = productProvider;
     }
+
+    #endregion
+
+    #region Public Methods
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductView>>> GetAll()
@@ -75,4 +85,6 @@ public class ProductsController : ControllerBase
         await _productProvider.DeleteAsync(id);
         return NoContent();
     }
-} 
+
+    #endregion
+}

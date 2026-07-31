@@ -5,6 +5,8 @@ description: Review a Paradigm.Enterprise change for framework API correctness, 
 
 # Review a Paradigm change
 
+Read and enforce [Paradigm Good Coding Practices](../../references/good-coding-practices.md) for handwritten code and documented generated-code exceptions.
+
 ## Gather evidence
 
 Inspect the diff, project graph, generated headers, tests, and host configuration. Run:
@@ -19,23 +21,23 @@ dotnet tool run paradigm validate --project <solution>
 dotnet tool run paradigm checks run --project <solution>
 ```
 
-Run configured C# packs against consuming application projects. Framework source and test internals may intentionally exercise patterns those packs reject. Apply the repository's review policy to warnings even when the CLI exits `0`.
+Run the built-in C# checks against consuming application projects. Framework source and test internals may intentionally exercise patterns those checks reject. Apply the repository's review policy to warnings even when the CLI exits `0`.
 
 Use `dotnet tool run paradigm api show/search` only to resolve an exact signature; do not load broad API documentation.
 
 ## Review in risk order
 
-1. Security: inherited anonymous metadata, authorization per action, exposure versus authorization, secret/error disclosure, request limits.
+1. Security: inherited anonymous metadata, authorization per action, browser cookie/token storage and CSRF, exposure versus authorization, secret/error disclosure, request limits.
 2. Correctness: invariants, identifier consistency, nullability, query bounds/order, stored-procedure result ordering, transaction and external-side-effect claims.
 3. Architecture: HTTP only in controllers, orchestration in Providers, invariants in Domain, persistence only in repositories, inward references.
-4. Conventions: public concrete types, exact `I{ConcreteName}` interfaces, marker inheritance, reachable assemblies, correct lifetimes.
+4. Conventions: one semantic type per file, required member regions/order, least visibility, immutability, meaningful folders, public discoverable types only where required, exact `I{ConcreteName}` interfaces, marker inheritance, reachable assemblies, correct lifetimes.
 5. Generation: no edits to replaceable output; JSON/request/response metadata complete.
-6. Operations: cancellation, correlation, useful telemetry, dependency health, retry/idempotency.
+6. Operations: cancellation, standard trace correlation, structured logs, metrics, liveness/readiness, dependency health, retry/idempotency.
 7. Tests: behavior and failure paths at the cheapest effective boundary.
 
 Reject repository contracts/public members exposing `IQueryable`, EF pagination where a stored-procedure boundary is required, public setters on handwritten entity state, and state mutation performed outside entity behavior. Verify positive behavior tests, not only property mapping.
 
-For dependency/security review also run `paradigm packages audit --project <solution>`. Treat vulnerabilities, mixed/below-minimum Paradigm versions, CLI mismatch, expired suppressions, and incomplete audits as errors. Report stable direct updates and deprecations as warnings unless policy promotes them.
+For dependency/security review also run `paradigm packages audit --project <solution>`. Treat vulnerabilities, mixed Paradigm package versions, expired suppressions, and incomplete audits as errors. Report stable direct updates and deprecations as warnings unless policy promotes them. For a proposed new NuGet package, verify its open-source license and repository, prefer MIT when comparable, explain alternatives and risk, and confirm that the user approved it before the project changed.
 
 Framework discovery and metadata-only tooling may use reviewed reflection. Flag reflection in application/runtime business code when it replaces explicit contracts.
 

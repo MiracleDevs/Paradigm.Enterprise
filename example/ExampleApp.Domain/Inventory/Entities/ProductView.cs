@@ -8,6 +8,8 @@ namespace ExampleApp.Domain.Inventory.Entities;
 /// </summary>
 public class ProductView : EntityBase<int>, IProduct
 {
+    #region Properties
+
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -16,4 +18,6 @@ public class ProductView : EntityBase<int>, IProduct
     public bool IsAvailable { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
+
+    #endregion
 }

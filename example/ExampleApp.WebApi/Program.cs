@@ -1,6 +1,8 @@
 using ExampleApp.Data.Inventory.Contexts;
 using ExampleApp.WebApi.Exceptions.Handlers.Resources;
 using ExampleApp.WebApi.Exceptions.Handlers;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Uow;
 using Paradigm.Enterprise.Domain.Uow;
@@ -13,9 +15,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
 
 // Register DbContext using an in-memory database for this example
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("ExampleAppDb"));
+builder.Services.AddDbContext<InventoryDbContext>(options => options.UseInMemoryDatabase("ExampleAppDb"));
 builder.Services.AddScoped<IExceptionHandler, ExceptionHandler>(_ =>
 {
     var exceptionHandler = new ExceptionHandler(typeof(Exceptions));
@@ -48,12 +52,17 @@ if (app.Environment.IsDevelopment())
 app.UseOwnExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("live")
+});
+app.MapHealthChecks("/health/ready");
 app.MapControllers();
 
 // Initialize the database on startup
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
     // This will trigger the creation of the database and the seed data
     dbContext.Database.EnsureCreated();
 }

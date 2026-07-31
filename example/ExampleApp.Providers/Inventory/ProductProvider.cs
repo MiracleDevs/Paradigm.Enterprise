@@ -10,9 +10,15 @@ namespace ExampleApp.Providers.Inventory;
 /// </summary>
 public class ProductProvider : EditProviderBase<IProduct, Product, ProductView, IProductRepository, IProductViewRepository, int>, IProductProvider
 {
+    #region Constructors
+
     public ProductProvider(IServiceProvider serviceProvider) : base(serviceProvider)
     {
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// Get products by category
@@ -29,4 +35,6 @@ public class ProductProvider : EditProviderBase<IProduct, Product, ProductView, 
     {
         return await ViewRepository.GetAvailableProductsAsync();
     }
+
+    #endregion
 }

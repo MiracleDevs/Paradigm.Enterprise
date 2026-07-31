@@ -12,7 +12,6 @@ The generated solution contains these projects:
 | `Providers` | Application workflows and generated JSON contexts |
 | `WebApi` | Composition root, middleware, controllers, and host policy |
 | `HealthChecks` | Host-specific health response rendering |
-| `CodeGenerator` | Application generation entry point |
 
 The template also creates an empty tests solution folder. Add test projects by responsibility rather than putting all test types in one assembly by default.
 
@@ -36,6 +35,6 @@ The generated host contains examples of Swagger, CORS, health responses, and aut
 
 ## Code generators
 
-There are two distinct generation concerns. The analyzer derives application interfaces during compilation. The console generator is intended to create JSON serializer contexts, stored-procedure mappers, and optionally a client from OpenAPI. Its current standalone JSON and mapper modes have a path-handling defect, so use the application-local process and review generated source until that defect is fixed. EF Core Power Tools and its T4 templates own database reverse engineering.
+There are two distinct generation concerns. The analyzer derives application interfaces during compilation. The installable `paradigm` CLI creates JSON serializer contexts, stored-procedure mappers, and optionally a client from OpenAPI through separate `generate` subcommands. EF Core Power Tools and its T4 templates own database reverse engineering.
 
-Keep those responsibilities separate when troubleshooting. Rebuilding the solution will not reverse engineer a database, and reverse engineering will not regenerate an OpenAPI client.
+Keep those responsibilities separate when troubleshooting. Rebuilding the solution will not reverse engineer a database, and reverse engineering will not regenerate an OpenAPI client. Client repositories install one CLI tool rather than carrying an application-local generator executable.

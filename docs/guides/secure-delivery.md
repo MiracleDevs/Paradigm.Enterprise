@@ -81,7 +81,7 @@ Pipeline identities should have only the permissions needed for their stage. Sep
 
 ## Protect the software supply chain
 
-Every dependency, build action, container base image, generated artifact, and infrastructure module becomes part of the delivered system. Pin tools and actions to an intentional version policy, review updates, and remove dependencies that no longer have a justified purpose.
+Every dependency, build action, container base image, generated artifact, and infrastructure module becomes part of the delivered system. Prefer platform or small custom code for a simple bounded problem. Before adding a NuGet package, explain the need and alternatives, verify its open-source license and official repository, prefer MIT when otherwise comparable, inspect maintenance/security/transitive risk, and obtain explicit user approval. Pin approved tools and actions to an intentional policy, review updates, and remove dependencies that no longer have a justified purpose.
 
 Software composition analysis can identify known vulnerable packages and license concerns. Secret scanning can detect many accidental credentials. Static analysis can find classes of unsafe code. Container and infrastructure scans can check deployable definitions. Each control needs an owner and a response policy so findings are resolved rather than accumulated as permanent noise.
 

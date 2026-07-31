@@ -30,20 +30,22 @@ jobs:
           dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
           dotnet build example/ExampleApp.sln --configuration Release --no-restore
           dotnet test example/ExampleApp.sln --configuration Release --no-build
-      - name: Pack and install read-only tools
+      - name: Pack and install the Paradigm CLI
         shell: pwsh
         run: |
           $version = ([xml](Get-Content -Raw build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
           dotnet pack src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj --configuration Release --no-build --output artifacts
-          dotnet pack src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj --configuration Release --no-build --output artifacts
           dotnet tool install --tool-path .paradigm/tools --add-source artifacts --no-cache Paradigm.Enterprise.Cli --version $version
-          dotnet tool install --tool-path .paradigm/tools --add-source artifacts --no-cache Paradigm.Enterprise.Checks.CSharp --version $version
       - name: Deterministic quality checks
         run: |
           .paradigm/tools/paradigm packages check --project src/Paradigm.Enterprise.slnx
           .paradigm/tools/paradigm packages audit --project src/Paradigm.Enterprise.slnx
           .paradigm/tools/paradigm packages check --project example/ExampleApp.sln
           .paradigm/tools/paradigm packages audit --project example/ExampleApp.sln
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
           .paradigm/tools/paradigm validate --project example/ExampleApp.sln
           .paradigm/tools/paradigm checks run --project example/ExampleApp.sln
           pwsh build/verify-version.ps1

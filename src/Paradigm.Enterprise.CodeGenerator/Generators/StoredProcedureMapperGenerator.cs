@@ -8,20 +8,25 @@ namespace Paradigm.Enterprise.CodeGenerator.Generators;
 
 internal class StoredProcedureMapperGenerator
 {
-    #region Properties
+    #region Fields
 
     /// <summary>
-    /// Gets or sets the output path.
+    /// The output path.
     /// </summary>
     /// <value>
     /// The output path.
     /// </value>
-    private string OutputPath { get; set; }
+    private string _outputPath;
 
     /// <summary>
     /// The data assembly path
     /// </summary>
     private readonly string? _dataAssemblyPath;
+
+    /// <summary>
+    /// The data source output path.
+    /// </summary>
+    private readonly string? _dataOutputPath;
 
     /// <summary>
     /// The project name
@@ -35,7 +40,7 @@ internal class StoredProcedureMapperGenerator
 
     #endregion
 
-    #region Constructor
+    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StoredProcedureMapperGenerator" /> class.
@@ -44,8 +49,9 @@ internal class StoredProcedureMapperGenerator
     /// <param name="logger">The logger.</param>
     public StoredProcedureMapperGenerator(IConfiguration configuration, ILogger<StoredProcedureMapperGenerator> logger)
     {
-        OutputPath = string.Empty;
+        _outputPath = string.Empty;
         _dataAssemblyPath = configuration.GetValue<string>("DataAssemblyPath");
+        _dataOutputPath = configuration.GetValue<string>("DataOutputPath");
         _projectName = configuration.GetValue<string>("ProjectName");
         _logger = logger;
     }
@@ -64,10 +70,13 @@ internal class StoredProcedureMapperGenerator
             if (string.IsNullOrWhiteSpace(_dataAssemblyPath))
                 throw new ArgumentNullException("DataAssemblyPath");
 
+            if (string.IsNullOrWhiteSpace(_dataOutputPath))
+                throw new ArgumentNullException("DataOutputPath");
+
             if (string.IsNullOrWhiteSpace(_projectName))
                 throw new ArgumentNullException("ProjectName");
 
-            OutputPath = Path.Combine(_dataAssemblyPath, "Mappers");
+            _outputPath = Path.Combine(_dataOutputPath, "Mappers");
 
             var storedProcedureTypes = Assembly.LoadFrom(_dataAssemblyPath).GetTypes().Where(IsStoredProcedureClass);
             var dataReaderMappers = GenerateDataReaderMappers(storedProcedureTypes);
@@ -78,6 +87,7 @@ internal class StoredProcedureMapperGenerator
         catch (Exception ex)
         {
             _logger.LogError(ex.Message);
+            throw;
         }
         finally
         {
@@ -109,7 +119,7 @@ internal class StoredProcedureMapperGenerator
     {
         _logger.LogInformation("Starting DataReader mappers generation.");
 
-        var mappersOutputPath = Path.Combine(OutputPath, "DataReaders");
+        var mappersOutputPath = Path.Combine(_outputPath, "DataReaders");
 
         if (!Directory.Exists(mappersOutputPath))
         {
@@ -234,7 +244,7 @@ internal partial class {mapperClassName} : DataReaderMapperBase
     {
         _logger.LogInformation("Starting SqlParameter mappers generation.");
 
-        var mappersOutputPath = Path.Combine(OutputPath, "SqlParameters");
+        var mappersOutputPath = Path.Combine(_outputPath, "SqlParameters");
 
         if (!Directory.Exists(mappersOutputPath))
         {
@@ -310,7 +320,7 @@ public static class StoreProcedureMappersRegisterer
     }}
 }}";
 
-        File.WriteAllText(Path.Combine(OutputPath, "StoreProcedureMappersRegisterer.cs"), sourceCode);
+        File.WriteAllText(Path.Combine(_outputPath, "StoreProcedureMappersRegisterer.cs"), sourceCode);
         _logger.LogInformation($"Generated StoreProcedureMappersRegisterer class with {dataReaderMappers.Count} DataReaderMappers and {sqlParameterMappers.Count} SqlParameterMappers.");
     }
 

@@ -5,6 +5,8 @@ description: Design a Paradigm.Enterprise application, module, or major workflow
 
 # Design a Paradigm application
 
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) to the design and any resulting source.
+
 ## Start from decisions
 
 Capture:
@@ -33,7 +35,7 @@ WebApi -> Providers -> Data -> Domain -> Interfaces
 - Repositories/Data: persistence and query mechanics, never permission or business decisions.
 - Services: focused external-system adapters, consumed by Providers.
 
-Organize related layers by coherent capability when the application grows. Do not share a module's repositories or context with another module; cross through a focused contract.
+Organize related layers by coherent bounded context and capability when the application grows. Prefer domain contexts such as `AccountingDbContext` and `InventoryDbContext`; keep any `SharedDbContext` deliberately small. Do not share a module's repositories or context with another module; cross through a focused contract.
 
 ## Choose the smallest sufficient topology
 

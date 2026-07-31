@@ -11,7 +11,7 @@ using Paradigm.Enterprise.Data.SqlServer.Context;
 using Paradigm.Enterprise.Data.SqlServer.Extensions;
 
 builder.Services.AddScoped<SqlServerDbContextConnectionProvider>();
-builder.Services.RegisterContext<ApplicationDbContext>("ApplicationDatabase");
+builder.Services.RegisterContext<CatalogDbContext>("CatalogDatabase");
 ```
 
 The corresponding configuration is resolved through `IConfiguration.GetConnectionString`.

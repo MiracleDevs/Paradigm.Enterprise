@@ -20,8 +20,8 @@ The authoring solution can differ from the generated solution. Validate the arch
 
 ## Validate the generated solution
 
-Create a solution with a neutral test name. Restore and build it. Add a local connection string, reverse engineer a minimal database selection, build generated interfaces, and run the host. Exercise the template-local generation process only after its input assemblies exist, and account for the standalone generator limitations described in the [code-generation guide](../code-generator.md).
+Create a solution with a neutral test name. Restore and build it. Add a local connection string, reverse engineer a minimal database selection, build generated interfaces, and run the host. Install the Paradigm CLI through a local manifest and exercise each required `paradigm generate` mode only after its input assemblies exist.
 
 Review host defaults before publishing a new template version. CORS, Swagger, authentication scaffolding, health output, JSON reflection settings, and middleware order are application policy and must be safe starting points.
 
-The template currently contains an application-local generator scaffold that differs from the standalone Enterprise generator. Keep the scaffold aligned with current library contracts, document intentional differences, and do not copy the standalone generator's known path or provider-specific limitations into new template code.
+Remove application-local generator scaffolds from new template output. Client projects should use the single installable CLI so fixes, command names, and generation settings have one owner. Keep any temporary migration shim explicit and do not publish it as a second tool.

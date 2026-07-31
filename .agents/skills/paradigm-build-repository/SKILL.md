@@ -5,6 +5,8 @@ description: Implement or review Paradigm.Enterprise repository contracts, read 
 
 # Build a Paradigm repository
 
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+
 ## Select the contract
 
 - Use a read/view repository for projections and query-specific shapes.
@@ -12,7 +14,7 @@ description: Implement or review Paradigm.Enterprise repository contracts, read 
 - Use a custom `RepositoryBase` implementation when generic CRUD/search does not express the query.
 - Keep stored-procedure/database-specific mechanics in Data; expose application-meaningful contracts inward.
 
-Confirm exact versioned bases before coding:
+Confirm exact installed bases before coding:
 
 ```powershell
 dotnet tool run paradigm api search RepositoryBase --project <solution> --limit 20
@@ -24,6 +26,8 @@ dotnet tool run paradigm api show EditRepositoryBase --project <solution>
 A repository must be public, concrete, assignable to `IRepository`, and implement exactly one exact-name interface: `OrderRepository` implements `IOrderRepository`. Make that application interface inherit the appropriate typed Enterprise repository contract.
 
 Keep one identifier type across entity, repository, provider, and controller contracts. Pass explicit assembly roots to registration when the host cannot reach the module through references.
+
+Use a context owned by the repository's bounded domain. Introduce a small `SharedDbContext` only for data with genuine shared ownership; do not grow a general-purpose application context.
 
 ## Keep the boundary narrow
 

@@ -6,6 +6,8 @@ namespace ExampleApp.Tests;
 [TestClass]
 public class ProductBehaviorTests
 {
+    #region Public Methods
+
     [TestMethod]
     public void Activation_requires_stock_and_deactivation_owns_the_transition()
     {
@@ -47,6 +49,10 @@ public class ProductBehaviorTests
         Assert.IsFalse(product.IsAvailable);
     }
 
+    #endregion
+
+    #region Private Methods
+
     private static ProductView WithAvailability(ProductView source, bool value) => new()
     {
         Id = source.Id,
@@ -57,4 +63,6 @@ public class ProductBehaviorTests
         StockQuantity = source.StockQuantity,
         IsAvailable = value
     };
+
+    #endregion
 }

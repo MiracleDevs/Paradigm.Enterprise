@@ -11,6 +11,8 @@ namespace ExampleApp.Domain.Inventory.Entities;
 /// </summary>
 public class Product : EntityBase<int, IProduct, Product, ProductView>, IProduct
 {
+    #region Properties
+
     public DateTime CreatedDate { get; private set; } = DateTime.UtcNow;
 
     public DateTime ModifiedDate { get; private set; } = DateTime.UtcNow;
@@ -33,16 +35,9 @@ public class Product : EntityBase<int, IProduct, Product, ProductView>, IProduct
 
     public bool IsAvailable { get; private set; }
 
-    public override Product? MapFrom(IServiceProvider serviceProvider, IProduct model)
-    {
-        this.Id = model.Id;
-        UpdateDetails(model.Name, model.Price, model.Description, model.Category, model.StockQuantity);
-        if (model.IsAvailable)
-            Activate();
-        else
-            Deactivate();
-        return this;
-    }
+    #endregion
+
+    #region Public Methods
 
     public void UpdateDetails(string name, decimal price, string description, string category, int stockQuantity)
     {
@@ -62,6 +57,21 @@ public class Product : EntityBase<int, IProduct, Product, ProductView>, IProduct
     }
 
     public void Deactivate() => IsAvailable = false;
+
+    #endregion
+
+    #region Overrides
+
+    public override Product? MapFrom(IServiceProvider serviceProvider, IProduct model)
+    {
+        this.Id = model.Id;
+        UpdateDetails(model.Name, model.Price, model.Description, model.Category, model.StockQuantity);
+        if (model.IsAvailable)
+            Activate();
+        else
+            Deactivate();
+        return this;
+    }
 
     public override ProductView MapTo(IServiceProvider serviceProvider)
     {
@@ -86,4 +96,6 @@ public class Product : EntityBase<int, IProduct, Product, ProductView>, IProduct
         validator.Assert(!this.IsAvailable || this.StockQuantity > 0, "A product with no stock cannot be available");
         validator.ThrowIfAny();
     }
+
+    #endregion
 }

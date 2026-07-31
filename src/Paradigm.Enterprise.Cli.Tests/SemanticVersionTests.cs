@@ -1,8 +1,8 @@
 namespace Paradigm.Enterprise.Cli.Tests;
-
 [TestClass]
 public class SemanticVersionTests
 {
+#region Public Methods
     [TestMethod]
     [DataRow("1.0.0-alpha", "1.0.0-alpha.1")]
     [DataRow("1.0.0-alpha.2", "1.0.0-alpha.10")]
@@ -19,26 +19,8 @@ public class SemanticVersionTests
     [TestMethod]
     public void Build_metadata_does_not_change_version_precedence_or_alignment()
     {
-        Assert.AreEqual(0,
-            PackagePolicyService.CompareVersions("1.1.0+build.1", "1.1.0+build.2"));
-        Assert.IsEmpty(ResponseFactory.VersionDiagnostics(
-            [
-                new("Paradigm.Enterprise.Domain", "1.1.0+build.1", "One.csproj"),
-                new("Paradigm.Enterprise.Data", "1.1.0+build.2", "Two.csproj")
-            ]));
-    }
-
-    [TestMethod]
-    public void Prerelease_framework_does_not_align_with_stable_cli()
-    {
-        var configuration = new ParadigmConfiguration("config.json", ".", [], new(), []);
-
-        var diagnostics = new PackagePolicyService().Check(
-            [new("Paradigm.Enterprise.Domain", "1.1.0-rc.1", "App.csproj")],
-            [],
-            configuration);
-
-        Assert.IsTrue(diagnostics.Any(x => x.Code == "PE7002"));
+        Assert.AreEqual(0, PackagePolicyService.CompareVersions("1.1.0+build.1", "1.1.0+build.2"));
+        Assert.IsEmpty(ResponseFactory.VersionDiagnostics([new("Paradigm.Enterprise.Domain", "1.1.0+build.1", "One.csproj"), new("Paradigm.Enterprise.Data", "1.1.0+build.2", "Two.csproj")]));
     }
 
     [TestMethod]
@@ -55,4 +37,5 @@ public class SemanticVersionTests
     {
         Assert.IsFalse(SemanticVersion.TryParse(value, out _));
     }
+#endregion
 }

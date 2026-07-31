@@ -5,6 +5,8 @@ description: Model Paradigm.Enterprise domain contracts, entities, views, value 
 
 # Model the Paradigm domain
 
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+
 ## Choose the model
 
 - Use a behavior-rich entity/aggregate for writes that protect invariants.
@@ -18,14 +20,12 @@ Keep Domain independent of ASP.NET Core, concrete databases, and infrastructure.
 
 Choose a value-type `TId` implementing `IEquatable<TId>` and use it through `IEntity<TId>`, entity/view bases, repository contracts/bases, provider contracts/bases, and controller bases. Default numeric/Guid values are treated as new identifiers.
 
-Before choosing a base or mapping signature, query the installed version:
+Before choosing a base or mapping signature, query the installed packages:
 
 ```powershell
 dotnet tool run paradigm api search IEntity --project <solution> --limit 10
 dotnet tool run paradigm api show EntityBase --project <solution>
 ```
-
-Older Paradigm versions may use fixed `int` identifiers and non-generic contracts. Preserve that installed-version model during maintenance; do not force a generic migration unless it is explicitly in scope.
 
 ## Put rules in the right place
 

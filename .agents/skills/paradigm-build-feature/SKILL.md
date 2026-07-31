@@ -5,6 +5,8 @@ description: Implement an end-to-end Paradigm.Enterprise feature or CRUD vertica
 
 # Build a Paradigm feature
 
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+
 ## Plan the slice
 
 Before editing, inspect adjacent working code and run:
@@ -24,7 +26,7 @@ Define the use case, identifier type, write aggregate, read projection, authoriz
 4. Expose only required transport actions with `paradigm-build-web-api`.
 5. Update the host composition root, generated JSON metadata, and explicit module assembly roots.
 
-Carry one `TId` through entity/view interfaces, repository/provider contracts and bases, and any anonymous generic controller base. Preserve legacy fixed-`int` contracts when maintaining a version that predates generic identifiers.
+Carry one `TId` through entity/view interfaces, repository/provider contracts and bases, and any anonymous generic controller base.
 
 Avoid pass-through layers: every class must own a decision or isolate a changing mechanism. Do not move HTTP choices into Providers or authorization/business policy into repositories.
 
@@ -42,4 +44,4 @@ Never edit replaceable EF/T4, analyzer, mapper, serializer, client, or stored-pr
 - Run configured semantic checks against the consuming application with `dotnet tool run paradigm checks run --project <application-solution>`; framework source/test internals are not a clean consumer target.
 - Apply the repository's review policy to warnings; CLI exit `0` for warnings does not make them automatically PR-acceptable.
 - Cover entity behavior transitions and the selected stored-procedure result ordering with focused tests.
-- Review transaction atomicity, idempotency, error disclosure, logs, metrics, and health impact.
+- Review transaction atomicity, idempotency, error disclosure, structured logs, trace propagation, metrics, and liveness/readiness health impact.
