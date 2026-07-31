@@ -8,6 +8,7 @@ Version `1.1.0`
 - Consolidated diagnostics, semantic C# checks, and JSON/mapper/OpenAPI generation behind one installable `Paradigm.Enterprise.Cli` tool; analyzer and generator projects are internal package components rather than separate tools.
 - Added built-in `PE3103`/`PE3104` semantic checks plus deterministic `PE3105` one-type-per-file and `PE3106` member-region, order, and spacing checks with generated-code exclusions.
 - Reorganized the single CLI by capability, protected its `Packages` source folder from NuGet ignore rules, and added complete user and maintainer documentation for commands, options, architecture, packaging, and verification.
+- Added `build/quality.sh` as a repeatable local Bash entry point for the complete PR quality workflow.
 - Removed unreleased CLI/framework lockstep, check-pack versions, executable configuration, minimum-version branches, and legacy API-shape guidance while retaining ordinary NuGet release metadata and installed-package inspection.
 - Split generator assembly input from source output, exposed independent generation modes, and made generation failures return nonzero `PE8001` results instead of being swallowed.
 - Added canonical Paradigm Good Coding Practices covering member order/regions, semantic file layout, domain folders/contexts, least visibility, immutability, browser security, dependency approval/licensing, and API observability/health.
