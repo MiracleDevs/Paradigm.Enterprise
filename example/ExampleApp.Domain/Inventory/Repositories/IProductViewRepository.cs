@@ -3,7 +3,7 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace ExampleApp.Domain.Inventory.Repositories;
 
-public interface IProductViewRepository : IReadRepository<ProductView>
+public interface IProductViewRepository : IReadRepository<ProductView, int>
 {
     /// <summary>
     /// Find products by category

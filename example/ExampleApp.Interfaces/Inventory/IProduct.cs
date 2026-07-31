@@ -5,14 +5,14 @@ namespace ExampleApp.Interfaces.Inventory;
 /// <summary>
 /// Represents a product entity interface in our example application
 /// </summary>
-public interface IProduct : IEntity
+public interface IProduct : IEntity<int>
 {
-    DateTime CreatedDate { get; set; }
-    DateTime ModifiedDate { get; set; }
-    string Name { get; set; }
-    decimal Price { get; set; }
-    string Description { get; set; }
-    string Category { get; set; }
-    int StockQuantity { get; set; }
-    bool IsAvailable { get; set; }
+    DateTime CreatedDate { get; }
+    DateTime ModifiedDate { get; }
+    string Name { get; }
+    decimal Price { get; }
+    string Description { get; }
+    string Category { get; }
+    int StockQuantity { get; }
+    bool IsAvailable { get; }
 }

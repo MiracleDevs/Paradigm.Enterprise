@@ -7,14 +7,16 @@ namespace ExampleApp.Data.Inventory.Contexts;
 /// <summary>
 /// Database context for our example application
 /// </summary>
-public class ApplicationDbContext : DbContextBase
+public class ApplicationDbContext : DbContextBase<int>
 {
     public DbSet<Product> Products { get; set; } = null!;
 
     public DbSet<ProductView> ProductViews { get; set; } = null!;
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
+    public ApplicationDbContext(
+        IServiceProvider serviceProvider,
+        DbContextOptions<ApplicationDbContext> options)
+        : base(serviceProvider, options)
     {
     }
 
@@ -54,7 +56,7 @@ public class ApplicationDbContext : DbContextBase
 
         // Seed some example data
         modelBuilder.Entity<Product>().HasData(
-            new Product
+            new
             {
                 Id = 1,
                 Name = "Gaming Laptop",
@@ -66,7 +68,7 @@ public class ApplicationDbContext : DbContextBase
                 CreatedDate = DateTime.UtcNow,
                 ModifiedDate = DateTime.UtcNow
             },
-            new Product
+            new
             {
                 Id = 2,
                 Name = "Wireless Headphones",

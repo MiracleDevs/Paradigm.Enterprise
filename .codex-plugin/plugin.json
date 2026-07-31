@@ -1,6 +1,6 @@
 {
   "name": "paradigm-enterprise",
-  "version": "1.0.33",
+  "version": "1.1.0",
   "description": "Guided architecture and implementation workflows for Paradigm.Enterprise applications.",
   "author": {
     "name": "Miracle Devs",
@@ -27,7 +27,8 @@
     "defaultPrompt": [
       "Design a Paradigm application.",
       "Build a Paradigm vertical slice.",
-      "Review this Paradigm change."
+      "Review this Paradigm change.",
+      "Promote a learned Paradigm practice into governed guidance."
     ]
   }
 }

@@ -29,7 +29,7 @@ During `SaveChangesAsync`, the context finds entities implementing `IAuditableEn
 
 ## Read repositories
 
-`ReadRepositoryBase<TEntity, TContext, TId>` supplies `GetAllAsync`, `GetByIdAsync`, and `GetByIdsAsync`. Search calls `GetSearchPaginatedFunction`, which throws unless a derived repository provides an implementation. A repository that exposes search must therefore override this function.
+`ReadRepositoryBase<TEntity, TContext, TId>` supplies `GetAllAsync`, `GetByIdAsync`, and `GetByIdsAsync`. Search calls `GetSearchPaginatedFunction`, which throws unless a derived repository provides an implementation. A repository that exposes search must therefore override this function. Prefer a SQL Server/PostgreSQL `ResultStoredProcedureBase` boundary for pagination, complex filtering, multi-join/reporting queries, or multi-step database work. Keep EF/LINQ for simple bounded, predictably translated queries, and never expose `IQueryable` through a repository contract or public member.
 
 ```csharp
 public interface ICatalogItemViewRepository

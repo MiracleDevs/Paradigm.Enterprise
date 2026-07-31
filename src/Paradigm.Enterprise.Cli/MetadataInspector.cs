@@ -71,6 +71,7 @@ internal sealed class MetadataInspector : IDisposable
                 {
                     var assemblyName = assembly.GetName().Name ?? "";
                     owners.TryGetValue(assemblyName, out var owner);
+                    var structuredMembers = GetStructuredMembers(type, assemblyName);
                     results.Add(new(
                         TypeName(type),
                         TypeName(type, simple: true),
@@ -78,13 +79,15 @@ internal sealed class MetadataInspector : IDisposable
                         type.BaseType is null ? null : TypeName(type.BaseType),
                         type.GetInterfaces().Select(x => TypeName(x)).Order(StringComparer.OrdinalIgnoreCase).ToArray(),
                         Attributes(type),
-                        GetVisibleMembers(type, assemblyName),
+                        structuredMembers.Select(x => x.Signature).Order(StringComparer.OrdinalIgnoreCase).ToArray(),
                         GetDeclaredActions(type),
                         type.IsPublic || type.IsNestedPublic,
                         type.IsAbstract,
                         assemblyName,
                         owner.Name,
-                        owner.Version));
+                        owner.Version,
+                        structuredMembers,
+                        Constraints(type.GetGenericArguments())));
                 }
                 catch (Exception exception) when (IsMetadataFailure(exception))
                 {
@@ -122,6 +125,43 @@ internal sealed class MetadataInspector : IDisposable
         if (!string.IsNullOrWhiteSpace(typeDoc))
             members.Insert(0, $"summary: {typeDoc}");
         return members.Order(StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    private IReadOnlyList<ApiMember> GetStructuredMembers(Type type, string assemblyName)
+    {
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic |
+                                   BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+        var members = new List<ApiMember>();
+        foreach (var constructor in type.GetConstructors(flags).Where(IsVisible))
+        {
+            var signature = $"{Modifiers(constructor)} {TypeName(type, true)}({Parameters(constructor.GetParameters())})";
+            members.Add(new("constructor", TypeName(type, true), signature, null, [], Attributes(constructor), []));
+        }
+        foreach (var property in type.GetProperties(flags))
+        {
+            var visibleAccessors = new[] { property.GetMethod, property.SetMethod }
+                .Where(x => x is not null).Cast<MethodInfo>().Where(IsVisible).ToArray();
+            if (visibleAccessors.Length == 0)
+                continue;
+            var representative = visibleAccessors[0];
+            var signature = $"{Modifiers(representative)} {TypeName(property.PropertyType)} {property.Name} {{ " +
+                            $"{Accessor(property.GetMethod, "get")} {Accessor(property.SetMethod, "set")}}}";
+            var accessors = new[] { (Method: property.GetMethod, Kind: "get"), (Method: property.SetMethod, Kind: "set") }
+                .Where(x => x.Method is not null)
+                .Select(x => new ApiAccessor(x.Kind, Visibility(x.Method!)))
+                .ToArray();
+            members.Add(new("property", property.Name, signature, TypeName(property.PropertyType), accessors,
+                Attributes(property), []));
+        }
+        foreach (var method in type.GetMethods(flags).Where(x => !x.IsSpecialName && IsVisible(x)))
+            members.Add(new("method", method.Name, MethodSignature(method), TypeName(method.ReturnType), [],
+                Attributes(method), Constraints(method.GetGenericArguments())));
+
+        var docs = documentation.GetValueOrDefault(assemblyName);
+        var typeDoc = docs?.GetValueOrDefault($"T:{type.FullName?.Replace('+', '.')}");
+        if (!string.IsNullOrWhiteSpace(typeDoc))
+            members.Add(new("summary", "summary", $"summary: {typeDoc}", null, [], [], []));
+        return members.OrderBy(x => x.Signature, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
     private static IReadOnlyList<InspectedAction> GetDeclaredActions(Type type)
@@ -175,6 +215,22 @@ internal sealed class MetadataInspector : IDisposable
         return string.Concat(values);
     }
 
+    private static IReadOnlyList<ApiGenericConstraint> Constraints(IEnumerable<Type> arguments) =>
+        arguments.Where(x => x.IsGenericParameter)
+            .Select(argument =>
+            {
+                var constraints = argument.GetGenericParameterConstraints().Select(x => TypeName(x)).ToList();
+                var attributes = argument.GenericParameterAttributes & GenericParameterAttributes.SpecialConstraintMask;
+                if (attributes.HasFlag(GenericParameterAttributes.ReferenceTypeConstraint))
+                    constraints.Insert(0, "class");
+                if (attributes.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
+                    constraints.Insert(0, "struct");
+                if (attributes.HasFlag(GenericParameterAttributes.DefaultConstructorConstraint))
+                    constraints.Add("new()");
+                return new ApiGenericConstraint(argument.Name, constraints);
+            })
+            .ToArray();
+
     private static string Parameters(IEnumerable<ParameterInfo> parameters) =>
         string.Join(", ", parameters.Select(parameter =>
         {
@@ -186,6 +242,13 @@ internal sealed class MetadataInspector : IDisposable
 
     private static bool IsVisible(MethodBase method) =>
         method.IsPublic || method.IsFamily || method.IsFamilyOrAssembly;
+
+    private static string Visibility(MethodBase method) =>
+        method.IsPublic ? "public" :
+        method.IsFamilyOrAssembly ? "protected internal" :
+        method.IsFamily ? "protected" :
+        method.IsAssembly ? "internal" :
+        "private";
 
     private static string Modifiers(MethodBase method)
     {

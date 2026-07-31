@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
+    <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data.SqlServer\Paradigm.Enterprise.Data.SqlServer.csproj" />
+    <ProjectReference Include="..\..\..\Paradigm.Enterprise.Domain\Paradigm.Enterprise.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Excluded.cs" />
+    <Compile Include="..\SemanticLinked\LinkedViolation.cs" Link="LinkedViolation.cs" />
+  </ItemGroup>
+</Project>

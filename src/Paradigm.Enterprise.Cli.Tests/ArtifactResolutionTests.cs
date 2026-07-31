@@ -47,7 +47,7 @@ public class ArtifactResolutionTests
             Assert.IsTrue(malformed.Diagnostics.Any(x => x.Code == "PE1002"));
 
             using var output = new StringWriter();
-            var exit = await CliApplication.RunAsync(
+            var exit = await TestCliApplication.RunAsync(
                 ["validate", "--project", project, "--format", "json"],
                 output,
                 TextWriter.Null);

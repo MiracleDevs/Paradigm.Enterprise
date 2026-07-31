@@ -8,7 +8,7 @@ namespace ExampleApp.Providers.Inventory;
 /// <summary>
 /// Provider for product management operations
 /// </summary>
-public class ProductProvider : EditProviderBase<IProduct, Product, ProductView, IProductRepository, IProductViewRepository>, IProductProvider
+public class ProductProvider : EditProviderBase<IProduct, Product, ProductView, IProductRepository, IProductViewRepository, int>, IProductProvider
 {
     public ProductProvider(IServiceProvider serviceProvider) : base(serviceProvider)
     {

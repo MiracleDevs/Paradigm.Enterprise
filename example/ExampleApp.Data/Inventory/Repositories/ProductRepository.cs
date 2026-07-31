@@ -8,7 +8,7 @@ namespace ExampleApp.Data.Inventory.Repositories;
 /// <summary>
 /// Repository implementation for products
 /// </summary>
-public class ProductRepository : EditRepositoryBase<Product, ApplicationDbContext>, IProductRepository
+public class ProductRepository : EditRepositoryBase<Product, ApplicationDbContext, int>, IProductRepository
 {
     public ProductRepository(IServiceProvider serviceProvider) : base(serviceProvider)
     {

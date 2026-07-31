@@ -63,7 +63,7 @@ The shared interface ties the editable entity and read view to one identifier ty
 ```csharp
 public interface ICatalogItem : IEntity<Guid>
 {
-    string Name { get; set; }
+    string Name { get; }
 }
 
 public sealed class CatalogItemView : EntityBase<Guid>, ICatalogItem
@@ -79,15 +79,20 @@ public sealed class CatalogItem
     : EntityBase<Guid, ICatalogItem, CatalogItem, CatalogItemView>,
       ICatalogItem
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; private set; } = string.Empty;
 
     public override CatalogItem? MapFrom(
         IServiceProvider serviceProvider,
         ICatalogItem model)
     {
         Id = model.Id;
-        Name = model.Name.Trim();
+        Rename(model.Name);
         return this;
+    }
+
+    public void Rename(string name)
+    {
+        Name = name.Trim();
     }
 
     public override CatalogItemView MapTo(IServiceProvider serviceProvider)

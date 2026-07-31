@@ -21,46 +21,7 @@ internal static class Analysis
     public static IReadOnlyList<Diagnostic> ValidateTypes(
         IEnumerable<InspectedType> applicationTypes,
         IEnumerable<InspectedType>? universe = null)
-    {
-        var diagnostics = new List<Diagnostic>();
-        var materialized = applicationTypes.Where(x => x.IsPublic && !x.IsAbstract).ToArray();
-        var all = universe?.ToArray() ?? materialized;
-        foreach (var type in materialized)
-        {
-            var kind = Classify(type, all);
-            if (kind is "provider" or "repository")
-            {
-                var convention = type.Interfaces.Count(x =>
-                    SimpleName(x).Equals("I" + StripGeneric(type.Name), StringComparison.Ordinal));
-                if (convention != 1)
-                    diagnostics.Add(new("PE3001", "error",
-                        $"{type.FullName} must implement exactly one convention interface named I{StripGeneric(type.Name)}; found {convention}.",
-                        type.AssemblyName));
-            }
-
-            if (kind == "controller" && HasAnonymousControllerMetadata(type, all) &&
-                !HasIndependentAuthorization(type, all))
-            {
-                diagnostics.Add(new("PE4001", "warning",
-                    $"{type.FullName} inherits anonymous controller metadata without an independent authorization filter on its type hierarchy or every inherited action.",
-                    type.AssemblyName));
-            }
-        }
-
-        foreach (var capability in materialized
-                     .SelectMany(type => IdentifierCandidates(type, all)
-                         .Select(id => (Capability: CapabilityName(type.Name), Type: type, Id: id)))
-                     .GroupBy(x => x.Capability, StringComparer.OrdinalIgnoreCase))
-        {
-            var ids = capability.Select(x => x.Id).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
-            if (ids.Length > 1)
-                diagnostics.Add(new("PE3002", "error",
-                    $"Capability '{capability.Key}' uses inconsistent identifier types: {string.Join(", ", ids)}.",
-                    string.Join(", ", capability.Select(x => x.Type.AssemblyName).Distinct().Order())));
-        }
-
-        return diagnostics.OrderBy(x => x.Code).ThenBy(x => x.Message, StringComparer.Ordinal).ToArray();
-    }
+        => BuiltInValidation.Evaluate(applicationTypes, universe);
 
     public static IReadOnlyList<Diagnostic> ValidateLayers(ProjectSelection selection)
     {
@@ -127,27 +88,44 @@ internal static class Analysis
         return detail.TrimStart(';', ' ');
     }
 
+    internal static IEnumerable<string> GetIdentifierCandidates(InspectedType type, IReadOnlyList<InspectedType> all) =>
+        IdentifierCandidates(type, all);
+
     private static IEnumerable<string> IdentifierCandidates(InspectedType type, IReadOnlyList<InspectedType> all)
     {
-        foreach (var current in Ancestry(type, all))
-        foreach (var contract in current.Interfaces.Append(current.BaseType ?? ""))
+        foreach (var contract in type.Interfaces.Append(type.BaseType ?? ""))
         {
             var definition = DefinitionName(contract);
             var simpleDefinition = SimpleName(definition);
             var args = GenericArguments(contract);
-            if (args.Count == 0)
-                continue;
-
-            if (simpleDefinition is "IEntity" or "EntityBase")
+            if (simpleDefinition == "IEntity")
             {
-                yield return args[0];
+                yield return args.Count == 1 ? args[0] : "System.Int32";
                 continue;
             }
 
-            if (simpleDefinition is "IReadRepository" or "IEditRepository" or
-                "IReadProvider" or "IEditProvider" or
-                "ReadApiControllerBase" or "EditApiControllerBase")
+            if (simpleDefinition == "EntityBase")
+            {
+                if (args.Count is 1 or 4)
+                    yield return args[0];
+                else if (args.Count is 0 or 3)
+                    yield return "System.Int32";
+                continue;
+            }
+
+            var currentArity = simpleDefinition switch
+            {
+                "IReadRepository" or "IEditRepository" or "IReadProvider" or "IEditProvider" => 2,
+                "ReadRepositoryBase" or "EditRepositoryBase" => 3,
+                "ReadProviderBase" => 4,
+                "EditProviderBase" => 6,
+                "ReadApiControllerBase" or "EditApiControllerBase" => 4,
+                _ => -1
+            };
+            if (currentArity > 0 && args.Count == currentArity)
                 yield return args[^1];
+            else if (currentArity > 0 && args.Count == currentArity - 1)
+                yield return "System.Int32";
         }
     }
 
@@ -174,10 +152,16 @@ internal static class Analysis
         return result;
     }
 
+    internal static bool InheritsAnonymousControllerMetadata(InspectedType type, IReadOnlyList<InspectedType> all) =>
+        HasAnonymousControllerMetadata(type, all);
+
     private static bool HasAnonymousControllerMetadata(InspectedType type, IReadOnlyList<InspectedType> all) =>
         Ancestry(type, all).Any(x =>
             x.Attributes.Any(attribute => attribute.EndsWith(".AllowAnonymousAttribute", StringComparison.Ordinal)) ||
             DefinitionName(x.FullName).StartsWith("Paradigm.Enterprise.WebApi.Controllers.", StringComparison.Ordinal));
+
+    internal static bool HasControllerAuthorization(InspectedType type, IReadOnlyList<InspectedType> all) =>
+        HasIndependentAuthorization(type, all);
 
     private static bool HasIndependentAuthorization(InspectedType type, IReadOnlyList<InspectedType> all)
     {
@@ -230,17 +214,23 @@ internal static class Analysis
         return index < 0 ? value : value[..index];
     }
 
+    internal static string SimpleTypeName(string value) => SimpleName(value);
+
     private static string SimpleName(string value)
     {
         var name = DefinitionName(value).Split('.').Last();
         return StripGeneric(name);
     }
 
+    internal static string StripGenericName(string value) => StripGeneric(value);
+
     private static string StripGeneric(string value)
     {
         var index = value.IndexOfAny(['`', '<']);
         return index < 0 ? value : value[..index];
     }
+
+    internal static string GetCapabilityName(string value) => CapabilityName(value);
 
     private static string CapabilityName(string value)
     {

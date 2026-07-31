@@ -2,7 +2,13 @@
 
 ## Generated persistence entity
 
-Keep generated properties and mappings replaceable. Add `partial class` behavior in a separate file. If public setters are required by scaffolding, prevent invalid transitions through domain methods and validation rather than editing the generated file.
+Keep generated properties and mappings replaceable. Add `partial class` behavior in a separate file. A generated persistence shape may retain public setters only when its generator/scaffolding requires them and the exception is documented and configured for deterministic validation. Prevent invalid transitions through domain methods and validation rather than editing generated output.
+
+## Handwritten entity
+
+Use private/protected setters. Put state transitions behind behavior methods and test success and rejection paths. Keep entity contracts getter-only. Let request/view models remain mutable when binding or serialization requires it.
+
+Entity-owned mapping may copy identity according to the installed framework contract, but it must call behavior such as `Rename` or `Activate` for transition-sensitive state.
 
 ## Separate read and write shapes
 

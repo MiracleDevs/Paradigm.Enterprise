@@ -28,6 +28,8 @@ Carry one `TId` through entity/view interfaces, repository/provider contracts an
 
 Avoid pass-through layers: every class must own a decision or isolate a changing mechanism. Do not move HTTP choices into Providers or authorization/business policy into repositories.
 
+Require intention-revealing entity behavior and getter-only entity contracts. Reject external entity mutation and public setters on handwritten entity state. Select stored procedures for pagination, complex filtering, multi-join/reporting queries, and multi-step database work; keep EF/LINQ for simple bounded queries. Never expose `IQueryable`.
+
 ## Handle generated code
 
 Never edit replaceable EF/T4, analyzer, mapper, serializer, client, or stored-procedure output. Change its source/template or add a partial file. Review regeneration diffs for key, nullability, navigation, serialization, and contract changes.
@@ -37,4 +39,7 @@ Never edit replaceable EF/T4, analyzer, mapper, serializer, client, or stored-pr
 - Unit-test domain behavior, repository queries, provider orchestration, and failure paths.
 - Integration-test protected endpoints with anonymous, underprivileged, valid, malformed, missing, and conflicting requests.
 - Run restore, build, tests, then `dotnet tool run paradigm validate --project <solution>`.
+- Run configured semantic checks against the consuming application with `dotnet tool run paradigm checks run --project <application-solution>`; framework source/test internals are not a clean consumer target.
+- Apply the repository's review policy to warnings; CLI exit `0` for warnings does not make them automatically PR-acceptable.
+- Cover entity behavior transitions and the selected stored-procedure result ordering with focused tests.
 - Review transaction atomicity, idempotency, error disclosure, logs, metrics, and health impact.

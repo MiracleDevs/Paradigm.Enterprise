@@ -20,6 +20,8 @@ An entity has continuity through change. Two entity instances represent the same
 
 The mapped form, `EntityBase<TId, TInterface, TEntity, TView>`, adds `MapFrom`, `MapTo`, mapping hooks, and `Validate`. Its defaults are intentionally minimal: `MapFrom` returns `null`, `MapTo` throws `NotImplementedException`, and `Validate` does nothing. An entity used by the generic edit provider must override the operations its workflow needs or delegate mapping to an `EntityMapperBase`.
 
+Treat `MapFrom` as an atomic transition when the entity is tracked. Prevalidate failure-prone input before changing state and route transition-sensitive values through entity behavior. If mapping throws after a partial mutation, reload or detach the entity before continuing so dirty tracked state cannot be committed later.
+
 A useful entity exposes behavior rather than asking every caller to reproduce its rules. Public setters may still exist on generated persistence-shaped classes, so encapsulation is an application design responsibility. Partial classes can add intention-revealing methods without editing generated files.
 
 ```csharp

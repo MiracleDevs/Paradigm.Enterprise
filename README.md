@@ -36,7 +36,7 @@ The site is served at `http://localhost:8080`. Pass a different port as the firs
 | Application stack | `Paradigm.Enterprise.Interfaces`, `Domain`, `Data`, `Providers`, `WebApi` |
 | Databases | `Paradigm.Enterprise.Data.SqlServer`, `Data.PostgreSql` |
 | Infrastructure | `Paradigm.Enterprise.Services.Cache`, `Email`, `BlobStorage`, `TableReader` |
-| Tooling | `Paradigm.Enterprise.CodeGenerator`, `Paradigm.Enterprise.Cli` |
+| Tooling | `Paradigm.Enterprise.CodeGenerator`, `Paradigm.Enterprise.Cli`, `Paradigm.Enterprise.Checks.CSharp` |
 
 Install only the package required by the owning project:
 
@@ -50,9 +50,12 @@ Install the read-only diagnostic CLI through a repository-local tool manifest:
 
 ```powershell
 dotnet new tool-manifest
-dotnet tool install Paradigm.Enterprise.Cli --version 1.0.33
+dotnet tool install Paradigm.Enterprise.Cli --version 1.1.0
+dotnet tool install Paradigm.Enterprise.Checks.CSharp --version 1.1.0
 dotnet tool run paradigm doctor --project src/Paradigm.Enterprise.slnx
 ```
+
+The CLI provides version-aware `api search/show/guide`, built-in validation, offline dependency checks, explicit network audits, and opt-in pinned process check packs. `Paradigm.Enterprise.Checks.CSharp` is the first-party semantic C# check pack. See [CLI documentation](docs/cli.md).
 
 AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills) together with the version-aware CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
 
@@ -60,7 +63,7 @@ AI coding agents can use the concise workflows under [`.agents/skills`](.agents/
 
 The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, host composition root, and code-generation tool. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
 
-The repository's [example](example/README.md) targets a historical package line and is retained as a compatibility sample. It is not the canonical guide for current APIs.
+The repository's [example](example/README.md) targets the current package line and demonstrates the generic identifier and behavior-owned entity patterns used by the current APIs.
 
 ## Build and test
 

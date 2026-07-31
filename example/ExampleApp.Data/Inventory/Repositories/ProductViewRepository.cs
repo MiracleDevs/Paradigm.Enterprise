@@ -6,7 +6,7 @@ using Paradigm.Enterprise.Data.Repositories;
 
 namespace ExampleApp.Data.Inventory.Repositories;
 
-public class ProductViewRepository : ReadRepositoryBase<ProductView, ApplicationDbContext>, IProductViewRepository
+public class ProductViewRepository : ReadRepositoryBase<ProductView, ApplicationDbContext, int>, IProductViewRepository
 {
     public ProductViewRepository(IServiceProvider serviceProvider) : base(serviceProvider)
     {

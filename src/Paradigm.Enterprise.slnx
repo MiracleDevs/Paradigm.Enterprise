@@ -20,10 +20,12 @@
     <Project Path="Paradigm.Enterprise.WebApi/Paradigm.Enterprise.WebApi.csproj" />
   </Folder>
   <Folder Name="/04.Tools/">
+    <Project Path="Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj" />
     <Project Path="Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj" />
     <Project Path="Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj" />
   </Folder>
   <Folder Name="/05.Tests/">
+    <Project Path="Paradigm.Enterprise.Cli.Tests/Fixtures/SemanticViolations/SemanticViolations.csproj" />
     <Project Path="Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj" />
     <Project Path="Paradigm.Enterprise.Tests/Paradigm.Enterprise.Tests.csproj" />
   </Folder>

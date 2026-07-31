@@ -28,7 +28,7 @@ Keep one identifier type across entity, repository, provider, and controller con
 ## Keep the boundary narrow
 
 - Put EF queries, projections, includes, database calls, and persistence mechanics here.
-- Return domain/application shapes, not `IQueryable`, `DbContext`, provider-specific connections, or HTTP types.
+- Never return `IQueryable`, `DbContext`, provider-specific connections, or HTTP types from a repository contract or public repository member.
 - Do not decide whether the caller may act or whether a business operation is allowed.
 - Avoid unbounded reads; make ordering and pagination deterministic.
 - Override the protected search function before exposing generic search.
@@ -36,7 +36,13 @@ Keep one identifier type across entity, repository, provider, and controller con
 
 Repository writes stage changes. The Provider/Unit of Work owns commit timing.
 
-For aggregate child removal and custom query patterns, read [repository patterns](references/repository-patterns.md).
+## Select EF or a stored procedure
+
+- Prefer a stored procedure for pagination, complex or dynamic filtering, multi-join/reporting queries, and multi-step database operations.
+- Use EF/LINQ only for simple, bounded queries whose translation, cardinality, and ordering are predictable.
+- Keep in-memory LINQ outside this selection rule; the concern is database query translation and execution.
+
+For aggregate child removal, query selection, and provider-specific stored-procedure mechanics, read [repository patterns](references/repository-patterns.md).
 
 ## Test
 

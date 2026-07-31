@@ -9,7 +9,7 @@ namespace Paradigm.Enterprise.Cli;
 
 internal static partial class AssetsReader
 {
-    public static AssetSelection Read(string project, string? requestedFramework)
+    public static AssetSelection Read(string project, string? requestedFramework, bool packagesOnly = false)
     {
         var projectDirectory = Path.GetDirectoryName(project)!;
         var assetsPath = Path.Combine(projectDirectory, "obj", "project.assets.json");
@@ -58,7 +58,7 @@ internal static partial class AssetsReader
                     packages.Add(new(name, version, project));
                     inspectionNames.Add(name);
                 }
-                if (libraryTypes.GetValueOrDefault(library.Name) == "project")
+                if (!packagesOnly && libraryTypes.GetValueOrDefault(library.Name) == "project")
                     inspectionNames.Add(name);
 
                 if (!library.Value.TryGetProperty("compile", out var compile))
@@ -82,7 +82,8 @@ internal static partial class AssetsReader
             }
 
             var projectName = ReadAssemblyName(project);
-            inspectionNames.Add(projectName);
+            if (!packagesOnly || projectName.StartsWith("Paradigm.Enterprise", StringComparison.OrdinalIgnoreCase))
+                inspectionNames.Add(projectName);
             if (projectName.StartsWith("Paradigm.Enterprise", StringComparison.OrdinalIgnoreCase) &&
                 packages.All(x => !x.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase)))
             {
@@ -108,6 +109,7 @@ internal static partial class AssetsReader
             }
 
             AddTrustedPlatformAssemblies(paths);
+            AddFrameworkReferenceAssemblies(paths, framework);
             var diagnostics = new List<Diagnostic>();
             var normalized = NormalizeMetadataPaths(paths, output.ExistingPath, owners, inspectionNames, diagnostics);
             return new(
@@ -322,6 +324,33 @@ internal static partial class AssetsReader
             return;
         foreach (var path in trusted.Split(Path.PathSeparator))
             paths.Add(path);
+    }
+
+    private static void AddFrameworkReferenceAssemblies(HashSet<string> paths, string framework)
+    {
+        var runtimeDirectory = new DirectoryInfo(Path.GetDirectoryName(typeof(object).Assembly.Location)!);
+        var dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT")
+                         ?? runtimeDirectory.Parent?.Parent?.Parent?.FullName;
+        if (dotnetRoot is null)
+            return;
+        var packsRoot = Path.Combine(dotnetRoot, "packs");
+        if (!Directory.Exists(packsRoot))
+            return;
+        var tfm = framework.Split('/')[0];
+        foreach (var packName in new[] { "Microsoft.NETCore.App.Ref", "Microsoft.AspNetCore.App.Ref", "NETStandard.Library.Ref" })
+        {
+            var packRoot = Path.Combine(packsRoot, packName);
+            if (!Directory.Exists(packRoot))
+                continue;
+            var referenceDirectory = Directory.EnumerateDirectories(packRoot)
+                .OrderByDescending(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+                .Select(version => Path.Combine(version, "ref", tfm))
+                .FirstOrDefault(Directory.Exists);
+            if (referenceDirectory is null)
+                continue;
+            foreach (var assembly in Directory.EnumerateFiles(referenceDirectory, "*.dll"))
+                paths.Add(assembly);
+        }
     }
 
     [GeneratedRegex("^net(\\d+(?:\\.\\d+)?)", RegexOptions.IgnoreCase)]

@@ -59,7 +59,9 @@ jobs:
         run: dotnet test src/Paradigm.Enterprise.Tests/Paradigm.Enterprise.Tests.csproj --configuration Release --no-build
 
       - name: Restore compatibility example
-        run: dotnet restore example/ExampleApp.sln
+        run: |
+          dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
+          dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
 
       - name: Build compatibility example
         run: dotnet build example/ExampleApp.sln --configuration Release --no-restore

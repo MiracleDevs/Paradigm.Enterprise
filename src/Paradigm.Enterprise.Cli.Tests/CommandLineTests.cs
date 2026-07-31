@@ -29,6 +29,26 @@ public class CommandLineTests
     }
 
     [TestMethod]
+    public void New_commands_use_dedicated_immutable_options()
+    {
+        Assert.IsTrue(CommandLine.TryParse(
+            ["api", "guide", "IEditProvider", "--package", "Providers", "--format", "json"],
+            out var guide, out _));
+        Assert.IsInstanceOfType<ApiGuideOptions>(guide!.Options);
+        Assert.AreEqual("Providers", guide.Package);
+
+        Assert.IsTrue(CommandLine.TryParse(
+            ["checks", "run", "--project", "App.sln", "--pack", "csharp"],
+            out var checks, out _));
+        Assert.IsInstanceOfType<ChecksRunOptions>(checks!.Options);
+
+        Assert.IsTrue(CommandLine.TryParse(
+            ["packages", "audit", "--warnings-as-errors"],
+            out var audit, out _));
+        Assert.IsTrue(((PackagesAuditOptions)audit!.Options).WarningsAsErrors);
+    }
+
+    [TestMethod]
     [DataRow("0")]
     [DataRow("101")]
     [DataRow("many")]
@@ -43,7 +63,7 @@ public class CommandLineTests
         using var output = new StringWriter();
         using var error = new StringWriter();
 
-        var exitCode = await CliApplication.RunAsync(["unknown"], output, error);
+        var exitCode = await TestCliApplication.RunAsync(["unknown"], output, error);
 
         Assert.AreEqual(2, exitCode);
         StringAssert.Contains(error.ToString(), "Unknown command");
@@ -53,10 +73,10 @@ public class CommandLineTests
     public async Task Version_is_available_without_a_project()
     {
         using var output = new StringWriter();
-        var exitCode = await CliApplication.RunAsync(["--version"], output, TextWriter.Null);
+        var exitCode = await TestCliApplication.RunAsync(["--version"], output, TextWriter.Null);
 
         Assert.AreEqual(0, exitCode);
-        StringAssert.StartsWith(output.ToString(), "1.0.33");
+        StringAssert.StartsWith(output.ToString(), "1.1.0");
     }
 
     [TestMethod]
@@ -65,7 +85,7 @@ public class CommandLineTests
         var missing = Path.Combine(Path.GetTempPath(), $"paradigm-missing-{Guid.NewGuid():N}");
         using var output = new StringWriter();
 
-        var exitCode = await CliApplication.RunAsync(
+        var exitCode = await TestCliApplication.RunAsync(
             ["inspect", "--project", missing, "--format", "json"],
             output,
             TextWriter.Null);
@@ -73,7 +93,7 @@ public class CommandLineTests
         Assert.AreEqual(3, exitCode);
         using var json = System.Text.Json.JsonDocument.Parse(output.ToString());
         var root = json.RootElement;
-        Assert.AreEqual("1.0", root.GetProperty("schemaVersion").GetString());
+        Assert.AreEqual("1.1", root.GetProperty("schemaVersion").GetString());
         Assert.AreEqual("inspect", root.GetProperty("command").GetString());
         Assert.AreEqual("error", root.GetProperty("status").GetString());
         Assert.AreEqual("PE1002", root.GetProperty("diagnostics")[0].GetProperty("code").GetString());
@@ -92,7 +112,7 @@ public class CommandLineTests
             File.WriteAllText(Path.Combine(directory, "Two.slnx"), "<Solution />");
             using var output = new StringWriter();
 
-            var exit = await CliApplication.RunAsync(
+            var exit = await TestCliApplication.RunAsync(
                 ["inspect", "--project", directory, "--format", "json"],
                 output,
                 TextWriter.Null);
@@ -131,6 +151,23 @@ public class CommandLineTests
     }
 
     [TestMethod]
+    public async Task Full_solution_guide_for_edit_provider_is_successful_and_isolated()
+    {
+        var root = FindRepositoryRoot();
+        var solution = Path.Combine(root, "src", "Paradigm.Enterprise.slnx");
+
+        var result = await Run(["api", "guide", "IEditProvider", "--project", solution, "--format", "json"]);
+
+        Assert.AreEqual(0, result.Exit);
+        using var json = System.Text.Json.JsonDocument.Parse(result.Output);
+        Assert.AreEqual("success", json.RootElement.GetProperty("status").GetString());
+        Assert.IsTrue(json.RootElement.TryGetProperty("guide", out var guide));
+        StringAssert.Contains(guide.GetProperty("recommendedPattern").GetString()!, "exact-name");
+        Assert.IsFalse(json.RootElement.GetProperty("diagnostics").EnumerateArray()
+            .Any(x => x.GetProperty("code").GetString() == "PE1002"));
+    }
+
+    [TestMethod]
     public void Directory_with_multiple_solutions_requires_explicit_selection()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"paradigm-solutions-{Guid.NewGuid():N}");
@@ -153,7 +190,7 @@ public class CommandLineTests
     private static async Task<(int Exit, string Output)> Run(string[] args)
     {
         using var output = new StringWriter();
-        var exit = await CliApplication.RunAsync(args, output, TextWriter.Null);
+        var exit = await TestCliApplication.RunAsync(args, output, TextWriter.Null);
         return (exit, output.ToString());
     }
 

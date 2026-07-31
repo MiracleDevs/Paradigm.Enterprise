@@ -6,11 +6,18 @@ Expose removal through the aggregate repository. Use the protected aggregate-rem
 
 ## Search
 
-Implement the protected paginated search function or a focused custom method. Apply a stable order before paging. Treat search parameters as application/data contracts, not HTTP request objects.
+Implement the protected paginated search function or a focused custom method through a stored-procedure boundary. Apply a stable order in the routine before paging. Treat search parameters as application/data contracts, not HTTP request objects.
 
 ## Stored procedures
 
-Keep connection ownership, command execution, result mapping, nullability, parameter direction, timeouts, and cancellation in Data. Review generated routine signatures after schema changes; do not edit generated mappers.
+Use `StoredProcedureBase<TParameters>` for commands without rows and the matching `ResultStoredProcedureBase<...>` for returned result sets. Select the SQL Server or PostgreSQL package explicitly.
+
+- Register the generated parameter mapper with `SqlParameterMapperFactory` or `NpgsqlParameterMapperFactory`; register required data-reader/result mappers too.
+- Call the routine with the repository's protected `GetDbConnection()` so it uses the context-owned connection. Do not dispose that connection.
+- Pass the scoped Unit of Work when the command must enlist in its active transaction. Resolve every participating repository before opening that transaction.
+- SQL Server tuple positions follow result-set order. PostgreSQL multi-result tuple positions follow implementation-defined distinct cursor-name enumeration and do not promise database return order; avoid assigning different business meaning by tuple position unless the application identifies it explicitly.
+- Set a reviewed command timeout, preserve cancellation where the installed API supports it, and document provider-specific connection behavior.
+- Review generated routine signatures after schema changes; never hand-edit generated mappers.
 
 ## Context and Unit of Work
 

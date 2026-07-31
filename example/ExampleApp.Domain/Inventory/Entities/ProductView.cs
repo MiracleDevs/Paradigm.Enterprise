@@ -6,7 +6,7 @@ namespace ExampleApp.Domain.Inventory.Entities;
 /// <summary>
 /// Data transfer object for product viewing
 /// </summary>
-public class ProductView : EntityBase, IProduct
+public class ProductView : EntityBase<int>, IProduct
 {
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
