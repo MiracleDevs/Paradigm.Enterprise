@@ -2,20 +2,27 @@ using System.Reflection;
 using System.Xml.Linq;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class MetadataInspector : IDisposable
 {
-#region Fields
+    #region Fields
+
     private readonly MetadataLoadContext context;
     private readonly List<Assembly> assemblies = [];
     private readonly IReadOnlyDictionary<string, (string Name, string Version)> owners;
     private readonly Dictionary<string, IReadOnlyDictionary<string, string>> documentation = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Diagnostic> diagnostics = [];
-#endregion
-#region Properties
+
+    #endregion
+
+    #region Properties
+
     public IReadOnlyList<Diagnostic> Diagnostics => diagnostics.DistinctBy(x => (x.Code, x.Message, x.Location)).OrderBy(x => x.Message, StringComparer.Ordinal).ToArray();
 
-#endregion
-#region Constructors
+    #endregion
+
+    #region Constructors
+
     public MetadataInspector(AssetSelection selection)
     {
         owners = selection.AssemblyOwners;
@@ -29,15 +36,17 @@ internal sealed class MetadataInspector : IDisposable
                 assemblies.Add(context.LoadFromAssemblyPath(path));
                 documentation[Path.GetFileNameWithoutExtension(path)] = LoadDocumentation(path);
             }
-            catch (Exception exception)when (IsMetadataFailure(exception))
+            catch (Exception exception) when (IsMetadataFailure(exception))
             {
                 diagnostics.Add(MetadataDiagnostic($"Assembly '{path}' could not be loaded: {exception.Message}", path));
             }
         }
     }
 
-#endregion
-#region Public Methods
+    #endregion
+
+    #region Public Methods
+
     public IReadOnlyList<InspectedType> GetTypes()
     {
         var results = new List<InspectedType>();
@@ -54,7 +63,7 @@ internal sealed class MetadataInspector : IDisposable
                 foreach (var loaderException in exception.LoaderExceptions.Where(x => x is not null))
                     diagnostics.Add(MetadataDiagnostic($"Assembly '{assembly.GetName().Name}' was only partially loaded: {loaderException!.Message}", assembly.GetName().Name));
             }
-            catch (Exception exception)when (IsMetadataFailure(exception))
+            catch (Exception exception) when (IsMetadataFailure(exception))
             {
                 diagnostics.Add(MetadataDiagnostic($"Types from assembly '{assembly.GetName().Name}' could not be loaded: {exception.Message}", assembly.GetName().Name));
                 continue;
@@ -69,7 +78,7 @@ internal sealed class MetadataInspector : IDisposable
                     var structuredMembers = GetStructuredMembers(type, assemblyName);
                     results.Add(new(TypeName(type), TypeName(type, simple: true), type.Namespace ?? "", type.BaseType is null ? null : TypeName(type.BaseType), type.GetInterfaces().Select(x => TypeName(x)).Order(StringComparer.OrdinalIgnoreCase).ToArray(), Attributes(type), structuredMembers.Select(x => x.Signature).Order(StringComparer.OrdinalIgnoreCase).ToArray(), GetDeclaredActions(type), type.IsPublic || type.IsNestedPublic, type.IsAbstract, assemblyName, owner.Name, owner.Version, structuredMembers, Constraints(type.GetGenericArguments())));
                 }
-                catch (Exception exception)when (IsMetadataFailure(exception))
+                catch (Exception exception) when (IsMetadataFailure(exception))
                 {
                     diagnostics.Add(MetadataDiagnostic($"Type '{type.FullName ?? type.Name}' could not be analyzed: {exception.Message}", assembly.GetName().Name));
                 }
@@ -80,8 +89,11 @@ internal sealed class MetadataInspector : IDisposable
     }
 
     public void Dispose() => context.Dispose();
-#endregion
-#region Private Methods
+
+    #endregion
+
+    #region Private Methods
+
     private IReadOnlyList<string> GetVisibleMembers(Type type, string assemblyName)
     {
         const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
@@ -246,7 +258,7 @@ internal sealed class MetadataInspector : IDisposable
             return new Dictionary<string, string>();
         try
         {
-            return XDocument.Load(path).Descendants("member").Where(x => x.Attribute("name")is not null).GroupBy(x => x.Attribute("name")!.Value).ToDictionary(x => x.Key, x => Normalize(x.First().Element("summary")?.Value), StringComparer.Ordinal);
+            return XDocument.Load(path).Descendants("member").Where(x => x.Attribute("name") is not null).GroupBy(x => x.Attribute("name")!.Value).ToDictionary(x => x.Key, x => Normalize(x.First().Element("summary")?.Value), StringComparer.Ordinal);
         }
         catch
         {
@@ -256,6 +268,7 @@ internal sealed class MetadataInspector : IDisposable
 
     private static bool IsMetadataFailure(Exception exception) => exception is BadImageFormatException or FileLoadException or FileNotFoundException or TypeLoadException or NotSupportedException;
     private static Diagnostic MetadataDiagnostic(string message, string? location) => new("PE1002", "error", message, location);
-    private static string Normalize(string? value) => string.Join(" ", (value ?? "").Split((char[]? )null, StringSplitOptions.RemoveEmptyEntries));
-#endregion
+    private static string Normalize(string? value) => string.Join(" ", (value ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+    #endregion
 }

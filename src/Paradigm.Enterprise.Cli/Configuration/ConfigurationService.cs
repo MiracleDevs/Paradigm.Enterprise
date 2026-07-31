@@ -2,15 +2,20 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class ConfigurationService : IConfigurationService
 {
-#region Fields
+    #region Fields
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
-#endregion
-#region Public Methods
+
+    #endregion
+
+    #region Public Methods
+
     public ConfigurationResult Load(ProjectSelection selection, string? requestedPath)
     {
         var path = requestedPath is null ? FindConfiguration(selection) : Path.GetFullPath(requestedPath);
@@ -30,14 +35,16 @@ internal sealed class ConfigurationService : IConfigurationService
             var diagnostics = Validate(path, suppressions);
             return new(new(path, workspace, packagePolicy, suppressions), diagnostics);
         }
-        catch (Exception exception)when (exception is JsonException or IOException)
+        catch (Exception exception) when (exception is JsonException or IOException)
         {
             return new(new(path, workspace, new(), []), [new("PE5001", "error", $"Configuration '{path}' is invalid: {exception.Message}", path)]);
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static IReadOnlyList<Diagnostic> Validate(string path, IReadOnlyList<ConfiguredSuppression> suppressions)
     {
         var diagnostics = new List<Diagnostic>();
@@ -73,5 +80,6 @@ internal sealed class ConfigurationService : IConfigurationService
         var display = File.Exists(selection.DisplayPath) ? Path.GetDirectoryName(selection.DisplayPath)! : selection.DisplayPath;
         return Path.GetFullPath(display);
     }
-#endregion
+
+    #endregion
 }

@@ -6,9 +6,11 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal static partial class AssetsReader
 {
-#region Public Methods
+    #region Public Methods
+
     public static AssetSelection Read(string project, string? requestedFramework, bool packagesOnly = false)
     {
         var projectDirectory = Path.GetDirectoryName(project)!;
@@ -108,8 +110,10 @@ internal static partial class AssetsReader
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     internal static string SelectFramework(IEnumerable<string> targetValues, string? requested)
     {
         var targets = targetValues.Where(x => x.StartsWith("net", StringComparison.OrdinalIgnoreCase)).OrderByDescending(FrameworkKey, StringComparer.OrdinalIgnoreCase).ThenBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
@@ -121,7 +125,7 @@ internal static partial class AssetsReader
         if (exact is not null)
             return exact;
         var requestedVersion = NetVersion(requested);
-        var compatible = requestedVersion is null ? null : targets.FirstOrDefault(x => NetVersion(x)is { } candidate && candidate <= requestedVersion);
+        var compatible = requestedVersion is null ? null : targets.FirstOrDefault(x => NetVersion(x) is { } candidate && candidate <= requestedVersion);
         return compatible ?? throw new AssetsException($"Framework '{requested}' has no compatible restored target. Available targets: {string.Join(", ", targets)}.");
     }
 
@@ -135,7 +139,7 @@ internal static partial class AssetsReader
                 var name = AssemblyName.GetAssemblyName(path);
                 valid.Add((path, name.FullName ?? name.Name ?? path, PathPreference(path, applicationAssembly, owners)));
             }
-            catch (Exception exception)when (exception is BadImageFormatException or FileLoadException or FileNotFoundException)
+            catch (Exception exception) when (exception is BadImageFormatException or FileLoadException or FileNotFoundException)
             {
                 if (inspectionAssemblyNames.Contains(Path.GetFileNameWithoutExtension(path)))
                     diagnostics.Add(new("PE1002", "error", $"Metadata assembly '{path}' cannot be read: {exception.Message}", path));
@@ -219,7 +223,7 @@ internal static partial class AssetsReader
             process.WaitForExit();
             return process.ExitCode == 0 ? output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault() : null;
         }
-        catch (Exception exception)when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
+        catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             return null;
         }
@@ -288,5 +292,6 @@ internal static partial class AssetsReader
 
     [GeneratedRegex("^net(\\d+(?:\\.\\d+)?)", RegexOptions.IgnoreCase)]
     private static partial Regex NetFrameworkRegex();
-#endregion
+
+    #endregion
 }

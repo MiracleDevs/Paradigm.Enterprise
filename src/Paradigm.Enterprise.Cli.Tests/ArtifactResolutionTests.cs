@@ -1,10 +1,12 @@
 using System.Diagnostics;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class ArtifactResolutionTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public async Task Custom_target_path_staleness_and_malformed_output_are_not_false_clean()
     {
@@ -71,8 +73,10 @@ public class ArtifactResolutionTests
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static void RunDotNet(string workingDirectory, params string[] arguments)
     {
         var startInfo = new ProcessStartInfo
@@ -92,5 +96,6 @@ public class ArtifactResolutionTests
         process.WaitForExit();
         Assert.AreEqual(0, process.ExitCode, stdout + Environment.NewLine + stderr);
     }
-#endregion
+
+    #endregion
 }

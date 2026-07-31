@@ -1,13 +1,15 @@
 using System.Xml.Linq;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal static class Analysis
 {
-#region Public Methods
+    #region Public Methods
+
     public static IReadOnlyList<ResultItem> Inspect(IEnumerable<InspectedType> types)
     {
         var materialized = types.ToArray();
-        return materialized.Where(x => x.IsPublic && !x.IsAbstract).Select(x => Classify(x, materialized)is { } kind ? new ResultItem(kind, x.FullName, IdentityDetail(x, materialized), x.Package, x.Version, x.AssemblyName) : null).Where(x => x is not null).Cast<ResultItem>().OrderBy(x => x.Kind, StringComparer.Ordinal).ThenBy(x => x.Name, StringComparer.Ordinal).ToArray();
+        return materialized.Where(x => x.IsPublic && !x.IsAbstract).Select(x => Classify(x, materialized) is { } kind ? new ResultItem(kind, x.FullName, IdentityDetail(x, materialized), x.Package, x.Version, x.AssemblyName) : null).Where(x => x is not null).Cast<ResultItem>().OrderBy(x => x.Kind, StringComparer.Ordinal).ThenBy(x => x.Name, StringComparer.Ordinal).ToArray();
     }
 
     public static IReadOnlyList<Diagnostic> ValidateTypes(IEnumerable<InspectedType> applicationTypes, IEnumerable<InspectedType>? universe = null) => BuiltInValidation.Evaluate(applicationTypes, universe);
@@ -24,7 +26,7 @@ internal static class Analysis
             {
                 document = XDocument.Load(project);
             }
-            catch (Exception exception)when (exception is IOException or System.Xml.XmlException)
+            catch (Exception exception) when (exception is IOException or System.Xml.XmlException)
             {
                 diagnostics.Add(new("PE1002", "error", $"Project '{project}' could not be read: {exception.Message}", project));
                 continue;
@@ -60,8 +62,10 @@ internal static class Analysis
         return null;
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static string IdentityDetail(InspectedType type, IReadOnlyList<InspectedType> all)
     {
         var ids = IdentifierCandidates(type, all).Distinct().ToArray();
@@ -121,7 +125,7 @@ internal static class Analysis
         var start = value.IndexOf('<');
         var end = value.LastIndexOf('>');
         if (start < 0 || end <= start)
-            return[];
+            return [];
         var result = new List<string>();
         var depth = 0;
         var segment = start + 1;
@@ -242,5 +246,6 @@ internal static class Analysis
             return (4, "WebApi/Host");
         return null;
     }
-#endregion
+
+    #endregion
 }

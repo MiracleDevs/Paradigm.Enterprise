@@ -1,4 +1,5 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal interface IValidationService
 {
     IReadOnlyList<ResultItem> Inspect(IEnumerable<InspectedType> types);

@@ -19,6 +19,7 @@ else:
         "#region Nested Types",
         "#region Static Constructors",
         "#region Event Handlers",
+        "exactly one empty line between adjacent regions",
         "localStorage",
         "explicit permission",
         "ActivitySource",

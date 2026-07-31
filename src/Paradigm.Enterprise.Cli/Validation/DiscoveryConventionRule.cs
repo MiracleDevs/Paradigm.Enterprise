@@ -1,11 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class DiscoveryConventionRule : IValidationRule
 {
-#region Properties
+    #region Properties
+
     public string Code => "PE3001";
 
-#endregion
-#region Public Methods
+    #endregion
+
+    #region Public Methods
+
     public IEnumerable<Diagnostic> Evaluate(ValidationContext context)
     {
         foreach (var type in context.ApplicationTypes.Where(x => !x.IsAbstract))
@@ -19,5 +23,6 @@ internal sealed class DiscoveryConventionRule : IValidationRule
                 yield return new(Code, "error", $"{type.FullName} must implement exactly one convention interface named {expected}; found {count}.", type.AssemblyName);
         }
     }
-#endregion
+
+    #endregion
 }

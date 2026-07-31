@@ -1,7 +1,9 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal static class PathContainment
 {
-#region Public Methods
+    #region Public Methods
+
     public static bool TryResolveWithin(string root, string relativePath, out string resolvedPath, out string? error)
     {
         try
@@ -16,7 +18,7 @@ internal static class PathContainment
             error = outside ? "resolved path is outside the canonical workspace" : null;
             return !outside;
         }
-        catch (Exception exception)when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
             resolvedPath = Path.GetFullPath(Path.Combine(root, relativePath));
             error = exception.Message;
@@ -24,8 +26,10 @@ internal static class PathContainment
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     internal static string Canonicalize(string path)
     {
         var fullPath = Path.GetFullPath(path);
@@ -43,5 +47,6 @@ internal static class PathContainment
 
         return Path.GetFullPath(current);
     }
-#endregion
+
+    #endregion
 }

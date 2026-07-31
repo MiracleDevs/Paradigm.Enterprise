@@ -10,7 +10,7 @@ Apply these rules to handwritten application and framework code. Treat generated
 
 ## Class member layout
 
-Order class members exactly as follows. Wrap every non-empty category in the matching region; omit empty regions. Keep the region names and capitalization exact.
+Order class members exactly as follows. Wrap every non-empty category in the matching region; omit empty regions. Keep the region names and capitalization exact. Leave exactly one empty line after `#region`, exactly one empty line before `#endregion`, and exactly one empty line between adjacent regions.
 
 1. `#region Nested Types`
 2. `#region Constants`
@@ -25,6 +25,20 @@ Order class members exactly as follows. Wrap every non-empty category in the mat
 11. `#region Event Handlers`
 
 Place an override in `Overrides` regardless of its declared accessibility. Place callbacks that handle an event in `Event Handlers`, after other private methods. Do not use thematic regions in a production class as a substitute for this order. Tests may group test cases by behavior, but helper members still follow the member order.
+
+```csharp
+    #region Fields
+
+    private readonly object _gate = new();
+
+    #endregion
+
+    #region Properties
+
+    public string Name { get; }
+
+    #endregion
+```
 
 ## Small, narrow, immutable surfaces
 

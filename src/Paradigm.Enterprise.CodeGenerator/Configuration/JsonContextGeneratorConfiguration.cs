@@ -1,4 +1,4 @@
-﻿namespace Paradigm.Enterprise.CodeGenerator.Configuration;
+namespace Paradigm.Enterprise.CodeGenerator.Configuration;
 
 internal sealed class JsonContextGeneratorConfiguration
 {

@@ -1,8 +1,10 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class SemanticVersionTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     [DataRow("1.0.0-alpha", "1.0.0-alpha.1")]
     [DataRow("1.0.0-alpha.2", "1.0.0-alpha.10")]
@@ -37,5 +39,6 @@ public class SemanticVersionTests
     {
         Assert.IsFalse(SemanticVersion.TryParse(value, out _));
     }
-#endregion
+
+    #endregion
 }

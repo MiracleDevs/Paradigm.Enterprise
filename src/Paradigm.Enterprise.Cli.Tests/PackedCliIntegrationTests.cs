@@ -4,14 +4,19 @@ using System.Text;
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 [DoNotParallelize]
 public class PackedCliIntegrationTests
 {
-#region Nested Types
+    #region Nested Types
+
     private sealed record ProcessResult(int ExitCode, string Output, string Error);
-#endregion
-#region Fields
+
+    #endregion
+
+    #region Fields
+
     private static string repository = null!;
     private static string temporary = null!;
     private static string executable = null!;
@@ -21,8 +26,11 @@ public class PackedCliIntegrationTests
     private static string auditProject = null!;
     private static string auditShimDirectory = null!;
     private static string version = null!;
-#endregion
-#region Public Methods
+
+    #endregion
+
+    #region Public Methods
+
     [ClassInitialize]
     public static async Task Initialize(TestContext _)
     {
@@ -116,8 +124,10 @@ public class PackedCliIntegrationTests
         Assert.AreEqual(0, packageAudit.RootElement.GetProperty("diagnostics").GetArrayLength());
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static JsonDocument AssertJson(ProcessResult result, string command)
     {
         Assert.AreEqual(0, result.ExitCode, result.Error + Environment.NewLine + result.Output);
@@ -149,7 +159,7 @@ public class PackedCliIntegrationTests
         foreach (var argument in arguments)
             process.StartInfo.ArgumentList.Add(argument);
         if (environment is not null)
-            foreach (var(name, value)in environment)
+            foreach (var (name, value) in environment)
                 process.StartInfo.Environment[name] = value;
         process.Start();
         var output = process.StandardOutput.ReadToEndAsync();
@@ -184,5 +194,6 @@ public class PackedCliIntegrationTests
                 return current.FullName;
         throw new DirectoryNotFoundException("Repository root was not found.");
     }
-#endregion
+
+    #endregion
 }

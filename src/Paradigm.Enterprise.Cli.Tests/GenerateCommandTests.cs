@@ -1,8 +1,10 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class GenerateCommandTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public async Task Json_generation_uses_separate_assembly_and_source_output_paths()
     {
@@ -24,8 +26,10 @@ public class GenerateCommandTests
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static string FindRepositoryRoot()
     {
         for (var current = new DirectoryInfo(AppContext.BaseDirectory); current is not null; current = current.Parent)
@@ -33,5 +37,6 @@ public class GenerateCommandTests
                 return current.FullName;
         throw new DirectoryNotFoundException("Repository root was not found.");
     }
-#endregion
+
+    #endregion
 }

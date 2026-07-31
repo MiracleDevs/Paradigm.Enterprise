@@ -1,19 +1,26 @@
 using System.Numerics;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable<SemanticVersion>
 {
-#region Fields
+    #region Fields
+
     private readonly IReadOnlyList<string> prerelease;
-#endregion
-#region Properties
+
+    #endregion
+
+    #region Properties
+
     public BigInteger Major { get; }
     public BigInteger Minor { get; }
     public BigInteger Patch { get; }
     public bool IsPrerelease => prerelease.Count > 0;
 
-#endregion
-#region Constructors
+    #endregion
+
+    #region Constructors
+
     private SemanticVersion(BigInteger major, BigInteger minor, BigInteger patch, IReadOnlyList<string> prerelease)
     {
         Major = major;
@@ -22,8 +29,10 @@ internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable
         this.prerelease = prerelease;
     }
 
-#endregion
-#region Public Methods
+    #endregion
+
+    #region Public Methods
+
     public static SemanticVersion Parse(string value) => TryParse(value, out var version) ? version : throw new FormatException($"'{value}' is not a valid Semantic Version.");
     public static bool TryParse(string? value, out SemanticVersion version)
     {
@@ -72,8 +81,11 @@ internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable
     }
 
     public bool Equals(SemanticVersion? other) => CompareTo(other) == 0;
-#endregion
-#region Overrides
+
+    #endregion
+
+    #region Overrides
+
     public override bool Equals(object? obj) => obj is SemanticVersion other && Equals(other);
     public override int GetHashCode()
     {
@@ -86,8 +98,10 @@ internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable
         return hash.ToHashCode();
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static bool TryNumeric(string value, out BigInteger number)
     {
         number = default;
@@ -95,5 +109,6 @@ internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable
     }
 
     private static bool ValidIdentifiers(string value, bool rejectNumericLeadingZeroes) => value.Split('.').All(identifier => identifier.Length > 0 && identifier.All(character => character is >= '0' and <= '9' or >= 'A' and <= 'Z' or >= 'a' and <= 'z' or '-') && (!rejectNumericLeadingZeroes || !identifier.All(character => character is >= '0' and <= '9') || identifier.Length == 1 || identifier[0] != '0'));
-#endregion
+
+    #endregion
 }

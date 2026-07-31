@@ -1,4 +1,5 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal interface IValidationRule
 {
     string Code { get; }

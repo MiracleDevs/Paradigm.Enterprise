@@ -1,7 +1,9 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal static class CommandLine
 {
-#region Constants
+    #region Constants
+
     internal const string Usage = """
         Paradigm.Enterprise CLI
 
@@ -21,8 +23,11 @@ internal static class CommandLine
           paradigm packages audit [--project <path>] [--framework <tfm>] [--config <path>] [--warnings-as-errors] [--format text|json]
           paradigm --version
         """;
-#endregion
-#region Public Methods
+
+    #endregion
+
+    #region Public Methods
+
     public static bool TryParse(string[] args, out ParsedCommand? command, out string? error)
     {
         command = null;
@@ -106,12 +111,13 @@ internal static class CommandLine
             switch (option)
             {
                 case "--project":
-                    if (name == "checks list")
+                    if (name == "checks list" || name.StartsWith("generate ", StringComparison.Ordinal))
                         return Fail($"Option '{option}' is not valid for '{name}'.", out error);
                     project = value;
                     break;
                 case "--framework":
-                    if (name is "doctor" or "checks list")
+                    if (name is "doctor" or "checks list" ||
+                        name.StartsWith("generate ", StringComparison.Ordinal))
                         return Fail($"Option '{option}' is not valid for '{name}'.", out error);
                     framework = value;
                     break;
@@ -172,17 +178,21 @@ internal static class CommandLine
             "generate json" or "generate mappers" or "generate client" => new GenerateOptions(name["generate ".Length..], projectName, assemblyPath, outputPath!, document, settingsPath, format),
             "packages check" => new PackagesCheckOptions(project, framework, config, format),
             "packages audit" => new PackagesAuditOptions(project, framework, config, warningsAsErrors, format),
-            _ => throw new InvalidOperationException($"No options model is registered for '{name}'.")};
+            _ => throw new InvalidOperationException($"No options model is registered for '{name}'.")
+        };
         command = new(name, options);
         return true;
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static bool Fail(string message, out string? error)
     {
         error = message;
         return false;
     }
-#endregion
+
+    #endregion
 }

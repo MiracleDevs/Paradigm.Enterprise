@@ -1,11 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class ValidateCommandHandler(MetadataCommandLoader loader, IValidationService validation, IConfigurationService configuration) : CliCommandHandler<ValidateOptions>
 {
-#region Properties
+    #region Properties
+
     public override string Route => "validate";
 
-#endregion
-#region Overrides
+    #endregion
+
+    #region Overrides
+
     public override Task<CommandResponse> ExecuteAsync(ValidateOptions options, CancellationToken cancellationToken)
     {
         var loaded = loader.Load(options.Project, options.Framework, true, false);
@@ -16,5 +20,6 @@ internal sealed class ValidateCommandHandler(MetadataCommandLoader loader, IVali
         var diagnostics = loaded.Diagnostics.Concat(validation.ValidateLayers(loaded.Selection)).Concat(configured.Diagnostics).Concat(SuppressionPolicy.Expired(configured.Configuration.Suppressions, configured.Configuration.Path)).Concat(policyDiagnostics);
         return Task.FromResult(ResponseFactory.Create(Route, loaded.Packages, results, diagnostics));
     }
-#endregion
+
+    #endregion
 }

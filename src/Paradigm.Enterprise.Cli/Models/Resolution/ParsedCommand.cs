@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed record ParsedCommand(string Name, ICliCommandOptions Options)
 {
-#region Properties
+    #region Properties
+
     public string? Query => Options switch
     {
         ApiSearchOptions options => options.Query,
@@ -22,5 +24,6 @@ internal sealed record ParsedCommand(string Name, ICliCommandOptions Options)
     };
     public int Limit => Options is ApiSearchOptions options ? options.Limit : 20;
     public OutputFormat Format => Options.Format;
-#endregion
+
+    #endregion
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.CodeGenerator.Generators.SqlServer;
 using System.Reflection;

@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file.
 
 Version `1.1.0`
 
+- Added installable Agent Skills for guided application design, implementation, security, and review.
 - Consolidated diagnostics, semantic C# checks, and JSON/mapper/OpenAPI generation behind one installable `Paradigm.Enterprise.Cli` tool; analyzer and generator projects are internal package components rather than separate tools.
-- Added built-in `PE3103`/`PE3104` semantic checks plus deterministic `PE3105` one-type-per-file and `PE3106` member-region/order checks with generated-code exclusions.
+- Added built-in `PE3103`/`PE3104` semantic checks plus deterministic `PE3105` one-type-per-file and `PE3106` member-region, order, and spacing checks with generated-code exclusions.
+- Reorganized the single CLI by capability, protected its `Packages` source folder from NuGet ignore rules, and added complete user and maintainer documentation for commands, options, architecture, packaging, and verification.
 - Removed unreleased CLI/framework lockstep, check-pack versions, executable configuration, minimum-version branches, and legacy API-shape guidance while retaining ordinary NuGet release metadata and installed-package inspection.
 - Split generator assembly input from source output, exposed independent generation modes, and made generation failures return nonzero `PE8001` results instead of being swallowed.
 - Added canonical Paradigm Good Coding Practices covering member order/regions, semantic file layout, domain folders/contexts, least visibility, immutability, browser security, dependency approval/licensing, and API observability/health.
@@ -17,7 +19,6 @@ Version `1.0.33`
 
 - Added fix in `Services.Cache` package crashing when Redis connection failed.
 - Added the read-only `Paradigm.Enterprise.Cli` .NET tool for restored-package API discovery and application diagnostics.
-- Added installable Agent Skills for guided application design, implementation, security, and review.
 
 Version `1.0.32`
 
@@ -26,9 +27,9 @@ Version `1.0.32`
 
 Version `1.0.31`
 
- - Upgraded EF Core and related data-access packages to `10.x` (including `Microsoft.EntityFrameworkCore*`, `EntityFrameworkCore.Exceptions.SqlServer`, and `Npgsql.EntityFrameworkCore.PostgreSQL`).
- - Upgraded additional dependencies (e.g., `Azure.Identity`, `Azure.Storage.Blobs`, `Microsoft.Data.SqlClient`, and Redis packages).
- - Updated some projects that previously multi-targeted `net9.0;net10.0` to target `net10.0` only.
+- Upgraded EF Core and related data-access packages to `10.x` (including `Microsoft.EntityFrameworkCore*`, `EntityFrameworkCore.Exceptions.SqlServer`, and `Npgsql.EntityFrameworkCore.PostgreSQL`).
+- Upgraded additional dependencies (e.g., `Azure.Identity`, `Azure.Storage.Blobs`, `Microsoft.Data.SqlClient`, and Redis packages).
+- Updated some projects that previously multi-targeted `net9.0;net10.0` to target `net10.0` only.
 
 Version `1.0.30`
 

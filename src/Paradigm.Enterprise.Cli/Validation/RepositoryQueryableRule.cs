@@ -1,11 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class RepositoryQueryableRule : IValidationRule
 {
-#region Properties
+    #region Properties
+
     public string Code => "PE3102";
 
-#endregion
-#region Public Methods
+    #endregion
+
+    #region Public Methods
+
     public IEnumerable<Diagnostic> Evaluate(ValidationContext context)
     {
         foreach (var type in context.ApplicationTypes)
@@ -16,5 +20,6 @@ internal sealed class RepositoryQueryableRule : IValidationRule
                 yield return new(Code, "error", $"{type.FullName}.{member.Name} exposes IQueryable across the repository boundary.", $"{type.AssemblyName}:{type.FullName}.{member.Name}");
         }
     }
-#endregion
+
+    #endregion
 }

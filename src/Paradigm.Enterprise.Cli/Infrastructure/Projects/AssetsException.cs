@@ -6,4 +6,5 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class AssetsException(string message) : Exception(message);

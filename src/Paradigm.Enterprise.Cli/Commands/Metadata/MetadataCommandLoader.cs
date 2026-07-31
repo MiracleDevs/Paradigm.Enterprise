@@ -1,7 +1,9 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class MetadataCommandLoader(IProjectResolutionService projects, IAssetService assets, IMetadataService metadata)
 {
-#region Public Methods
+    #region Public Methods
+
     public LoadedMetadata Load(string? project, string? framework, bool requireApplicationAssembly, bool packagesOnly)
     {
         var selection = projects.Resolve(project);
@@ -34,7 +36,7 @@ internal sealed class MetadataCommandLoader(IProjectResolutionService projects, 
                 allTypes.AddRange(inspected.Types);
                 diagnostics.AddRange(inspected.Diagnostics);
             }
-            catch (Exception exception)when (exception is AssetsException or FileNotFoundException or BadImageFormatException)
+            catch (Exception exception) when (exception is AssetsException or FileNotFoundException or BadImageFormatException)
             {
                 diagnostics.Add(new("PE1002", "error", exception.Message, projectPath));
             }
@@ -44,5 +46,6 @@ internal sealed class MetadataCommandLoader(IProjectResolutionService projects, 
         diagnostics.AddRange(ResponseFactory.VersionDiagnostics(packages));
         return new(selection, packages, allTypes, diagnostics);
     }
-#endregion
+
+    #endregion
 }

@@ -1,8 +1,10 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class AnalysisTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public void Provider_without_convention_interface_is_an_error()
     {
@@ -70,8 +72,11 @@ public class AnalysisTests
         Assert.IsTrue(diagnostics.Any(x => x.Code == "PE3002"));
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static InspectedType Type(string fullName, string name, IReadOnlyList<string> interfaces, string? baseType = null, IReadOnlyList<string>? attributes = null, IReadOnlyList<InspectedAction>? actions = null, bool isAbstract = false) => new(fullName, name, "Sample", baseType, interfaces, attributes ?? [], [], actions ?? [], true, isAbstract, "Sample", null, null);
-#endregion
+
+    #endregion
 }

@@ -1,4 +1,5 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal interface IApiQueryService
 {
     IReadOnlyList<ResultItem> Search(IEnumerable<InspectedType> types, string query, string? package, int limit);

@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal interface ICliCommandOptions
 {
     string? Project { get; }

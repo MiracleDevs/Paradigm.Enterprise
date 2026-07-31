@@ -1,13 +1,17 @@
 using Paradigm.Enterprise.Checks.CSharp;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class ChecksRunCommandHandler(IProjectResolutionService projects, IAssetService assets, IConfigurationService configuration) : CliCommandHandler<ChecksRunOptions>
 {
-#region Properties
+    #region Properties
+
     public override string Route => "checks run";
 
-#endregion
-#region Overrides
+    #endregion
+
+    #region Overrides
+
     public override Task<CommandResponse> ExecuteAsync(ChecksRunOptions options, CancellationToken cancellationToken)
     {
         var selection = projects.Resolve(options.Project);
@@ -37,5 +41,6 @@ internal sealed class ChecksRunCommandHandler(IProjectResolutionService projects
         BuiltInCheckInfo[] checks = [new("csharp", "PE31")];
         return Task.FromResult(ResponseFactory.Create(Route, packages, [], diagnostics, checks: new(checks, executed ? ["csharp"] : [])));
     }
-#endregion
+
+    #endregion
 }

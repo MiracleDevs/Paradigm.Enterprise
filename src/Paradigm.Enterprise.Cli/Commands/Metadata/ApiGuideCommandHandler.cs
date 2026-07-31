@@ -1,11 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class ApiGuideCommandHandler(MetadataCommandLoader loader, IApiQueryService api, ApiGuideService guides) : ApiCommandHandler<ApiGuideOptions>(loader, api)
 {
-#region Properties
+    #region Properties
+
     public override string Route => "api guide";
 
-#endregion
-#region Overrides
+    #endregion
+
+    #region Overrides
+
     public override Task<CommandResponse> ExecuteAsync(ApiGuideOptions options, CancellationToken cancellationToken)
     {
         var loaded = Loader.Load(options.Project, options.Framework, false, true);
@@ -21,5 +25,6 @@ internal sealed class ApiGuideCommandHandler(MetadataCommandLoader loader, IApiQ
 
         return Task.FromResult(ResponseFactory.Create(Route, loaded.Packages, match.Results, diagnostics, guide));
     }
-#endregion
+
+    #endregion
 }

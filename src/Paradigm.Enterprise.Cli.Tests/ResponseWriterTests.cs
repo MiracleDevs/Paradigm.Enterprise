@@ -1,10 +1,12 @@
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class ResponseWriterTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public async Task Text_and_json_output_are_deterministic_and_json_has_stable_envelope()
     {
@@ -33,13 +35,16 @@ public class ResponseWriterTests
         Assert.AreEqual(61, document.RootElement.GetProperty("results").GetArrayLength());
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static async Task<string> Write(CommandResponse response, OutputFormat format)
     {
         using var output = new StringWriter();
         await ResponseWriter.WriteAsync(response, format, output);
         return output.ToString();
     }
-#endregion
+
+    #endregion
 }

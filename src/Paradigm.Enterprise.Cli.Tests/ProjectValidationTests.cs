@@ -1,8 +1,10 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class ProjectValidationTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public void Lower_layer_reference_to_host_is_an_error()
     {
@@ -28,5 +30,6 @@ public class ProjectValidationTests
             Directory.Delete(directory, recursive: true);
         }
     }
-#endregion
+
+    #endregion
 }

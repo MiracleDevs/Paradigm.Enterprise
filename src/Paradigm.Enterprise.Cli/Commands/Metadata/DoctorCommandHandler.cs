@@ -1,11 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class DoctorCommandHandler(IProjectResolutionService projects, IAssetService assets) : CliCommandHandler<DoctorOptions>
 {
-#region Properties
+    #region Properties
+
     public override string Route => "doctor";
 
-#endregion
-#region Overrides
+    #endregion
+
+    #region Overrides
+
     public override Task<CommandResponse> ExecuteAsync(DoctorOptions options, CancellationToken cancellationToken)
     {
         var selection = projects.Resolve(options.Project);
@@ -48,5 +52,6 @@ internal sealed class DoctorCommandHandler(IProjectResolutionService projects, I
         diagnostics.AddRange(ResponseFactory.VersionDiagnostics(packages));
         return Task.FromResult(ResponseFactory.Create(Route, packages, results, diagnostics));
     }
-#endregion
+
+    #endregion
 }

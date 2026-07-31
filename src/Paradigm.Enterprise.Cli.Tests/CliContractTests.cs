@@ -1,10 +1,12 @@
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class CliContractTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public async Task Help_text_and_exit_match_the_current_contract()
     {
@@ -67,8 +69,11 @@ public class CliContractTests
         Assert.AreEqual(Normalize($"inspect: error{Environment.NewLine}" + $"PE1002 error: Project path '{Path.GetFullPath(missing)}' does not exist.{Environment.NewLine}"), Normalize(output.ToString()));
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static string Normalize(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal);
-#endregion
+
+    #endregion
 }

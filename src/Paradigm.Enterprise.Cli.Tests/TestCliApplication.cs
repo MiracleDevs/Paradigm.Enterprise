@@ -1,7 +1,9 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 internal static class TestCliApplication
 {
-#region Public Methods
+    #region Public Methods
+
     public static Task<int> RunAsync(string[] args, TextWriter output, TextWriter error, CancellationToken cancellationToken = default)
     {
         IProjectResolutionService projects = new ProjectResolutionService();
@@ -34,5 +36,6 @@ internal static class TestCliApplication
         var application = new CliApplication(new CommandRouter(handlers), responseWriter, exitPolicy, output, error);
         return application.RunAsync(args, cancellationToken);
     }
-#endregion
+
+    #endregion
 }

@@ -1,8 +1,10 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class CommandLineTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public void Search_defaults_to_bounded_text_output()
     {
@@ -54,6 +56,20 @@ public class CommandLineTests
         Assert.IsFalse(CommandLine.TryParse(["generate", "client", "--output", "generated"], out _, out _));
         Assert.IsTrue(CommandLine.TryParse(["generate", "mappers", "--project-name", "Sample", "--assembly", "Sample.Data.dll", "--output", "generated"], out var command, out _));
         Assert.IsInstanceOfType<GenerateOptions>(command!.Options);
+    }
+
+    [TestMethod]
+    [DataRow("--project", "App.slnx")]
+    [DataRow("--framework", "net10.0")]
+    public void Generation_rejects_unused_project_selection_options(string option, string value)
+    {
+        var valid = CommandLine.TryParse(
+            ["generate", "client", "--document", "https://localhost/openapi.json", "--output", "generated", option, value],
+            out _,
+            out var error);
+
+        Assert.IsFalse(valid);
+        StringAssert.Contains(error!, "not valid for 'generate client'");
     }
 
     [TestMethod]
@@ -187,8 +203,10 @@ public class CommandLineTests
             StringAssert.Contains(documentation, signature);
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static async Task<(int Exit, string Output)> Run(string[] args)
     {
         using var output = new StringWriter();
@@ -208,5 +226,6 @@ public class CommandLineTests
 
         throw new DirectoryNotFoundException("Repository root was not found.");
     }
-#endregion
+
+    #endregion
 }

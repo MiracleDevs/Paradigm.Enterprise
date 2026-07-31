@@ -1,10 +1,12 @@
 using Paradigm.Enterprise.Checks.CSharp;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class CSharpCheckServiceTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public void Source_layout_rules_report_invalid_files_and_allow_valid_and_generated_files()
     {
@@ -20,8 +22,13 @@ public class CSharpCheckServiceTests
     {
         var diagnostics = AnalyzeGoodPracticesFixture().Where(diagnostic => diagnostic.Code == "PE3106").ToArray();
         Assert.IsNotEmpty(diagnostics);
-        Assert.IsTrue(diagnostics.All(diagnostic => diagnostic.Location?.Contains("BadLayout.cs", StringComparison.OrdinalIgnoreCase) == true));
         Assert.IsTrue(diagnostics.Any(diagnostic => diagnostic.Message.Contains("#region Fields", StringComparison.Ordinal)));
+        Assert.IsTrue(diagnostics.Any(diagnostic =>
+            diagnostic.Location?.Contains("BadSpacing.cs", StringComparison.OrdinalIgnoreCase) == true &&
+            diagnostic.Message.Contains("exactly one empty line", StringComparison.Ordinal)));
+        Assert.IsTrue(diagnostics.All(diagnostic =>
+            diagnostic.Location?.Contains("BadLayout.cs", StringComparison.OrdinalIgnoreCase) == true ||
+            diagnostic.Location?.Contains("BadSpacing.cs", StringComparison.OrdinalIgnoreCase) == true));
     }
 
     [TestMethod]
@@ -33,8 +40,10 @@ public class CSharpCheckServiceTests
         Assert.IsTrue(diagnostics.Any(diagnostic => diagnostic.Code == "PE3104"));
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static IReadOnlyList<CSharpCheckDiagnostic> AnalyzeGoodPracticesFixture() => CSharpCheckService.Analyze(new(FixtureProject("GoodPractices", "GoodPractices.csproj"), "net10.0"));
     private static string FixtureProject(string directory, string project)
     {
@@ -49,5 +58,6 @@ public class CSharpCheckServiceTests
                 return current.FullName;
         throw new DirectoryNotFoundException("Repository root was not found.");
     }
-#endregion
+
+    #endregion
 }

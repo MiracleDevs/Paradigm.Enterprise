@@ -1,16 +1,21 @@
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal static class ResponseWriter
 {
-#region Fields
+    #region Fields
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
-#endregion
-#region Public Methods
+
+    #endregion
+
+    #region Public Methods
+
     public static async Task WriteAsync(CommandResponse response, OutputFormat format, TextWriter output)
     {
         if (format == OutputFormat.Json)
@@ -56,12 +61,15 @@ internal static class ResponseWriter
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static async Task WriteLines(string label, IEnumerable<string> values, TextWriter output)
     {
         foreach (var value in values)
             await output.WriteLineAsync($"  {label}: {value}");
     }
-#endregion
+
+    #endregion
 }

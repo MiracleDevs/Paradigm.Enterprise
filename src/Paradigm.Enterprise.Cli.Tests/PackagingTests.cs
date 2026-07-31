@@ -2,11 +2,13 @@ using System.Diagnostics;
 using System.IO.Compression;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 [DoNotParallelize]
 public class PackagingTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     [Timeout(120_000)]
     public async Task Solution_pack_never_emits_test_fixture_packages()
@@ -61,8 +63,10 @@ public class PackagingTests
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static string FindRepositoryRoot()
     {
         for (var current = new DirectoryInfo(AppContext.BaseDirectory); current is not null; current = current.Parent)
@@ -70,5 +74,6 @@ public class PackagingTests
                 return current.FullName;
         throw new DirectoryNotFoundException("Repository root was not found.");
     }
-#endregion
+
+    #endregion
 }

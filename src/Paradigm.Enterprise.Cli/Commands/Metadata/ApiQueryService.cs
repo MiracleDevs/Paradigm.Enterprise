@@ -1,7 +1,9 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class ApiQueryService : IApiQueryService
 {
-#region Public Methods
+    #region Public Methods
+
     public IReadOnlyList<ResultItem> Search(IEnumerable<InspectedType> types, string query, string? package, int limit) => PublicParadigmTypes(types, package).SelectMany(type =>
     {
         var items = new List<ResultItem>();
@@ -20,8 +22,10 @@ internal sealed class ApiQueryService : IApiQueryService
         return Match(symbol, memberMatches.Select(x => x.Result).ToArray(), memberMatches.Select(x => x.Type).DistinctBy(x => x.FullName).ToArray());
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static ApiMatch Match(string symbol, IReadOnlyList<ResultItem> results, IReadOnlyList<InspectedType> types)
     {
         if (results.Count == 0)
@@ -48,5 +52,6 @@ internal sealed class ApiQueryService : IApiQueryService
         var index = value.IndexOf('<');
         return index < 0 ? value : value[..index];
     }
-#endregion
+
+    #endregion
 }

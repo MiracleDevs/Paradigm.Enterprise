@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Paradigm.Enterprise.Checks.CSharp;
 
@@ -54,6 +55,7 @@ internal static class CSharpChecks
         {
             var model = compilation.GetSemanticModel(tree, ignoreAccessibility: true);
             diagnostics.AddRange(SourceLayout(tree));
+            diagnostics.AddRange(RegionSpacing(tree));
             diagnostics.AddRange(MemberLayout(tree, model));
             diagnostics.AddRange(PaginatedEfQueries(tree, model));
             diagnostics.AddRange(ExternalEntityMutation(tree, model));
@@ -188,27 +190,101 @@ internal static class CSharpChecks
         }
     }
 
+    private static IEnumerable<CSharpCheckDiagnostic> RegionSpacing(SyntaxTree tree)
+    {
+        if (IsGenerated(tree))
+            yield break;
+        var root = tree.GetRoot();
+        var text = tree.GetText();
+        var types = root.DescendantNodes().OfType<TypeDeclarationSyntax>().ToArray();
+        var directives = root.DescendantTrivia(descendIntoTrivia: true)
+            .Select(trivia => trivia.GetStructure())
+            .OfType<DirectiveTriviaSyntax>()
+            .Where(directive => directive is RegionDirectiveTriviaSyntax or EndRegionDirectiveTriviaSyntax)
+            .OrderBy(directive => directive.SpanStart);
+        var stack = new Stack<RegionDirectiveTriviaSyntax>();
+        foreach (var directive in directives)
+        {
+            if (directive is RegionDirectiveTriviaSyntax region)
+            {
+                stack.Push(region);
+                continue;
+            }
+
+            if (directive is not EndRegionDirectiveTriviaSyntax endRegion ||
+                !stack.TryPop(out var openingRegion) ||
+                !IsMemberRegion(openingRegion.ToString()) ||
+                !types.Any(type => type.FullSpan.Contains(openingRegion.SpanStart)))
+                continue;
+
+            var openingLine = text.Lines.GetLineFromPosition(openingRegion.SpanStart).LineNumber;
+            if (!HasExactlyOneEmptyLineAfter(text, openingLine))
+                yield return Diagnostic("PE3106", "error",
+                    $"Leave exactly one empty line after '{openingRegion.ToString().Trim()}'.",
+                    openingRegion);
+
+            var closingLine = text.Lines.GetLineFromPosition(endRegion.SpanStart).LineNumber;
+            if (!HasExactlyOneEmptyLineBefore(text, closingLine))
+                yield return Diagnostic("PE3106", "error",
+                    "Leave exactly one empty line before '#endregion'.",
+                    endRegion);
+
+            var nextContentLine = closingLine + 1;
+            while (IsEmptyLine(text, nextContentLine))
+                nextContentLine++;
+            if (nextContentLine < text.Lines.Count &&
+                IsMemberRegion(text.Lines[nextContentLine].ToString()) &&
+                nextContentLine != closingLine + 2)
+                yield return Diagnostic("PE3106", "error",
+                    "Leave exactly one empty line between adjacent member regions.",
+                    endRegion);
+        }
+    }
+
+    private static bool HasExactlyOneEmptyLineAfter(SourceText text, int lineNumber) =>
+        IsEmptyLine(text, lineNumber + 1) && !IsEmptyLine(text, lineNumber + 2);
+
+    private static bool HasExactlyOneEmptyLineBefore(SourceText text, int lineNumber) =>
+        IsEmptyLine(text, lineNumber - 1) && !IsEmptyLine(text, lineNumber - 2);
+
+    private static bool IsEmptyLine(SourceText text, int lineNumber) =>
+        lineNumber >= 0 && lineNumber < text.Lines.Count &&
+        string.IsNullOrWhiteSpace(text.Lines[lineNumber].ToString());
+
+    private static bool IsMemberRegion(string value) => value.Trim() is
+        "#region Nested Types" or
+        "#region Constants" or
+        "#region Fields" or
+        "#region Properties" or
+        "#region Constructors" or
+        "#region Static Constructors" or
+        "#region Public Methods" or
+        "#region Overrides" or
+        "#region Protected Methods" or
+        "#region Private Methods" or
+        "#region Event Handlers";
+
     private static (int Rank, string Region)? MemberCategory(
         MemberDeclarationSyntax member,
         SemanticModel model) => member switch
-    {
-        BaseTypeDeclarationSyntax or DelegateDeclarationSyntax => (0, "Nested Types"),
-        FieldDeclarationSyntax field when field.Modifiers.Any(SyntaxKind.ConstKeyword) => (1, "Constants"),
-        FieldDeclarationSyntax or EventFieldDeclarationSyntax => (2, "Fields"),
-        PropertyDeclarationSyntax or IndexerDeclarationSyntax or EventDeclarationSyntax => (3, "Properties"),
-        ConstructorDeclarationSyntax constructor when !constructor.Modifiers.Any(SyntaxKind.StaticKeyword) =>
-            (4, "Constructors"),
-        ConstructorDeclarationSyntax => (5, "Static Constructors"),
-        MethodDeclarationSyntax method when IsEventHandler(method, model) => (10, "Event Handlers"),
-        BaseMethodDeclarationSyntax method when method.Modifiers.Any(SyntaxKind.OverrideKeyword) =>
-            (7, "Overrides"),
-        BaseMethodDeclarationSyntax method when method.Modifiers.Any(SyntaxKind.PublicKeyword) =>
-            (6, "Public Methods"),
-        BaseMethodDeclarationSyntax method when method.Modifiers.Any(SyntaxKind.ProtectedKeyword) =>
-            (8, "Protected Methods"),
-        BaseMethodDeclarationSyntax => (9, "Private Methods"),
-        _ => null
-    };
+        {
+            BaseTypeDeclarationSyntax or DelegateDeclarationSyntax => (0, "Nested Types"),
+            FieldDeclarationSyntax field when field.Modifiers.Any(SyntaxKind.ConstKeyword) => (1, "Constants"),
+            FieldDeclarationSyntax or EventFieldDeclarationSyntax => (2, "Fields"),
+            PropertyDeclarationSyntax or IndexerDeclarationSyntax or EventDeclarationSyntax => (3, "Properties"),
+            ConstructorDeclarationSyntax constructor when !constructor.Modifiers.Any(SyntaxKind.StaticKeyword) =>
+                (4, "Constructors"),
+            ConstructorDeclarationSyntax => (5, "Static Constructors"),
+            MethodDeclarationSyntax method when IsEventHandler(method, model) => (10, "Event Handlers"),
+            BaseMethodDeclarationSyntax method when method.Modifiers.Any(SyntaxKind.OverrideKeyword) =>
+                (7, "Overrides"),
+            BaseMethodDeclarationSyntax method when method.Modifiers.Any(SyntaxKind.PublicKeyword) =>
+                (6, "Public Methods"),
+            BaseMethodDeclarationSyntax method when method.Modifiers.Any(SyntaxKind.ProtectedKeyword) =>
+                (8, "Protected Methods"),
+            BaseMethodDeclarationSyntax => (9, "Private Methods"),
+            _ => null
+        };
 
     private static bool IsEventHandler(MethodDeclarationSyntax method, SemanticModel model)
     {

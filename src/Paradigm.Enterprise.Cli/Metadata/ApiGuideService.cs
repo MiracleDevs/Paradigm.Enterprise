@@ -1,10 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class ApiGuideService
 {
-#region Nested Types
+    #region Nested Types
+
     private sealed record Descriptor(string Pattern, IReadOnlyList<string> Discovery, IReadOnlyList<string> Cautions, IReadOnlyList<string> Verification, Func<InspectedType, bool>? Probe = null);
-#endregion
-#region Public Methods
+
+    #endregion
+
+    #region Public Methods
+
     public GuideInfo? Create(InspectedType type)
     {
         var key = Ungeneric(type.Name);
@@ -18,8 +23,10 @@ internal sealed class ApiGuideService
         return new(type.FullName, descriptor.Pattern, generic, required, hooks, descriptor.Discovery, descriptor.Cautions, descriptor.Verification, new(type.FullName, type.Namespace, type.BaseType, type.Interfaces, type.Attributes, type.GenericConstraints ?? [], members));
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static Descriptor? DescriptorFor(string symbol) => symbol switch
     {
         "IEntity" or "EntityBase" => new("Implement the capability's exact entity interface and derive the installed EntityBase<TId> shape; keep handwritten state setters non-public and expose behavior methods.", ["Register concrete entities only when provider construction resolves them; keep shared entity interfaces getter-only."], ["Use one value-type identifier across the complete capability.", "Keep EntityBase<TId>.Id unchanged; identity tightening is a separate breaking decision.", "Entity-owned mapping should call behavior for transition-sensitive state."], ["paradigm validate --project <solution>", "dotnet test <domain-tests>"]),
@@ -37,5 +44,6 @@ internal sealed class ApiGuideService
         var index = value.IndexOf('<');
         return index < 0 ? value : value[..index];
     }
-#endregion
+
+    #endregion
 }

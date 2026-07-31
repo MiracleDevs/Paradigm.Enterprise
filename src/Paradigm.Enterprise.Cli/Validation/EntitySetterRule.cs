@@ -1,11 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal sealed class EntitySetterRule : IValidationRule
 {
-#region Properties
+    #region Properties
+
     public string Code => "PE3101";
 
-#endregion
-#region Public Methods
+    #endregion
+
+    #region Public Methods
+
     public IEnumerable<Diagnostic> Evaluate(ValidationContext context)
     {
         foreach (var type in context.ApplicationTypes)
@@ -21,8 +25,11 @@ internal sealed class EntitySetterRule : IValidationRule
         }
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static bool HasGeneratedMarker(IEnumerable<string> attributes) => attributes.Any(attribute => attribute.EndsWith(".GeneratedCodeAttribute", StringComparison.Ordinal) || attribute.EndsWith(".CompilerGeneratedAttribute", StringComparison.Ordinal) || attribute is "System.CodeDom.Compiler.GeneratedCodeAttribute" or "System.Runtime.CompilerServices.CompilerGeneratedAttribute");
-#endregion
+
+    #endregion
 }

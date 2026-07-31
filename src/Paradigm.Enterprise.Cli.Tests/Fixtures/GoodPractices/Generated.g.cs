@@ -4,6 +4,9 @@ namespace GoodPractices;
 
 internal sealed class GeneratedFirst
 {
+#region Properties
+    public int Value { get; }
+#endregion
 }
 
 internal sealed class GeneratedSecond

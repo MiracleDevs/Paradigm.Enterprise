@@ -1,8 +1,10 @@
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class PolicyAndRuleTests
 {
-#region Public Methods
+    #region Public Methods
+
     [TestMethod]
     public void Public_entity_setter_is_warning_but_view_and_identity_are_allowed()
     {
@@ -24,11 +26,11 @@ public class PolicyAndRuleTests
     [TestMethod]
     public void Generated_type_and_generated_property_setters_are_allowed()
     {
-        var generatedType = Type("Sample.GeneratedEntity", "GeneratedEntity", "entity", [Property("Name", "System.String", "public")])with
+        var generatedType = Type("Sample.GeneratedEntity", "GeneratedEntity", "entity", [Property("Name", "System.String", "public")]) with
         {
             Attributes = ["System.CodeDom.Compiler.GeneratedCodeAttribute"]
         };
-        var generatedProperty = Property("PersistenceValue", "System.String", "public")with
+        var generatedProperty = Property("PersistenceValue", "System.String", "public") with
         {
             Attributes = ["System.Runtime.CompilerServices.CompilerGeneratedAttribute"]
         };
@@ -94,8 +96,10 @@ public class PolicyAndRuleTests
         Assert.IsTrue(diagnostics.Any(x => x.Code == "PE7004"));
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static ApiMember Property(string name, string type, string setterVisibility) => new("property", name, $"public {type} {name} {{ get; set; }}", type, [new("get", "public"), new("set", setterVisibility)], [], []);
     private static InspectedType Type(string fullName, string name, string kind, IReadOnlyList<ApiMember> members, bool isAbstract = false)
     {
@@ -107,5 +111,6 @@ public class PolicyAndRuleTests
         };
         return new(fullName, name, "Sample", null, interfaces, [], members.Select(x => x.Signature).ToArray(), [], true, isAbstract, "Sample", null, null, members);
     }
-#endregion
+
+    #endregion
 }

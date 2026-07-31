@@ -2,9 +2,11 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Paradigm.Enterprise.Cli;
+
 internal static partial class ProjectResolver
 {
-#region Public Methods
+    #region Public Methods
+
     public static ProjectSelection Resolve(string? input)
     {
         var path = Path.GetFullPath(input ?? Environment.CurrentDirectory);
@@ -15,7 +17,8 @@ internal static partial class ProjectResolver
                 ".csproj" => new([path], path),
                 ".slnx" => new(ReadSlnx(path), path),
                 ".sln" => new(ReadSln(path), path),
-                _ => throw new ArgumentException($"Unsupported project path '{path}'.")};
+                _ => throw new ArgumentException($"Unsupported project path '{path}'.")
+            };
         }
 
         if (!Directory.Exists(path))
@@ -31,8 +34,10 @@ internal static partial class ProjectResolver
         return new(projects, path);
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static IReadOnlyList<string> ReadSlnx(string path)
     {
         var root = Path.GetDirectoryName(path)!;
@@ -47,5 +52,6 @@ internal static partial class ProjectResolver
 
     [GeneratedRegex("Project\\(\"[^\"]+\"\\)\\s*=\\s*\"[^\"]+\",\\s*\"([^\"]+\\.csproj)\"", RegexOptions.IgnoreCase)]
     private static partial Regex SlnProjectRegex();
-#endregion
+
+    #endregion
 }

@@ -1,10 +1,15 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal static class ResponseFactory
 {
-#region Constants
+    #region Constants
+
     public const string SchemaVersion = "1.1";
-#endregion
-#region Public Methods
+
+    #endregion
+
+    #region Public Methods
+
     public static CommandResponse Create(string command, IEnumerable<PackageInfo> packages, IEnumerable<ResultItem> results, IEnumerable<Diagnostic> diagnostics, GuideInfo? guide = null, CheckData? checks = null)
     {
         var orderedDiagnostics = diagnostics.DistinctBy(x => (x.Code, x.Severity, x.Message, x.Location)).OrderBy(x => x.Code, StringComparer.Ordinal).ThenBy(x => x.Message, StringComparer.Ordinal).ThenBy(x => x.Location, StringComparer.Ordinal).ToArray();
@@ -23,5 +28,6 @@ internal static class ResponseFactory
         var mixed = precedenceVersions.All(x => x is not null) ? precedenceVersions.Distinct().Count() > 1 : versions.Length > 1;
         return !mixed ? [] : [new("PE1001", "error", $"Paradigm packages use mixed versions: {string.Join(", ", versions)}.")];
     }
-#endregion
+
+    #endregion
 }

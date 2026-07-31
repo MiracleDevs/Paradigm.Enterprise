@@ -1,25 +1,33 @@
 using System.Reflection;
 
 namespace Paradigm.Enterprise.Cli.Tests;
+
 [TestClass]
 public class MetadataTests
 {
-#region Nested Types
+    #region Nested Types
+
     public class VisibleFixture
     {
-#region Constructors
+        #region Constructors
+
         protected VisibleFixture()
         {
         }
 
-#endregion
-#region Protected Methods
+        #endregion
+
+        #region Protected Methods
+
         protected virtual string Resolve(int value) => value.ToString();
-#endregion
+
+        #endregion
     }
 
-#endregion
-#region Public Methods
+    #endregion
+
+    #region Public Methods
+
     [TestMethod]
     public void Resolver_de_duplicates_identical_assembly_identity_with_application_preference()
     {
@@ -66,8 +74,10 @@ public class MetadataTests
         Assert.Throws<AssetsException>(() => AssetsReader.SelectFramework(["net10.0"], "net9.0"));
     }
 
-#endregion
-#region Private Methods
+    #endregion
+
+    #region Private Methods
+
     private static string[] TrustedPlatformAssemblies() => ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator);
     private static string CreateTemporaryDirectory()
     {
@@ -75,5 +85,6 @@ public class MetadataTests
         Directory.CreateDirectory(path);
         return path;
     }
-#endregion
+
+    #endregion
 }

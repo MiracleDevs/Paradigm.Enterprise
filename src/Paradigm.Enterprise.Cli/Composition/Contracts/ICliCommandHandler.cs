@@ -1,4 +1,5 @@
 namespace Paradigm.Enterprise.Cli;
+
 internal interface ICliCommandHandler
 {
     string Route { get; }
