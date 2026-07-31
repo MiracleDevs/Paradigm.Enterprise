@@ -12,7 +12,7 @@ internal static class CommandLine
           paradigm api guide <symbol> [--project <path>] [--framework <tfm>] [--package <name>] [--format text|json]
           paradigm inspect [--project <path>] [--framework <tfm>] [--format text|json]
           paradigm validate [--project <path>] [--framework <tfm>] [--format text|json]
-          paradigm checks list [--project <path>] [--format text|json]
+          paradigm checks list [--format text|json]
           paradigm checks run [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
           paradigm generate json --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
           paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
@@ -106,6 +106,8 @@ internal static class CommandLine
             switch (option)
             {
                 case "--project":
+                    if (name == "checks list")
+                        return Fail($"Option '{option}' is not valid for '{name}'.", out error);
                     project = value;
                     break;
                 case "--framework":
@@ -165,7 +167,7 @@ internal static class CommandLine
             "api guide" => new ApiGuideOptions(query!, project, framework, package, format),
             "inspect" => new InspectOptions(project, framework, format),
             "validate" => new ValidateOptions(project, framework, format),
-            "checks list" => new ChecksListOptions(project, format),
+            "checks list" => new ChecksListOptions(format),
             "checks run" => new ChecksRunOptions(project, framework, config, format),
             "generate json" or "generate mappers" or "generate client" => new GenerateOptions(name["generate ".Length..], projectName, assemblyPath, outputPath!, document, settingsPath, format),
             "packages check" => new PackagesCheckOptions(project, framework, config, format),

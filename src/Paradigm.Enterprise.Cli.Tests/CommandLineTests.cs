@@ -36,6 +36,18 @@ public class CommandLineTests
     }
 
     [TestMethod]
+    public void Checks_list_is_project_independent()
+    {
+        Assert.IsTrue(CommandLine.TryParse(["checks", "list", "--format", "json"], out var command, out _));
+        Assert.IsInstanceOfType<ChecksListOptions>(command!.Options);
+        Assert.IsFalse(CommandLine.TryParse(
+            ["checks", "list", "--project", "App.sln"],
+            out _,
+            out var error));
+        StringAssert.Contains(error!, "not valid for 'checks list'");
+    }
+
+    [TestMethod]
     public void Generation_modes_require_explicit_inputs()
     {
         Assert.IsFalse(CommandLine.TryParse(["generate", "json", "--output", "generated"], out _, out _));
@@ -161,6 +173,18 @@ public class CommandLineTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [TestMethod]
+    public void Command_reference_contains_every_current_usage_signature()
+    {
+        var documentation = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docs", "cli.md"));
+        var signatures = CommandLine.Usage
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(line => line.StartsWith("paradigm ", StringComparison.Ordinal));
+
+        foreach (var signature in signatures)
+            StringAssert.Contains(documentation, signature);
     }
 
 #endregion

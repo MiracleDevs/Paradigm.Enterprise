@@ -98,7 +98,7 @@ public class PackedCliIntegrationTests
     [Timeout(180_000)]
     public async Task Packed_cli_check_and_package_routes_use_the_single_installed_tool()
     {
-        using var list = AssertJson(await Run("checks", "list", "--project", providerProject, "--format", "json"), "checks list");
+        using var list = AssertJson(await Run("checks", "list", "--format", "json"), "checks list");
         Assert.AreEqual("csharp", list.RootElement.GetProperty("checks").GetProperty("builtIn")[0].GetProperty("id").GetString());
         var violationsProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli.Tests", "Fixtures", "SemanticViolations", "SemanticViolations.csproj");
         var checkResult = await Run("checks", "run", "--project", violationsProject, "--format", "json");

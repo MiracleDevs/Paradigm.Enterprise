@@ -54,7 +54,7 @@ dotnet tool install Paradigm.Enterprise.Cli
 dotnet tool run paradigm doctor --project src/Paradigm.Enterprise.slnx
 ```
 
-One `paradigm` tool provides `api search/show/guide`, metadata validation, built-in semantic C# checks, dependency audits, and explicit JSON/mapper/OpenAPI generation commands. It is designed for client repositories that consume the Paradigm libraries; it is not a runtime dependency. See [CLI documentation](docs/cli.md).
+After cloning a repository with an existing tool manifest, use `dotnet tool restore` rather than installing again. One `paradigm` tool provides `api search/show/guide`, metadata validation, built-in semantic C# checks, dependency audits, and explicit JSON/mapper/OpenAPI generation commands. It is designed for client repositories that consume the Paradigm libraries; it is not a runtime dependency. See [CLI documentation](docs/cli.md).
 
 AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills), the canonical [Good Coding Practices](.agents/references/good-coding-practices.md), and the CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
 
