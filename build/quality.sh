@@ -62,6 +62,7 @@ dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --fi
 
 step "Pack current release and build example"
 dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output "$ARTIFACTS_DIRECTORY"
+"$POWERSHELL" -NoProfile -NonInteractive -File build/verify-packages.ps1 -ArtifactsDirectory "$ARTIFACTS_DIRECTORY"
 dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources="$ARTIFACTS_DIRECTORY"
 dotnet build example/ExampleApp.sln --configuration Release --no-restore
 dotnet test example/ExampleApp.sln --configuration Release --no-build

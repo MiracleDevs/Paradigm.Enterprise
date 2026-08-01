@@ -16,6 +16,7 @@ Version `1.1.0`
 - Strengthened every Paradigm skill and deterministic skill validation to reference the canonical practices.
 - Updated ExampleApp to .NET 10, current generic identifier APIs, behavior-owned entity transitions, and aligned Paradigm 1.1.0 packages.
 - Added PR and scheduled dependency workflows, Copilot review guidance, centralized release-version validation, expanded CLI/tool fixtures, and warning-as-error documentation validation.
+- Embedded a README in every distributable NuGet package and added archive-level package README validation to local and GitHub quality workflows.
 
 Version `1.0.33`
 

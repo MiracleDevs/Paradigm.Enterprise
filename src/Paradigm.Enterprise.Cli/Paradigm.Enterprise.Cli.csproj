@@ -15,6 +15,7 @@
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
     <PackageTags>paradigm enterprise cli scaffold database diagnostics checks generation agent</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeSource>$(MSBuildProjectDirectory)/README.md</PackageReadmeSource>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Reflection.MetadataLoadContext" />
@@ -22,8 +23,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Paradigm.Enterprise.Checks.CSharp\Paradigm.Enterprise.Checks.CSharp.csproj" />
     <ProjectReference Include="..\Paradigm.Enterprise.CodeGenerator\Paradigm.Enterprise.CodeGenerator.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
