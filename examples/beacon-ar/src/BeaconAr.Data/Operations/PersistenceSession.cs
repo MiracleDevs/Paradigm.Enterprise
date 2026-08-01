@@ -1,9 +1,9 @@
 using BeaconAr.Data.Receivables;
-using BeaconAr.Domain.MasterData.Application;
+using BeaconAr.Domain.Operations;
 
-namespace BeaconAr.Data.MasterData;
+namespace BeaconAr.Data.Operations;
 
-public sealed class MasterDataPersistenceSession : IMasterDataPersistenceSession
+public sealed class PersistenceSession : IPersistenceSession
 {
     #region Fields
 
@@ -13,7 +13,7 @@ public sealed class MasterDataPersistenceSession : IMasterDataPersistenceSession
 
     #region Constructors
 
-    public MasterDataPersistenceSession(ReceivablesDbContext context)
+    public PersistenceSession(ReceivablesDbContext context)
     {
         _context = context;
     }

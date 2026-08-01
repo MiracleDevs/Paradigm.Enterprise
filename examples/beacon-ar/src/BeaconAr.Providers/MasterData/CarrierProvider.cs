@@ -1,9 +1,12 @@
 using BeaconAr.Domain.MasterData.Application;
+using BeaconAr.Domain.Operations;
+using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Validation;
 using BeaconAr.Domain.Receivables.Generated;
 using Paradigm.Enterprise.Domain.Uow;
+using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
@@ -26,7 +29,7 @@ public sealed class CarrierProvider : MasterDataProviderBase, ICarrierProvider
         IApplicationOperationContext operationContext,
         TimeProvider timeProvider,
         IMasterDataPersistenceErrorClassifier errorClassifier,
-        IMasterDataPersistenceSession persistenceSession)
+        IPersistenceSession persistenceSession)
         : base(unitOfWork, auditLogs, operationContext, timeProvider, errorClassifier, persistenceSession)
     {
         _carriers = carriers;

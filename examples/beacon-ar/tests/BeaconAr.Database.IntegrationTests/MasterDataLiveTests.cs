@@ -1,8 +1,11 @@
 using BeaconAr.Data.MasterData;
+using BeaconAr.Data.Operations;
 using BeaconAr.Data.Receivables;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
+using BeaconAr.Domain.Operations;
+using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Receivables.Generated;
 using BeaconAr.Providers.MasterData;
 using System.Data;
@@ -552,7 +555,7 @@ public sealed class MasterDataLiveTests
         services.AddScoped<ICarrierViewRepository, CarrierViewRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IMasterDataPersistenceErrorClassifier, MasterDataPersistenceErrorClassifier>();
-        services.AddScoped<IMasterDataPersistenceSession, MasterDataPersistenceSession>();
+        services.AddScoped<IPersistenceSession, PersistenceSession>();
         services.AddScoped<IApplicationOperationContext>(_ => new TestOperationContext(userId, correlationId));
         services.AddSingleton<TimeProvider>(new FixedTimeProvider(new DateTimeOffset(2026, 8, 1, 15, 30, 0, TimeSpan.Zero)));
         services.AddScoped<IProductProvider, ProductProvider>();

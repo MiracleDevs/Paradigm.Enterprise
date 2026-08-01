@@ -6,8 +6,7 @@ public static class VersionTokenCodec
 
     public static string Encode(byte[] value)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        return Convert.ToBase64String(value);
+        return Operations.VersionTokenCodec.Encode(value);
     }
 
     public static byte[] Decode(string? value, string fieldName = "version")
@@ -15,18 +14,9 @@ public static class VersionTokenCodec
         if (string.IsNullOrWhiteSpace(value))
             throw Validation(fieldName, "A version is required.");
 
-        try
-        {
-            byte[] decoded = Convert.FromBase64String(value);
-            if (decoded.Length != 8 || Convert.ToBase64String(decoded) != value)
-                throw Validation(fieldName, "The version must be a canonical SQL Server rowversion token.");
-
-            return decoded;
-        }
-        catch (FormatException)
-        {
+        if (!Operations.VersionTokenCodec.TryDecode(value, out byte[] decoded))
             throw Validation(fieldName, "The version must be a canonical SQL Server rowversion token.");
-        }
+        return decoded;
     }
 
     #endregion
