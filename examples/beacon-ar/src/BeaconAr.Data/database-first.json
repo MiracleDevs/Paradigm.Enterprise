@@ -1,0 +1,9 @@
+{
+  "context": "ReceivablesDbContext",
+  "contextDirectory": "Receivables/Generated",
+  "contextNamespace": "BeaconAr.Data.Receivables",
+  "entityDirectory": "../BeaconAr.Domain/Receivables/Generated",
+  "entityNamespace": "BeaconAr.Domain.Receivables.Generated",
+  "provider": "Microsoft.EntityFrameworkCore.SqlServer",
+  "useDatabaseNames": true
+}
