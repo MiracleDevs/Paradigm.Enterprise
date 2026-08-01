@@ -22,7 +22,10 @@ Apply these rules to handwritten SQL Server and PostgreSQL database source. Pres
 - For auditable entities, use `CreatedByUserId`, `CreationDate`, `ModifiedByUserId`, and `ModificationDate` as one coherent set. Use database-native instant types and explicit user foreign keys.
 - Let the Paradigm application audit owner set audit values unless the database is deliberately the owner. Do not add competing implicit defaults.
 - Use `IsActive` for enabled/disabled or logical lifecycle behavior. Do not add an `IsDeleted` convention to new Paradigm projects.
-- Model workflow state with a dedicated status table, stable identifiers, a `StatusId` foreign key, and idempotent reference-data publication.
+- Give transactional/entity tables an auto-incrementing `Id` by default. Give system catalogs such as statuses and closed enumerations stable, explicitly assigned identifiers; never let deployment order choose their values.
+- Publish every system catalog through a rerunnable post-deployment data script. Mirror its identifiers and stable machine codes in a service-side .NET enum and review database seed and enum changes together; a localized/display name may differ. Never delete, reuse, or renumber a published status identifier. Retire it with `IsActive` while preserving foreign-key targets.
+- Model current workflow state with a dedicated seeded status table and `StatusId` foreign key. Also add an append-only `<Entity>StatusHistory` table with its own auto-incrementing `Id`, `<Entity>Id`, `StatusId`, `CreatedByUserId`, and `CreationDate`; write a row for every accepted transition.
+- Treat status-history rows as immutable transition facts. Write the initial status history when the entity is created, use non-cascading foreign keys, and route every later current-status update plus history insert through one transaction-owning workflow with concurrency protection. Do not expose generic history update/delete behavior, update or logically delete history rows, or add modification audit fields unless the domain deliberately supports correcting history.
 
 ## Routines and data scripts
 
@@ -31,6 +34,8 @@ Apply these rules to handwritten SQL Server and PostgreSQL database source. Pres
 - Use idempotent upsert/merge behavior for roles, permissions, statuses, and other required reference data.
 - Use source-deleting synchronization only for an explicitly authoritative closed catalog. Never use it for users, tenant data, or data with an independent lifecycle.
 - Require review for destructive transitions, data rewrites, baseline refresh, external publication, cascade changes, and any disabled data-loss protection.
+
+For SQL Server, keep `scripts/prepredeployment/PrePreDeployment.sql` as an idempotent phase executed by the finite bootstrap after optional baseline import and a successful DACPAC build, but before SqlPackage creates the deployment plan. Use it only for reviewed compatibility cleanup that must precede plan generation, such as removing an obstructing legacy object. Exclude it from model build and do not confuse it with DACPAC `PreDeploy`, which runs after plan generation. Execute it with a SQLCMD-compatible batch runner; do not split `GO` batches with ad hoc string logic.
 
 ## Secrets and baselines
 

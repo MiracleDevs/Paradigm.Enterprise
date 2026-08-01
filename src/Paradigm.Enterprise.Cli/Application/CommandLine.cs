@@ -19,6 +19,8 @@ internal static class CommandLine
           paradigm generate json --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
           paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
           paradigm generate client --document <url> --output <directory> [--settings <json>] [--format text|json]
+          paradigm scaffold solution --template-root <path> --name <name> --output <empty-directory> --paradigm-version <version> [--dry-run] [--format text|json]
+          paradigm database validate --project <sqlproj-or-project.jsonc> [--solution <sln-or-slnx>] [--strict] [--format text|json]
           paradigm packages check [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
           paradigm packages audit [--project <path>] [--framework <tfm>] [--config <path>] [--warnings-as-errors] [--format text|json]
           paradigm --version
@@ -79,6 +81,18 @@ internal static class CommandLine
                 return Fail("Expected 'generate json|mappers|client'.", out error);
             name += " " + args[index++];
         }
+        else if (name == "scaffold")
+        {
+            if (index >= args.Length || args[index] != "solution")
+                return Fail("Expected 'scaffold solution'.", out error);
+            name += " " + args[index++];
+        }
+        else if (name == "database")
+        {
+            if (index >= args.Length || args[index] != "validate")
+                return Fail("Expected 'database validate'.", out error);
+            name += " " + args[index++];
+        }
         else if (name is not ("doctor" or "inspect" or "validate"))
         {
             return Fail($"Unknown command '{name}'.", out error);
@@ -93,15 +107,31 @@ internal static class CommandLine
         string? outputPath = null;
         string? document = null;
         string? settingsPath = null;
+        string? templateRoot = null;
+        string? solutionName = null;
+        string? paradigmVersion = null;
+        string? solution = null;
         var limit = 20;
         var format = OutputFormat.Text;
         var warningsAsErrors = false;
+        var dryRun = false;
+        var strict = false;
         while (index < args.Length)
         {
             var option = args[index++];
             if (option == "--warnings-as-errors" && name == "packages audit")
             {
                 warningsAsErrors = true;
+                continue;
+            }
+            if (option == "--dry-run" && name == "scaffold solution")
+            {
+                dryRun = true;
+                continue;
+            }
+            if (option == "--strict" && name == "database validate")
+            {
+                strict = true;
                 continue;
             }
 
@@ -111,12 +141,12 @@ internal static class CommandLine
             switch (option)
             {
                 case "--project":
-                    if (name == "checks list" || name.StartsWith("generate ", StringComparison.Ordinal))
+                    if (name == "checks list" || name.StartsWith("generate ", StringComparison.Ordinal) || name == "scaffold solution")
                         return Fail($"Option '{option}' is not valid for '{name}'.", out error);
                     project = value;
                     break;
                 case "--framework":
-                    if (name is "doctor" or "checks list" ||
+                    if (name is "doctor" or "checks list" or "database validate" or "scaffold solution" ||
                         name.StartsWith("generate ", StringComparison.Ordinal))
                         return Fail($"Option '{option}' is not valid for '{name}'.", out error);
                     framework = value;
@@ -144,11 +174,26 @@ internal static class CommandLine
                 case "--output" when name.StartsWith("generate ", StringComparison.Ordinal):
                     outputPath = value;
                     break;
+                case "--output" when name == "scaffold solution":
+                    outputPath = value;
+                    break;
                 case "--document" when name == "generate client":
                     document = value;
                     break;
                 case "--settings" when name.StartsWith("generate ", StringComparison.Ordinal):
                     settingsPath = value;
+                    break;
+                case "--template-root" when name == "scaffold solution":
+                    templateRoot = value;
+                    break;
+                case "--name" when name == "scaffold solution":
+                    solutionName = value;
+                    break;
+                case "--paradigm-version" when name == "scaffold solution":
+                    paradigmVersion = value;
+                    break;
+                case "--solution" when name == "database validate":
+                    solution = value;
                     break;
                 default:
                     return Fail($"Option '{option}' is not valid for '{name}'.", out error);
@@ -164,6 +209,10 @@ internal static class CommandLine
             if (name == "generate client" && string.IsNullOrWhiteSpace(document))
                 return Fail("'generate client' requires --document.", out error);
         }
+        if (name == "scaffold solution" && (string.IsNullOrWhiteSpace(templateRoot) || string.IsNullOrWhiteSpace(solutionName) || string.IsNullOrWhiteSpace(outputPath) || string.IsNullOrWhiteSpace(paradigmVersion)))
+            return Fail("'scaffold solution' requires --template-root, --name, --output, and --paradigm-version.", out error);
+        if (name == "database validate" && string.IsNullOrWhiteSpace(project))
+            return Fail("'database validate' requires --project.", out error);
 
         ICliCommandOptions options = name switch
         {
@@ -176,6 +225,8 @@ internal static class CommandLine
             "checks list" => new ChecksListOptions(format),
             "checks run" => new ChecksRunOptions(project, framework, config, format),
             "generate json" or "generate mappers" or "generate client" => new GenerateOptions(name["generate ".Length..], projectName, assemblyPath, outputPath!, document, settingsPath, format),
+            "scaffold solution" => new ScaffoldSolutionOptions(templateRoot!, solutionName!, outputPath!, paradigmVersion!, dryRun, format),
+            "database validate" => new DatabaseValidateOptions(project!, solution, strict, format),
             "packages check" => new PackagesCheckOptions(project, framework, config, format),
             "packages audit" => new PackagesAuditOptions(project, framework, config, warningsAsErrors, format),
             _ => throw new InvalidOperationException($"No options model is registered for '{name}'.")

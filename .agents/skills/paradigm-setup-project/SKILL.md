@@ -15,10 +15,10 @@ Read and apply [Paradigm Good Coding Practices](../../references/good-coding-pra
 4. Preserve the dependency direction `Interfaces <- Domain <- Data <- Providers <- WebApi`. Database adapters depend on Data; infrastructure adapters expose focused contracts to Providers. Organize growing applications by bounded context and prefer domain-specific `DbContext` types over a general-purpose context.
 5. Restore and build before adding features.
 
-For a new solution, run the reviewed scaffolder from an installed or checked-out Paradigm skill path:
+For a new solution, run the reviewed scaffolder from the Paradigm CLI:
 
 ```powershell
-python <paradigm-setup-project>/scripts/scaffold_from_template.py `
+dotnet tool run paradigm scaffold solution `
   --template-root <Paradigm.Web.ApiTemplate> `
   --name <Company.Product> `
   --output <empty-repository-directory> `
@@ -26,7 +26,7 @@ python <paradigm-setup-project>/scripts/scaffold_from_template.py `
   --dry-run
 ```
 
-Review the dry-run inventory, then rerun without `--dry-run`. The script copies only template `src`, replaces template tokens and GUIDs, aligns Paradigm package references, preserves binary assets, never edits the source template, and refuses a non-empty output directory. Add repository policy files deliberately after scaffolding.
+Review the dry-run inventory, then rerun without `--dry-run`. The CLI copies only template `src`, replaces template tokens and GUIDs, aligns Paradigm package references, preserves binary assets, never edits the source template, refuses a non-empty output directory, and creates the root `start.sh` Aspire wrapper. Add repository policy files deliberately after scaffolding.
 
 Preserve the template's `.sln` or `.slnx` format. After selecting the database engine, use `$paradigm-build-database` to create `src/database` and add its project to that solution; do not create a second database-only solution.
 

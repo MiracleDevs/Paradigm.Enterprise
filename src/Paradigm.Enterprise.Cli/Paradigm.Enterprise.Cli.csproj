@@ -7,13 +7,13 @@
     <Authors>Miracle Devs</Authors>
     <Company>Miracle Devs</Company>
     <Product>Paradigm Enterprise CLI</Product>
-    <Description>API discovery, diagnostics, semantic checks, dependency audits, and explicit source generation for Paradigm.Enterprise applications.</Description>
+    <Description>Solution scaffolding, database validation, API discovery, diagnostics, semantic checks, dependency audits, and explicit source generation for Paradigm.Enterprise applications.</Description>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>paradigm</ToolCommandName>
     <PackageId>Paradigm.Enterprise.Cli</PackageId>
     <PackageProjectUrl>https://github.com/MiracleDevs/Paradigm.Enterprise</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
-    <PackageTags>paradigm enterprise cli diagnostics checks generation agent</PackageTags>
+    <PackageTags>paradigm enterprise cli scaffold database diagnostics checks generation agent</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
