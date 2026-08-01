@@ -25,6 +25,8 @@ var handlers = new ICliCommandHandler[]
     new GenerateCommandHandler("generate json", CodeGenerationMode.Json),
     new GenerateCommandHandler("generate mappers", CodeGenerationMode.Mappers),
     new GenerateCommandHandler("generate client", CodeGenerationMode.Client),
+    new ScaffoldSolutionCommandHandler(new SolutionScaffolder()),
+    new DatabaseValidateCommandHandler(new DatabaseProjectValidator()),
     new PackagesCheckCommandHandler(projects, assets, configuration, new PackagePolicyService()),
     new PackagesAuditCommandHandler(
         projects, assets, configuration, new PackagePolicyService(), new DotNetPackageAuditor())

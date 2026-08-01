@@ -59,6 +59,35 @@ public class CommandLineTests
     }
 
     [TestMethod]
+    public void Scaffold_and_database_commands_use_dedicated_options()
+    {
+        Assert.IsTrue(CommandLine.TryParse(
+            ["scaffold", "solution", "--template-root", "template", "--name", "Contoso.Product", "--output", "output", "--paradigm-version", "1.1.0", "--dry-run"],
+            out var scaffold,
+            out _));
+        var scaffoldOptions = (ScaffoldSolutionOptions)scaffold!.Options;
+        Assert.IsTrue(scaffoldOptions.DryRun);
+        Assert.AreEqual("Contoso.Product", scaffoldOptions.Name);
+
+        Assert.IsTrue(CommandLine.TryParse(
+            ["database", "validate", "--project", "database.sqlproj", "--solution", "Product.slnx", "--strict", "--format", "json"],
+            out var database,
+            out _));
+        var databaseOptions = (DatabaseValidateOptions)database!.Options;
+        Assert.IsTrue(databaseOptions.Strict);
+        Assert.AreEqual(OutputFormat.Json, databaseOptions.Format);
+    }
+
+    [TestMethod]
+    public void Scaffold_and_database_commands_require_their_inputs()
+    {
+        Assert.IsFalse(CommandLine.TryParse(["scaffold", "solution", "--name", "Contoso.Product"], out _, out var scaffoldError));
+        StringAssert.Contains(scaffoldError!, "requires --template-root");
+        Assert.IsFalse(CommandLine.TryParse(["database", "validate", "--strict"], out _, out var databaseError));
+        StringAssert.Contains(databaseError!, "requires --project");
+    }
+
+    [TestMethod]
     [DataRow("--project", "App.slnx")]
     [DataRow("--framework", "net10.0")]
     public void Generation_rejects_unused_project_selection_options(string option, string value)

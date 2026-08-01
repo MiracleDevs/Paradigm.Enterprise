@@ -21,20 +21,23 @@ Read [SQL Server projects](references/sql-server.md) for `.sqlproj`/DACPAC/BACPA
 - Declare current desired schema in SQL Server project objects; do not create an accumulating migration catalog around a DACPAC.
 - Keep PostgreSQL DbPublisher files rerunnable and explicitly ordered because the publisher executes them sequentially.
 - Make reference/status/permission seed scripts idempotent. Use source-deleting synchronization only for an explicitly authoritative closed catalog; never apply it to users or tenant-owned data.
+- Use auto-incrementing IDs for transactional/entity tables and assigned stable IDs for seeded system catalogs. Keep every system seed and its service-side .NET enum numerically aligned; pair stable machine codes with enum symbols and keep display labels separate.
+- Add append-only `<Entity>StatusHistory` transition storage whenever an entity has workflow `StatusId`; a current status row is not an audit trail. Record the initial state and every transition atomically, preserve status identifiers forever, and prohibit cascading or generic history mutation.
+- For SQL Server, keep the explicit pre-pre-deployment bootstrap phase before SqlPackage plan generation. Treat destructive cleanup as reviewed compatibility work, not a routine migration shortcut.
 - Keep credentials out of project, publish profile, SQL, BACPAC documentation, and generated output. Use the root `.env` contract from `$paradigm-setup-aspire` for local orchestration.
 - Require explicit review for data loss, cascade deletion, constraint replacement, large rewrites, baseline refresh, or an external database publish.
 
 ## Validate deterministically
 
-Run the bundled validator:
+Run the built-in CLI validator:
 
 ```powershell
-python .agents/skills/paradigm-build-database/scripts/validate_database_project.py --project <sqlproj-or-project.jsonc> --solution <solution> --strict
+dotnet tool run paradigm database validate --project <sqlproj-or-project.jsonc> --solution <solution> --strict
 ```
 
 Use `--format json` for automation. Omit `--strict` when auditing a legacy project so noncanonical but established names remain warnings. The validator is read-only; do not make it a fixer.
 
-Then build or compile the engine-specific project and inspect the complete output. Treat idempotency, cascade semantics, destructive transitions, seed ownership, and stored-routine correctness as judgment-based review even when deterministic checks pass.
+Then build or compile the engine-specific project and inspect the complete output. Treat exact seed/enum parity, idempotency, cascade semantics, destructive transitions, seed ownership, allowed workflow transitions, and stored-routine correctness as judgment-based review even when deterministic checks pass. Use `$paradigm-model-domain` to choose the enum's domain or public-contract owner; do not invent status values, numeric identifiers, transitions, or API meanings.
 
 ## Finish
 

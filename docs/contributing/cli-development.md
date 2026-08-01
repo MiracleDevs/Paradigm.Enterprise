@@ -9,8 +9,10 @@ Paradigm.Enterprise.Cli/
   Application/
   Commands/
     Checks/
+    Database/
     Generation/
     Metadata/
+    Scaffolding/
   Composition/
     Contracts/
     Routing/
@@ -26,6 +28,8 @@ Paradigm.Enterprise.Cli/
     Resolution/
     Responses/
   Packages/
+  Database/
+  Scaffolding/
   Validation/
   Program.cs
 ```
@@ -94,6 +98,8 @@ Check routes are `checks list` and `checks run`. Listing is project-independent.
 Package routes are `packages check` and `packages audit`. Check reads restored assets and remains offline. Audit performs the same local policy first, then invokes the .NET package-list JSON interface with `--no-restore`; this is the explicit network boundary. `--warnings-as-errors` belongs only to audit.
 
 Generation routes are `generate json`, `generate mappers`, and `generate client`. JSON and mapper generation require `--project-name`, a built DLL through `--assembly`, and `--output`. Client generation requires a trusted OpenAPI URL through `--document` and an output directory. Every generation route accepts `--settings` for a reviewed settings replacement. Generation writes files and returns `PE8001` for a reviewed operational failure.
+
+`scaffold solution` is the explicit template-writing boundary. It refuses non-empty output, preserves the template source, supports dry-run, and generates the developer starter. `database validate` is a read-only deterministic database-source boundary. Keep both in the CLI and test them as C# services; do not reintroduce skill-owned Python executables for these responsibilities.
 
 Project-aware routes accept `--project`; all except `doctor` may accept `--framework`. API routes alone accept `--package`, and search alone accepts `--limit`. Checks and package routes that apply policy accept `--config`. All operational routes accept `--format text|json`. The complete user-facing syntax is maintained in [the CLI command reference](../cli.md), and `CommandLineTests.Command_reference_contains_every_current_usage_signature` prevents a command signature from being added to runtime help without also appearing there.
 

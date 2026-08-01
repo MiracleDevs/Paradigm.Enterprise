@@ -14,5 +14,5 @@ Confirm:
 - public contracts and stored data have an upgrade/rollback story.
 - deployment defines environment configuration and secrets, schema-migration ownership/order, startup and shutdown behavior, health probes, capacity/timeouts, rollback compatibility, and post-deploy verification.
 - local orchestration defines managed versus external dependencies, persistent development data, bootstrap idempotency, and which finite resources must complete before APIs start;
-- database delivery defines SQL Server DACPAC/BACPAC or PostgreSQL DbPublisher ownership, destructive-change approval, seed-data authority, and external-database safeguards;
+- database delivery defines SQL Server DACPAC/BACPAC or PostgreSQL DbPublisher ownership, pre-pre-deployment/destructive-change approval, seed-data authority, assigned system identifiers, service-enum parity, status-transition history, and external-database safeguards;
 - Aspire publishing names an explicit target and treats generated Bicep/manifests as disposable output rather than hand-maintained source.

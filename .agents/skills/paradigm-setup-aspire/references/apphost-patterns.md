@@ -30,6 +30,7 @@ Keep:
 ```text
 aspire.config.json
 .env.example
+start.sh
 src/
   Product.AppHost/
   Product.ServiceDefaults/
@@ -38,6 +39,8 @@ src/
 ```
 
 Reference ServiceDefaults from each hosted .NET service. Add `AddServiceDefaults()` before building the app and map the standard endpoints after middleware configuration. Keep readiness dependency-aware and liveness process-only.
+
+Keep `start.sh` at this root and make it a thin, noninteractive Aspire wrapper after prerequisite checks. Its `start` command runs Aspire in the foreground; `stop` uses the explicit AppHost project path so it cannot select another checkout's process. The script may install missing repository-local development tools before AppHost starts; AppHost resources and database bootstrap executables must never install tools.
 
 Use `/health` for readiness and `/alive` for liveness unless the existing solution has a documented compatible contract. Do not expose dependency details or configuration values in either response.
 
@@ -59,16 +62,19 @@ The bootstrap must:
 2. conservatively prove the database is empty: require no non-system objects in `sys.objects`, no user-defined entries in `sys.types`, and no user-owned schemas beyond the expected empty-database defaults; abort the import when the result is uncertain;
 3. import `src/database/bootstrap/<Database>.bacpac` only when the database is empty and the file exists;
 4. build the SDK-style SQL project into a known repository artifact directory and require exactly the expected `<Project>.dacpac`;
-5. publish the resulting DACPAC with the complete target connection string;
-6. probe an expected schema object and exit nonzero on failure.
+5. execute `scripts/prepredeployment/PrePreDeployment.sql` idempotently with a SQLCMD-compatible batch runner and fail on error;
+6. generate the SqlPackage plan and publish the resulting DACPAC with the complete target connection string;
+7. probe an expected schema object and exit nonzero on failure.
 
 SqlPackage [imports a BACPAC into a new or empty database](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-import?view=sql-server-ver17); the bootstrap must enforce that precondition rather than using import as a reset mechanism.
 
-Keep SqlPackage in the repository-local tool manifest. Never install it at runtime. Avoid disabling data-loss blocking by default; require explicit approval for a reviewed exceptional publish profile.
+Keep SqlPackage pinned in the repository-local tool manifest and restore it before AppHost starts. Never install it at runtime. Avoid disabling data-loss blocking by default; require explicit approval for a reviewed exceptional publish profile.
 
 Give the finite bootstrap a clear contract: connection string from the Aspire reference, repository-rooted project/baseline paths, bounded connection retries and command timeouts, host cancellation, structured secret-free logs, and nonzero exit for build/import/publish/probe failure. Default local readiness to a two-minute overall deadline and each import/publish process to a fifteen-minute deadline; make non-secret timeout overrides explicit and never retry forever. Select a stable required table or schema object from the database project as the post-publish probe; do not use "connection succeeded" as proof that publication succeeded.
 
-For PostgreSQL, supply the Aspire database connection string as `Paradigm_ORM_ConnectionString`. Because DbPublisher behavior varies by installed version, verify nonzero failure propagation and follow execution with a schema probe before marking the bootstrap complete.
+Pre-pre-deployment is not DACPAC `PreDeploy`: compile and verify the DACPAC first, then finish pre-pre before SqlPackage generates its plan. Use a SQLCMD-compatible executor with `GO`, reviewed include/variable behavior, bounded timeouts, cancellation, nonzero failure propagation, and secret-free logs; a naive `SqlCommand` over the complete file is invalid. Run it only when schema publication is enabled, including the explicit external-mode opt-in, and never use it to bypass unreviewed data-loss protection.
+
+For PostgreSQL, map the Aspire database resource explicitly with `.WithReference(database).WithEnvironment("Paradigm_ORM_ConnectionString", database)`; `WithReference` alone only creates the conventional `ConnectionStrings__<resource-name>` variable. Pin the verified DbPublisher executable or container in repository-owned configuration. Because DbPublisher behavior varies by installed version, verify nonzero failure propagation and follow execution with a schema probe before marking the bootstrap complete.
 
 ## External databases
 

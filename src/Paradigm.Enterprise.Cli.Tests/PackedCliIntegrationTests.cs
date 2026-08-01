@@ -112,6 +112,33 @@ public class PackedCliIntegrationTests
         Assert.AreEqual(0, packageAudit.RootElement.GetProperty("diagnostics").GetArrayLength());
     }
 
+    [TestMethod]
+    [Timeout(180_000)]
+    public async Task Packed_cli_scaffolds_with_the_real_program_composition()
+    {
+        var template = Path.Combine(temporary, "scaffold-template", "src");
+        var templateProject = Path.Combine(template, "Paradigm.Web.ApiTemplate.WebApi");
+        Directory.CreateDirectory(templateProject);
+        File.WriteAllText(Path.Combine(template, "Paradigm.Web.ApiTemplate.sln"), "Microsoft Visual Studio Solution File");
+        File.WriteAllText(Path.Combine(templateProject, "Paradigm.Web.ApiTemplate.WebApi.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><PackageReference Include=\"Paradigm.Enterprise.WebApi\" Version=\"1.0.0\" /></ItemGroup></Project>");
+        var output = Path.Combine(temporary, "scaffold-output");
+        using var result = AssertJson(await Run(
+            "scaffold",
+            "solution",
+            "--template-root",
+            Path.GetDirectoryName(template)!,
+            "--name",
+            "Contoso.Packed",
+            "--output",
+            output,
+            "--paradigm-version",
+            version,
+            "--format",
+            "json"), "scaffold solution");
+        Assert.IsTrue(File.Exists(Path.Combine(output, "start.sh")));
+        StringAssert.Contains(File.ReadAllText(Path.Combine(output, "src", "Contoso.Packed.WebApi", "Contoso.Packed.WebApi.csproj")), $"Version=\"{version}\"");
+    }
+
     #endregion
 
     #region Private Methods

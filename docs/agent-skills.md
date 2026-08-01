@@ -28,4 +28,4 @@ Use `paradigm-evolve-guidance` when a repeatable review lesson should become a f
 
 Use `paradigm-setup-aspire` for AppHost, ServiceDefaults, root `.env`, database bootstrap ordering, and Bicep publishing. Install Microsoft's current [Aspire workflow skills](https://aspire.dev/get-started/aspire-skills/) in the consuming repository with `aspire agent init`; the Paradigm skill adds project-specific policy instead of vendoring that bundle.
 
-Use `paradigm-build-database` for SDK-style SQL Server projects, DACPAC/BACPAC handling, PostgreSQL DbPublisher projects, schema scripts, keys, audit fields, and seed data. Its bundled validator is read-only and supports strict new-project enforcement plus warning-oriented legacy audits.
+Use `paradigm-build-database` for SDK-style SQL Server projects, DACPAC/BACPAC handling, PostgreSQL DbPublisher projects, schema scripts, keys, audit fields, and seed data. The built-in `paradigm database validate` command is read-only and supports strict new-project enforcement plus warning-oriented legacy audits.
