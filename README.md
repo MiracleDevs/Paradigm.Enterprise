@@ -56,11 +56,11 @@ dotnet tool run paradigm doctor --project src/Paradigm.Enterprise.slnx
 
 After cloning a repository with an existing tool manifest, use `dotnet tool restore` rather than installing again. One `paradigm` tool provides `api search/show/guide`, metadata validation, built-in semantic C# checks, dependency audits, and explicit JSON/mapper/OpenAPI generation commands. It is designed for client repositories that consume the Paradigm libraries; it is not a runtime dependency. See [CLI documentation](docs/cli.md).
 
-AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills), the canonical [Good Coding Practices](.agents/references/good-coding-practices.md), and the CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
+AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills), including Aspire and database-project setup, the canonical [Good Coding Practices](.agents/references/good-coding-practices.md), [Database Practices](.agents/references/database-practices.md), and the CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
 
 ## Start a new API
 
-The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, and host composition root. Use the installable `paradigm generate` commands for application source generation. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
+The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, and host composition root. The setup skills can adapt it for console-first solution creation, Aspire orchestration, and governed database projects. Use the installable `paradigm generate` commands for application source generation. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
 
 The repository's [example](example/README.md) targets the current package line and demonstrates the generic identifier and behavior-owned entity patterns used by the current APIs.
 

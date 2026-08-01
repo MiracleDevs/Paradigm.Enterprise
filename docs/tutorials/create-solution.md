@@ -1,8 +1,10 @@
-# Create a solution from the Visual Studio template
+# Create a solution from the reviewed template
 
 The Visual Studio template creates the expected project boundaries, references the Enterprise packages, and includes the database-first and code-generation tools used by the team. Starting from the template is safer than assembling the layers from memory.
 
 The template targets Visual Studio 2022 or later and .NET 10. Install the current .NET 10 SDK and make sure it is visible to Visual Studio before creating a solution.
+
+Agents and console-first developers can use the repository's `paradigm-setup-project` skill and its dry-run scaffolder. Prefer the sibling `C:\Repositories\github\Paradigm.Web.ApiTemplate` clone; when it is unavailable, clone the [official template repository](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) into a temporary working directory. The scaffolder accepts a local template path, never changes that source, and refuses non-empty output directories.
 
 ## Install the template
 
@@ -25,10 +27,23 @@ dotnet restore
 dotnet build
 ```
 
+For console scaffolding, preview before writing:
+
+```powershell
+python .agents/skills/paradigm-setup-project/scripts/scaffold_from_template.py `
+  --template-root <local-template-clone> `
+  --name <Company.Product> `
+  --output <empty-repository-directory> `
+  --paradigm-version <approved-version> `
+  --dry-run
+```
+
+Review the inventory and rerun without `--dry-run`. Preserve the generated `.sln` or `.slnx` format. Use `paradigm-build-database` to create the selected SQL Server or PostgreSQL project under `src/database` and add it to the application solution. Use `paradigm-setup-aspire` to add AppHost, ServiceDefaults, root `.env` handling, and database bootstrap ordering.
+
 A new template is a scaffold, not a production-ready host. Add a connection string through user secrets or environment variables, review CORS and health output, select authentication and authorization, and verify middleware ordering before deployment.
 
 Continue with [Understand the generated solution](generated-solution.md), then [Scaffold from a database](database-first.md).
 
-## If the template is unavailable
+## If neither template source is available
 
 Create separate Interfaces, Domain, Data, Providers, and WebApi projects with the dependency direction shown in [Architecture](../architecture.md). This manual path is useful for an existing solution, but it does not reproduce the analyzer, T4, and generator setup automatically.

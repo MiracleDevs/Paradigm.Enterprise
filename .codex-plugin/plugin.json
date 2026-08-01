@@ -13,22 +13,24 @@
     "paradigm-enterprise",
     "dotnet",
     "architecture",
-    "agent-skills"
+    "agent-skills",
+    "aspire",
+    "sql-database-projects",
+    "postgresql"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Paradigm Enterprise",
     "shortDescription": "Build correct Paradigm.Enterprise applications.",
-    "longDescription": "Concise workflows for designing, implementing, securing, and reviewing Paradigm.Enterprise applications with canonical coding practices.",
+    "longDescription": "Concise workflows for designing, implementing, orchestrating, securing, and reviewing Paradigm.Enterprise applications and their databases.",
     "developerName": "Miracle Devs",
     "category": "Developer Tools",
     "capabilities": [],
     "websiteURL": "https://miracledevs.github.io/Paradigm.Enterprise/",
     "defaultPrompt": [
-      "Design a Paradigm application.",
-      "Build a Paradigm vertical slice.",
-      "Review this Paradigm change.",
-      "Promote a learned Paradigm practice into governed guidance."
+      "Design or build a Paradigm application.",
+      "Set up a Paradigm solution with Aspire.",
+      "Build or review a Paradigm database."
     ]
   }
 }
