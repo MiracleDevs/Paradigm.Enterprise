@@ -16,7 +16,7 @@ Restore local tools and the solution from this directory:
 dotnet tool restore --add-source ../../artifacts
 dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../../artifacts
 dotnet build src/BeaconAr.sln --configuration Release --no-restore
-dotnet test src/BeaconAr.sln --configuration Release --no-build --no-restore
+dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
 ```
 
 ## Local start
