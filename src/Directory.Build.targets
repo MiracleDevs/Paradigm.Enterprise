@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <PackageReadmeFile Condition="'$(PackageReadmeFile)' == ''">README.md</PackageReadmeFile>
+    <PackageReadmeSource Condition="'$(PackageReadmeSource)' == ''">$(MSBuildThisFileDirectory)../README.md</PackageReadmeSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(PackageReadmeSource)" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <Target Name="ValidatePackageReadme" BeforeTargets="GenerateNuspec" Condition="'$(IsPackable)' == 'true'">
+    <Error Condition="'$(PackageReadmeFile)' == ''" Text="Packable project $(MSBuildProjectName) must declare PackageReadmeFile." />
+    <Error Condition="'$(PackageReadmeSource)' == '' Or !Exists('$(PackageReadmeSource)')" Text="Package README source '$(PackageReadmeSource)' for $(MSBuildProjectName) does not exist." />
+  </Target>
+</Project>

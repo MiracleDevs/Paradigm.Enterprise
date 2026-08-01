@@ -23,5 +23,6 @@ jobs:
         run: |
           $version = ([xml](Get-Content -Raw build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
           dotnet pack src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj --configuration Release --no-build --output artifacts
+          ./build/verify-packages.ps1 -ArtifactsDirectory artifacts
           dotnet tool install --tool-path .paradigm/tools --add-source artifacts --no-cache Paradigm.Enterprise.Cli --version $version
       - run: .paradigm/tools/paradigm packages audit --project src/Paradigm.Enterprise.slnx
