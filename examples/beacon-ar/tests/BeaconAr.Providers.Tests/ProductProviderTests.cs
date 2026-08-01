@@ -2,9 +2,12 @@ using System.Data;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
+using BeaconAr.Domain.Operations;
+using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Receivables.Generated;
 using BeaconAr.Providers.MasterData;
 using Paradigm.Enterprise.Domain.Uow;
+using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.Tests;
 
@@ -173,7 +176,7 @@ public sealed class ProductProviderTests
         public PersistenceConflictKind Classify(Exception exception) => PersistenceConflictKind.None;
     }
 
-    private sealed class FakePersistenceSession : IMasterDataPersistenceSession
+    private sealed class FakePersistenceSession : IPersistenceSession
     {
         public int DiscardCalls { get; private set; }
 

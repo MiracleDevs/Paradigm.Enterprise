@@ -1,4 +1,5 @@
 using BeaconAr.Domain.MasterData.Application;
+using BeaconAr.Domain.Operations;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 

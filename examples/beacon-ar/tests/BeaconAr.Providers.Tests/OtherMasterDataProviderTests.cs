@@ -1,4 +1,6 @@
 using BeaconAr.Domain.MasterData.Application;
+using BeaconAr.Domain.Operations;
+using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Providers.MasterData;
 

@@ -1,4 +1,4 @@
-namespace BeaconAr.Domain.MasterData.Application;
+namespace BeaconAr.Domain.Operations;
 
 public enum PersistenceConflictKind
 {
