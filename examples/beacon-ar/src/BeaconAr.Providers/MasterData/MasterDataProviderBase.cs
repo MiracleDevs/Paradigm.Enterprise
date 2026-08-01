@@ -1,9 +1,12 @@
 using System.Security.Cryptography;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Repositories;
+using BeaconAr.Domain.Operations;
+using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Receivables.Generated;
 using Paradigm.Enterprise.Domain.Uow;
 using Paradigm.Enterprise.Providers;
+using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
@@ -12,7 +15,7 @@ public abstract class MasterDataProviderBase : IProvider
     #region Fields
 
     private readonly IMasterDataPersistenceErrorClassifier _errorClassifier;
-    private readonly IMasterDataPersistenceSession _persistenceSession;
+    private readonly IPersistenceSession _persistenceSession;
 
     #endregion
 
@@ -36,7 +39,7 @@ public abstract class MasterDataProviderBase : IProvider
         IApplicationOperationContext operationContext,
         TimeProvider timeProvider,
         IMasterDataPersistenceErrorClassifier errorClassifier,
-        IMasterDataPersistenceSession persistenceSession)
+        IPersistenceSession persistenceSession)
     {
         UnitOfWork = unitOfWork;
         AuditLogs = auditLogs;

@@ -131,7 +131,7 @@ public sealed class LayerBoundaryTests
     }
 
     [TestMethod]
-    public void MasterDataRepositoriesAndProvidersFollowDiscoveryNames()
+    public void ApplicationRepositoriesAndProvidersFollowDiscoveryNames()
     {
         Type[] repositoryTypes = typeof(BeaconAr.Data.MasterData.ProductRepository).Assembly.GetTypes()
             .Where(type => type.IsPublic && !type.IsAbstract && typeof(IRepository).IsAssignableFrom(type))
@@ -140,8 +140,8 @@ public sealed class LayerBoundaryTests
             .Where(type => type.IsPublic && !type.IsAbstract && typeof(IProvider).IsAssignableFrom(type))
             .ToArray();
 
-        Assert.HasCount(9, repositoryTypes);
-        Assert.HasCount(4, providerTypes);
+        Assert.HasCount(15, repositoryTypes);
+        Assert.HasCount(8, providerTypes);
         foreach (Type implementation in repositoryTypes.Concat(providerTypes))
         {
             Type[] exactInterfaces = implementation.GetInterfaces()
@@ -173,6 +173,60 @@ public sealed class LayerBoundaryTests
             Assert.IsFalse(provider.GetMethods().Any(method => method.ReturnType == persistenceNamespaceMarker ||
                 method.GetParameters().Any(parameter => parameter.ParameterType == persistenceNamespaceMarker)), provider.FullName);
         }
+    }
+
+    [TestMethod]
+    public void SalesWorkflowBoundariesStayTransportNeutralAndAggregateOwned()
+    {
+        Type[] providers = typeof(BeaconAr.Providers.Sales.QuoteProvider).Assembly.GetTypes()
+            .Where(type => type.Namespace?.StartsWith("BeaconAr.Providers.Sales", StringComparison.Ordinal) == true)
+            .ToArray();
+        Assert.IsFalse(providers.Any(type => type.GetMethods().Any(method =>
+            method.ReturnType.Namespace?.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal) == true ||
+            method.GetParameters().Any(parameter =>
+                parameter.ParameterType.Namespace?.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal) == true))));
+
+        Type[] repositories = typeof(BeaconAr.Data.Sales.QuoteRepository).Assembly.GetTypes()
+            .Where(type => typeof(IRepository).IsAssignableFrom(type) && type.IsPublic)
+            .ToArray();
+        Assert.IsFalse(repositories.Any(type => type.Name.Contains("LineRepository", StringComparison.Ordinal) ||
+            type.Name.Contains("StatusHistoryRepository", StringComparison.Ordinal)));
+
+        Type[] providerContracts = typeof(BeaconAr.Providers.Sales.IQuoteProvider).Assembly.GetTypes()
+            .Where(type => type.IsInterface && type.Namespace?.StartsWith("BeaconAr.Providers.Sales", StringComparison.Ordinal) == true)
+            .ToArray();
+        Assert.IsFalse(providerContracts.SelectMany(type => type.GetMethods()).Any(method =>
+            method.ReturnType == typeof(Quote) || method.ReturnType == typeof(SalesOrder) ||
+            method.GetParameters().Any(parameter => parameter.ParameterType == typeof(Quote) ||
+                parameter.ParameterType == typeof(SalesOrder))));
+    }
+
+    [TestMethod]
+    public void SalesDatabaseRoutinesDeclareBoundedConsistentContracts()
+    {
+        string root = FindExampleRoot();
+        string quoteSearch = File.ReadAllText(Path.Combine(root, "src", "database", "routines", "Sales", "SearchQuote.sql"));
+        string orderSearch = File.ReadAllText(Path.Combine(root, "src", "database", "routines", "Sales", "SearchSalesOrder.sql"));
+        string dashboard = File.ReadAllText(Path.Combine(root, "src", "database", "routines", "Reporting", "GetDashboardSummary.sql"));
+
+        foreach (string search in new[] { quoteSearch, orderSearch })
+        {
+            StringAssert.Contains(search, "SELECT COUNT(1)");
+            StringAssert.Contains(search, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+            StringAssert.Contains(search, "BEGIN TRANSACTION");
+            StringAssert.Contains(search, "COMMIT TRANSACTION");
+            StringAssert.Contains(search, "ROLLBACK TRANSACTION");
+            StringAssert.Contains(search, "OFFSET ((CONVERT(BIGINT, @PageNumber) - 1) * @PageSize)");
+            StringAssert.Contains(search, "[DeletionDate] IS NULL");
+            StringAssert.Contains(search, "THROW 50002");
+            Assert.IsFalse(search.Contains("EXEC(", StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(search.Contains("sp_executesql", StringComparison.OrdinalIgnoreCase));
+        }
+
+        StringAssert.Contains(dashboard, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+        StringAssert.Contains(dashboard, "COUNT_BIG");
+        StringAssert.Contains(dashboard, "SYSUTCDATETIME()");
+        StringAssert.Contains(dashboard, "IF XACT_STATE() <> 0 ROLLBACK TRANSACTION");
     }
 
     #endregion
