@@ -63,9 +63,9 @@ dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --fi
 step "Pack current release and build example"
 dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output "$ARTIFACTS_DIRECTORY"
 "$POWERSHELL" -NoProfile -NonInteractive -File build/verify-packages.ps1 -ArtifactsDirectory "$ARTIFACTS_DIRECTORY"
-dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources="$ARTIFACTS_DIRECTORY"
-dotnet build example/ExampleApp.sln --configuration Release --no-restore
-dotnet test example/ExampleApp.sln --configuration Release --no-build
+dotnet restore examples/inventory-crud/InventoryCrud.sln --property:RestoreAdditionalProjectSources="$ARTIFACTS_DIRECTORY"
+dotnet build examples/inventory-crud/InventoryCrud.sln --configuration Release --no-restore
+dotnet test examples/inventory-crud/InventoryCrud.sln --configuration Release --no-build
 
 step "Install and test the packed Paradigm CLI"
 VERSION="$("$POWERSHELL" -NoProfile -NonInteractive -Command '([xml](Get-Content -Raw "build/Paradigm.Version.props")).Project.PropertyGroup.ParadigmEnterpriseVersion')"
@@ -84,14 +84,14 @@ dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.cspr
 step "Deterministic quality checks"
 "$PARADIGM" packages check --project src/Paradigm.Enterprise.slnx
 "$PARADIGM" packages audit --project src/Paradigm.Enterprise.slnx
-"$PARADIGM" packages check --project example/ExampleApp.sln
-"$PARADIGM" packages audit --project example/ExampleApp.sln
+"$PARADIGM" packages check --project examples/inventory-crud/InventoryCrud.sln
+"$PARADIGM" packages audit --project examples/inventory-crud/InventoryCrud.sln
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
-"$PARADIGM" validate --project example/ExampleApp.sln
-"$PARADIGM" checks run --project example/ExampleApp.sln
+"$PARADIGM" validate --project examples/inventory-crud/InventoryCrud.sln
+"$PARADIGM" checks run --project examples/inventory-crud/InventoryCrud.sln
 "$POWERSHELL" -NoProfile -NonInteractive -File build/verify-version.ps1
 
 step "Validate skills and plugin"

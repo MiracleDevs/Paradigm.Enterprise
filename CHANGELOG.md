@@ -14,7 +14,7 @@ Version `1.1.0`
 - Split generator assembly input from source output, exposed independent generation modes, and made generation failures return nonzero `PE8001` results instead of being swallowed.
 - Added canonical Paradigm Good Coding Practices covering member order/regions, semantic file layout, domain folders/contexts, least visibility, immutability, browser security, dependency approval/licensing, and API observability/health.
 - Strengthened every Paradigm skill and deterministic skill validation to reference the canonical practices.
-- Updated ExampleApp to .NET 10, current generic identifier APIs, behavior-owned entity transitions, and aligned Paradigm 1.1.0 packages.
+- Updated the Inventory CRUD example to .NET 10, current generic identifier APIs, behavior-owned entity transitions, and aligned Paradigm 1.1.0 packages.
 - Added PR and scheduled dependency workflows, Copilot review guidance, centralized release-version validation, expanded CLI/tool fixtures, and warning-as-error documentation validation.
 - Embedded a README in every distributable NuGet package and added archive-level package README validation to local and GitHub quality workflows.
 
