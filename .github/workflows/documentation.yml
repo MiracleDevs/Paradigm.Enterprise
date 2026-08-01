@@ -9,7 +9,7 @@ on:
       - ".github/workflows/documentation.yml"
       - "build/**"
       - "docs/**"
-      - "example/**"
+      - "examples/**"
       - "src/**"
       - "README.md"
   push:
@@ -20,7 +20,7 @@ on:
       - ".github/workflows/documentation.yml"
       - "build/**"
       - "docs/**"
-      - "example/**"
+      - "examples/**"
       - "src/**"
       - "README.md"
   workflow_dispatch:
@@ -62,10 +62,10 @@ jobs:
         run: |
           dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
           pwsh build/verify-packages.ps1 -ArtifactsDirectory artifacts
-          dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
+          dotnet restore examples/inventory-crud/InventoryCrud.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
 
       - name: Build compatibility example
-        run: dotnet build example/ExampleApp.sln --configuration Release --no-restore
+        run: dotnet build examples/inventory-crud/InventoryCrud.sln --configuration Release --no-restore
 
       - name: Build documentation
         run: dotnet docfx docs/docfx.json --warningsAsErrors
