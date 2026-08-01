@@ -21,6 +21,16 @@ dotnet tool run paradigm validate --project <solution>
 dotnet tool run paradigm checks run --project <solution>
 ```
 
+When the change contains an AppHost, also run `aspire doctor`, `aspire restore`, and inspect the resource graph, waits, root `.env` handling, secret parameters, health endpoints, and finite database bootstrap. Use `$paradigm-setup-aspire` for the Paradigm-specific review.
+
+When the change contains a `.sqlproj` or DbPublisher config, run:
+
+```powershell
+python .agents/skills/paradigm-build-database/scripts/validate_database_project.py --project <database-project> --solution <solution>
+```
+
+Use `--strict` for a new project. Read [Paradigm Database Practices](../../references/database-practices.md) and use `$paradigm-build-database` for engine-specific review.
+
 Run the built-in C# checks against consuming application projects. Framework source and test internals may intentionally exercise patterns those checks reject. Apply the repository's review policy to warnings even when the CLI exits `0`.
 
 Use `dotnet tool run paradigm api show/search` only to resolve an exact signature; do not load broad API documentation.
@@ -28,11 +38,11 @@ Use `dotnet tool run paradigm api show/search` only to resolve an exact signatur
 ## Review in risk order
 
 1. Security: inherited anonymous metadata, authorization per action, browser cookie/token storage and CSRF, exposure versus authorization, secret/error disclosure, request limits.
-2. Correctness: invariants, identifier consistency, nullability, query bounds/order, stored-procedure result ordering, transaction and external-side-effect claims.
+2. Correctness: invariants, identifier consistency, nullability, query bounds/order, stored-procedure result ordering, database bootstrap idempotency, baseline/import rules, transaction and external-side-effect claims.
 3. Architecture: HTTP only in controllers, orchestration in Providers, invariants in Domain, persistence only in repositories, inward references.
 4. Conventions: one semantic type per file, required member regions/order, least visibility, immutability, meaningful folders, public discoverable types only where required, exact `I{ConcreteName}` interfaces, marker inheritance, reachable assemblies, correct lifetimes.
 5. Generation: no edits to replaceable output; JSON/request/response metadata complete.
-6. Operations: cancellation, standard trace correlation, structured logs, metrics, liveness/readiness, dependency health, retry/idempotency.
+6. Operations: cancellation, standard trace correlation, structured logs, metrics, liveness/readiness, dependency health, Aspire wait ordering, retry/idempotency, secret-free generated deployment artifacts.
 7. Tests: behavior and failure paths at the cheapest effective boundary.
 
 Reject repository contracts/public members exposing `IQueryable`, EF pagination where a stored-procedure boundary is required, public setters on handwritten entity state, and state mutation performed outside entity behavior. Verify positive behavior tests, not only property mapping.

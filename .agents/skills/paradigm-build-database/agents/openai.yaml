@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Paradigm Database"
+  short_description: "Build governed SQL Server or PostgreSQL databases"
+  default_prompt: "Use $paradigm-build-database to create or review this Paradigm database project."

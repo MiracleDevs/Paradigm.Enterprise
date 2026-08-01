@@ -53,6 +53,7 @@ jobs:
           pwsh build/verify-version.ps1
       - name: Validate skills and plugin
         run: |
+          python .github/scripts/test-skill-tools.py
           python .github/scripts/validate-skills.py
           python .github/scripts/validate-plugin.py
       - name: Build documentation
