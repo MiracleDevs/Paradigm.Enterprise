@@ -1,0 +1,25 @@
+.swagger-ui .topbar {
+    background-color: #0078D4;
+}
+
+.swagger-ui .opblock-tag {
+    font-size: 1em;
+    margin: 0;
+}
+
+#select {
+    border: none;
+}
+
+.swagger-ui .btn.authorize {
+    border-color: #1491ff;
+    color: #1491ff;
+}
+
+.swagger-ui .btn.authorize svg {
+    fill: #1491ff;
+}
+
+.swagger-ui img {
+    content: url(/swagger/logo.png);
+}
