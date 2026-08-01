@@ -3,6 +3,8 @@ using BeaconAr.CodeGenerator;
 using BeaconAr.Data.Receivables;
 using BeaconAr.Domain.Receivables.Generated;
 using Microsoft.EntityFrameworkCore;
+using Paradigm.Enterprise.Domain.Repositories;
+using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Architecture.Tests;
 
@@ -126,6 +128,51 @@ public sealed class LayerBoundaryTests
         var program = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.WebApi", "Program.cs"));
 
         Assert.IsFalse(program.Contains("ClearProviders", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void MasterDataRepositoriesAndProvidersFollowDiscoveryNames()
+    {
+        Type[] repositoryTypes = typeof(BeaconAr.Data.MasterData.ProductRepository).Assembly.GetTypes()
+            .Where(type => type.IsPublic && !type.IsAbstract && typeof(IRepository).IsAssignableFrom(type))
+            .ToArray();
+        Type[] providerTypes = typeof(BeaconAr.Providers.MasterData.ProductProvider).Assembly.GetTypes()
+            .Where(type => type.IsPublic && !type.IsAbstract && typeof(IProvider).IsAssignableFrom(type))
+            .ToArray();
+
+        Assert.HasCount(9, repositoryTypes);
+        Assert.HasCount(4, providerTypes);
+        foreach (Type implementation in repositoryTypes.Concat(providerTypes))
+        {
+            Type[] exactInterfaces = implementation.GetInterfaces()
+                .Where(contract => contract.Name == $"I{implementation.Name}")
+                .ToArray();
+            Assert.HasCount(1, exactInterfaces, implementation.FullName);
+        }
+    }
+
+    [TestMethod]
+    public void MasterDataContractsDoNotLeakInfrastructureOrPersistenceEntities()
+    {
+        Type[] contracts = typeof(BeaconAr.Domain.MasterData.Contracts.ProductDto).Assembly.GetTypes()
+            .Where(type => type.Namespace?.StartsWith("BeaconAr.Domain.MasterData", StringComparison.Ordinal) == true)
+            .ToArray();
+        foreach (Type contract in contracts)
+        {
+            IEnumerable<Type> exposedTypes = contract.GetMethods().SelectMany(method =>
+                method.GetParameters().Select(parameter => parameter.ParameterType).Append(method.ReturnType));
+            Assert.IsFalse(exposedTypes.Any(type => type == typeof(IQueryable) ||
+                type.Namespace?.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) == true ||
+                type.Namespace?.StartsWith("Microsoft.Data.SqlClient", StringComparison.Ordinal) == true), contract.FullName);
+        }
+
+        Type persistenceNamespaceMarker = typeof(Product);
+        foreach (Type provider in typeof(BeaconAr.Providers.MasterData.ProductProvider).Assembly.GetTypes()
+                     .Where(type => type.IsPublic && typeof(IProvider).IsAssignableFrom(type)))
+        {
+            Assert.IsFalse(provider.GetMethods().Any(method => method.ReturnType == persistenceNamespaceMarker ||
+                method.GetParameters().Any(parameter => parameter.ParameterType == persistenceNamespaceMarker)), provider.FullName);
+        }
     }
 
     #endregion

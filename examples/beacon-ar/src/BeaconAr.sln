@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeaconAr.Database.Integrati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeaconAr.DatabaseBootstrap.Tests", "..\tests\BeaconAr.DatabaseBootstrap.Tests\BeaconAr.DatabaseBootstrap.Tests.csproj", "{31FF0D2C-F341-4FF5-99DF-C2911C5D56F6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeaconAr.Providers.Tests", "..\tests\BeaconAr.Providers.Tests\BeaconAr.Providers.Tests.csproj", "{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -215,6 +217,18 @@ Global
 		{31FF0D2C-F341-4FF5-99DF-C2911C5D56F6}.Release|x64.Build.0 = Release|Any CPU
 		{31FF0D2C-F341-4FF5-99DF-C2911C5D56F6}.Release|x86.ActiveCfg = Release|Any CPU
 		{31FF0D2C-F341-4FF5-99DF-C2911C5D56F6}.Release|x86.Build.0 = Release|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Release|x64.Build.0 = Release|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -228,6 +242,7 @@ Global
 		{905F50E1-8FD5-4374-B9B0-F06C8663620F} = {D1C71A15-47CF-88DA-8B2E-51BCE58FAE6A}
 		{2F3DC4D7-EC5C-417C-8A87-EC1A71C1F57D} = {D1C71A15-47CF-88DA-8B2E-51BCE58FAE6A}
 		{31FF0D2C-F341-4FF5-99DF-C2911C5D56F6} = {D1C71A15-47CF-88DA-8B2E-51BCE58FAE6A}
+		{A1F4C090-7688-47C7-9312-E5A3E8F3AD6B} = {D1C71A15-47CF-88DA-8B2E-51BCE58FAE6A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F13DE1A5-3CB3-46E8-943F-AF9ED5EFD30D}
