@@ -30,9 +30,9 @@ jobs:
         run: |
           dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
           pwsh build/verify-packages.ps1 -ArtifactsDirectory artifacts
-          dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
-          dotnet build example/ExampleApp.sln --configuration Release --no-restore
-          dotnet test example/ExampleApp.sln --configuration Release --no-build
+          dotnet restore examples/inventory-crud/InventoryCrud.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
+          dotnet build examples/inventory-crud/InventoryCrud.sln --configuration Release --no-restore
+          dotnet test examples/inventory-crud/InventoryCrud.sln --configuration Release --no-build
       - name: Install and test the packed Paradigm CLI
         shell: pwsh
         run: |
@@ -45,14 +45,14 @@ jobs:
         run: |
           .paradigm/tools/paradigm packages check --project src/Paradigm.Enterprise.slnx
           .paradigm/tools/paradigm packages audit --project src/Paradigm.Enterprise.slnx
-          .paradigm/tools/paradigm packages check --project example/ExampleApp.sln
-          .paradigm/tools/paradigm packages audit --project example/ExampleApp.sln
+          .paradigm/tools/paradigm packages check --project examples/inventory-crud/InventoryCrud.sln
+          .paradigm/tools/paradigm packages audit --project examples/inventory-crud/InventoryCrud.sln
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
-          .paradigm/tools/paradigm validate --project example/ExampleApp.sln
-          .paradigm/tools/paradigm checks run --project example/ExampleApp.sln
+          .paradigm/tools/paradigm validate --project examples/inventory-crud/InventoryCrud.sln
+          .paradigm/tools/paradigm checks run --project examples/inventory-crud/InventoryCrud.sln
           pwsh build/verify-version.ps1
       - name: Validate skills and plugin
         run: |

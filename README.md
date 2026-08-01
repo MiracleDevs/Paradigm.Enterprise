@@ -62,7 +62,7 @@ AI coding agents can use the concise workflows under [`.agents/skills`](.agents/
 
 The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, and host composition root. `paradigm scaffold solution` adapts it for console-first solution creation and adds the Docker-aware `start.sh`, a baseline GitHub quality workflow, and a Paradigm diagnostic matcher; the setup skills guide Aspire orchestration and governed database projects. Use the installable `paradigm generate` commands for application source generation. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
 
-The repository's [example](example/README.md) targets the current package line and demonstrates the generic identifier and behavior-owned entity patterns used by the current APIs.
+The repository's [examples catalog](examples/README.md) includes an [Inventory CRUD compatibility example](examples/inventory-crud/README.md) that targets the current package line and demonstrates the generic identifier and behavior-owned entity patterns used by the current APIs.
 
 ## Build and test
 

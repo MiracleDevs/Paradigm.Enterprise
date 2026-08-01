@@ -1,0 +1,70 @@
+using InventoryCrud.Data.Inventory.Contexts;
+using InventoryCrud.WebApi.Exceptions.Handlers.Resources;
+using InventoryCrud.WebApi.Exceptions.Handlers;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
+using Paradigm.Enterprise.Data.Uow;
+using Paradigm.Enterprise.Domain.Uow;
+using Paradigm.Enterprise.WebApi.Exceptions.Handlers;
+using Paradigm.Enterprise.WebApi.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
+
+// Register DbContext using an in-memory database for this example
+builder.Services.AddDbContext<InventoryDbContext>(options => options.UseInMemoryDatabase("InventoryCrudDb"));
+builder.Services.AddScoped<IExceptionHandler, ExceptionHandler>(_ =>
+{
+    var exceptionHandler = new ExceptionHandler(typeof(Exceptions));
+
+    exceptionHandler.AddMatcher(new UniqueKeyExceptionMatcher());
+    exceptionHandler.AddMatcher(new ForeignKeyExceptionMatcher());
+
+    return exceptionHandler;
+});
+
+// Register the Unit of Work
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.RegisterRepositories()
+    .RegisterProviders()
+    .RegisterServices([])
+    .RegisterMappers()
+    .RegisterEntities()
+    .RegisterDtos();
+
+// build the app
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseOwnExceptionHandler();
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("live")
+});
+app.MapHealthChecks("/health/ready");
+app.MapControllers();
+
+// Initialize the database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
+    // This will trigger the creation of the database and the seed data
+    dbContext.Database.EnsureCreated();
+}
+
+app.Run();
