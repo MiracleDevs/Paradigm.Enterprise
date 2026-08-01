@@ -26,7 +26,7 @@ dotnet tool run paradigm scaffold solution `
   --dry-run
 ```
 
-Review the dry-run inventory, then rerun without `--dry-run`. The CLI copies only template `src`, replaces template tokens and GUIDs, aligns Paradigm package references, preserves binary assets, never edits the source template, refuses a non-empty output directory, and creates the root `start.sh` Aspire wrapper. Add repository policy files deliberately after scaffolding.
+Review the dry-run inventory, then rerun without `--dry-run`. The CLI copies only template `src`, replaces template tokens and GUIDs, aligns Paradigm package references, preserves binary assets, never edits the source template, refuses a non-empty output directory, and creates the root `start.sh` Aspire wrapper. It also creates a baseline GitHub quality workflow and Paradigm problem matcher. Review those generated files and add any other repository policy deliberately after scaffolding.
 
 Preserve the template's `.sln` or `.slnx` format. After selecting the database engine, use `$paradigm-build-database` to create `src/database` and add its project to that solution; do not create a second database-only solution.
 

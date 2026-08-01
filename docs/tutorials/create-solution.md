@@ -38,7 +38,7 @@ dotnet tool run paradigm scaffold solution `
   --dry-run
 ```
 
-Review the inventory and rerun without `--dry-run`. Preserve the generated `.sln` or `.slnx` format. The CLI also creates `start.sh`, which restores/installs repository-local Paradigm and Aspire tools and checks Docker before starting Aspire. Use `paradigm-build-database` to create the selected SQL Server or PostgreSQL project under `src/database` and add it to the application solution. Use `paradigm-setup-aspire` to add AppHost, ServiceDefaults, root `.env` handling, and database bootstrap ordering.
+Review the inventory and rerun without `--dry-run`. Preserve the generated `.sln` or `.slnx` format. The CLI also creates `start.sh`, which restores/installs repository-local Paradigm and Aspire tools and checks Docker before starting Aspire. It creates a baseline `.github/workflows/quality.yml` and `.github/problem-matchers/paradigm.json`, so Paradigm warnings and errors appear as GitHub annotations. If you replace the workflow, preserve its `::add-matcher::` registration step before any Paradigm commands; see [GitHub Actions diagnostics](../cli.md#github-actions-diagnostics). Use `paradigm-build-database` to create the selected SQL Server or PostgreSQL project under `src/database` and add it to the application solution. Use `paradigm-setup-aspire` to add AppHost, ServiceDefaults, root `.env` handling, and database bootstrap ordering.
 
 A new template is a scaffold, not a production-ready host. Add a connection string through user secrets or environment variables, review CORS and health output, select authentication and authorization, and verify middleware ordering before deployment.
 

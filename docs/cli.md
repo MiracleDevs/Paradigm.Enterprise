@@ -163,13 +163,24 @@ Build assemblies before JSON or mapper generation. Generate clients only from a 
 
 ## Solution scaffolding
 
-`scaffold solution` adapts the reviewed Paradigm Web API template without modifying its source. It requires a local template root, a dot-separated C# solution name, an empty output directory, and the approved Paradigm package version. Use `--dry-run` first. The command preserves `.sln`/`.slnx`, regenerates template GUIDs, preserves binary assets, aligns Paradigm package references, and creates the root `start.sh` wrapper for repository-local Paradigm/Aspire tools and Docker-aware Aspire startup.
+`scaffold solution` adapts the reviewed Paradigm Web API template without modifying its source. It requires a local template root, a dot-separated C# solution name, an empty output directory, and the approved Paradigm package version. Use `--dry-run` first. The command preserves `.sln`/`.slnx`, regenerates template GUIDs, preserves binary assets, aligns Paradigm package references, and creates the root `start.sh` wrapper for repository-local Paradigm/Aspire tools and Docker-aware Aspire startup. It also creates `.github/problem-matchers/paradigm.json` and a baseline `.github/workflows/quality.yml` that restores, builds, tests, runs the Paradigm checks, and publishes `PE` warnings and errors as GitHub annotations.
 
 ```powershell
 dotnet tool run paradigm scaffold solution --template-root C:\Repositories\github\Paradigm.Web.ApiTemplate --name Contoso.Product --output C:\Repositories\Contoso.Product --paradigm-version 1.1.0 --dry-run
 ```
 
 The command writes only beneath the requested empty output and returns `PE8101` on a reviewed scaffolding failure. Review every generated file before committing it.
+
+### GitHub Actions diagnostics
+
+The CLI's text diagnostics use the stable form `PE7008 warning: message [location]` or `PE1002 error: message [location]`. GitHub's built-in .NET matcher expects compiler-shaped output, so a workflow that runs Paradigm commands must register the generated matcher before those commands:
+
+```yaml
+- name: Register Paradigm problem matcher
+  run: echo "::add-matcher::${{ github.workspace }}/.github/problem-matchers/paradigm.json"
+```
+
+Keep the matcher file in the repository and register it once per job that invokes the CLI. The generated quality workflow already does this. Existing repositories and custom pipelines can copy the matcher from a newly scaffolded solution or from the Paradigm.Enterprise repository. Non-GitHub automation can consume `--format json` instead.
 
 ## Database project validation
 
