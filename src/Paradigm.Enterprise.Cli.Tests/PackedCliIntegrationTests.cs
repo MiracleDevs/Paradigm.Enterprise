@@ -136,6 +136,8 @@ public class PackedCliIntegrationTests
             "--format",
             "json"), "scaffold solution");
         Assert.IsTrue(File.Exists(Path.Combine(output, "start.sh")));
+        Assert.IsTrue(File.Exists(Path.Combine(output, ".github", "problem-matchers", "paradigm.json")));
+        Assert.IsTrue(File.Exists(Path.Combine(output, ".github", "workflows", "quality.yml")));
         StringAssert.Contains(File.ReadAllText(Path.Combine(output, "src", "Contoso.Packed.WebApi", "Contoso.Packed.WebApi.csproj")), $"Version=\"{version}\"");
     }
 

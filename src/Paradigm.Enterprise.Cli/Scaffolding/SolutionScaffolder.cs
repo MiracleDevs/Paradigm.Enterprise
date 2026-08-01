@@ -13,7 +13,62 @@ internal sealed class SolutionScaffolder
 
     #region Constants
 
+    // TODO: Once the Paradigm.Web.ApiTemplate is merged with this repo, move these files (quality.yml, paradigm.json, start.sh) into the template and remove these constants.
     private const string TemplateName = "Paradigm.Web.ApiTemplate";
+    private const string ProblemMatcher = """
+        {
+          "problemMatcher": [
+            {
+              "owner": "paradigm",
+              "pattern": [
+                {
+                  "regexp": "^(PE\\d+) (warning|error): (.*?)(?: \\[(.+)\\])?$",
+                  "code": 1,
+                  "severity": 2,
+                  "message": 3,
+                  "file": 4
+                }
+              ]
+            }
+          ]
+        }
+        """;
+    private const string QualityWorkflow = """
+        name: Quality
+
+        on:
+          pull_request:
+            branches: [main]
+          workflow_dispatch:
+
+        permissions:
+          contents: read
+
+        jobs:
+          verify:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: actions/checkout@v7
+              - uses: actions/setup-dotnet@v6
+                with:
+                  dotnet-version: 10.0.x
+              - name: Register Paradigm problem matcher
+                run: echo "::add-matcher::${{ github.workspace }}/.github/problem-matchers/paradigm.json"
+              - name: Install Paradigm CLI
+                run: dotnet tool install --tool-path .paradigm/tools Paradigm.Enterprise.Cli --version __PARADIGM_VERSION__
+              - name: Restore
+                run: dotnet restore __SOLUTION_PATH__
+              - name: Build and test
+                run: |
+                  dotnet build __SOLUTION_PATH__ --configuration Release --no-restore
+                  dotnet test __SOLUTION_PATH__ --configuration Release --no-build
+              - name: Paradigm quality checks
+                run: |
+                  .paradigm/tools/paradigm packages check --project __SOLUTION_PATH__
+                  .paradigm/tools/paradigm packages audit --project __SOLUTION_PATH__
+                  .paradigm/tools/paradigm validate --project __SOLUTION_PATH__
+                  .paradigm/tools/paradigm checks run --project __SOLUTION_PATH__
+        """;
     private const string StarterScript = """
         #!/usr/bin/env bash
         set -euo pipefail
@@ -167,9 +222,11 @@ internal sealed class SolutionScaffolder
         var planned = CollectFiles(source, options.Name);
         if (planned.Count == 0)
             throw new InvalidOperationException("Template source contains no files.");
+        var solutionFile = planned.Single(file => string.IsNullOrEmpty(Path.GetDirectoryName(file.RelativeTarget)) && Path.GetExtension(file.RelativeTarget) is ".sln" or ".slnx");
+        var solutionPath = "src/" + solutionFile.RelativeTarget.Replace(Path.DirectorySeparatorChar, '/');
 
         var guidMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var targets = new List<string>(planned.Count + 1);
+        var targets = new List<string>(planned.Count + 3);
         foreach (var file in planned)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -190,13 +247,22 @@ internal sealed class SolutionScaffolder
         }
 
         var starter = Path.Combine(destination, "start.sh");
+        var problemMatcher = Path.Combine(destination, ".github", "problem-matchers", "paradigm.json");
+        var qualityWorkflow = Path.Combine(destination, ".github", "workflows", "quality.yml");
         targets.Add(starter);
+        targets.Add(problemMatcher);
+        targets.Add(qualityWorkflow);
         if (!options.DryRun)
         {
             var starterText = StarterScript
                 .Replace("__PARADIGM_VERSION__", options.ParadigmVersion, StringComparison.Ordinal)
                 .Replace("__SOLUTION_NAME__", options.Name, StringComparison.Ordinal);
+            var qualityWorkflowText = QualityWorkflow
+                .Replace("__PARADIGM_VERSION__", options.ParadigmVersion, StringComparison.Ordinal)
+                .Replace("__SOLUTION_PATH__", solutionPath, StringComparison.Ordinal);
             WriteText(starter, starterText + Environment.NewLine);
+            WriteText(problemMatcher, ProblemMatcher + Environment.NewLine);
+            WriteText(qualityWorkflow, qualityWorkflowText + Environment.NewLine);
             if (!OperatingSystem.IsWindows())
                 File.SetUnixFileMode(starter, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
         }

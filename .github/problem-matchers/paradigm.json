@@ -1,0 +1,16 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "paradigm",
+      "pattern": [
+        {
+          "regexp": "^(PE\\d+) (warning|error): (.*?)(?: \\[(.+)\\])?$",
+          "code": 1,
+          "severity": 2,
+          "message": 3,
+          "file": 4
+        }
+      ]
+    }
+  ]
+}

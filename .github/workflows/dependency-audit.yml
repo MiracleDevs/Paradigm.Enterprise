@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+      - name: Register Paradigm problem matcher
+        run: echo "::add-matcher::${{ github.workspace }}/.github/problem-matchers/paradigm.json"
       - run: dotnet restore src/Paradigm.Enterprise.slnx
       - run: dotnet build src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj --configuration Release --no-restore
       - name: Pack and install CLI
