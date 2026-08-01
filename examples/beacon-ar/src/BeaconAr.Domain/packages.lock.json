@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Paradigm.Enterprise.Domain": {
+        "type": "Direct",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "eO6hVbxeqoTypVX1zk4cMCrzZk6waQFW9qqD71Bdrspt23Ge5zwtIDy17tqKYw0wHawdcq8SGT3AMQZnnCG9fA==",
+        "dependencies": {
+          "Mapster": "10.0.9",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.9",
+          "Paradigm.Enterprise.Interfaces": "1.1.0"
+        }
+      },
+      "Mapster": {
+        "type": "Transitive",
+        "resolved": "10.0.9",
+        "contentHash": "UQW0Fquj9czyZHtHq08OaceEvgXhNOY8n5Ezc8BALU6//MFLmM2xPW3mCNzcvrqpMNwvMhEy7MHlRSkkbfpMeQ==",
+        "dependencies": {
+          "Mapster.Core": "10.0.9"
+        }
+      },
+      "Mapster.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.9",
+        "contentHash": "v6/hzOlSyCzlwize5PbRtiBCuWDjUEeH3S2pYXa+B7gD+HPn+6kTavCfjwA7olhOq78ufMw5bGOXhwCcJOZ+sQ=="
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.0.9",
+        "contentHash": "g41l/30G3K4B/d/L8kjux0+30e27c8D0FVQ/PFCpbekgfDpj9mnDhieP67EqXWvl1EWNeZh2rpR4F5B/jcDOHA=="
+      },
+      "beaconar.interfaces": {
+        "type": "Project",
+        "dependencies": {
+          "Paradigm.Enterprise.Interfaces": "[1.1.0, )"
+        }
+      },
+      "Paradigm.Enterprise.Interfaces": {
+        "type": "CentralTransitive",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "FS5b9FsNTO4lAMo539QbWPP6qlZ+FxxtEOIBdd3gV6trW/TMVky51A3kJurjHPdJtvblNHEl2LuzZfJ3MlqZ+Q=="
+      }
+    }
+  }
+}

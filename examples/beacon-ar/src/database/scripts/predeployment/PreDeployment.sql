@@ -1,0 +1,1 @@
+-- DACPAC pre-deployment root. Pre-plan compatibility work belongs in PrePreDeployment.sql.

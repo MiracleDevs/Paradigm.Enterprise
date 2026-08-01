@@ -11,6 +11,14 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: ${{ format('BeaconAr-{0}-Aa1!', github.run_id) }}
+        ports:
+          - 1433:1433
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -33,6 +41,65 @@ jobs:
           dotnet restore examples/inventory-crud/InventoryCrud.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
           dotnet build examples/inventory-crud/InventoryCrud.sln --configuration Release --no-restore
           dotnet test examples/inventory-crud/InventoryCrud.sln --configuration Release --no-build
+      - name: Build and test Beacon AR foundation
+        working-directory: examples/beacon-ar
+        run: |
+          dotnet tool restore --add-source ../../artifacts
+          dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
+          dotnet build src/BeaconAr.sln --configuration Release --no-restore
+          dotnet test src/BeaconAr.sln --configuration Release --no-build --no-restore
+          if dotnet run --project src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj --configuration Release --no-build -- invalid; then
+            echo "Code generation unexpectedly accepted an unknown target." >&2
+            exit 1
+          fi
+      - name: Publish and integration-test Beacon AR database
+        working-directory: examples/beacon-ar
+        env:
+          BEACON_AR_CI_SQL_PASSWORD: ${{ format('BeaconAr-{0}-Aa1!', github.run_id) }}
+          ConnectionStrings__DatabaseConnection: Server=localhost,1433;Initial Catalog=BeaconAr;User ID=sa;Password=${{ format('BeaconAr-{0}-Aa1!', github.run_id) }};Encrypt=True;TrustServerCertificate=True
+          Database__Mode: Managed
+          Database__PublishOnStart: true
+        run: |
+          if [ ! -x /opt/mssql-tools18/bin/sqlcmd ]; then
+            curl -sSL -o /tmp/packages-microsoft-prod.deb "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+            sudo dpkg -i /tmp/packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
+          fi
+          export PATH="/opt/mssql-tools18/bin:$PATH"
+          sqlcmd_help="$(sqlcmd -? 2>&1 || true)"
+          grep -Eq '^Version 18\.' <<<"$sqlcmd_help" || {
+            echo "Microsoft SQLCMD major version 18 is required." >&2
+            exit 1
+          }
+          for attempt in {1..60}; do
+            if docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$BEACON_AR_CI_SQL_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              echo "SQL Server did not become ready." >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$BEACON_AR_CI_SQL_PASSWORD" -Q "CREATE DATABASE [BeaconAr]"
+          dotnet run --project src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj --configuration Release --no-build
+          dotnet test tests/BeaconAr.Database.IntegrationTests/BeaconAr.Database.IntegrationTests.csproj --configuration Release --no-build --no-restore
+          dotnet run --project src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj --configuration Release --no-build
+          pwsh build/regenerate-persistence.ps1
+          git diff --exit-code -- src/BeaconAr.Data/Receivables/Generated src/BeaconAr.Domain/Receivables/Generated
+          test -z "$(git status --porcelain --untracked-files=all -- src/BeaconAr.Data/Receivables/Generated src/BeaconAr.Domain/Receivables/Generated)"
+          python - <<'PY'
+          import pathlib
+          import sys
+          import xml.etree.ElementTree as ET
+
+          report = pathlib.Path("artifacts/database/BeaconAr.Database.deployreport.xml")
+          operations = ET.parse(report).getroot().findall(".//{*}Operation")
+          if operations:
+              print("Second publication reported schema operations:", [item.get("Name") for item in operations], file=sys.stderr)
+              raise SystemExit(1)
+          PY
       - name: Install and test the packed Paradigm CLI
         shell: pwsh
         run: |
@@ -53,6 +120,14 @@ jobs:
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
           .paradigm/tools/paradigm validate --project examples/inventory-crud/InventoryCrud.sln
           .paradigm/tools/paradigm checks run --project examples/inventory-crud/InventoryCrud.sln
+          .paradigm/tools/paradigm packages check --project examples/beacon-ar/src/BeaconAr.sln
+          .paradigm/tools/paradigm packages audit --project examples/beacon-ar/src/BeaconAr.sln
+          .paradigm/tools/paradigm validate --project examples/beacon-ar/src/BeaconAr.sln
+          .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.Domain/BeaconAr.Domain.csproj
+          .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.Data/BeaconAr.Data.csproj
+          .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.Providers/BeaconAr.Providers.csproj
+          .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.WebApi/BeaconAr.WebApi.csproj
+          .paradigm/tools/paradigm database validate --project examples/beacon-ar/src/database/BeaconAr.Database.sqlproj --solution examples/beacon-ar/src/BeaconAr.sln --strict
           pwsh build/verify-version.ps1
       - name: Validate skills and plugin
         run: |

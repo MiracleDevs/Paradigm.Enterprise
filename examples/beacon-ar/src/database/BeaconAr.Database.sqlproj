@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.Build.Sql/2.2.0">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <SqlServerVersion>Sql160</SqlServerVersion>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <DefaultCollation>Latin1_General_100_CI_AS_SC</DefaultCollation>
+  </PropertyGroup>
+  <ItemGroup>
+    <Build Remove="scripts\prepredeployment\**\*.sql" />
+    <Build Remove="scripts\postdeployment\**\*Data.sql" />
+    <Build Remove="scripts\verification\**\*.sql" />
+    <None Include="scripts\prepredeployment\PrePreDeployment.sql" />
+    <None Include="scripts\verification\FoundationSmoke.sql" />
+    <PreDeploy Include="scripts\predeployment\PreDeployment.sql" />
+    <PostDeploy Include="scripts\postdeployment\PostDeployment.sql" />
+  </ItemGroup>
+</Project>

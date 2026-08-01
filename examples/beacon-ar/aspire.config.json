@@ -1,0 +1,4 @@
+{
+  "$schema": "https://aka.ms/aspire/13.4/aspire.schema.json",
+  "appHostPath": "src/BeaconAr.AppHost/BeaconAr.AppHost.csproj"
+}
