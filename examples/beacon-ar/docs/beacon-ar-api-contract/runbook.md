@@ -2,7 +2,9 @@
 
 ## Identity registration
 
-Register one Entra API application and expose delegated scopes/app roles whose configured values map to `business.read` and `business.write`. Set `Authentication__Authority`, `Authentication__Issuer`, and `Authentication__Audience` to the tenant v2 issuer and this API's application-ID URI. Register the Angular SPA as a public client using Authorization Code with PKCE and its exact redirect URIs. Never configure a client secret in the SPA or API, and never send an ID token to this resource server.
+Register one Entra API application and expose delegated scopes and, if needed, roles assignable to signed-in users whose configured values map to `business.read` and `business.write`. Configure `AzureAd__Instance`, `AzureAd__TenantId`, and `AzureAd__ClientId` for `Microsoft.Identity.Web`; keep `AzureAd__AllowWebApiToBeAuthorizedByACL=true` so authenticated tokens without either grant reach the application's exact authorization policies and receive `403` rather than being rejected as malformed credentials. Register the Angular SPA as a public client using Authorization Code with PKCE and its exact redirect URIs. Never configure a client secret in the SPA or API, and never send an ID token to this resource server.
+
+Release one accepts Microsoft Entra v2 delegated user access tokens issued for the Beacon AR API audience; it never accepts an ID token as an API credential. Microsoft Identity Web validates signature, issuer, tenant, audience, and lifetime. The token must contain non-empty `oid` and `sub` claims, which are identity inputs rather than the actor-type discriminator. If Entra emits `idtyp`, it must be `user`; `app` and unknown values receive `403`. If `idtyp` is absent, the token must contain non-empty delegated `scp`; roles-only and no-scope shapes receive `403` before local-user lookup or provisioning. A token containing both `scp` and `roles` is delegated, and exact roles assigned to that user can grant configured permissions. Do not grant daemon/application permissions for this API until a separate service-principal audit actor is implemented. A display value in `name` or `preferred_username` is also required before a delegated user can be provisioned; `email` remains optional.
 
 The application rejects `Authentication__SigningKey` outside the isolated `Testing` environment, and production always uses OIDC signing metadata. Hosted tests configure their symmetric validation key in the test host rather than application startup. Never place a test key in application settings or commit one.
 
@@ -30,7 +32,7 @@ Quote conversion uses `PUT /api/v1/quotes/{id}/sales-order` without `If-Match`: 
 
 ## OpenAPI and client generation
 
-Build `BeaconAr.WebApi` in Release to produce `artifacts/openapi/beacon-ar-v1.json`. Run the `openapi-typescript` CodeGenerator target and the pinned strict TypeScript probe exactly as shown in the example README. CI publishes both files as `beacon-ar-api-v1`.
+Run `./scripts/generate-openapi.ps1` to build the API in Release, start an isolated Development host, and regenerate the checked `artifacts/openapi/beacon-ar-v1.json` contract. The script validates the JSON and always stops the host it created. Runtime OpenAPI JSON at `/openapi/v1.json` and Swagger UI at `/swagger` are available anonymously only in Development; neither is served in Testing or production. Run the `openapi-typescript` CodeGenerator target and the pinned strict TypeScript probe exactly as shown in the example README. CI publishes both files as `beacon-ar-api-v1`.
 
 ## Diagnosis
 

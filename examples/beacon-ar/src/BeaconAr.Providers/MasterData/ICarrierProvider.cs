@@ -14,5 +14,13 @@ public interface ICarrierProvider : IEditProvider<CarrierView, int>
 
     Task<CarrierDto> UpdateAsync(int id, CarrierUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
 
+    Task<PageResult<CarrierView>> SearchForApiAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
+
+    Task<CarrierView> GetForApiAsync(int id, CancellationToken cancellationToken);
+
+    Task<CarrierView> CreateForApiAsync(CarrierCreateRequest request, CancellationToken cancellationToken);
+
+    Task<CarrierView> UpdateForApiAsync(int id, CarrierUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
+
     Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken);
 }

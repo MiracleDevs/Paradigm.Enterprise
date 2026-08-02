@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Tokens;
 
 namespace BeaconAr.WebApi.Tests;
@@ -632,7 +633,15 @@ public sealed class BeaconArApiAcceptanceTests
         {
             Issuer = tokenIssuer,
             Audience = Audience,
-            Subject = new ClaimsIdentity([new Claim("sub", subject), new Claim("name", displayName), new Claim("scp", permission)]),
+            Subject = new ClaimsIdentity(
+            [
+                new Claim("tid", "beacon-acceptance-tests"),
+                new Claim("oid", "00000000-0000-0000-0000-000000000005"),
+                new Claim("sub", subject),
+                new Claim("idtyp", "user"),
+                new Claim("name", displayName),
+                new Claim("scp", permission),
+            ]),
             Expires = DateTime.UtcNow.AddMinutes(10),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey)), SecurityAlgorithms.HmacSha256),
         };
@@ -656,6 +665,9 @@ public sealed class BeaconArApiAcceptanceTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+            builder.UseSetting("AzureAd:Instance", "https://login.microsoftonline.com/");
+            builder.UseSetting("AzureAd:TenantId", "beacon-acceptance-tests");
+            builder.UseSetting("AzureAd:ClientId", Audience);
             builder.UseSetting("Authentication:Audience", Audience);
             builder.UseSetting("Authentication:Issuer", tokenIssuer);
             builder.UseSetting("Authentication:Permissions:Read", "business.read");
@@ -671,7 +683,10 @@ public sealed class BeaconArApiAcceptanceTests
             options.Authority = null;
             options.Configuration = new OpenIdConnectConfiguration { Issuer = tokenIssuer };
             options.Configuration.SigningKeys.Add(key);
+            options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.Configuration);
             options.TokenValidationParameters.IssuerSigningKey = key;
+            options.TokenValidationParameters.ValidIssuer = tokenIssuer;
+            options.TokenValidationParameters.ValidAudience = Audience;
         }
 
         #endregion

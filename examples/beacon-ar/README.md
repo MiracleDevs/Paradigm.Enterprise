@@ -48,7 +48,7 @@ Managed mode provisions SQL Server, builds the repository-owned database-bootstr
 
 ## API and security
 
-All business routes live under `/api/v1` and require a signed OIDC/OAuth 2.0 bearer access token. `business.read` protects reads and `business.write` protects mutations and implies read. The resource server validates issuer, audience, signature, and lifetime, then maps exact `scp` or `roles` values. `/api/v1/me` resolves the validated `(issuer, subject)` to the local audit identity.
+All business routes live under `/api/v1` and require a signed delegated-user OIDC/OAuth 2.0 bearer access token. Configure Microsoft Identity Web with the non-secret `AzureAd__Instance`, `AzureAd__TenantId`, and `AzureAd__ClientId` values shown in `.env.example`. `business.read` protects reads and `business.write` protects mutations and implies read. The resource server validates issuer, audience, signature, and lifetime, accepts explicit `idtyp=user` or requires delegated `scp` when `idtyp` is absent, and rejects roles-only client-credentials tokens before user provisioning. Exact delegated scopes or roles carried by an already-classified user can grant permissions. `/api/v1/me` resolves the validated `(issuer, subject)` to the local audit identity. Anonymous `GET /` returns only the API name and assembly product version.
 
 Mutable resources return a strong `ETag`; updates, deletes, and transitions require it in `If-Match`. The six creation routes accept `Idempotency-Key`; only its SHA-256 hash and a canonical request fingerprint are stored in the SQL ledger in the same transaction as the resource and audit write. Quote conversion is the idempotent singleton `PUT /api/v1/quotes/{id}/sales-order`.
 
@@ -56,10 +56,10 @@ Expected failures use RFC 7807 `application/problem+json` with stable `code` and
 
 ## OpenAPI and Angular client
 
-Builds emit the versioned OpenAPI 3.0 document at `artifacts/openapi/beacon-ar-v1.json`. Generate the NSwag Angular client and compile its strict consumer with:
+Run the isolated generator to refresh the checked versioned OpenAPI 3.0 document at `artifacts/openapi/beacon-ar-v1.json`. Swagger JSON at `/openapi/v1.json` and Swagger UI at `/swagger` are exposed only in Development. Generate the NSwag Angular client and compile its strict consumer with:
 
 ```bash
-dotnet build src/BeaconAr.WebApi/BeaconAr.WebApi.csproj --configuration Release
+./scripts/generate-openapi.ps1
 dotnet run --project src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj --configuration Release -- openapi-typescript ../../artifacts/openapi/beacon-ar-v1.json ../../tests/BeaconAr.ClientContract/generated/beacon-ar-v1.ts
 npm ci --prefix tests/BeaconAr.ClientContract
 npm run check --prefix tests/BeaconAr.ClientContract
@@ -78,4 +78,4 @@ dotnet tool run paradigm checks run --project src/BeaconAr.Providers/BeaconAr.Pr
 
 After publishing a disposable database, set `ConnectionStrings__DatabaseConnection` and run both database and authenticated HTTP acceptance suites with `--filter TestCategory=Integration`.
 
-Implementation records: [foundation](docs/beacon-ar-foundation/implementation-plan.md), [master data](docs/beacon-ar-master-data/implementation-plan.md), [sales workflows](docs/beacon-ar-sales-workflows/implementation-plan.md), and [API contract](docs/beacon-ar-api-contract/implementation-plan.md). Operational configuration and incident steps are in the [API runbook](docs/beacon-ar-api-contract/runbook.md).
+Implementation records: [foundation](docs/beacon-ar-foundation/implementation-plan.md), [master data](docs/beacon-ar-master-data/implementation-plan.md), [sales workflows](docs/beacon-ar-sales-workflows/implementation-plan.md), [API contract](docs/beacon-ar-api-contract/implementation-plan.md), and [framework-aligned Web API integration](docs/beacon-ar-web-api/implementation-plan.md). Operational configuration and incident steps are in the [API runbook](docs/beacon-ar-api-contract/runbook.md); task-specific decisions are recorded in the [Web API decisions](docs/beacon-ar-web-api/decisions.md).

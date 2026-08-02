@@ -1,11 +1,12 @@
 using System.Text.Json.Nodes;
 using System.Globalization;
-using Microsoft.AspNetCore.OpenApi;
+using BeaconAr.WebApi.Endpoints;
 using Microsoft.OpenApi;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace BeaconAr.WebApi.OpenApi;
 
-public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransformer
+public sealed class BeaconArDocumentFilter : IDocumentFilter
 {
     #region Fields
 
@@ -78,35 +79,34 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
 
     #region Public Methods
 
-    public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
+    public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
-        document.Info.Title = "Beacon AR API";
-        document.Info.Version = "v1";
-        document.Info.Description = "Authenticated release-one accounts-receivable API. business.write implies business.read.";
-        document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>(StringComparer.Ordinal);
-        document.Components.SecuritySchemes["bearerAuth"] = new OpenApiSecurityScheme
+        swaggerDoc.Info.Title = ApiMetadata.Name;
+        swaggerDoc.Info.Version = ApiMetadata.OpenApiVersion;
+        swaggerDoc.Info.Description = "Delegated Microsoft Entra user access tokens (v2) only. Explicit idtyp must be user; without idtyp, delegated scp is required and roles-only client-credentials tokens are rejected. business.write implies business.read.";
+        swaggerDoc.Components ??= new OpenApiComponents();
+        swaggerDoc.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>(StringComparer.Ordinal);
+        swaggerDoc.Components.SecuritySchemes["bearerAuth"] = new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            Description = "OIDC/OAuth 2.0 access token issued for the Beacon AR API audience.",
+            Description = "Delegated Microsoft Entra v2 user access token issued for the Beacon AR API audience. oid and sub are required. Explicit idtyp must be user; when idtyp is absent, scp is required and roles-only tokens are rejected.",
         };
 
-        AddProblemSchema(document);
-        ApplySchemaContract(document);
+        AddProblemSchema(swaggerDoc);
+        ApplySchemaContract(swaggerDoc);
 
-        OpenApiSecuritySchemeReference reference = new("bearerAuth", document);
-        foreach (OpenApiPathItem path in document.Paths.Values)
+        OpenApiSecuritySchemeReference reference = new("bearerAuth", swaggerDoc);
+        foreach (OpenApiPathItem path in swaggerDoc.Paths.Values)
         {
             if (path.Operations is null)
                 continue;
 
             foreach (OpenApiOperation operation in path.Operations.Values)
-                ApplyOperationContract(document, operation, reference);
+                ApplyOperationContract(swaggerDoc, operation, reference);
         }
 
-        return Task.CompletedTask;
     }
 
     #endregion
@@ -146,6 +146,13 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
 
     private static void ApplyOperationContract(OpenApiDocument document, OpenApiOperation operation, OpenApiSecuritySchemeReference reference)
     {
+        if (string.Equals(operation.OperationId, "getApiRoot", StringComparison.Ordinal))
+        {
+            operation.Security = [];
+            AddSuccessMetadata(operation);
+            return;
+        }
+
         operation.Security ??= [];
         operation.Security.Add(new OpenApiSecurityRequirement { [reference] = [] });
         operation.Responses ??= new OpenApiResponses();
@@ -367,12 +374,13 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
 
         return operationId switch
         {
+            "getApiRoot" => ParseExample("""{"name":"Beacon AR API","version":"1.0.0"}"""),
             "getCurrentUser" => ParseExample("""{"id":42,"displayName":"Alex Morgan","email":"alex@example.test","policies":["business.read","business.write"]}"""),
             "getDashboardSummary" => ParseExample("""{"products":120,"customers":48,"carriers":6,"openQuotes":12,"activeOrders":23,"asOf":"2026-08-01T15:30:00Z"}"""),
-            "getProduct" or "createProduct" or "updateProduct" => ParseExample("""{"id":7,"sku":"BEACON-01","name":"Warehouse Beacon","category":"Hardware","unitPrice":49.9500,"stockQuantity":25,"thumbnailUrl":"https://cdn.example.test/beacon.png","isActive":true,"createdByUserId":42,"creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
-            "getCustomer" or "createCustomer" or "updateCustomer" => ParseExample("""{"id":42,"accountNumber":"ACME-001","name":"Acme Distribution","email":"ar@acme.example","phone":"+1-555-0100","creditLimit":25000.00,"paymentTermsDays":30,"isActive":true,"createdByUserId":42,"creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
-            "getAddress" or "createAddress" or "updateAddress" => ParseExample("""{"id":84,"customerId":42,"type":"shipping","label":"Main warehouse","line1":"100 Beacon Way","line2":null,"city":"Seattle","state":"WA","postalCode":"98101","country":"US","defaultBilling":false,"defaultShipping":true,"createdByUserId":42,"creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
-            "getCarrier" or "createCarrier" or "updateCarrier" => ParseExample("""{"id":3,"code":"UPS","name":"United Parcel Service","serviceLevel":"Ground","trackingUrlTemplate":"https://example.test/track/{trackingNumber}","isActive":true,"createdByUserId":42,"creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
+            "getProduct" or "createProduct" or "updateProduct" => ParseExample("""{"id":7,"sku":"BEACON-01","name":"Warehouse Beacon","category":"Hardware","unitPrice":49.9500,"stockQuantity":25,"thumbnailUrl":"https://cdn.example.test/beacon.png","isActive":true,"createdByUserId":42,"createdByUserDisplayName":"Alex Morgan","creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modifiedByUserDisplayName":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
+            "getCustomer" or "createCustomer" or "updateCustomer" => ParseExample("""{"id":42,"accountNumber":"ACME-001","name":"Acme Distribution","email":"ar@acme.example","phone":"+1-555-0100","creditLimit":25000.00,"paymentTermsDays":30,"isActive":true,"createdByUserId":42,"createdByUserDisplayName":"Alex Morgan","creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modifiedByUserDisplayName":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
+            "getAddress" or "createAddress" or "updateAddress" => ParseExample("""{"id":84,"customerId":42,"customerAccountNumber":"ACME-001","customerName":"Acme Distribution","addressTypeId":2,"type":"shipping","addressTypeDisplayName":"Shipping","label":"Main warehouse","line1":"100 Beacon Way","line2":null,"city":"Seattle","state":"WA","postalCode":"98101","country":"US","defaultBilling":false,"defaultShipping":true,"createdByUserId":42,"createdByUserDisplayName":"Alex Morgan","creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modifiedByUserDisplayName":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
+            "getCarrier" or "createCarrier" or "updateCarrier" => ParseExample("""{"id":3,"code":"UPS","name":"United Parcel Service","serviceLevel":"Ground","trackingUrlTemplate":"https://example.test/track/{trackingNumber}","isActive":true,"createdByUserId":42,"createdByUserDisplayName":"Alex Morgan","creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modifiedByUserDisplayName":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
             "getQuote" or "createQuote" or "updateQuote" or "transitionQuoteStatus" => ParseExample("""{"id":91,"quoteNumber":"Q-2026-000091","customerId":42,"shippingAddressId":84,"quoteDate":"2026-08-01","validUntil":"2026-08-31","status":"sent","notes":"Valid for 30 days.","customerAccountNumber":"ACME-001","customerName":"Acme Distribution","customerEmail":"ar@acme.example","customerPhone":"+1-555-0100","shippingLabel":"Main warehouse","shippingLine1":"100 Beacon Way","shippingLine2":null,"shippingCity":"Seattle","shippingState":"WA","shippingPostalCode":"98101","shippingCountry":"US","shippingAddressTypeCode":"shipping","lines":[{"id":1,"productId":7,"sku":"BEACON-01","productName":"Warehouse Beacon","quantity":2,"unitPrice":49.9500,"discountPercent":5.00,"lineSubtotal":99.90,"discountAmount":5.00,"lineTotal":94.90}],"subtotal":99.90,"discountTotal":5.00,"grandTotal":94.90,"salesOrderId":null,"createdByUserId":42,"creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":42,"modificationDate":"2026-08-01T15:35:00Z","version":"AQIDBAUGBwg="}"""),
             "getSalesOrder" or "createSalesOrder" or "updateSalesOrder" or "transitionSalesOrderStatus" or "convertQuoteToSalesOrder" => ParseExample("""{"id":101,"orderNumber":"SO-2026-000101","sourceQuoteId":91,"customerId":42,"shippingAddressId":84,"status":"draft","requestedShipDate":"2026-08-15","carrierId":3,"carrierName":"United Parcel Service","trackingNumber":"1Z999AA10123456784","customerAccountNumber":"ACME-001","customerName":"Acme Distribution","customerEmail":"ar@acme.example","customerPhone":"+1-555-0100","shippingLabel":"Main warehouse","shippingLine1":"100 Beacon Way","shippingLine2":null,"shippingCity":"Seattle","shippingState":"WA","shippingPostalCode":"98101","shippingCountry":"US","shippingAddressTypeCode":"shipping","lines":[{"id":1,"productId":7,"sku":"BEACON-01","productName":"Warehouse Beacon","quantity":2,"unitPrice":49.9500,"discountPercent":5.00,"lineSubtotal":99.90,"discountAmount":5.00,"lineTotal":94.90}],"subtotal":99.90,"discountTotal":5.00,"grandTotal":94.90,"createdByUserId":42,"creationDate":"2026-08-01T15:30:00Z","modifiedByUserId":null,"modificationDate":null,"version":"AQIDBAUGBwg="}"""),
             _ => null,
@@ -391,9 +399,37 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
         if (document.Components?.Schemas is null)
             return;
 
+        ConfigureTransportViewSchemas(document.Components.Schemas);
         ConfigureSharedProperties(document.Components.Schemas);
         ConfigureRequestSchemas(document.Components.Schemas);
         ConfigureSchemaExamples(document.Components.Schemas);
+    }
+
+    private static void ConfigureTransportViewSchemas(IDictionary<string, IOpenApiSchema> schemas)
+    {
+        foreach (string schemaName in new[] { "ProductView", "CustomerView", "CustomerAddressView", "CarrierView" })
+            RenameProperty(schemas, schemaName, "rowVersion", "version");
+
+        RenameProperty(schemas, "CustomerAddressView", "addressTypeCode", "type");
+        RenameProperty(schemas, "CustomerAddressView", "isDefaultBilling", "defaultBilling");
+        RenameProperty(schemas, "CustomerAddressView", "isDefaultShipping", "defaultShipping");
+    }
+
+    private static void RenameProperty(
+        IDictionary<string, IOpenApiSchema> schemas,
+        string schemaName,
+        string currentName,
+        string transportName)
+    {
+        if (!schemas.TryGetValue(schemaName, out IOpenApiSchema? schema) ||
+            schema is not OpenApiSchema mutable ||
+            mutable.Properties is null ||
+            !mutable.Properties.Remove(currentName, out IOpenApiSchema? property))
+            return;
+
+        mutable.Properties[transportName] = property;
+        if (mutable.Required?.Remove(currentName) == true)
+            mutable.Required.Add(transportName);
     }
 
     private static void ConfigureRequestSchemas(IDictionary<string, IOpenApiSchema> schemas)
@@ -428,10 +464,10 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
         SetNullable(schemas, "SalesOrderStatusTransitionRequest", "carrierId", "trackingNumber");
 
         SetNullable(schemas, "CurrentUserDto", "email");
-        SetNullable(schemas, "ProductDto", "thumbnailUrl", "createdByUserId", "modifiedByUserId", "modificationDate");
-        SetNullable(schemas, "CustomerDto", "phone", "createdByUserId", "modifiedByUserId", "modificationDate");
-        SetNullable(schemas, "AddressDto", "line2", "state", "createdByUserId", "modifiedByUserId", "modificationDate");
-        SetNullable(schemas, "CarrierDto", "trackingUrlTemplate", "createdByUserId", "modifiedByUserId", "modificationDate");
+        SetNullable(schemas, "ProductView", "thumbnailUrl", "createdByUserId", "createdByUserDisplayName", "modifiedByUserId", "modifiedByUserDisplayName", "modificationDate");
+        SetNullable(schemas, "CustomerView", "phone", "createdByUserId", "createdByUserDisplayName", "modifiedByUserId", "modifiedByUserDisplayName", "modificationDate");
+        SetNullable(schemas, "CustomerAddressView", "line2", "state", "createdByUserId", "createdByUserDisplayName", "modifiedByUserId", "modifiedByUserDisplayName", "modificationDate");
+        SetNullable(schemas, "CarrierView", "trackingUrlTemplate", "createdByUserId", "createdByUserDisplayName", "modifiedByUserId", "modifiedByUserDisplayName", "modificationDate");
         SetNullable(schemas, "QuoteDto", "notes", "customerPhone", "shippingLine2", "shippingState", "salesOrderId", "createdByUserId", "modifiedByUserId", "modificationDate");
         SetNullable(schemas, "QuoteSummaryDto", "salesOrderId", "createdByUserId", "modifiedByUserId", "modificationDate");
         SetNullable(schemas, "SalesOrderDto", "sourceQuoteId", "requestedShipDate", "carrierId", "carrierName", "trackingNumber", "customerPhone", "shippingLine2", "shippingState", "createdByUserId", "modifiedByUserId", "modificationDate");
@@ -442,6 +478,7 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
     {
         IReadOnlyDictionary<string, JsonNode> examples = new Dictionary<string, JsonNode>(StringComparer.Ordinal)
         {
+            ["ApiRootResponse"] = ResponseExample("getApiRoot")!,
             ["ProductCreateRequest"] = RequestExample("createProduct")!,
             ["ProductUpdateRequest"] = RequestExample("updateProduct")!,
             ["CustomerCreateRequest"] = RequestExample("createCustomer")!,
@@ -459,10 +496,10 @@ public sealed class BearerSecurityDocumentTransformer : IOpenApiDocumentTransfor
             ["SalesLineRequest"] = ParseExample("""{"productId":7,"quantity":2,"unitPrice":49.9500,"discountPercent":5.00}"""),
             ["CurrentUserDto"] = ResponseExample("getCurrentUser")!,
             ["DashboardSummaryDto"] = ResponseExample("getDashboardSummary")!,
-            ["ProductDto"] = ResponseExample("getProduct")!,
-            ["CustomerDto"] = ResponseExample("getCustomer")!,
-            ["AddressDto"] = ResponseExample("getAddress")!,
-            ["CarrierDto"] = ResponseExample("getCarrier")!,
+            ["ProductView"] = ResponseExample("getProduct")!,
+            ["CustomerView"] = ResponseExample("getCustomer")!,
+            ["CustomerAddressView"] = ResponseExample("getAddress")!,
+            ["CarrierView"] = ResponseExample("getCarrier")!,
             ["QuoteDto"] = ResponseExample("getQuote")!,
             ["SalesOrderDto"] = ResponseExample("getSalesOrder")!,
             ["SalesLineDto"] = ParseExample("""{"id":1,"productId":7,"sku":"BEACON-01","productName":"Warehouse Beacon","quantity":2,"unitPrice":49.9500,"discountPercent":5.00,"lineSubtotal":99.90,"discountAmount":5.00,"lineTotal":94.90}"""),

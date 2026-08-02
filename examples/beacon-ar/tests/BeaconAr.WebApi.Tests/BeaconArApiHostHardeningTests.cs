@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
@@ -43,6 +44,30 @@ public sealed class BeaconArApiHostHardeningTests
         Exception exception = await Assert.ThrowsAsync<Exception>(() => Task.Run(() => _ = factory.Server));
 
         StringAssert.Contains(AllMessages(exception), "Authentication:SigningKey is permitted only");
+    }
+
+    [TestMethod]
+    [DataRow("AzureAd:Instance")]
+    [DataRow("AzureAd:TenantId")]
+    [DataRow("AzureAd:ClientId")]
+    [DataRow("Cors:AllowedOrigins")]
+    public async Task ProductionRejectsEachMissingRequiredIdentityOrCorsSetting(string missingSetting)
+    {
+        await using ProductionConfigurationFactory factory = new(missingSetting);
+
+        Exception exception = await Assert.ThrowsAsync<Exception>(() => Task.Run(() => _ = factory.Server));
+
+        StringAssert.Contains(
+            AllMessages(exception),
+            "AzureAd instance, tenant ID, client ID, and at least one CORS origin are required");
+    }
+
+    [TestMethod]
+    public void ProductionAcceptsCompleteIdentityAndCorsConfigurationWithoutMetadataCalls()
+    {
+        using ProductionConfigurationFactory factory = new();
+
+        _ = factory.Server;
     }
 
     [TestMethod]
@@ -156,7 +181,10 @@ public sealed class BeaconArApiHostHardeningTests
         options.Authority = null;
         options.Configuration = new OpenIdConnectConfiguration { Issuer = Issuer };
         options.Configuration.SigningKeys.Add(key);
+        options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.Configuration);
         options.TokenValidationParameters.IssuerSigningKey = key;
+        options.TokenValidationParameters.ValidIssuer = Issuer;
+        options.TokenValidationParameters.ValidAudience = Audience;
     }
 
     private static string CreateToken()
@@ -167,7 +195,10 @@ public sealed class BeaconArApiHostHardeningTests
             Audience = Audience,
             Subject = new ClaimsIdentity(
             [
+                new Claim("tid", "beacon-host-tests"),
+                new Claim("oid", "00000000-0000-0000-0000-000000000004"),
                 new Claim("sub", "host-test-user"),
+                new Claim("idtyp", "user"),
                 new Claim("name", "Host Test User"),
                 new Claim("scp", "business.write"),
             ]),
@@ -204,6 +235,9 @@ public sealed class BeaconArApiHostHardeningTests
     private static void ConfigureTestingHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.UseSetting("AzureAd:Instance", "https://login.microsoftonline.com/");
+        builder.UseSetting("AzureAd:TenantId", "beacon-host-tests");
+        builder.UseSetting("AzureAd:ClientId", Audience);
         builder.UseSetting("Authentication:Audience", Audience);
         builder.UseSetting("Authentication:Issuer", Issuer);
         builder.UseSetting("Authentication:Permissions:Read", "business.read");
@@ -255,12 +289,40 @@ public sealed class BeaconArApiHostHardeningTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Production");
-            builder.UseSetting("Authentication:Authority", Issuer);
+            builder.UseSetting("AzureAd:Instance", "https://login.microsoftonline.com/");
+            builder.UseSetting("AzureAd:TenantId", "beacon-host-tests");
+            builder.UseSetting("AzureAd:ClientId", Audience);
             builder.UseSetting("Authentication:Audience", Audience);
             builder.UseSetting("Authentication:Issuer", Issuer);
             builder.UseSetting("Authentication:SigningKey", SigningKey);
             builder.UseSetting("Cors:AllowedOrigins:0", "https://spa.beacon.test");
             builder.UseSetting("ConnectionStrings:DatabaseConnection", "Server=(local);Database=BeaconArHostTests;Integrated Security=true;TrustServerCertificate=true");
+        }
+
+        #endregion
+    }
+
+    private sealed class ProductionConfigurationFactory(string? missingSetting = null) : WebApplicationFactory<Program>
+    {
+        #region Overrides
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseEnvironment("Production");
+            builder.UseSetting(
+                "AzureAd:Instance",
+                string.Equals(missingSetting, "AzureAd:Instance", StringComparison.Ordinal) ? " " : "https://login.microsoftonline.com/");
+            builder.UseSetting(
+                "AzureAd:TenantId",
+                string.Equals(missingSetting, "AzureAd:TenantId", StringComparison.Ordinal) ? " " : "beacon-host-tests");
+            builder.UseSetting(
+                "AzureAd:ClientId",
+                string.Equals(missingSetting, "AzureAd:ClientId", StringComparison.Ordinal) ? " " : Audience);
+            if (!string.Equals(missingSetting, "Cors:AllowedOrigins", StringComparison.Ordinal))
+                builder.UseSetting("Cors:AllowedOrigins:0", "https://spa.beacon.test");
+            builder.UseSetting(
+                "ConnectionStrings:DatabaseConnection",
+                "Server=(local);Database=BeaconArHostTests;Integrated Security=true;TrustServerCertificate=true");
         }
 
         #endregion

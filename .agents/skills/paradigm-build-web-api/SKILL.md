@@ -30,6 +30,14 @@ Prefer purpose-built request/command types for writes. Do not bind persistence e
 - If reflection JSON metadata is disabled, add every request, response, and nested type to a registered application `JsonSerializerContext`.
 - Configure request sizes, content types, streaming, and file inspection in the host.
 - Prefer an encrypted `Secure`/`HttpOnly` authentication cookie and CSRF protection for browser clients instead of storing tokens in `localStorage`; use bearer tokens when a non-browser client or API threat model requires them.
+- For Microsoft Entra bearer APIs, decide whether the application actor model permits delegated users,
+  service principals, or both before provisioning an application user. Treat an explicit `idtyp` as
+  authoritative. For legacy tokens without `idtyp`, use permission claims: `scp` identifies delegated
+  authorization, while `roles` without `scp` is application-only. Never infer a human actor by comparing
+  `oid` and `sub`; both claims can exist and differ for a service principal.
+- Fail closed outside local/test environments when required identity and CORS configuration is absent.
+  Regression-test each missing setting through actual host startup, plus the fully configured production
+  path without depending on a live metadata endpoint.
 - Configure structured logging, standard trace propagation, useful metrics, and separate liveness/readiness health checks. Prefer framework and already-approved host integrations.
 
 Framework reflection-based discovery is permitted. Avoid ad hoc reflection in runtime business code.

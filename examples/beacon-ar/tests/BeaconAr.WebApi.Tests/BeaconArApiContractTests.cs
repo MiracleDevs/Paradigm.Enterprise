@@ -26,8 +26,11 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using CustomerAddressView = BeaconAr.Domain.Receivables.Entities.CustomerAddressView;
 
 namespace BeaconAr.WebApi.Tests;
 
@@ -154,6 +157,51 @@ public sealed class BeaconArApiContractTests
     }
 
     [TestMethod]
+    public async Task GeneratedMasterViewsUseStableTransportAliasesAndExpandedFields()
+    {
+        await using TestApiFactory factory = new();
+        JsonSerializerOptions options = factory.Services
+            .GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.JsonOptions>>()
+            .Value.JsonSerializerOptions;
+        CustomerAddressView value = new()
+        {
+            Id = 9,
+            CustomerId = 4,
+            CustomerAccountNumber = "ACME-001",
+            CustomerName = "Acme Distribution",
+            AddressTypeId = 2,
+            AddressTypeCode = "shipping",
+            AddressTypeDisplayName = "Shipping",
+            Label = "Warehouse",
+            Line1 = "100 Beacon Way",
+            City = "Seattle",
+            PostalCode = "98101",
+            Country = "US",
+            IsDefaultBilling = false,
+            IsDefaultShipping = true,
+            CreationDate = new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero),
+            RowVersion = [1, 2, 3, 4],
+        };
+
+        string json = JsonSerializer.Serialize(value, options);
+        StringAssert.Contains(json, "\"customerAccountNumber\":\"ACME-001\"");
+        StringAssert.Contains(json, "\"customerName\":\"Acme Distribution\"");
+        StringAssert.Contains(json, "\"addressTypeDisplayName\":\"Shipping\"");
+        StringAssert.Contains(json, "\"type\":\"shipping\"");
+        StringAssert.Contains(json, "\"defaultBilling\":false");
+        StringAssert.Contains(json, "\"defaultShipping\":true");
+        StringAssert.Contains(json, "\"version\":\"AQIDBA==\"");
+        Assert.IsFalse(json.Contains("rowVersion", StringComparison.Ordinal));
+        Assert.IsFalse(json.Contains("addressTypeCode", StringComparison.Ordinal));
+
+        CustomerAddressView? roundTrip = JsonSerializer.Deserialize<CustomerAddressView>(json, options);
+        Assert.IsNotNull(roundTrip);
+        Assert.AreEqual("shipping", roundTrip.AddressTypeCode);
+        Assert.IsTrue(roundTrip.IsDefaultShipping);
+        CollectionAssert.AreEqual(value.RowVersion, roundTrip.RowVersion);
+    }
+
+    [TestMethod]
     public void Scenario10EndpointCatalogIsVersionedNamedAndProtected()
     {
         Type[] controllers =
@@ -206,7 +254,10 @@ public sealed class BeaconArApiContractTests
             Audience = audience,
             Subject = new ClaimsIdentity(
             [
+                new Claim("tid", "beacon-contract-tests"),
+                new Claim("oid", "00000000-0000-0000-0000-000000000003"),
                 new Claim("sub", "contract-user"),
+                new Claim("idtyp", "user"),
                 new Claim("name", "Contract User"),
                 new Claim("email", "contract@example.test"),
                 new Claim("scp", permission),
@@ -228,6 +279,9 @@ public sealed class BeaconArApiContractTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+            builder.UseSetting("AzureAd:Instance", "https://login.microsoftonline.com/");
+            builder.UseSetting("AzureAd:TenantId", "beacon-contract-tests");
+            builder.UseSetting("AzureAd:ClientId", Audience);
             builder.UseSetting("Authentication:Audience", Audience);
             builder.UseSetting("Authentication:Issuer", Issuer);
             builder.UseSetting("Authentication:Permissions:Read", "business.read");
@@ -237,6 +291,9 @@ public sealed class BeaconArApiContractTests
             {
                 ["Authentication:Audience"] = Audience,
                 ["Authentication:Issuer"] = Issuer,
+                ["AzureAd:Instance"] = "https://login.microsoftonline.com/",
+                ["AzureAd:TenantId"] = "beacon-contract-tests",
+                ["AzureAd:ClientId"] = Audience,
                 ["Authentication:Permissions:Read"] = "business.read",
                 ["Authentication:Permissions:Write"] = "business.write",
                 ["ConnectionStrings:DatabaseConnection"] = "Server=(local);Database=BeaconArTests;Integrated Security=true;TrustServerCertificate=true",
@@ -257,7 +314,10 @@ public sealed class BeaconArApiContractTests
             options.Authority = null;
             options.Configuration = new OpenIdConnectConfiguration { Issuer = Issuer };
             options.Configuration.SigningKeys.Add(key);
+            options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.Configuration);
             options.TokenValidationParameters.IssuerSigningKey = key;
+            options.TokenValidationParameters.ValidIssuer = Issuer;
+            options.TokenValidationParameters.ValidAudience = Audience;
         }
 
         #endregion

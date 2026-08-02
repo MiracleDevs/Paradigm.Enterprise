@@ -1,4 +1,5 @@
 using BeaconAr.Domain.MasterData.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Providers.MasterData;
 using BeaconAr.WebApi.Http;
 using BeaconAr.WebApi.Security;
@@ -32,7 +33,7 @@ public sealed class ProductsController : ControllerBase
     #region Public Methods
 
     [HttpGet(Name = "searchProducts")]
-    public async Task<ActionResult<PageResult<ProductDto>>> Search(
+    public async Task<ActionResult<PageResult<ProductView>>> Search(
         [FromQuery(Name = "search")] string? search,
         [FromQuery(Name = "pageNumber")] int pageNumber = 1,
         [FromQuery(Name = "pageSize")] int pageSize = 10,
@@ -40,18 +41,18 @@ public sealed class ProductsController : ControllerBase
         [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
         [FromQuery(Name = "active")] bool? active = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchAsync(new ProductSearchRequest
+        Ok(await _provider.SearchForApiAsync(new ProductSearchRequest
         {
             Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
             SortDirection = sortDirection, Active = active,
         }, cancellationToken));
 
     [HttpGet("{id:int}", Name = "getProduct")]
-    public async Task<ActionResult<ProductDto>> Get(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProductView>> Get(int id, CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        ProductDto value = await _provider.GetByIdAsync(id, cancellationToken);
-        ApiContract.SetETag(Response, value.Version);
+        ProductView value = await _provider.GetForApiAsync(id, cancellationToken);
+        ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }
 
@@ -59,16 +60,16 @@ public sealed class ProductsController : ControllerBase
     [Authorize(Policy = BeaconPolicies.Write)]
     [Consumes(ApiContract.Json)]
     [RequestSizeLimit(1_048_576)]
-    [ProducesResponseType<ProductDto>(StatusCodes.Status201Created)]
-    public async Task<ActionResult<ProductDto>> Create(
+    [ProducesResponseType<ProductView>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<ProductView>> Create(
         [FromBody] ProductCreateRequest request,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
-        (ProductDto value, bool replayed) = await _idempotency.ExecuteAsync(
-            "create-product", idempotencyKey, request, () => _provider.CreateAsync(request, cancellationToken),
-            id => _provider.GetByIdAsync(id, cancellationToken), static value => value.Id, cancellationToken);
-        ApiContract.SetETag(Response, value.Version);
+        (ProductView value, bool replayed) = await _idempotency.ExecuteAsync(
+            "create-product", idempotencyKey, request, () => _provider.CreateForApiAsync(request, cancellationToken),
+            id => _provider.GetForApiAsync(id, cancellationToken), static value => value.Id, cancellationToken);
+        ApiContract.SetETag(Response, value.RowVersion);
         if (replayed)
             Response.Headers["Idempotency-Replayed"] = "true";
         return CreatedAtRoute("getProduct", new { id = value.Id }, value);
@@ -78,15 +79,15 @@ public sealed class ProductsController : ControllerBase
     [Authorize(Policy = BeaconPolicies.Write)]
     [Consumes(ApiContract.Json)]
     [RequestSizeLimit(1_048_576)]
-    public async Task<ActionResult<ProductDto>> Update(
+    public async Task<ActionResult<ProductView>> Update(
         int id,
         [FromBody] ProductUpdateRequest request,
         [FromHeader(Name = "If-Match")] string? ifMatch,
         CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        ProductDto value = await _provider.UpdateAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
-        ApiContract.SetETag(Response, value.Version);
+        ProductView value = await _provider.UpdateForApiAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
+        ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }
 

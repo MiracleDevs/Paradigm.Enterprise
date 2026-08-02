@@ -129,8 +129,12 @@ public sealed class BeaconArApiSecurityMatrixTests
     public async Task ReadOnlyAndWriteTokensEnforceTheHostedOperationMatrix()
     {
         await using BeaconArSecurityTestHost factory = new();
-        using HttpClient readClient = AuthorizedClient(factory, BeaconArTestTokenFactory.Create(scope: "business.read"));
-        using HttpClient writeClient = AuthorizedClient(factory, BeaconArTestTokenFactory.Create(scope: "business.write"));
+        using HttpClient readClient = AuthorizedClient(
+            factory,
+            BeaconArTestTokenFactory.Create(scope: "business.read", identityType: null));
+        using HttpClient writeClient = AuthorizedClient(
+            factory,
+            BeaconArTestTokenFactory.Create(scope: "business.write", identityType: null));
 
         foreach (Operation operation in Operations)
         {
@@ -171,16 +175,43 @@ public sealed class BeaconArApiSecurityMatrixTests
     }
 
     [TestMethod]
-    public async Task ScopeAndRoleEvaluationIsExactCaseSensitiveAndWriteImpliesRead()
+    public async Task ApplicationOnlyRoleTokensAreForbiddenBeforeUserProvisioning()
+    {
+        await using BeaconArSecurityTestHost factory = new();
+        using HttpClient explicitApplicationClient = AuthorizedClient(
+            factory,
+            BeaconArTestTokenFactory.CreateApplication(["business.read"]));
+        using HttpClient rolesOnlyReadClient = AuthorizedClient(
+            factory,
+            BeaconArTestTokenFactory.CreateApplication(["business.read"], includeIdentityType: false));
+        using HttpClient rolesOnlyWriteClient = AuthorizedClient(
+            factory,
+            BeaconArTestTokenFactory.CreateApplication(["business.write"], includeIdentityType: false));
+
+        using HttpResponseMessage explicitApplication = await explicitApplicationClient.GetAsync("/api/v1/me");
+        await AssertProblem(explicitApplication, HttpStatusCode.Forbidden, "forbidden", "idtyp application profile");
+        using HttpResponseMessage rolesOnlyProfile = await rolesOnlyReadClient.GetAsync("/api/v1/me");
+        await AssertProblem(rolesOnlyProfile, HttpStatusCode.Forbidden, "forbidden", "roles-only application profile");
+        using HttpResponseMessage rolesOnlyRead = await rolesOnlyReadClient.GetAsync("/api/v1/dashboard/summary");
+        await AssertProblem(rolesOnlyRead, HttpStatusCode.Forbidden, "forbidden", "roles-only application read");
+        using HttpResponseMessage rolesOnlyWrite = await rolesOnlyWriteClient.PostAsync("/api/v1/products", content: null);
+        await AssertProblem(rolesOnlyWrite, HttpStatusCode.Forbidden, "forbidden", "roles-only application write");
+
+        Assert.AreEqual(0, factory.CurrentUserResolutionCount);
+    }
+
+    [TestMethod]
+    public async Task DelegatedUserScopeAndRoleEvaluationIsExactCaseSensitiveAndWriteImpliesRead()
     {
         PermissionCase[] cases =
         [
             new("no grants", BeaconArTestTokenFactory.Create(), false, false),
-            new("read scope", BeaconArTestTokenFactory.Create(scope: "business.read"), true, false),
-            new("write scope", BeaconArTestTokenFactory.Create(scope: "business.write"), true, true),
+            new("delegated read scope", BeaconArTestTokenFactory.Create(scope: "business.read", identityType: null), true, false),
+            new("delegated write scope", BeaconArTestTokenFactory.Create(scope: "business.write", identityType: null), true, true),
             new("space-delimited scope", BeaconArTestTokenFactory.Create(scope: "unrelated business.read another"), true, false),
-            new("read role", BeaconArTestTokenFactory.Create(roles: ["business.read"]), true, false),
-            new("write role", BeaconArTestTokenFactory.Create(roles: ["business.write"]), true, true),
+            new("explicit user read role", BeaconArTestTokenFactory.Create(roles: ["business.read"]), true, false),
+            new("explicit user write role", BeaconArTestTokenFactory.Create(roles: ["business.write"]), true, true),
+            new("delegated role plus scope", BeaconArTestTokenFactory.Create(scope: "unrelated", roles: ["business.read"], identityType: null), true, false),
             new("roles array", BeaconArTestTokenFactory.Create(roles: ["unrelated", "business.read"]), true, false),
             new("singular role claim", BeaconArTestTokenFactory.Create(roles: ["business.read"], roleClaimType: "role"), false, false),
             new("scope case variant", BeaconArTestTokenFactory.Create(scope: "Business.Read"), false, false),
@@ -206,21 +237,24 @@ public sealed class BeaconArApiSecurityMatrixTests
     }
 
     [TestMethod]
-    public async Task AuthenticatedIdentitiesMissingRequiredClaimsAreForbiddenBeforeDataAccess()
+    public async Task IncompleteDelegatedUserIdentitiesAreForbiddenBeforeBusinessDataAccess()
     {
-        (string Name, string Token)[] cases =
+        (string Name, string Token, string Detail)[] cases =
         [
-            ("subject", BeaconArTestTokenFactory.Create(scope: "business.read", includeSubject: false)),
-            ("display name", BeaconArTestTokenFactory.Create(scope: "business.read", includeName: false)),
+            ("object identifier", BeaconArTestTokenFactory.Create(scope: "business.read", includeObjectId: false), "not authorized"),
+            ("subject", BeaconArTestTokenFactory.Create(scope: "business.read", includeSubject: false), "not authorized"),
+            ("unknown identity type", BeaconArTestTokenFactory.Create(scope: "business.read", identityType: "service"), "not authorized"),
+            ("unclassified token", BeaconArTestTokenFactory.Create(identityType: null), "not authorized"),
+            ("display name", BeaconArTestTokenFactory.Create(scope: "business.read", includeName: false), "authenticated identity is incomplete"),
         ];
 
         await using BeaconArSecurityTestHost factory = new(useProductionIdentityProvider: true);
-        foreach ((string name, string token) in cases)
+        foreach ((string name, string token, string detail) in cases)
         {
             using HttpClient client = AuthorizedClient(factory, token);
             using HttpResponseMessage response = await client.GetAsync("/api/v1/me");
             await AssertProblem(response, HttpStatusCode.Forbidden, "forbidden", name);
-            StringAssert.Contains(await response.Content.ReadAsStringAsync(), "authenticated identity is incomplete", StringComparison.OrdinalIgnoreCase);
+            StringAssert.Contains(await response.Content.ReadAsStringAsync(), detail, StringComparison.OrdinalIgnoreCase);
         }
     }
 

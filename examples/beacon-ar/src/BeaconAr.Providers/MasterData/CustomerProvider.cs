@@ -31,19 +31,36 @@ public sealed class CustomerProvider
 
     #region Public Methods
 
-    public Task<PageResult<CustomerDto>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
+    public async Task<PageResult<CustomerDto>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
+    {
+        PageResult<CustomerView> result = await SearchForApiAsync(request, cancellationToken);
+        return new PageResult<CustomerDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
+            result.TotalPages, result.ItemsCount);
+    }
+
+    public async Task<CustomerDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+        ToDto(await GetForApiAsync(id, cancellationToken));
+
+    public async Task<CustomerDto> CreateAsync(CustomerCreateRequest request, CancellationToken cancellationToken) =>
+        ToDto(await CreateForApiAsync(request, cancellationToken));
+
+    public async Task<CustomerDto> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion,
+        CancellationToken cancellationToken) =>
+        ToDto(await UpdateForApiAsync(id, request, expectedVersion, cancellationToken));
+
+    public Task<PageResult<CustomerView>> SearchForApiAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
     {
         MasterDataRequestValidator.ValidateSearch(request, "id", "name");
-        return SearchLegacyAsync(request, cancellationToken);
+        return ViewRepository.SearchAsync(request, cancellationToken);
     }
 
-    public async Task<CustomerDto> GetByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<CustomerView> GetForApiAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return ToDto(await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("customer"));
+        return await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("customer");
     }
 
-    public async Task<CustomerDto> CreateAsync(CustomerCreateRequest request, CancellationToken cancellationToken)
+    public async Task<CustomerView> CreateForApiAsync(CustomerCreateRequest request, CancellationToken cancellationToken)
     {
         CustomerCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
@@ -61,10 +78,10 @@ public sealed class CustomerProvider
             await UnitOfWork.CommitChangesAsync();
             return customer.Id;
         }, "referenced_record");
-        return await GetByIdAsync(id, cancellationToken);
+        return await GetForApiAsync(id, cancellationToken);
     }
 
-    public async Task<CustomerDto> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion,
+    public async Task<CustomerView> UpdateForApiAsync(int id, CustomerUpdateRequest request, string expectedVersion,
         CancellationToken cancellationToken)
     {
         CustomerUpdateRequest value = MasterDataRequestValidator.Normalize(request);
@@ -88,7 +105,7 @@ public sealed class CustomerProvider
             await UnitOfWork.CommitChangesAsync();
             return customer.Id;
         }, "referenced_record");
-        return await GetByIdAsync(id, cancellationToken);
+        return await GetForApiAsync(id, cancellationToken);
     }
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -146,14 +163,6 @@ public sealed class CustomerProvider
             await UnitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_record");
-    }
-
-    private async Task<PageResult<CustomerDto>> SearchLegacyAsync(CustomerSearchRequest request,
-        CancellationToken cancellationToken)
-    {
-        PageResult<CustomerView> result = await ViewRepository.SearchAsync(request, cancellationToken);
-        return new PageResult<CustomerDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
-            result.TotalPages, result.ItemsCount);
     }
 
     private static CustomerDto ToDto(CustomerView customer) => new(
