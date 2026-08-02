@@ -9,6 +9,9 @@ internal static class BeaconArTestTokenFactory
 {
     #region Constants
 
+    private const string ApplicationObjectId = "00000000-0000-0000-0000-000000000002";
+    private const string ApplicationSubject = "application-subject-0002";
+
     public const string Audience = "api://beacon-security-tests";
     public const string Issuer = "https://issuer.beacon.security.test";
     public const string SigningKey = "beacon-ar-security-tests-signing-key-2026";
@@ -28,9 +31,16 @@ internal static class BeaconArTestTokenFactory
         bool includeName = true,
         bool includeExpiration = true,
         DateTime? notBefore = null,
-        DateTime? expires = null)
+        DateTime? expires = null,
+        bool includeObjectId = true,
+        string? identityType = "user")
     {
         List<Claim> claims = [];
+        claims.Add(new Claim("tid", "beacon-security-tests"));
+        if (includeObjectId)
+            claims.Add(new Claim("oid", "00000000-0000-0000-0000-000000000001"));
+        if (identityType is not null)
+            claims.Add(new Claim("idtyp", identityType));
         if (includeSubject)
             claims.Add(new Claim("sub", "security-test-user"));
         if (includeName)
@@ -57,13 +67,39 @@ internal static class BeaconArTestTokenFactory
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public static string CreateApplication(IReadOnlyList<string> roles, bool includeIdentityType = true)
+    {
+        List<Claim> claims =
+        [
+            new Claim("tid", "beacon-security-tests"),
+            new Claim("oid", ApplicationObjectId),
+            new Claim("sub", ApplicationSubject),
+        ];
+        if (includeIdentityType)
+            claims.Add(new Claim("idtyp", "app"));
+        foreach (string role in roles)
+            claims.Add(new Claim("roles", role));
+
+        DateTime now = DateTime.UtcNow;
+        JwtSecurityToken token = new(
+            Issuer,
+            Audience,
+            claims,
+            now.AddMinutes(-1),
+            now.AddMinutes(5),
+            new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey)),
+                SecurityAlgorithms.HmacSha256));
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public static string CreateUnsigned()
     {
         DateTime now = DateTime.UtcNow;
         JwtSecurityToken token = new(
             Issuer,
             Audience,
-            [new Claim("sub", "security-test-user"), new Claim("name", "Security Test User")],
+            [new Claim("tid", "beacon-security-tests"), new Claim("oid", "00000000-0000-0000-0000-000000000001"), new Claim("sub", "security-test-user"), new Claim("idtyp", "user"), new Claim("name", "Security Test User")],
             now.AddMinutes(-1),
             now.AddMinutes(5));
         return new JwtSecurityTokenHandler().WriteToken(token);

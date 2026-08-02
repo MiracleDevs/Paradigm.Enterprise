@@ -14,5 +14,13 @@ public interface IAddressProvider : IEditProvider<CustomerAddressView, int>
 
     Task<AddressDto> UpdateAsync(int id, AddressUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
 
+    Task<PageResult<CustomerAddressView>> SearchForApiAsync(AddressSearchRequest request, CancellationToken cancellationToken);
+
+    Task<CustomerAddressView> GetForApiAsync(int id, CancellationToken cancellationToken);
+
+    Task<CustomerAddressView> CreateForApiAsync(AddressCreateRequest request, CancellationToken cancellationToken);
+
+    Task<CustomerAddressView> UpdateForApiAsync(int id, AddressUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
+
     Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken);
 }

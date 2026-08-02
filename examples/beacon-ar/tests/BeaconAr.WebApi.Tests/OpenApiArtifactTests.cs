@@ -7,14 +7,15 @@ public sealed class OpenApiArtifactTests
 {
     #region Constants
 
-    private const int ExpectedOperationCount = 35;
-    private const int ExpectedPathCount = 17;
+    private const int ExpectedOperationCount = 36;
+    private const int ExpectedPathCount = 18;
 
     #endregion
 
     #region Fields
 
     private static readonly string[] ProblemRequiredProperties = ["status", "code", "title", "detail", "correlationId"];
+    private static readonly string[] RootResponseProperties = ["name", "version"];
 
     private static readonly HashSet<string> BadRequestOperations = new(StringComparer.Ordinal)
     {
@@ -75,6 +76,12 @@ public sealed class OpenApiArtifactTests
         Assert.AreEqual(ExpectedPathCount, paths.EnumerateObject().Count());
         Assert.AreEqual(ExpectedOperationCount, operations.Count);
         Assert.AreEqual(ExpectedOperationCount, operations.Select(OperationId).Distinct(StringComparer.Ordinal).Count());
+        StringAssert.Contains(root.GetProperty("info").GetProperty("description").GetString()!, "Delegated Microsoft Entra user access tokens");
+        string bearerDescription = root.GetProperty("components").GetProperty("securitySchemes")
+            .GetProperty("bearerAuth").GetProperty("description").GetString()!;
+        StringAssert.Contains(bearerDescription, "Explicit idtyp must be user");
+        StringAssert.Contains(bearerDescription, "when idtyp is absent, scp is required");
+        StringAssert.Contains(bearerDescription, "roles-only tokens are rejected");
 
         VerifyOperationContracts(operations);
         VerifyHeaders(operations);
@@ -115,6 +122,16 @@ public sealed class OpenApiArtifactTests
         foreach (JsonElement operation in operations)
         {
             string operationId = OperationId(operation);
+            if (string.Equals(operationId, "getApiRoot", StringComparison.Ordinal))
+            {
+                Assert.AreEqual(0, operation.GetProperty("security").GetArrayLength());
+                JsonProperty[] responses = operation.GetProperty("responses").EnumerateObject().ToArray();
+                Assert.AreEqual(1, responses.Length);
+                Assert.AreEqual("200", responses[0].Name);
+                Assert.IsTrue(responses[0].Value.GetProperty("content").GetProperty("application/json").TryGetProperty("example", out _));
+                continue;
+            }
+
             Assert.IsTrue(operation.GetProperty("security").EnumerateArray().Any(requirement => requirement.TryGetProperty("bearerAuth", out _)),
                 $"{operationId} must require bearerAuth.");
 
@@ -234,11 +251,29 @@ public sealed class OpenApiArtifactTests
         Assert.AreEqual(32, product.GetProperty("properties").GetProperty("sku").GetProperty("maxLength").GetInt32());
         Assert.AreEqual(0.0001m, product.GetProperty("properties").GetProperty("unitPrice").GetProperty("minimum").GetDecimal());
 
-        JsonElement productResponse = Schema(root, "ProductDto").GetProperty("properties");
+        JsonElement productResponse = Schema(root, "ProductView").GetProperty("properties");
         Assert.IsTrue(productResponse.GetProperty("modifiedByUserId").GetProperty("nullable").GetBoolean());
         Assert.AreEqual("integer", productResponse.GetProperty("modifiedByUserId").GetProperty("type").GetString());
         Assert.IsTrue(productResponse.GetProperty("modificationDate").GetProperty("nullable").GetBoolean());
         Assert.AreEqual("date-time", productResponse.GetProperty("modificationDate").GetProperty("format").GetString());
+        Assert.IsTrue(productResponse.TryGetProperty("createdByUserDisplayName", out _));
+        Assert.IsTrue(productResponse.TryGetProperty("modifiedByUserDisplayName", out _));
+        Assert.IsTrue(productResponse.TryGetProperty("version", out _));
+        Assert.IsFalse(productResponse.TryGetProperty("rowVersion", out _));
+
+        JsonElement addressResponse = Schema(root, "CustomerAddressView").GetProperty("properties");
+        Assert.IsTrue(addressResponse.TryGetProperty("customerAccountNumber", out _));
+        Assert.IsTrue(addressResponse.TryGetProperty("customerName", out _));
+        Assert.IsTrue(addressResponse.TryGetProperty("addressTypeDisplayName", out _));
+        Assert.IsTrue(addressResponse.TryGetProperty("type", out _));
+        Assert.IsTrue(addressResponse.TryGetProperty("defaultBilling", out _));
+        Assert.IsTrue(addressResponse.TryGetProperty("defaultShipping", out _));
+        Assert.IsFalse(addressResponse.TryGetProperty("addressTypeCode", out _));
+
+        JsonElement rootResponse = Schema(root, "ApiRootResponse");
+        HashSet<string> rootProperties = rootResponse.GetProperty("properties").EnumerateObject().Select(static property => property.Name).ToHashSet(StringComparer.Ordinal);
+        CollectionAssert.AreEquivalent(RootResponseProperties, rootProperties.ToArray());
+        Assert.IsTrue(rootResponse.TryGetProperty("example", out _));
 
         JsonElement customer = Schema(root, "CustomerCreateRequest");
         Assert.AreEqual(5, customer.GetProperty("properties").GetProperty("paymentTermsDays").GetProperty("enum").GetArrayLength());

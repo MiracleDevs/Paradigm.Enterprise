@@ -15,3 +15,11 @@ Use the exact read/edit base exposed by the installed packages and carry the sam
 ## Source-generated JSON
 
 Keep serializer contexts application-owned or generator-owned. Register their resolvers with MVC and cover each endpoint in serialization tests; missing nested metadata often appears only at runtime.
+
+## Microsoft Entra actors
+
+Authorize the token before resolving or persisting the current application user. If the application is
+delegated-user-only, apply that requirement to default, fallback, and every named business policy so an
+application token cannot reach user provisioning. Cover explicit user/app `idtyp`, legacy `scp`, legacy
+roles-only application tokens with distinct `oid`/`sub`, combined scope/role user tokens, unknown identity
+types, and missing actor identifiers.

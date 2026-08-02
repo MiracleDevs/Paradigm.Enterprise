@@ -37,13 +37,13 @@ Use `dotnet tool run paradigm api show/search` only to resolve an exact signatur
 
 ## Review in risk order
 
-1. Security: inherited anonymous metadata, authorization per action, browser cookie/token storage and CSRF, exposure versus authorization, secret/error disclosure, request limits.
+1. Security: inherited anonymous metadata, authorization per action, browser cookie/token storage and CSRF, exposure versus authorization, secret/error disclosure, request limits. For Entra bearer APIs, verify the delegated-user/service-principal actor decision before user provisioning; reject `oid`/`sub` comparison as a token-type discriminator and require `idtyp` or the documented `scp`/`roles` fallback.
 2. Correctness: invariants, identifier consistency, nullability, query bounds/order, stored-procedure result ordering, assigned system IDs and enum/seed parity, status-transition history, pre-pre/DACPAC ordering, database bootstrap idempotency, baseline/import rules, transaction and external-side-effect claims.
 3. Architecture: HTTP only in controllers, orchestration in Providers, invariants in Domain, persistence only in repositories, inward references.
 4. Conventions: one semantic type per file, required member regions/order, least visibility, immutability, meaningful folders, public discoverable types only where required, exact `I{ConcreteName}` interfaces, marker inheritance, reachable assemblies, correct lifetimes.
 5. Generation: no edits to replaceable output; generated source has an early ownership marker and generated types have compiled `GeneratedCodeAttribute` metadata when assembly checks are used; JSON/request/response metadata complete. When a generated routine result changes, reject parallel handwritten mappers and stale result models/registrations; verify the atomic generator is byte-stable across a second run.
 6. Operations: cancellation, standard trace correlation, structured logs, metrics, liveness/readiness, dependency health, Aspire wait ordering, retry/idempotency, secret-free generated deployment artifacts.
-7. Tests: behavior and failure paths at the cheapest effective boundary.
+7. Tests: behavior and failure paths at the cheapest effective boundary. Exercise every required production identity/CORS setting by starting the real host with that setting absent, and prove the fully configured startup path without relying on live identity metadata.
 
 Reject repository contracts/public members exposing `IQueryable`, EF pagination where a stored-procedure boundary is required, public setters on handwritten entity state, and state mutation performed outside entity behavior. Exercise inherited typed-provider operations through their interfaces; class ancestry alone does not prove search is implemented or mutations preserve validation, concurrency, audit, and transaction policy. Verify positive behavior tests, not only property mapping.
 

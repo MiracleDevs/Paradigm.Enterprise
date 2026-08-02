@@ -2,7 +2,9 @@ using System.Text.Json.Serialization;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Reporting.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.WebApi.Endpoints;
 using Microsoft.AspNetCore.Mvc;
 using BeaconAr.WebApi.Serialization;
 
@@ -23,24 +25,24 @@ namespace BeaconAr.WebApi;
 [JsonSerializable(typeof(DashboardSummaryDto))]
 [JsonSerializable(typeof(ProductCreateRequest))]
 [JsonSerializable(typeof(ProductUpdateRequest))]
-[JsonSerializable(typeof(ProductDto))]
+[JsonSerializable(typeof(ProductView))]
 [JsonSerializable(typeof(ProductSearchRequest))]
-[JsonSerializable(typeof(PageResult<ProductDto>))]
+[JsonSerializable(typeof(PageResult<ProductView>))]
 [JsonSerializable(typeof(CustomerCreateRequest))]
 [JsonSerializable(typeof(CustomerUpdateRequest))]
-[JsonSerializable(typeof(CustomerDto))]
+[JsonSerializable(typeof(CustomerView))]
 [JsonSerializable(typeof(CustomerSearchRequest))]
-[JsonSerializable(typeof(PageResult<CustomerDto>))]
+[JsonSerializable(typeof(PageResult<CustomerView>))]
 [JsonSerializable(typeof(AddressCreateRequest))]
 [JsonSerializable(typeof(AddressUpdateRequest))]
-[JsonSerializable(typeof(AddressDto))]
+[JsonSerializable(typeof(CustomerAddressView))]
 [JsonSerializable(typeof(AddressSearchRequest))]
-[JsonSerializable(typeof(PageResult<AddressDto>))]
+[JsonSerializable(typeof(PageResult<CustomerAddressView>))]
 [JsonSerializable(typeof(CarrierCreateRequest))]
 [JsonSerializable(typeof(CarrierUpdateRequest))]
-[JsonSerializable(typeof(CarrierDto))]
+[JsonSerializable(typeof(CarrierView))]
 [JsonSerializable(typeof(CarrierSearchRequest))]
-[JsonSerializable(typeof(PageResult<CarrierDto>))]
+[JsonSerializable(typeof(PageResult<CarrierView>))]
 [JsonSerializable(typeof(QuoteCreateRequest))]
 [JsonSerializable(typeof(QuoteUpdateRequest))]
 [JsonSerializable(typeof(QuoteDto))]
@@ -61,4 +63,5 @@ namespace BeaconAr.WebApi;
 [JsonSerializable(typeof(ValidationProblemDetails))]
 [JsonSerializable(typeof(Dictionary<string, string[]>))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
+[JsonSerializable(typeof(ApiRootResponse))]
 public sealed partial class BeaconArApiJsonContext : JsonSerializerContext;
