@@ -46,9 +46,11 @@ npm run check --prefix tests/BeaconAr.ClientContract
 
 ```bash
 dotnet build src/BeaconAr.sln --configuration Release
-dotnet test src/BeaconAr.sln --configuration Release --filter "TestCategory!=Integration"
+dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
 dotnet tool run paradigm validate --project src/BeaconAr.sln
-dotnet tool run paradigm checks run --project src/BeaconAr.WebApi/BeaconAr.WebApi.csproj
+dotnet tool run paradigm checks run --project src/BeaconAr.Domain/BeaconAr.Domain.csproj
+dotnet tool run paradigm checks run --project src/BeaconAr.Data/BeaconAr.Data.csproj
+dotnet tool run paradigm checks run --project src/BeaconAr.Providers/BeaconAr.Providers.csproj
 ```
 
 After publishing a disposable database, set `ConnectionStrings__DatabaseConnection` and run both database and authenticated HTTP acceptance suites with `--filter TestCategory=Integration`.
