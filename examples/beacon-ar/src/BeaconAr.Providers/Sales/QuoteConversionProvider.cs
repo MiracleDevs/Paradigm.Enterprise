@@ -10,13 +10,14 @@ using Paradigm.Enterprise.Domain.Uow;
 
 namespace BeaconAr.Providers.Sales;
 
-public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversionProvider
+public sealed class QuoteConversionProvider : IQuoteConversionProvider
 {
     #region Fields
 
     private readonly IQuoteRepository _quotes;
     private readonly ISalesOrderRepository _orders;
     private readonly ISalesOrderViewRepository _views;
+    private readonly SalesWorkflowCoordinator _workflow;
 
     #endregion
 
@@ -26,17 +27,12 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
         IQuoteRepository quotes,
         ISalesOrderRepository orders,
         ISalesOrderViewRepository views,
-        IAuditLogRepository auditLogs,
-        IUnitOfWork unitOfWork,
-        IApplicationOperationContext operationContext,
-        TimeProvider timeProvider,
-        ISalesPersistenceErrorClassifier errorClassifier,
-        IPersistenceSession persistenceSession)
-        : base(unitOfWork, auditLogs, operationContext, timeProvider, errorClassifier, persistenceSession)
+        SalesWorkflowCoordinator workflow)
     {
         _quotes = quotes;
         _orders = orders;
         _views = views;
+        _workflow = workflow;
     }
 
     #endregion
@@ -48,12 +44,12 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
         CancellationToken cancellationToken)
     {
         if (quoteId <= 0)
-            throw InvalidReference("quoteId", "Quote ID must be positive.");
+            throw SalesWorkflowCoordinator.InvalidReference("quoteId", "Quote ID must be positive.");
 
-        using ITransaction transaction = UnitOfWork.CreateTransaction();
+        using ITransaction transaction = _workflow.UnitOfWork.CreateTransaction();
         try
         {
-            Quote quote = await _quotes.LockForConversionAsync(quoteId, cancellationToken) ?? throw NotFound("quote");
+            Quote quote = await _quotes.LockForConversionAsync(quoteId, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");
             SalesOrder? existing = await _orders.FindBySourceQuoteAsync(quoteId, cancellationToken);
             if (existing is not null)
             {
@@ -62,17 +58,17 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
             }
 
             quote.ValidateForConversion();
-            DateTimeOffset now = TimeProvider.GetUtcNow();
+            DateTimeOffset now = _workflow.UtcNow;
             string number = await _orders.AllocateNumberAsync(cancellationToken);
-            SalesOrder order = SalesOrder.CreateFromQuote(number, quote, OperationContext.UserId, now);
+            SalesOrder order = SalesOrder.CreateFromQuote(number, quote, _workflow.UserId, now);
             _orders.Add(order);
-            _orders.AddHistory(SalesOrderStatusHistory.Create(order, OperationContext.UserId, now));
+            _orders.AddHistory(SalesOrderStatusHistory.Create(order, _workflow.UserId, now));
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _workflow.UnitOfWork.CommitChangesAsync();
             cancellationToken.ThrowIfCancellationRequested();
-            AddAudit("salesOrder", order.Id, "created", now, metadataJson: $"{{\"sourceQuoteId\":{quote.Id}}}");
-            AddAudit("quote", quote.Id, "converted", now, metadataJson: $"{{\"salesOrderId\":{order.Id}}}");
-            await UnitOfWork.CommitChangesAsync();
+            _workflow.AddAudit("salesOrder", order.Id, "created", now, metadataJson: $"{{\"sourceQuoteId\":{quote.Id}}}");
+            _workflow.AddAudit("quote", quote.Id, "converted", now, metadataJson: $"{{\"salesOrderId\":{order.Id}}}");
+            await _workflow.UnitOfWork.CommitChangesAsync();
             transaction.Commit();
             return new QuoteConversionResult(await GetOrderAsync(order.Id, cancellationToken), true);
         }
@@ -80,9 +76,9 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
         {
             if (transaction.IsActive)
                 transaction.Rollback();
-            PersistenceSession.DiscardTrackedChanges();
+            _workflow.PersistenceSession.DiscardTrackedChanges();
 
-            if (ErrorClassifier.IsSourceQuoteSingletonConflict(exception))
+            if (_workflow.ErrorClassifier.IsSourceQuoteSingletonConflict(exception))
             {
                 SalesOrder winner = await _orders.FindBySourceQuoteAsync(quoteId, cancellationToken)
                     ?? throw new SalesException("duplicate_key", "A quote conversion conflict occurred.", exception);
@@ -90,7 +86,7 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
             }
             if (exception is OperationCanceledException or SalesException)
                 throw;
-            PersistenceConflictKind conflict = ErrorClassifier.Classify(exception);
+            PersistenceConflictKind conflict = _workflow.ErrorClassifier.Classify(exception);
             if (conflict == PersistenceConflictKind.None)
                 throw;
             throw conflict switch
@@ -108,7 +104,7 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
     #region Private Methods
 
     private async Task<SalesOrderDto> GetOrderAsync(int id, CancellationToken cancellationToken) =>
-        await _views.GetByIdIncludingDeletedAsync(id, cancellationToken) ?? throw NotFound("sales order");
+        await _views.GetByIdIncludingDeletedAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("sales order");
 
     #endregion
 }

@@ -1,9 +1,10 @@
 using BeaconAr.Domain.MasterData.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Providers.MasterData;
 
-public interface IAddressProvider : IProvider
+public interface IAddressProvider : IEditProvider<CustomerAddressView, int>
 {
     Task<PageResult<AddressDto>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken);
 

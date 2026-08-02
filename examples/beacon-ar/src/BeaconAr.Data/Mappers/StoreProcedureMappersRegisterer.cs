@@ -14,25 +14,25 @@ public static class StoreProcedureMappersRegisterer
 
     private static void RegisterDataReaderMappers()
     {
+        DataReaderMapperFactory.RegisterMapper<Data.Reporting.StoredProcedures.DashboardRow>(() => new DataReaders.DashboardRowDataReaderMapper());
         DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.QuoteSearchRow>(() => new DataReaders.QuoteSearchRowDataReaderMapper());
         DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.SalesOrderSearchRow>(() => new DataReaders.SalesOrderSearchRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.Reporting.StoredProcedures.DashboardRow>(() => new DataReaders.DashboardRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.AddressSearchRow>(() => new DataReaders.AddressSearchRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.CarrierSearchRow>(() => new DataReaders.CarrierSearchRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.CustomerSearchRow>(() => new DataReaders.CustomerSearchRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.ProductSearchRow>(() => new DataReaders.ProductSearchRowDataReaderMapper());
+        DataReaderMapperFactory.RegisterMapper<Domain.Receivables.Entities.CarrierView>(() => new DataReaders.CarrierViewDataReaderMapper());
+        DataReaderMapperFactory.RegisterMapper<Domain.Receivables.Entities.CustomerAddressView>(() => new DataReaders.CustomerAddressViewDataReaderMapper());
+        DataReaderMapperFactory.RegisterMapper<Domain.Receivables.Entities.CustomerView>(() => new DataReaders.CustomerViewDataReaderMapper());
+        DataReaderMapperFactory.RegisterMapper<Domain.Receivables.Entities.ProductView>(() => new DataReaders.ProductViewDataReaderMapper());
 
     }
 
     private static void RegisterSqlParameterMappers()
     {
-        SqlParameterMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.QuoteSearchParameters>(() => new SqlParameters.QuoteSearchParametersMapper());
-        SqlParameterMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.SalesOrderSearchParameters>(() => new SqlParameters.SalesOrderSearchParametersMapper());
-        SqlParameterMapperFactory.RegisterMapper<Data.Reporting.StoredProcedures.DashboardParameters>(() => new SqlParameters.DashboardParametersMapper());
         SqlParameterMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.AddressSearchParameters>(() => new SqlParameters.AddressSearchParametersMapper());
         SqlParameterMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.CarrierSearchParameters>(() => new SqlParameters.CarrierSearchParametersMapper());
         SqlParameterMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.CustomerSearchParameters>(() => new SqlParameters.CustomerSearchParametersMapper());
         SqlParameterMapperFactory.RegisterMapper<Data.MasterData.StoredProcedures.ProductSearchParameters>(() => new SqlParameters.ProductSearchParametersMapper());
+        SqlParameterMapperFactory.RegisterMapper<Data.Reporting.StoredProcedures.DashboardParameters>(() => new SqlParameters.DashboardParametersMapper());
+        SqlParameterMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.QuoteSearchParameters>(() => new SqlParameters.QuoteSearchParametersMapper());
+        SqlParameterMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.SalesOrderSearchParameters>(() => new SqlParameters.SalesOrderSearchParametersMapper());
 
     }
 }

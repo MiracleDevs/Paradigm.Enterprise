@@ -11,13 +11,14 @@ BEGIN
     DECLARE @SearchPattern NVARCHAR(640) = REPLACE(REPLACE(REPLACE(REPLACE(@Search, N'\', N'\\'), N'[', N'\['), N'%', N'\%'), N'_', N'\_');
 
     SELECT COUNT(1)
-    FROM [dbo].[Carrier]
+    FROM [dbo].[CarrierView]
     WHERE (@Search IS NULL OR [Code] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Name] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [ServiceLevel] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\')
       AND (@Active IS NULL OR [IsActive] = @Active);
 
     SELECT [Id], [Code], [Name], [ServiceLevel], [TrackingUrlTemplate], [IsActive], [CreatedByUserId],
-           [CreationDate], [ModifiedByUserId], [ModificationDate], [RowVersion]
-    FROM [dbo].[Carrier]
+           [CreatedByUserDisplayName], [CreationDate], [ModifiedByUserId], [ModifiedByUserDisplayName],
+           [ModificationDate], [RowVersion]
+    FROM [dbo].[CarrierView]
     WHERE (@Search IS NULL OR [Code] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Name] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [ServiceLevel] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\')
       AND (@Active IS NULL OR [IsActive] = @Active)
     ORDER BY

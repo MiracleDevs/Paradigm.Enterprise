@@ -6,7 +6,7 @@ using Paradigm.Enterprise.Data.Repositories;
 
 namespace BeaconAr.Data.MasterData;
 
-public sealed class CarrierRepository : RepositoryBase<ReceivablesDbContext, int>, ICarrierRepository
+public sealed class CarrierRepository : EditRepositoryBase<Carrier, ReceivablesDbContext, int>, ICarrierRepository
 {
     #region Constructors
 
@@ -28,10 +28,6 @@ public sealed class CarrierRepository : RepositoryBase<ReceivablesDbContext, int
 
     public Task<bool> HasReferencesAsync(int id, CancellationToken cancellationToken) =>
         EntityContext.SalesOrders.AsNoTracking().AnyAsync(order => order.CarrierId == id, cancellationToken);
-
-    public void Add(Carrier carrier) => EntityContext.Carriers.Add(carrier);
-
-    public void Delete(Carrier carrier) => EntityContext.Carriers.Remove(carrier);
 
     #endregion
 }

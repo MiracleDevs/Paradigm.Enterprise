@@ -11,13 +11,14 @@ BEGIN
     DECLARE @SearchPattern NVARCHAR(640) = REPLACE(REPLACE(REPLACE(REPLACE(@Search, N'\', N'\\'), N'[', N'\['), N'%', N'\%'), N'_', N'\_');
 
     SELECT COUNT(1)
-    FROM [dbo].[Product]
+    FROM [dbo].[ProductView]
     WHERE (@Search IS NULL OR [Sku] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Name] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Category] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\')
       AND (@Active IS NULL OR [IsActive] = @Active);
 
     SELECT [Id], [Sku], [Name], [Category], [UnitPrice], [StockQuantity], [ThumbnailUrl], [IsActive],
-           [CreatedByUserId], [CreationDate], [ModifiedByUserId], [ModificationDate], [RowVersion]
-    FROM [dbo].[Product]
+           [CreatedByUserId], [CreatedByUserDisplayName], [CreationDate], [ModifiedByUserId],
+           [ModifiedByUserDisplayName], [ModificationDate], [RowVersion]
+    FROM [dbo].[ProductView]
     WHERE (@Search IS NULL OR [Sku] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Name] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Category] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\')
       AND (@Active IS NULL OR [IsActive] = @Active)
     ORDER BY

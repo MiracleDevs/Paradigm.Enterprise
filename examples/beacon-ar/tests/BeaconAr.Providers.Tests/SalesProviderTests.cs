@@ -306,8 +306,9 @@ public sealed class SalesProviderTests
         FakeUnitOfWork unitOfWork,
         FakeSession? session = null,
         FakeQuoteViewRepository? views = null) => new(
-            quotes, views ?? new FakeQuoteViewRepository(quotes), references, audits, unitOfWork,
-            new FakeOperationContext(), new FakeTimeProvider(), new FakeClassifier(), session ?? new FakeSession());
+            quotes, views ?? new FakeQuoteViewRepository(quotes), references,
+            new SalesWorkflowCoordinator(unitOfWork, audits, new FakeOperationContext(), new FakeTimeProvider(),
+                new FakeClassifier(), session ?? new FakeSession()));
 
     private static QuoteCreateRequest Request() => new(
         1, 10, new DateOnly(2026, 8, 1), new DateOnly(2026, 8, 31), null,

@@ -8,7 +8,7 @@ using Paradigm.Enterprise.Data.Repositories;
 
 namespace BeaconAr.Data.MasterData;
 
-public sealed class AddressRepository : RepositoryBase<ReceivablesDbContext, int>, IAddressRepository
+public sealed class AddressRepository : EditRepositoryBase<CustomerAddress, ReceivablesDbContext, int>, IAddressRepository
 {
     #region Constructors
 
@@ -109,10 +109,6 @@ public sealed class AddressRepository : RepositoryBase<ReceivablesDbContext, int
         EntityContext.Entry(address).State = EntityState.Detached;
         address.Replace(request, addressTypeId, userId, now);
     }
-
-    public void Add(CustomerAddress address) => EntityContext.CustomerAddresses.Add(address);
-
-    public void Delete(CustomerAddress address) => EntityContext.CustomerAddresses.Remove(address);
 
     #endregion
 

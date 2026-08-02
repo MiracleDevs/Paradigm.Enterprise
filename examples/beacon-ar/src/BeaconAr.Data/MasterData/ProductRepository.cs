@@ -6,7 +6,7 @@ using Paradigm.Enterprise.Data.Repositories;
 
 namespace BeaconAr.Data.MasterData;
 
-public sealed class ProductRepository : RepositoryBase<ReceivablesDbContext, int>, IProductRepository
+public sealed class ProductRepository : EditRepositoryBase<Product, ReceivablesDbContext, int>, IProductRepository
 {
     #region Constructors
 
@@ -29,10 +29,6 @@ public sealed class ProductRepository : RepositoryBase<ReceivablesDbContext, int
     public async Task<bool> HasReferencesAsync(int id, CancellationToken cancellationToken) =>
         await EntityContext.QuoteLines.AsNoTracking().AnyAsync(line => line.ProductId == id, cancellationToken) ||
         await EntityContext.SalesOrderLines.AsNoTracking().AnyAsync(line => line.ProductId == id, cancellationToken);
-
-    public void Add(Product product) => EntityContext.Products.Add(product);
-
-    public void Delete(Product product) => EntityContext.Products.Remove(product);
 
     #endregion
 }

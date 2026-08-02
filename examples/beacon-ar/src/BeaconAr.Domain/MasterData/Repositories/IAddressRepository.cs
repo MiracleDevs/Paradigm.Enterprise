@@ -4,7 +4,7 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace BeaconAr.Domain.MasterData.Repositories;
 
-public interface IAddressRepository : IRepository
+public interface IAddressRepository : IEditRepository<CustomerAddress, int>
 {
     Task<CustomerAddress?> GetForUpdateAsync(int id, CancellationToken cancellationToken);
 
@@ -19,7 +19,4 @@ public interface IAddressRepository : IRepository
 
     Task<IReadOnlyList<CustomerAddress>> GetDefaultsForUpdateAsync(IEnumerable<int> customerIds, CancellationToken cancellationToken);
 
-    void Add(CustomerAddress address);
-
-    void Delete(CustomerAddress address);
 }

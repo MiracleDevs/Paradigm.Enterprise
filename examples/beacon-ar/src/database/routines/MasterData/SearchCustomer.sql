@@ -11,13 +11,14 @@ BEGIN
     DECLARE @SearchPattern NVARCHAR(640) = REPLACE(REPLACE(REPLACE(REPLACE(@Search, N'\', N'\\'), N'[', N'\['), N'%', N'\%'), N'_', N'\_');
 
     SELECT COUNT(1)
-    FROM [dbo].[Customer]
+    FROM [dbo].[CustomerView]
     WHERE (@Search IS NULL OR [AccountNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Name] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Email] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Phone] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\')
       AND (@Active IS NULL OR [IsActive] = @Active);
 
     SELECT [Id], [AccountNumber], [Name], [Email], [Phone], [CreditLimit], [PaymentTermsDays], [IsActive],
-           [CreatedByUserId], [CreationDate], [ModifiedByUserId], [ModificationDate], [RowVersion]
-    FROM [dbo].[Customer]
+           [CreatedByUserId], [CreatedByUserDisplayName], [CreationDate], [ModifiedByUserId],
+           [ModifiedByUserDisplayName], [ModificationDate], [RowVersion]
+    FROM [dbo].[CustomerView]
     WHERE (@Search IS NULL OR [AccountNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Name] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Email] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\' OR [Phone] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\')
       AND (@Active IS NULL OR [IsActive] = @Active)
     ORDER BY
