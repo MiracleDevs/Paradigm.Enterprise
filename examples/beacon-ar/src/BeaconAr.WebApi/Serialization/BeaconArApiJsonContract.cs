@@ -3,7 +3,7 @@ using BeaconAr.Domain.Receivables.Entities;
 
 namespace BeaconAr.WebApi.Serialization;
 
-internal static class BeaconArApiJsonContract
+public static class BeaconArApiJsonContract
 {
     #region Public Methods
 

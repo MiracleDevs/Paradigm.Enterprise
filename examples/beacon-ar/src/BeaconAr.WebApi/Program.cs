@@ -202,6 +202,7 @@ Assembly domainAssembly = typeof(BeaconAr.Domain.Receivables.Entities.Product).A
 builder.Services.RegisterMappers(domainAssembly);
 builder.Services.RegisterEntities(domainAssembly);
 builder.Services.AddScoped<IMasterDataPersistenceErrorClassifier, MasterDataPersistenceErrorClassifier>();
+builder.Services.AddScoped<IIdempotencyPersistenceErrorClassifier, IdempotencyPersistenceErrorClassifier>();
 builder.Services.AddScoped<MasterDataMutationCoordinator>();
 builder.Services.AddScoped<SalesWorkflowCoordinator>();
 builder.Services.AddScoped<ISalesPersistenceErrorClassifier, SalesPersistenceErrorClassifier>();

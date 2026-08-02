@@ -286,7 +286,7 @@ public sealed class ProductProviderTests
         var unitOfWork = new FakeUnitOfWork();
         ProductProvider provider = CreateProvider(repository, views, audits, unitOfWork);
 
-        ProductDto result = await provider.CreateAsync(
+        ProductView result = await provider.CreateAsync(
             new ProductCreateRequest(" SKU ", " Product ", " Category ", 1m, 0, null), CancellationToken.None);
 
         Assert.AreEqual(42, result.Id);

@@ -43,7 +43,7 @@ public sealed class AddressesController : ControllerBase
         [FromQuery(Name = "type")] string? type = null,
         [FromQuery(Name = "usage")] AddressUsage? usage = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchForApiAsync(new AddressSearchRequest
+        Ok(await _provider.SearchAsync(new AddressSearchRequest
         {
             Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
             SortDirection = sortDirection, CustomerId = customerId, Type = type, Usage = usage,
@@ -53,7 +53,7 @@ public sealed class AddressesController : ControllerBase
     public async Task<ActionResult<CustomerAddressView>> Get(int id, CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        CustomerAddressView value = await _provider.GetForApiAsync(id, cancellationToken);
+        CustomerAddressView value = await _provider.GetByIdAsync(id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }
@@ -65,7 +65,7 @@ public sealed class AddressesController : ControllerBase
     public async Task<ActionResult<CustomerAddressView>> Create([FromBody] AddressCreateRequest request, [FromHeader(Name = "Idempotency-Key")] string? key, CancellationToken cancellationToken)
     {
         (CustomerAddressView value, bool replayed) = await _idempotency.ExecuteAsync("create-address", key, request,
-            () => _provider.CreateForApiAsync(request, cancellationToken), id => _provider.GetForApiAsync(id, cancellationToken), static value => value.Id, cancellationToken);
+            () => _provider.CreateAsync(request, cancellationToken), id => _provider.GetByIdAsync(id, cancellationToken), static value => value.Id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         if (replayed) Response.Headers["Idempotency-Replayed"] = "true";
         return CreatedAtRoute("getAddress", new { id = value.Id }, value);
@@ -81,7 +81,7 @@ public sealed class AddressesController : ControllerBase
         CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        CustomerAddressView value = await _provider.UpdateForApiAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
+        CustomerAddressView value = await _provider.UpdateAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }

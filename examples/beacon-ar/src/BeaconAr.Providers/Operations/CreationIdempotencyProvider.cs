@@ -1,10 +1,8 @@
-using System.Data.Common;
 using System.Security.Cryptography;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Receivables.Entities;
-using Microsoft.Data.SqlClient;
 using Paradigm.Enterprise.Domain.Uow;
 
 namespace BeaconAr.Providers.Operations;
@@ -14,6 +12,7 @@ public sealed class CreationIdempotencyProvider : ICreationIdempotencyProvider
     #region Fields
 
     private readonly IIdempotencyRepository _requests;
+    private readonly IIdempotencyPersistenceErrorClassifier _persistenceErrors;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IApplicationOperationContext _operationContext;
     private readonly IPersistenceSession _persistenceSession;
@@ -25,12 +24,14 @@ public sealed class CreationIdempotencyProvider : ICreationIdempotencyProvider
 
     public CreationIdempotencyProvider(
         IIdempotencyRepository requests,
+        IIdempotencyPersistenceErrorClassifier persistenceErrors,
         IUnitOfWork unitOfWork,
         IApplicationOperationContext operationContext,
         IPersistenceSession persistenceSession,
         TimeProvider timeProvider)
     {
         _requests = requests;
+        _persistenceErrors = persistenceErrors;
         _unitOfWork = unitOfWork;
         _operationContext = operationContext;
         _persistenceSession = persistenceSession;
@@ -80,7 +81,7 @@ public sealed class CreationIdempotencyProvider : ICreationIdempotencyProvider
             if (transaction.IsActive)
                 transaction.Rollback();
             _persistenceSession.DiscardTrackedChanges();
-            if (!IsUniqueConflict(exception))
+            if (!_persistenceErrors.IsKeyConflict(exception))
                 throw;
 
             IdempotencyRequest? winner = await _requests.FindForUpdateAsync(
@@ -110,20 +111,6 @@ public sealed class CreationIdempotencyProvider : ICreationIdempotencyProvider
             throw new MasterDataException("idempotency_in_progress", "An idempotent request with this key is still in progress.");
         }
         return new CreationResult<T>(await reload(resourceId), false);
-    }
-
-    private static bool IsUniqueConflict(Exception exception)
-    {
-        for (Exception? current = exception; current is not null; current = current.InnerException)
-        {
-            if (current is SqlException sqlException && sqlException.Number is 2601 or 2627)
-                return true;
-            if (current is DbException databaseException && databaseException.ErrorCode is 2601 or 2627)
-                return true;
-            if (current.GetType().Name.Contains("Unique", StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-        return false;
     }
 
     #endregion

@@ -5,6 +5,8 @@
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
     <DefaultCollation>Latin1_General_100_CI_AS_SC</DefaultCollation>
     <EnableDefaultSqlItems>false</EnableDefaultSqlItems>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <ProjectGuid>{a09e027b-4428-49a6-9a92-c43cf35d9206}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup Label="Database Model">
     <Build Include="tables\**\*.sql" />

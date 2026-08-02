@@ -33,33 +33,16 @@ public sealed class ProductProvider
 
     #region Public Methods
 
-    public async Task<PageResult<ProductDto>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
-    {
-        PageResult<ProductView> result = await SearchForApiAsync(request, cancellationToken);
-        return new PageResult<ProductDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
-            result.TotalPages, result.ItemsCount);
-    }
-
-    public async Task<ProductDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        ToDto(await GetForApiAsync(id, cancellationToken));
-
-    public async Task<ProductDto> CreateAsync(ProductCreateRequest request, CancellationToken cancellationToken) =>
-        ToDto(await CreateForApiAsync(request, cancellationToken));
-
-    public async Task<ProductDto> UpdateAsync(int id, ProductUpdateRequest request, string expectedVersion,
-        CancellationToken cancellationToken) =>
-        ToDto(await UpdateForApiAsync(id, request, expectedVersion, cancellationToken));
-
-    public Task<PageResult<ProductView>> SearchForApiAsync(ProductSearchRequest request, CancellationToken cancellationToken)
+    public Task<PageResult<ProductView>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
     {
         MasterDataRequestValidator.ValidateSearch(request, "id", "sku", "name");
         return ViewRepository.SearchAsync(request, cancellationToken);
     }
 
-    public async Task<ProductView> GetForApiAsync(int id, CancellationToken cancellationToken) =>
+    public async Task<ProductView> GetByIdAsync(int id, CancellationToken cancellationToken) =>
         await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
 
-    public async Task<ProductView> CreateForApiAsync(ProductCreateRequest request, CancellationToken cancellationToken)
+    public async Task<ProductView> CreateAsync(ProductCreateRequest request, CancellationToken cancellationToken)
     {
         ProductCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
@@ -77,10 +60,10 @@ public sealed class ProductProvider
             await UnitOfWork.CommitChangesAsync();
             return product.Id;
         }, "referenced_record");
-        return await GetForApiAsync(id, cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task<ProductView> UpdateForApiAsync(int id, ProductUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
+    public async Task<ProductView> UpdateAsync(int id, ProductUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
     {
         ProductUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
@@ -100,7 +83,7 @@ public sealed class ProductProvider
             await UnitOfWork.CommitChangesAsync();
             return product.Id;
         }, "referenced_record");
-        return await GetForApiAsync(id, cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -158,11 +141,6 @@ public sealed class ProductProvider
             return id;
         }, "referenced_record");
     }
-
-    private static ProductDto ToDto(ProductView product) => new(
-        product.Id, product.Sku, product.Name, product.Category, product.UnitPrice, product.StockQuantity,
-        product.ThumbnailUrl, product.IsActive, product.CreatedByUserId, product.CreationDate,
-        product.ModifiedByUserId, product.ModificationDate, VersionTokenCodec.Encode(product.RowVersion));
 
     #endregion
 }
