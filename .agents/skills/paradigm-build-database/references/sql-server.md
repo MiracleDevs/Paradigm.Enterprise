@@ -13,7 +13,9 @@ dotnet sln <solution> add src/database/Product.Database.sqlproj
 dotnet build src/database/Product.Database.sqlproj
 ```
 
-Choose the target platform from the deployed SQL Server or Azure SQL target. Do not copy preview SDK versions from older applications. SDK-style globbing includes ordinary `.sql` object files; keep the project file minimal.
+Choose the target platform from the deployed SQL Server or Azure SQL target. Do not copy preview SDK versions from older applications. SDK-style globbing includes ordinary `.sql` object files; keep the project file minimal unless Visual Studio fails to display the required SQL source.
+
+When SDK SQL files are hidden in Visual Studio, use one verified explicit-item strategy: disable the SDK SQL glob and explicitly include each model category (`tables`, `views`, `functions`, `routines`, `types`, and any supported sequence category). Preserve `PreDeploy`, `PostDeploy`, and non-model script roles, including pre-pre-deployment and maintenance artifacts; do not compile them as model objects. Inspect evaluated `Build` paths and verify every path is unique before accepting the project. Do not combine explicit model includes with the SDK catch-all glob.
 
 Use:
 

@@ -13,8 +13,11 @@ Read and apply [Paradigm Good Coding Practices](../../references/good-coding-pra
 2. Put a new project under `src/database` and include it in the application `.sln` or `.slnx`. Keep direct CLI build/publish support.
 3. Use one object per file and group tables, views, functions, routines, types, and scripts by capability.
 4. Preserve established legacy names while maintaining an existing project. Apply canonical names to new projects and new objects unless compatibility requires otherwise.
+5. For consumer-facing major entity and transactional tables, add schema-bound `{Entity}View` projections that preserve the base mapping surface, retain IDs, add commonly used descriptive foreign-key fields, and remain one row per entity. Treat helper/reporting views and internal/status/history tables as concrete-consumer decisions rather than automatic DTOs.
 
 Read [SQL Server projects](references/sql-server.md) for `.sqlproj`/DACPAC/BACPAC work. Read [PostgreSQL DbPublisher](references/postgresql.md) for `project.jsonc` and ordered PostgreSQL scripts.
+
+When SDK SQL files are hidden in Visual Studio, use the verified explicit-item strategy in the SQL Server reference; do not mix it with the SDK SQL glob or duplicate model items.
 
 ## Make changes safely
 

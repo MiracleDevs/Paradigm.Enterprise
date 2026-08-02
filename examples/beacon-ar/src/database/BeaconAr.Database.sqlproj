@@ -4,14 +4,40 @@
     <SqlServerVersion>Sql160</SqlServerVersion>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
     <DefaultCollation>Latin1_General_100_CI_AS_SC</DefaultCollation>
+    <EnableDefaultSqlItems>false</EnableDefaultSqlItems>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Label="Database Model">
+    <Build Include="tables\**\*.sql" />
+    <Build Include="views\**\*.sql" />
+    <Build Include="functions\**\*.sql" />
+    <Build Include="routines\**\*.sql" />
+    <Build Include="types\**\*.sql" />
+    <Build Include="sequences\**\*.sql" />
+  </ItemGroup>
+  <ItemGroup Label="Deployment Scripts">
     <Build Remove="scripts\prepredeployment\**\*.sql" />
     <Build Remove="scripts\postdeployment\**\*Data.sql" />
     <Build Remove="scripts\verification\**\*.sql" />
-    <None Include="scripts\prepredeployment\PrePreDeployment.sql" />
-    <None Include="scripts\verification\FoundationSmoke.sql" />
     <PreDeploy Include="scripts\predeployment\PreDeployment.sql" />
     <PostDeploy Include="scripts\postdeployment\PostDeployment.sql" />
+    <None Include="scripts\prepredeployment\PrePreDeployment.sql" />
+    <None Include="scripts\postdeployment\**\*Data.sql" />
+    <None Include="scripts\verification\**\*.sql" />
+    <None Include="scripts\maintenance\**\*" />
+  </ItemGroup>
+  <ItemGroup Label="Project Documentation">
+    <None Include="bootstrap\**\*" />
+    <None Include="functions\**\*.md" />
+    <None Include="routines\**\*.md" />
+    <None Include="types\**\*.md" />
+  </ItemGroup>
+  <ItemGroup Label="Project Folders">
+    <Folder Include="tables\" />
+    <Folder Include="views\" />
+    <Folder Include="functions\" />
+    <Folder Include="routines\" />
+    <Folder Include="types\" />
+    <Folder Include="sequences\" />
+    <Folder Include="scripts\" />
   </ItemGroup>
 </Project>
