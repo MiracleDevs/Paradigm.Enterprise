@@ -5,5 +5,5 @@ namespace BeaconAr.Providers.Sales;
 
 public interface IQuoteConversionProvider : IProvider
 {
-    Task<QuoteConversionResult> ConvertAsync(int quoteId, string expectedVersion, CancellationToken cancellationToken);
+    Task<QuoteConversionResult> ConvertAsync(int quoteId, CancellationToken cancellationToken);
 }

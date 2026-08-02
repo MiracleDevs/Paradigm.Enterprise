@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -61,11 +63,11 @@ public static class Extensions
         app.MapHealthChecks(HealthEndpointPath, new HealthCheckOptions
         {
             Predicate = static check => !check.Tags.Contains("live"),
-        });
+        }).AllowAnonymous().WithMetadata(new HttpMethodMetadata(["GET", "HEAD"]));
         app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
         {
             Predicate = static check => check.Tags.Contains("live"),
-        });
+        }).AllowAnonymous().WithMetadata(new HttpMethodMetadata(["GET", "HEAD"]));
         return app;
     }
 

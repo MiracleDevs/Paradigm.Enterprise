@@ -68,13 +68,7 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
             Quote quote = Quote.CreateDraft(number, request, customer, address, products,
                 OperationContext.UserId, now);
             _quotes.Add(quote);
-            _quotes.AddHistory(new QuoteStatusHistory
-            {
-                Quote = quote,
-                StatusId = (int)QuoteState.Draft,
-                CreatedByUserId = OperationContext.UserId,
-                CreationDate = now,
-            });
+            _quotes.AddHistory(QuoteStatusHistory.Create(quote, OperationContext.UserId, now));
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             cancellationToken.ThrowIfCancellationRequested();
@@ -133,13 +127,7 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
             EnsureVersion(quote.RowVersion, expectedVersion);
             DateTimeOffset now = TimeProvider.GetUtcNow();
             QuoteState previous = quote.TransitionTo(request.Status, OperationContext.UserId, now);
-            _quotes.AddHistory(new QuoteStatusHistory
-            {
-                QuoteId = quote.Id,
-                StatusId = (int)request.Status,
-                CreatedByUserId = OperationContext.UserId,
-                CreationDate = now,
-            });
+            _quotes.AddHistory(QuoteStatusHistory.Create(quote, OperationContext.UserId, now));
             AddAudit("quote", quote.Id, "statusTransition", now, Code(previous), Code(request.Status));
             await UnitOfWork.CommitChangesAsync();
             return quote.Id;

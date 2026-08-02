@@ -47,6 +47,19 @@ public class CSharpCheckServiceTests
         Assert.IsTrue(diagnostics.Any(diagnostic => diagnostic.Code == "PE3104"));
     }
 
+    [TestMethod]
+    public void Evaluated_interceptor_namespaces_are_carried_into_parse_options()
+    {
+        var project = FixtureProject("GoodPractices", "GoodPractices.csproj");
+        var evaluated = EvaluatedProject.Load(project, "net10.0");
+        var feature = evaluated.CreateParseOptions().Features.Single(value =>
+            value.Key.Equals("InterceptorsNamespaces", StringComparison.Ordinal));
+        string[] namespaces = feature.Value.Split(';');
+        CollectionAssert.Contains(namespaces, "GoodPractices.Generated");
+        CollectionAssert.Contains(namespaces, "GoodPractices.Preview");
+        Assert.HasCount(1, namespaces.Where(value => value.Equals("GoodPractices.Generated", StringComparison.Ordinal)));
+    }
+
     #endregion
 
     #region Private Methods
