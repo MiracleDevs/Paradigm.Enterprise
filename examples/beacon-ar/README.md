@@ -4,6 +4,16 @@ Beacon AR is a complete .NET 10 and SQL Server example built on Paradigm.Enterpr
 
 The solution is a modular monolith with inward dependencies: `WebApi -> Providers -> Data -> Domain -> Interfaces`. Providers own transactions, audit facts, validation, lifecycle transitions, snapshots, concurrency, and creation idempotency. Controllers only own HTTP concerns. The SQL project in `src/database` is the schema source; runtime schema creation and cascading business-history deletes are intentionally absent.
 
+## Database read projections
+
+Every consumer-facing entity or transactional table has a schema-bound `{Entity}View` projection. These views expose the entity's complete mapping surface and expand foreign keys with commonly needed names, codes, and display values while preserving one row per base entity. `SearchQuote` and `SearchSalesOrder` now query these projections directly, establishing the database DTO contract.
+
+The intended application boundary is that EF Core Power Tools generates matching entity/view types and their shared domain interfaces, repositories retrieve entities or view shapes, and Providers own entity-to-view mapping and validation orchestration. That generated model/context work, detail-repository adoption of the views, and provider mapping remain pending Tasks 2 and 3; the current detail repositories still use the existing entity/pricing projections.
+
+`QuoteView` and `SalesOrderView` are the public pricing projections and expose the schema's `Subtotal`, `DiscountTotal`, and `GrandTotal` values. Their schema-bound pricing helpers are database implementation details rather than standalone API DTOs. Status catalogs, audit history, idempotency storage, and other internal tables do not receive API views unless a concrete consumer requires one.
+
+The SQL Server project is `src/database/BeaconAr.Database.sqlproj` and is included in `src/BeaconAr.sln`. Its Microsoft.Build.Sql item groups explicitly include tables, views, functions, routines, types, sequences, and deployment/support scripts so the full schema is visible when the solution is opened in Visual Studio.
+
 ## Prerequisites and local start
 
 - .NET SDK 10.0.302 or a compatible later patch

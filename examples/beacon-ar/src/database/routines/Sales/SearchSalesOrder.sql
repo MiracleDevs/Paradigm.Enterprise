@@ -26,7 +26,7 @@ BEGIN
     BEGIN TRANSACTION;
 
     SELECT COUNT(1)
-    FROM [dbo].[SalesOrder] AS [O]
+    FROM [dbo].[SalesOrderView] AS [O]
     WHERE [O].[DeletionDate] IS NULL
       AND (@Search IS NULL OR [O].[OrderNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
           OR [O].[TrackingNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
@@ -38,12 +38,10 @@ BEGIN
 
     SELECT [O].[Id], [O].[OrderNumber], [O].[SourceQuoteId], [O].[CustomerId],
            [O].[CustomerAccountNumberSnapshot], [O].[CustomerNameSnapshot], [O].[StatusId],
-           [O].[RequestedShipDate], [O].[CarrierId], [C].[Name] AS [CarrierName], [O].[TrackingNumber],
-           [P].[Subtotal], [P].[DiscountTotal], [P].[GrandTotal], [O].[CreatedByUserId], [O].[CreationDate],
+           [O].[RequestedShipDate], [O].[CarrierId], [O].[CarrierName], [O].[TrackingNumber],
+           [O].[Subtotal], [O].[DiscountTotal], [O].[GrandTotal], [O].[CreatedByUserId], [O].[CreationDate],
            [O].[ModifiedByUserId], [O].[ModificationDate], [O].[RowVersion]
-    FROM [dbo].[SalesOrder] AS [O]
-    INNER JOIN [dbo].[SalesOrderPricing] AS [P] ON [P].[SalesOrderId] = [O].[Id]
-    LEFT JOIN [dbo].[Carrier] AS [C] ON [C].[Id] = [O].[CarrierId]
+    FROM [dbo].[SalesOrderView] AS [O]
     WHERE [O].[DeletionDate] IS NULL
       AND (@Search IS NULL OR [O].[OrderNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
           OR [O].[TrackingNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'

@@ -25,7 +25,7 @@ BEGIN
     BEGIN TRANSACTION;
 
     SELECT COUNT(1)
-    FROM [dbo].[Quote] AS [Q]
+    FROM [dbo].[QuoteView] AS [Q]
     WHERE [Q].[DeletionDate] IS NULL
       AND (@Search IS NULL OR [Q].[QuoteNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
           OR [Q].[CustomerAccountNumberSnapshot] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
@@ -36,12 +36,10 @@ BEGIN
     SELECT [Q].[Id], [Q].[QuoteNumber], [Q].[CustomerId],
            [Q].[CustomerAccountNumberSnapshot], [Q].[CustomerNameSnapshot],
            [Q].[QuoteDate], [Q].[ValidUntil], [Q].[StatusId],
-           [P].[Subtotal], [P].[DiscountTotal], [P].[GrandTotal],
-           [O].[Id] AS [SalesOrderId], [Q].[CreatedByUserId], [Q].[CreationDate],
+           [Q].[Subtotal], [Q].[DiscountTotal], [Q].[GrandTotal],
+           [Q].[SalesOrderId], [Q].[CreatedByUserId], [Q].[CreationDate],
            [Q].[ModifiedByUserId], [Q].[ModificationDate], [Q].[RowVersion]
-    FROM [dbo].[Quote] AS [Q]
-    INNER JOIN [dbo].[QuotePricing] AS [P] ON [P].[QuoteId] = [Q].[Id]
-    LEFT JOIN [dbo].[SalesOrder] AS [O] ON [O].[SourceQuoteId] = [Q].[Id]
+    FROM [dbo].[QuoteView] AS [Q]
     WHERE [Q].[DeletionDate] IS NULL
       AND (@Search IS NULL OR [Q].[QuoteNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
           OR [Q].[CustomerAccountNumberSnapshot] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'
