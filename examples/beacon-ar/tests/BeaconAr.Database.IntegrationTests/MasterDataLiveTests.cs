@@ -13,6 +13,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Data.Uow;
+using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Extensions;
 using Paradigm.Enterprise.Domain.Uow;
 
@@ -66,9 +67,29 @@ public sealed class MasterDataLiveTests
         public Task<bool> HasReferencesAsync(int id, CancellationToken cancellationToken) =>
             inner.HasReferencesAsync(id, cancellationToken);
 
-        public void Add(Product product) => inner.Add(product);
+        public Task<Product> AddAsync(Product product) => inner.AddAsync(product);
 
-        public void Delete(Product product) => inner.Delete(product);
+        public Task AddAsync(IEnumerable<Product> products) => inner.AddAsync(products);
+
+        public Task<Product> UpdateAsync(Product product) => inner.UpdateAsync(product);
+
+        public Task UpdateAsync(IEnumerable<Product> products) => inner.UpdateAsync(products);
+
+        public Task DeleteAsync(Product product) => inner.DeleteAsync(product);
+
+        public Task DeleteAsync(IEnumerable<Product> products) => inner.DeleteAsync(products);
+
+        public Task<Product?> GetByIdAsync(int id) => inner.GetByIdAsync(id);
+
+        public Task<IEnumerable<Product>> GetByIdsAsync(IEnumerable<int> ids) => inner.GetByIdsAsync(ids);
+
+        public Task<IEnumerable<Product>> GetAllAsync() => inner.GetAllAsync();
+
+        public Task<PaginatedResultDto<Product>> SearchAsync<TParameters>(TParameters parameters)
+            where TParameters : PaginationParametersBase => inner.SearchAsync(parameters);
+
+        public Task<PaginatedResultDto<Product>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters) =>
+            throw new NotSupportedException();
 
         public void Dispose()
         {
@@ -140,6 +161,20 @@ public sealed class MasterDataLiveTests
             Assert.AreEqual(firstProduct.Id, productPage.Items.Single().Id);
             Assert.IsFalse(string.IsNullOrWhiteSpace(firstProduct.Version));
 
+            PaginatedResultDto<ProductView> officialProductPage = await products.SearchAsync(
+                new MasterDataViewSearchParameters
+                {
+                    Search = "alpha product",
+                    Active = true,
+                    PageNumber = 1,
+                    PageSize = 10,
+                    SortBy = "name",
+                    SortDirection = "asc",
+                });
+            ProductView officialProduct = officialProductPage.Results.Single();
+            Assert.AreEqual(firstProduct.Id, officialProduct.Id);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(officialProduct.CreatedByUserDisplayName));
+
             MasterDataException duplicateProduct = await Assert.ThrowsAsync<MasterDataException>(() => products.CreateAsync(
                 new ProductCreateRequest($"SKU-{key}", "Duplicate", "Other", 1m, 0, null), CancellationToken.None));
             Assert.AreEqual("duplicate_key", duplicateProduct.Code);
@@ -158,6 +193,10 @@ public sealed class MasterDataLiveTests
             MasterDataException duplicateCustomer = await Assert.ThrowsAsync<MasterDataException>(() => customers.CreateAsync(
                 new CustomerCreateRequest($"ACCOUNT-{key}", "Duplicate", "duplicate@example.test", null, 0, 0), CancellationToken.None));
             Assert.AreEqual("duplicate_key", duplicateCustomer.Code);
+            PaginatedResultDto<CustomerView> officialCustomerPage = await customers.SearchAsync(
+                new MasterDataViewSearchParameters { Search = "Live Customer", PageSize = 10, SortBy = "name" });
+            Assert.AreEqual(customer.Id, officialCustomerPage.Results.Single().Id);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(officialCustomerPage.Results.Single().CreatedByUserDisplayName));
 
             AddressDto firstAddress = await addresses.CreateAsync(new AddressCreateRequest(
                 customer.Id, "shipping", "First", "1 First Street", null, "Buenos Aires", null, "1000", "ar", false, true), CancellationToken.None);
@@ -175,9 +214,23 @@ public sealed class MasterDataLiveTests
             Assert.AreEqual(secondAddress.Id, addressPage.Items.Single(address => address.DefaultShipping).Id);
             Assert.IsFalse(addressPage.Items.Single(address => address.Id == firstAddress.Id).DefaultShipping);
             Assert.AreEqual("AR", secondAddress.Country);
+            PaginatedResultDto<CustomerAddressView> officialAddressPage = await addresses.SearchAsync(
+                new MasterDataViewSearchParameters
+                {
+                    CustomerId = customer.Id,
+                    Usage = AddressUsage.Shipping,
+                    PageSize = 10,
+                    SortBy = "name",
+                });
+            Assert.AreEqual(2, officialAddressPage.PageInfo.ItemsCount);
+            Assert.IsTrue(officialAddressPage.Results.All(address => address.CustomerName == "Live Customer"));
 
             CarrierDto carrier = await carriers.CreateAsync(new CarrierCreateRequest(
                 $"carrier-{key}", "Live Carrier", "Priority", "https://carrier.example/track/{trackingNumber}"), CancellationToken.None);
+            PaginatedResultDto<CarrierView> officialCarrierPage = await carriers.SearchAsync(
+                new MasterDataViewSearchParameters { Search = "Live Carrier", PageSize = 10, SortBy = "name" });
+            Assert.AreEqual(carrier.Id, officialCarrierPage.Results.Single().Id);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(officialCarrierPage.Results.Single().CreatedByUserDisplayName));
             MasterDataException duplicateCarrier = await Assert.ThrowsAsync<MasterDataException>(() => carriers.CreateAsync(
                 new CarrierCreateRequest($"CARRIER-{key}", "Duplicate", "Priority", null), CancellationToken.None));
             Assert.AreEqual("duplicate_key", duplicateCarrier.Code);

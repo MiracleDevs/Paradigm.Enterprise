@@ -1,9 +1,10 @@
 using BeaconAr.Domain.MasterData.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Providers.MasterData;
 
-public interface ICarrierProvider : IProvider
+public interface ICarrierProvider : IEditProvider<CarrierView, int>
 {
     Task<PageResult<CarrierDto>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
 

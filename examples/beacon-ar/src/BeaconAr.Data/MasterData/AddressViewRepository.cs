@@ -2,16 +2,16 @@ using BeaconAr.Data.Mappers;
 using BeaconAr.Data.MasterData.StoredProcedures;
 using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Domain.MasterData;
-using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Receivables.Entities;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Repositories;
+using Paradigm.Enterprise.Domain.Dtos;
 
 namespace BeaconAr.Data.MasterData;
 
-public sealed class AddressViewRepository : RepositoryBase<ReceivablesDbContext, int>, IAddressViewRepository
+public sealed class AddressViewRepository : ReadRepositoryBase<CustomerAddressView, ReceivablesDbContext, int>, IAddressViewRepository
 {
     #region Fields
 
@@ -30,21 +30,19 @@ public sealed class AddressViewRepository : RepositoryBase<ReceivablesDbContext,
 
     #region Static Constructors
 
-    static AddressViewRepository() => StoreProcedureMappersRegisterer.RegisterMappers();
+    static AddressViewRepository()
+    {
+        StoreProcedureMappersRegisterer.RegisterMappers();
+    }
 
     #endregion
 
     #region Public Methods
 
-    public async Task<AddressDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
-    {
-        CustomerAddress? address = await EntityContext.CustomerAddresses.AsNoTracking()
-            .Include(item => item.AddressType)
-            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
-        return address is null ? null : Map(address);
-    }
+    public Task<CustomerAddressView?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+        AsQueryable().SingleOrDefaultAsync(view => view.Id == id, cancellationToken);
 
-    public async Task<PageResult<AddressDto>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken)
+    public async Task<PageResult<CustomerAddressView>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken)
     {
         string? search = string.IsNullOrWhiteSpace(request.Search) ? null : request.Search.Trim();
         string sort = string.IsNullOrWhiteSpace(request.SortField) ? "id" : request.SortField.Trim().ToLowerInvariant();
@@ -66,24 +64,51 @@ public sealed class AddressViewRepository : RepositoryBase<ReceivablesDbContext,
             SortDirection = request.SortDirection == SortDirection.Desc ? "desc" : "asc",
         }, UnitOfWork);
         cancellationToken.ThrowIfCancellationRequested();
-        return PageResultFactory.Create((rows ?? []).Select(Map).ToArray(), request.PageNumber, request.PageSize, count);
+        return PageResultFactory.Create(rows ?? [], request.PageNumber, request.PageSize, count);
+    }
+
+    #endregion
+
+    #region Overrides
+
+    protected override IQueryable<CustomerAddressView> AsQueryable() => EntityContext.CustomerAddressViews.AsNoTracking();
+
+    protected override Func<PaginationParametersBase, Task<(PaginationInfo, List<CustomerAddressView>)>>
+        GetSearchPaginatedFunction(PaginationParametersBase parameters)
+    {
+        if (parameters is not MasterDataViewSearchParameters search)
+            throw new ArgumentException($"{nameof(AddressViewRepository)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
+
+        return async _ =>
+        {
+            AddressSearchRequest request = ToLegacyRequest(search);
+            PageResult<CustomerAddressView> result = await SearchAsync(request, CancellationToken.None);
+            return (new PaginationInfo
+            {
+                ItemsCount = result.ItemsCount,
+                PageNumber = result.PageNumber,
+                TotalPages = result.TotalPages,
+            }, result.Items.ToList());
+        };
     }
 
     #endregion
 
     #region Private Methods
 
-    private static AddressDto Map(CustomerAddress address) => new(
-        address.Id, address.CustomerId, address.AddressType.Code, address.Label, address.Line1, address.Line2,
-        address.City, address.State, address.PostalCode, address.Country.Trim(), address.IsDefaultBilling,
-        address.IsDefaultShipping, address.CreatedByUserId, address.CreationDate, address.ModifiedByUserId,
-        address.ModificationDate, VersionTokenCodec.Encode(address.RowVersion));
-
-    private static AddressDto Map(AddressSearchRow address) => new(
-        address.Id, address.CustomerId, address.Type, address.Label, address.Line1, address.Line2,
-        address.City, address.State, address.PostalCode, address.Country, address.DefaultBilling,
-        address.DefaultShipping, address.CreatedByUserId, address.CreationDate, address.ModifiedByUserId,
-        address.ModificationDate, VersionTokenCodec.Encode(address.RowVersion));
+    private static AddressSearchRequest ToLegacyRequest(MasterDataViewSearchParameters parameters) => new()
+    {
+        Search = parameters.Search,
+        CustomerId = parameters.CustomerId,
+        Type = parameters.Type,
+        Usage = parameters.Usage,
+        PageNumber = parameters.PageNumber ?? 1,
+        PageSize = parameters.PageSize ?? 10,
+        SortField = parameters.SortBy,
+        SortDirection = string.Equals(parameters.SortDirection, "desc", StringComparison.OrdinalIgnoreCase)
+            ? SortDirection.Desc
+            : SortDirection.Asc,
+    };
 
     #endregion
 }

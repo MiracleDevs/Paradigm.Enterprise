@@ -1,45 +1,38 @@
 using BeaconAr.Domain.MasterData.Application;
-using BeaconAr.Domain.Operations;
-using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Validation;
 using BeaconAr.Domain.Receivables.Entities;
-using Paradigm.Enterprise.Domain.Uow;
+using BeaconAr.Interfaces.Receivables.Entities;
+using Paradigm.Enterprise.Domain.Dtos;
+using Paradigm.Enterprise.Providers;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
-public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
+public sealed class AddressProvider
+    : EditProviderBase<ICustomerAddress, CustomerAddress, CustomerAddressView, IAddressRepository, IAddressViewRepository, int>, IAddressProvider
 {
     #region Fields
 
     private static readonly IReadOnlyList<string> TypeUnavailableMessages =
         Array.AsReadOnly(new[] { "The address type is not available." });
 
-    private readonly IAddressRepository _addresses;
-    private readonly IAddressViewRepository _views;
     private readonly ICustomerRepository _customers;
+    private readonly MasterDataMutationCoordinator _mutations;
 
     #endregion
 
     #region Constructors
 
     public AddressProvider(
-        IAddressRepository addresses,
-        IAddressViewRepository views,
+        IServiceProvider serviceProvider,
         ICustomerRepository customers,
-        IAuditLogRepository auditLogs,
-        IUnitOfWork unitOfWork,
-        IApplicationOperationContext operationContext,
-        TimeProvider timeProvider,
-        IMasterDataPersistenceErrorClassifier errorClassifier,
-        IPersistenceSession persistenceSession)
-        : base(unitOfWork, auditLogs, operationContext, timeProvider, errorClassifier, persistenceSession)
+        MasterDataMutationCoordinator mutations)
+        : base(serviceProvider)
     {
-        _addresses = addresses;
-        _views = views;
         _customers = customers;
+        _mutations = mutations;
     }
 
     #endregion
@@ -49,30 +42,33 @@ public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
     public Task<PageResult<AddressDto>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken)
     {
         MasterDataRequestValidator.ValidateSearch(request, "id", "name");
-        return _views.SearchAsync(request, cancellationToken);
+        return SearchLegacyAsync(request, cancellationToken);
     }
 
-    public async Task<AddressDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        await _views.GetByIdAsync(id, cancellationToken) ?? throw NotFound("address");
+    public async Task<AddressDto> GetByIdAsync(int id, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ToDto(await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address"));
+    }
 
     public async Task<AddressDto> CreateAsync(AddressCreateRequest request, CancellationToken cancellationToken)
     {
         AddressCreateRequest value = MasterDataRequestValidator.Normalize(request);
-        int id = await ExecuteMutationAsync(async () =>
+        int id = await _mutations.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            await _addresses.LockCustomersAsync(new[] { value.CustomerId }, cancellationToken);
+            DateTimeOffset now = _mutations.UtcNow;
+            await Repository.LockCustomersAsync(new[] { value.CustomerId }, cancellationToken);
             int typeId = await EnsureCustomerAndTypeAsync(value.CustomerId, value.Type!, cancellationToken);
-            IReadOnlyList<CustomerAddress> defaults = await _addresses.GetDefaultsForUpdateAsync(new[] { value.CustomerId }, cancellationToken);
+            IReadOnlyList<CustomerAddress> defaults = await Repository.GetDefaultsForUpdateAsync(new[] { value.CustomerId }, cancellationToken);
             List<(CustomerAddress Address, bool Billing, bool Shipping)> cleared = ClearRequestedDefaults(
                 defaults, 0, value.DefaultBilling, value.DefaultShipping, now: now);
 
-            CustomerAddress address = CustomerAddress.Create(value, typeId, OperationContext.UserId, now);
-            _addresses.Add(address);
+            CustomerAddress address = CustomerAddress.Create(value, typeId, _mutations.UserId, now);
+            await Repository.AddAsync(address);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             AuditClearedDefaults(cleared, now);
-            AddAudit("address", address.Id, "created", recordedAt: now);
+            _mutations.AddAudit("address", address.Id, "created", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             return address.Id;
@@ -84,18 +80,18 @@ public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
     {
         AddressUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
-        await ExecuteMutationAsync(async () =>
+        await _mutations.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            CustomerAddress address = await _addresses.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("address");
-            EnsureVersion(address.RowVersion, expectedVersion);
+            DateTimeOffset now = _mutations.UtcNow;
+            CustomerAddress address = await Repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
+            MasterDataMutationCoordinator.EnsureVersion(address.RowVersion, expectedVersion);
             int oldCustomerId = address.CustomerId;
-            if (oldCustomerId != value.CustomerId && await _addresses.HasReferencesAsync(id, cancellationToken))
+            if (oldCustomerId != value.CustomerId && await Repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_address", "A referenced address cannot be moved to another customer.");
 
-            await _addresses.LockCustomersAsync(new[] { oldCustomerId, value.CustomerId }, cancellationToken);
+            await Repository.LockCustomersAsync(new[] { oldCustomerId, value.CustomerId }, cancellationToken);
             int typeId = await EnsureCustomerAndTypeAsync(value.CustomerId, value.Type!, cancellationToken);
-            IReadOnlyList<CustomerAddress> defaults = await _addresses.GetDefaultsForUpdateAsync(
+            IReadOnlyList<CustomerAddress> defaults = await Repository.GetDefaultsForUpdateAsync(
                 new[] { oldCustomerId, value.CustomerId }, cancellationToken);
             List<(CustomerAddress Address, bool Billing, bool Shipping)> cleared = ClearRequestedDefaults(
                 defaults, id, value.DefaultBilling, value.DefaultShipping, value.CustomerId, now);
@@ -105,11 +101,14 @@ public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
                 await UnitOfWork.CommitChangesAsync();
             }
             if (oldCustomerId != value.CustomerId)
-                await _addresses.ReparentAsync(address, value, typeId, OperationContext.UserId, now, cancellationToken);
+                await Repository.ReparentAsync(address, value, typeId, _mutations.UserId, now, cancellationToken);
             else
-                address.Replace(value, typeId, OperationContext.UserId, now);
+            {
+                address.Replace(value, typeId, _mutations.UserId, now);
+                await Repository.UpdateAsync(address);
+            }
             AuditClearedDefaults(cleared, now);
-            AddAudit("address", address.Id, "updated", "{\"changedFields\":[\"masterData\",\"defaults\"]}", now);
+            _mutations.AddAudit("address", address.Id, "updated", "{\"changedFields\":[\"masterData\",\"defaults\"]}", now);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             return address.Id;
@@ -125,13 +124,41 @@ public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
 
     #endregion
 
+    #region Overrides
+
+    public override Task<PaginatedResultDto<CustomerAddressView>> SearchAsync<TParameters>(TParameters parameters)
+    {
+        if (parameters is not MasterDataViewSearchParameters search)
+            throw new ArgumentException($"{nameof(AddressProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
+        MasterDataRequestValidator.ValidateSearch(search, "id", "name");
+        return base.SearchAsync(parameters);
+    }
+
+    public override Task<CustomerAddressView> AddAsync(CustomerAddressView view) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<IEnumerable<CustomerAddressView>> AddAsync(List<CustomerAddressView> views) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<CustomerAddressView> UpdateAsync(CustomerAddressView view) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<IEnumerable<CustomerAddressView>> UpdateAsync(List<CustomerAddressView> views) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<CustomerAddressView> SaveAsync(CustomerAddressView view) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<IEnumerable<CustomerAddressView>> SaveAsync(IEnumerable<CustomerAddressView> views) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task DeleteAsync(int id) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task DeleteAsync(IEnumerable<int> ids) => throw OfficialMasterDataMutationGuard.Create();
+
+    #endregion
+
     #region Private Methods
 
     private async Task<int> EnsureCustomerAndTypeAsync(int customerId, string type, CancellationToken cancellationToken)
     {
         if (!await _customers.ExistsAsync(customerId, cancellationToken))
             throw new MasterDataException("not_found", "The customer was not found.");
-        int? typeId = await _addresses.GetActiveTypeIdAsync(type, cancellationToken);
+        int? typeId = await Repository.GetActiveTypeIdAsync(type, cancellationToken);
         if (!typeId.HasValue)
             throw new MasterDataValidationException(new Dictionary<string, IReadOnlyList<string>>
             {
@@ -145,8 +172,8 @@ public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
         bool billing, bool shipping, int? destinationCustomerId = null, DateTimeOffset? now = null)
     {
         var cleared = new List<(CustomerAddress Address, bool Billing, bool Shipping)>();
-        int userId = OperationContext.UserId;
-        DateTimeOffset timestamp = now ?? TimeProvider.GetUtcNow();
+        int userId = _mutations.UserId;
+        DateTimeOffset timestamp = now ?? _mutations.UtcNow;
         foreach (CustomerAddress existing in defaults.Where(item => item.Id != excludedId &&
                      (!destinationCustomerId.HasValue || item.CustomerId == destinationCustomerId.Value)))
         {
@@ -169,29 +196,43 @@ public sealed class AddressProvider : MasterDataProviderBase, IAddressProvider
         foreach ((CustomerAddress address, bool billing, bool shipping) in cleared)
         {
             if (billing)
-                AddAudit("address", address.Id, "defaultBillingCleared", "{\"changedFields\":[\"defaultBilling\"]}", recordedAt);
+                _mutations.AddAudit("address", address.Id, "defaultBillingCleared", "{\"changedFields\":[\"defaultBilling\"]}", recordedAt);
             if (shipping)
-                AddAudit("address", address.Id, "defaultShippingCleared", "{\"changedFields\":[\"defaultShipping\"]}", recordedAt);
+                _mutations.AddAudit("address", address.Id, "defaultShippingCleared", "{\"changedFields\":[\"defaultShipping\"]}", recordedAt);
         }
     }
 
     private async Task ExecuteDeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
     {
-        await ExecuteMutationAsync(async () =>
+        await _mutations.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            CustomerAddress address = await _addresses.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("address");
-            EnsureVersion(address.RowVersion, expectedVersion);
-            if (await _addresses.HasReferencesAsync(id, cancellationToken))
+            DateTimeOffset now = _mutations.UtcNow;
+            CustomerAddress address = await Repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
+            MasterDataMutationCoordinator.EnsureVersion(address.RowVersion, expectedVersion);
+            if (await Repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_address", "The address is referenced and cannot be deleted.");
 
-            _addresses.Delete(address);
-            AddAudit("address", id, "deleted", recordedAt: now);
+            await Repository.DeleteAsync(address);
+            _mutations.AddAudit("address", id, "deleted", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_address");
     }
+
+    private async Task<PageResult<AddressDto>> SearchLegacyAsync(AddressSearchRequest request,
+        CancellationToken cancellationToken)
+    {
+        PageResult<CustomerAddressView> result = await ViewRepository.SearchAsync(request, cancellationToken);
+        return new PageResult<AddressDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
+            result.TotalPages, result.ItemsCount);
+    }
+
+    private static AddressDto ToDto(CustomerAddressView address) => new(
+        address.Id, address.CustomerId, address.AddressTypeCode, address.Label, address.Line1, address.Line2,
+        address.City, address.State, address.PostalCode, address.Country.Trim(), address.IsDefaultBilling,
+        address.IsDefaultShipping, address.CreatedByUserId, address.CreationDate, address.ModifiedByUserId,
+        address.ModificationDate, VersionTokenCodec.Encode(address.RowVersion));
 
     #endregion
 }

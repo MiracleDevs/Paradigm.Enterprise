@@ -1,16 +1,16 @@
 using BeaconAr.Data.Mappers;
 using BeaconAr.Data.MasterData.StoredProcedures;
 using BeaconAr.Data.Receivables.Context;
-using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Receivables.Entities;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Repositories;
+using Paradigm.Enterprise.Domain.Dtos;
 
 namespace BeaconAr.Data.MasterData;
 
-public sealed class CustomerViewRepository : RepositoryBase<ReceivablesDbContext, int>, ICustomerViewRepository
+public sealed class CustomerViewRepository : ReadRepositoryBase<CustomerView, ReceivablesDbContext, int>, ICustomerViewRepository
 {
     #region Fields
 
@@ -29,20 +29,19 @@ public sealed class CustomerViewRepository : RepositoryBase<ReceivablesDbContext
 
     #region Static Constructors
 
-    static CustomerViewRepository() => StoreProcedureMappersRegisterer.RegisterMappers();
+    static CustomerViewRepository()
+    {
+        StoreProcedureMappersRegisterer.RegisterMappers();
+    }
 
     #endregion
 
     #region Public Methods
 
-    public async Task<CustomerDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
-    {
-        Customer? customer = await EntityContext.Customers.AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
-        return customer is null ? null : Map(customer);
-    }
+    public Task<CustomerView?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+        AsQueryable().SingleOrDefaultAsync(view => view.Id == id, cancellationToken);
 
-    public async Task<PageResult<CustomerDto>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
+    public async Task<PageResult<CustomerView>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
     {
         string? search = string.IsNullOrWhiteSpace(request.Search) ? null : request.Search.Trim();
         string sort = string.IsNullOrWhiteSpace(request.SortField) ? "id" : request.SortField.Trim().ToLowerInvariant();
@@ -57,22 +56,49 @@ public sealed class CustomerViewRepository : RepositoryBase<ReceivablesDbContext
             SortDirection = request.SortDirection == SortDirection.Desc ? "desc" : "asc",
         }, UnitOfWork);
         cancellationToken.ThrowIfCancellationRequested();
-        return PageResultFactory.Create((rows ?? []).Select(Map).ToArray(), request.PageNumber, request.PageSize, count);
+        return PageResultFactory.Create(rows ?? [], request.PageNumber, request.PageSize, count);
+    }
+
+    #endregion
+
+    #region Overrides
+
+    protected override IQueryable<CustomerView> AsQueryable() => EntityContext.CustomerViews.AsNoTracking();
+
+    protected override Func<PaginationParametersBase, Task<(PaginationInfo, List<CustomerView>)>>
+        GetSearchPaginatedFunction(PaginationParametersBase parameters)
+    {
+        if (parameters is not MasterDataViewSearchParameters search)
+            throw new ArgumentException($"{nameof(CustomerViewRepository)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
+
+        return async _ =>
+        {
+            CustomerSearchRequest request = ToLegacyRequest(search);
+            PageResult<CustomerView> result = await SearchAsync(request, CancellationToken.None);
+            return (new PaginationInfo
+            {
+                ItemsCount = result.ItemsCount,
+                PageNumber = result.PageNumber,
+                TotalPages = result.TotalPages,
+            }, result.Items.ToList());
+        };
     }
 
     #endregion
 
     #region Private Methods
 
-    private static CustomerDto Map(Customer customer) => new(
-        customer.Id, customer.AccountNumber, customer.Name, customer.Email, customer.Phone, customer.CreditLimit,
-        customer.PaymentTermsDays, customer.IsActive, customer.CreatedByUserId, customer.CreationDate,
-        customer.ModifiedByUserId, customer.ModificationDate, VersionTokenCodec.Encode(customer.RowVersion));
-
-    private static CustomerDto Map(CustomerSearchRow customer) => new(
-        customer.Id, customer.AccountNumber, customer.Name, customer.Email, customer.Phone, customer.CreditLimit,
-        customer.PaymentTermsDays, customer.IsActive, customer.CreatedByUserId, customer.CreationDate,
-        customer.ModifiedByUserId, customer.ModificationDate, VersionTokenCodec.Encode(customer.RowVersion));
+    private static CustomerSearchRequest ToLegacyRequest(MasterDataViewSearchParameters parameters) => new()
+    {
+        Search = parameters.Search,
+        Active = parameters.Active,
+        PageNumber = parameters.PageNumber ?? 1,
+        PageSize = parameters.PageSize ?? 10,
+        SortField = parameters.SortBy,
+        SortDirection = string.Equals(parameters.SortDirection, "desc", StringComparison.OrdinalIgnoreCase)
+            ? SortDirection.Desc
+            : SortDirection.Asc,
+    };
 
     #endregion
 }

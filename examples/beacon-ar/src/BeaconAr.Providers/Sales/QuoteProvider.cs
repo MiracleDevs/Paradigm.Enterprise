@@ -13,13 +13,14 @@ using QuoteState = BeaconAr.Domain.Sales.QuoteStatus;
 
 namespace BeaconAr.Providers.Sales;
 
-public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
+public sealed class QuoteProvider : IQuoteProvider
 {
     #region Fields
 
     private readonly IQuoteRepository _quotes;
     private readonly IQuoteViewRepository _views;
     private readonly ISalesReferenceRepository _references;
+    private readonly SalesWorkflowCoordinator _workflow;
 
     #endregion
 
@@ -29,17 +30,12 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
         IQuoteRepository quotes,
         IQuoteViewRepository views,
         ISalesReferenceRepository references,
-        IAuditLogRepository auditLogs,
-        IUnitOfWork unitOfWork,
-        IApplicationOperationContext operationContext,
-        TimeProvider timeProvider,
-        ISalesPersistenceErrorClassifier errorClassifier,
-        IPersistenceSession persistenceSession)
-        : base(unitOfWork, auditLogs, operationContext, timeProvider, errorClassifier, persistenceSession)
+        SalesWorkflowCoordinator workflow)
     {
         _quotes = quotes;
         _views = views;
         _references = references;
+        _workflow = workflow;
     }
 
     #endregion
@@ -53,27 +49,27 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
     }
 
     public async Task<QuoteDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        await _views.GetByIdAsync(id, cancellationToken) ?? throw NotFound("quote");
+        await _views.GetByIdAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");
 
     public async Task<QuoteDto> CreateAsync(QuoteCreateRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         SalesRequestValidator.Validate(request);
-        int id = await ExecuteMutationAsync(async () =>
+        int id = await _workflow.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
+            DateTimeOffset now = _workflow.UtcNow;
             var (customer, address, products) = await ResolveReferencesAsync(
                 request.CustomerId, request.ShippingAddressId, request.Lines, cancellationToken);
             string number = await _quotes.AllocateNumberAsync(cancellationToken);
             Quote quote = Quote.CreateDraft(number, request, customer, address, products,
-                OperationContext.UserId, now);
+                _workflow.UserId, now);
             _quotes.Add(quote);
-            _quotes.AddHistory(QuoteStatusHistory.Create(quote, OperationContext.UserId, now));
+            _quotes.AddHistory(QuoteStatusHistory.Create(quote, _workflow.UserId, now));
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _workflow.UnitOfWork.CommitChangesAsync();
             cancellationToken.ThrowIfCancellationRequested();
-            AddAudit("quote", quote.Id, "created", now);
-            await UnitOfWork.CommitChangesAsync();
+            _workflow.AddAudit("quote", quote.Id, "created", now);
+            await _workflow.UnitOfWork.CommitChangesAsync();
             return quote.Id;
         });
         return await GetByIdAsync(id, cancellationToken);
@@ -88,18 +84,18 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
         ArgumentNullException.ThrowIfNull(request);
         SalesRequestValidator.Validate(request);
         SalesRequestValidator.ValidateVersion(expectedVersion);
-        await ExecuteMutationAsync(async () =>
+        await _workflow.ExecuteAsync(async () =>
         {
-            Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("quote");
-            EnsureVersion(quote.RowVersion, expectedVersion);
+            Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");
+            SalesWorkflowCoordinator.EnsureVersion(quote.RowVersion, expectedVersion);
             var (customer, address, products) = await ResolveReferencesAsync(
                 request.CustomerId, request.ShippingAddressId, request.Lines, cancellationToken);
             IReadOnlyList<QuoteLine> lines = quote.PrepareReplacement(request, customer, address, products);
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            quote.ApplyReplacement(request, customer, address, OperationContext.UserId, now);
+            DateTimeOffset now = _workflow.UtcNow;
+            quote.ApplyReplacement(request, customer, address, _workflow.UserId, now);
             _quotes.ReplaceLines(quote, lines);
-            AddAudit("quote", quote.Id, "updated", now, metadataJson: "{\"changedFields\":[\"header\",\"lines\"]}");
-            await UnitOfWork.CommitChangesAsync();
+            _workflow.AddAudit("quote", quote.Id, "updated", now, metadataJson: "{\"changedFields\":[\"header\",\"lines\"]}");
+            await _workflow.UnitOfWork.CommitChangesAsync();
             return quote.Id;
         });
         return await GetByIdAsync(id, cancellationToken);
@@ -120,16 +116,16 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
         ArgumentNullException.ThrowIfNull(request);
         SalesRequestValidator.ValidateVersion(expectedVersion);
         if (!Enum.IsDefined(request.Status))
-            throw InvalidReference("status", "Status is invalid.");
-        await ExecuteMutationAsync(async () =>
+            throw SalesWorkflowCoordinator.InvalidReference("status", "Status is invalid.");
+        await _workflow.ExecuteAsync(async () =>
         {
-            Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("quote");
-            EnsureVersion(quote.RowVersion, expectedVersion);
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            QuoteState previous = quote.TransitionTo(request.Status, OperationContext.UserId, now);
-            _quotes.AddHistory(QuoteStatusHistory.Create(quote, OperationContext.UserId, now));
-            AddAudit("quote", quote.Id, "statusTransition", now, Code(previous), Code(request.Status));
-            await UnitOfWork.CommitChangesAsync();
+            Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");
+            SalesWorkflowCoordinator.EnsureVersion(quote.RowVersion, expectedVersion);
+            DateTimeOffset now = _workflow.UtcNow;
+            QuoteState previous = quote.TransitionTo(request.Status, _workflow.UserId, now);
+            _quotes.AddHistory(QuoteStatusHistory.Create(quote, _workflow.UserId, now));
+            _workflow.AddAudit("quote", quote.Id, "statusTransition", now, Code(previous), Code(request.Status));
+            await _workflow.UnitOfWork.CommitChangesAsync();
             return quote.Id;
         });
         return await GetByIdAsync(id, cancellationToken);
@@ -141,14 +137,14 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
 
     private async Task DeleteCoreAsync(int id, string expectedVersion, CancellationToken cancellationToken)
     {
-        await ExecuteMutationAsync(async () =>
+        await _workflow.ExecuteAsync(async () =>
         {
-            Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("quote");
-            EnsureVersion(quote.RowVersion, expectedVersion);
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            quote.Tombstone(OperationContext.UserId, now);
-            AddAudit("quote", quote.Id, "deleted", now);
-            await UnitOfWork.CommitChangesAsync();
+            Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");
+            SalesWorkflowCoordinator.EnsureVersion(quote.RowVersion, expectedVersion);
+            DateTimeOffset now = _workflow.UtcNow;
+            quote.Tombstone(_workflow.UserId, now);
+            _workflow.AddAudit("quote", quote.Id, "deleted", now);
+            await _workflow.UnitOfWork.CommitChangesAsync();
             return quote.Id;
         });
     }
@@ -161,13 +157,13 @@ public sealed class QuoteProvider : SalesProviderBase, IQuoteProvider
         CancellationToken cancellationToken)
     {
         if (customerId <= 0)
-            throw InvalidReference("customerId", "Customer ID must be positive.");
+            throw SalesWorkflowCoordinator.InvalidReference("customerId", "Customer ID must be positive.");
         if (addressId <= 0)
-            throw InvalidReference("shippingAddressId", "Shipping address ID must be positive.");
+            throw SalesWorkflowCoordinator.InvalidReference("shippingAddressId", "Shipping address ID must be positive.");
         CustomerSalesReference customer = await _references.GetCustomerAsync(customerId, cancellationToken)
-            ?? throw InvalidReference("customerId", "The selected customer was not found.");
+            ?? throw SalesWorkflowCoordinator.InvalidReference("customerId", "The selected customer was not found.");
         AddressSalesReference address = await _references.GetAddressAsync(addressId, cancellationToken)
-            ?? throw InvalidReference("shippingAddressId", "The selected shipping address was not found.");
+            ?? throw SalesWorkflowCoordinator.InvalidReference("shippingAddressId", "The selected shipping address was not found.");
         IReadOnlyDictionary<int, ProductSalesReference> products = await _references.GetProductsAsync(
             lines?.Where(line => line.ProductId > 0).Select(line => line.ProductId).Distinct().ToArray() ?? [],
             cancellationToken);

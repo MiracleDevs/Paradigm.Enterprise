@@ -51,7 +51,10 @@ internal class StoredProcedureMapperGenerator
             throw new ArgumentNullException(nameof(outputPath));
 
         using var output = new AtomicOutputDirectory(outputPath);
-        var storedProcedureTypes = typeof(ReceivablesDbContext).Assembly.GetTypes().Where(IsStoredProcedureClass).ToArray();
+        var storedProcedureTypes = typeof(ReceivablesDbContext).Assembly.GetTypes()
+            .Where(IsStoredProcedureClass)
+            .OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal)
+            .ToArray();
         var dataReaderMappers = GenerateDataReaderMappers(storedProcedureTypes, output.Path);
         var sqlParameterMappers = GenerateSqlParameterMappers(storedProcedureTypes, output.Path);
 
@@ -120,7 +123,7 @@ internal class StoredProcedureMapperGenerator
                     var mapperClassName = $"{targetType.Name}DataReaderMapper";
                     var propertyAssignments = new StringBuilder();
 
-                    foreach (var property in targetType.GetProperties())
+                    foreach (var property in targetType.GetProperties().OrderBy(static property => property.MetadataToken))
                     {
                         GenerateDataReaderMapperPropertyAssignments(propertyAssignments, property, targetType.Name);
                     }
@@ -246,7 +249,7 @@ internal partial class {mapperClassName} : DataReaderMapperBase
                     var mapperClassName = $"{targetType.Name}Mapper";
                     var propertyAssignments = new StringBuilder();
 
-                    foreach (var property in targetType.GetProperties())
+                    foreach (var property in targetType.GetProperties().OrderBy(static property => property.MetadataToken))
                     {
                         GenerateSqlParameterMapperPropertyAssignments(propertyAssignments, property, targetType.Name);
                     }
@@ -380,13 +383,13 @@ internal partial class {mapperClassName} : SqlParameterMapperBase
         var registerDataReaderMappers = new StringBuilder();
         var registerSqlParameterMappers = new StringBuilder();
 
-        foreach (var generatedType in dataReaderMappers)
+        foreach (var generatedType in dataReaderMappers.OrderBy(static type => type, StringComparer.Ordinal))
         {
             var className = generatedType.Substring(generatedType.LastIndexOf('.') + 1);
             registerDataReaderMappers.AppendLine($"        DataReaderMapperFactory.RegisterMapper<{generatedType.Replace("BeaconAr.", string.Empty)}>(() => new DataReaders.{className}DataReaderMapper());");
         }
 
-        foreach (var generatedType in sqlParameterMappers)
+        foreach (var generatedType in sqlParameterMappers.OrderBy(static type => type, StringComparer.Ordinal))
         {
             var className = generatedType.Substring(generatedType.LastIndexOf('.') + 1);
             registerSqlParameterMappers.AppendLine($"        SqlParameterMapperFactory.RegisterMapper<{generatedType.Replace("BeaconAr.", string.Empty)}>(() => new SqlParameters.{className}Mapper());");

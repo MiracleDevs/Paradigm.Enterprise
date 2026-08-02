@@ -1,11 +1,12 @@
 using BeaconAr.Domain.MasterData.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 
 namespace BeaconAr.Domain.MasterData.Repositories;
 
-public interface ICustomerViewRepository : IRepository
+public interface ICustomerViewRepository : IReadRepository<CustomerView, int>
 {
-    Task<CustomerDto?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<CustomerView?> GetByIdAsync(int id, CancellationToken cancellationToken);
 
-    Task<PageResult<CustomerDto>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken);
+    Task<PageResult<CustomerView>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken);
 }

@@ -1,8 +1,9 @@
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
 namespace BeaconAr.Data.MasterData.StoredProcedures;
 
-internal sealed class SearchCarrierProcedure : ResultStoredProcedureBase<CarrierSearchParameters, int, List<CarrierSearchRow>>
+internal sealed class SearchCarrierProcedure : ResultStoredProcedureBase<CarrierSearchParameters, int, List<CarrierView>>
 {
     #region Properties
 

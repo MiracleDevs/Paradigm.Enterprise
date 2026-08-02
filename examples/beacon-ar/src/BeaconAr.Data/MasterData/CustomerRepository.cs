@@ -6,7 +6,7 @@ using Paradigm.Enterprise.Data.Repositories;
 
 namespace BeaconAr.Data.MasterData;
 
-public sealed class CustomerRepository : RepositoryBase<ReceivablesDbContext, int>, ICustomerRepository
+public sealed class CustomerRepository : EditRepositoryBase<Customer, ReceivablesDbContext, int>, ICustomerRepository
 {
     #region Constructors
 
@@ -33,10 +33,6 @@ public sealed class CustomerRepository : RepositoryBase<ReceivablesDbContext, in
         await EntityContext.CustomerAddresses.AsNoTracking().AnyAsync(address => address.CustomerId == id, cancellationToken) ||
         await EntityContext.Quotes.AsNoTracking().AnyAsync(quote => quote.CustomerId == id, cancellationToken) ||
         await EntityContext.SalesOrders.AsNoTracking().AnyAsync(order => order.CustomerId == id, cancellationToken);
-
-    public void Add(Customer customer) => EntityContext.Customers.Add(customer);
-
-    public void Delete(Customer customer) => EntityContext.Customers.Remove(customer);
 
     #endregion
 }

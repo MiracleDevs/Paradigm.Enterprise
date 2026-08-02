@@ -1,11 +1,12 @@
 using BeaconAr.Domain.MasterData.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 
 namespace BeaconAr.Domain.MasterData.Repositories;
 
-public interface ICarrierViewRepository : IRepository
+public interface ICarrierViewRepository : IReadRepository<CarrierView, int>
 {
-    Task<CarrierDto?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<CarrierView?> GetByIdAsync(int id, CancellationToken cancellationToken);
 
-    Task<PageResult<CarrierDto>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
+    Task<PageResult<CarrierView>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
 }

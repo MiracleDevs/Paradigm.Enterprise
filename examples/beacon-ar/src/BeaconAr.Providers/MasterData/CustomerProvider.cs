@@ -1,39 +1,30 @@
 using BeaconAr.Domain.MasterData.Application;
-using BeaconAr.Domain.Operations;
-using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Validation;
 using BeaconAr.Domain.Receivables.Entities;
-using Paradigm.Enterprise.Domain.Uow;
+using BeaconAr.Interfaces.Receivables.Entities;
+using Paradigm.Enterprise.Domain.Dtos;
+using Paradigm.Enterprise.Providers;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
-public sealed class CustomerProvider : MasterDataProviderBase, ICustomerProvider
+public sealed class CustomerProvider
+    : EditProviderBase<ICustomer, Customer, CustomerView, ICustomerRepository, ICustomerViewRepository, int>, ICustomerProvider
 {
     #region Fields
 
-    private readonly ICustomerRepository _customers;
-    private readonly ICustomerViewRepository _views;
+    private readonly MasterDataMutationCoordinator _mutations;
 
     #endregion
 
     #region Constructors
 
-    public CustomerProvider(
-        ICustomerRepository customers,
-        ICustomerViewRepository views,
-        IAuditLogRepository auditLogs,
-        IUnitOfWork unitOfWork,
-        IApplicationOperationContext operationContext,
-        TimeProvider timeProvider,
-        IMasterDataPersistenceErrorClassifier errorClassifier,
-        IPersistenceSession persistenceSession)
-        : base(unitOfWork, auditLogs, operationContext, timeProvider, errorClassifier, persistenceSession)
+    public CustomerProvider(IServiceProvider serviceProvider, MasterDataMutationCoordinator mutations)
+        : base(serviceProvider)
     {
-        _customers = customers;
-        _views = views;
+        _mutations = mutations;
     }
 
     #endregion
@@ -43,26 +34,29 @@ public sealed class CustomerProvider : MasterDataProviderBase, ICustomerProvider
     public Task<PageResult<CustomerDto>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
     {
         MasterDataRequestValidator.ValidateSearch(request, "id", "name");
-        return _views.SearchAsync(request, cancellationToken);
+        return SearchLegacyAsync(request, cancellationToken);
     }
 
-    public async Task<CustomerDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        await _views.GetByIdAsync(id, cancellationToken) ?? throw NotFound("customer");
+    public async Task<CustomerDto> GetByIdAsync(int id, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ToDto(await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("customer"));
+    }
 
     public async Task<CustomerDto> CreateAsync(CustomerCreateRequest request, CancellationToken cancellationToken)
     {
         CustomerCreateRequest value = MasterDataRequestValidator.Normalize(request);
-        int id = await ExecuteMutationAsync(async () =>
+        int id = await _mutations.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            if (await _customers.AccountNumberExistsAsync(value.AccountNumber!, null, cancellationToken))
-                throw Duplicate("account number");
+            DateTimeOffset now = _mutations.UtcNow;
+            if (await Repository.AccountNumberExistsAsync(value.AccountNumber!, null, cancellationToken))
+                throw MasterDataMutationCoordinator.Duplicate("account number");
 
-            Customer customer = Customer.Create(value, OperationContext.UserId, now);
-            _customers.Add(customer);
+            Customer customer = Customer.Create(value, _mutations.UserId, now);
+            await Repository.AddAsync(customer);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
-            AddAudit("customer", customer.Id, "created", recordedAt: now);
+            _mutations.AddAudit("customer", customer.Id, "created", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             return customer.Id;
@@ -70,21 +64,26 @@ public sealed class CustomerProvider : MasterDataProviderBase, ICustomerProvider
         return await GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task<CustomerDto> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
+    public async Task<CustomerDto> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion,
+        CancellationToken cancellationToken)
     {
         CustomerUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
-        await ExecuteMutationAsync(async () =>
+        await _mutations.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            Customer customer = await _customers.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("customer");
-            EnsureVersion(customer.RowVersion, expectedVersion);
-            if (await _customers.AccountNumberExistsAsync(value.AccountNumber!, id, cancellationToken))
-                throw Duplicate("account number");
+            DateTimeOffset now = _mutations.UtcNow;
+            Customer customer = await Repository.GetForUpdateAsync(id, cancellationToken) ??
+                                throw MasterDataMutationCoordinator.NotFound("customer");
+            MasterDataMutationCoordinator.EnsureVersion(customer.RowVersion, expectedVersion);
+            if (await Repository.AccountNumberExistsAsync(value.AccountNumber!, id, cancellationToken))
+                throw MasterDataMutationCoordinator.Duplicate("account number");
 
             bool wasActive = customer.IsActive;
-            customer.Replace(value, OperationContext.UserId, now);
-            AddAudit("customer", customer.Id, GetUpdateAction(wasActive, customer.IsActive), "{\"changedFields\":[\"masterData\"]}", now);
+            customer.Replace(value, _mutations.UserId, now);
+            await Repository.UpdateAsync(customer);
+            _mutations.AddAudit("customer", customer.Id,
+                MasterDataMutationCoordinator.GetUpdateAction(wasActive, customer.IsActive),
+                "{\"changedFields\":[\"masterData\"]}", now);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             return customer.Id;
@@ -100,25 +99,67 @@ public sealed class CustomerProvider : MasterDataProviderBase, ICustomerProvider
 
     #endregion
 
+    #region Overrides
+
+    public override Task<PaginatedResultDto<CustomerView>> SearchAsync<TParameters>(TParameters parameters)
+    {
+        if (parameters is not MasterDataViewSearchParameters search)
+            throw new ArgumentException($"{nameof(CustomerProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
+        MasterDataRequestValidator.ValidateSearch(search, "id", "name");
+        return base.SearchAsync(parameters);
+    }
+
+    public override Task<CustomerView> AddAsync(CustomerView view) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<IEnumerable<CustomerView>> AddAsync(List<CustomerView> views) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<CustomerView> UpdateAsync(CustomerView view) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<IEnumerable<CustomerView>> UpdateAsync(List<CustomerView> views) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<CustomerView> SaveAsync(CustomerView view) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task<IEnumerable<CustomerView>> SaveAsync(IEnumerable<CustomerView> views) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task DeleteAsync(int id) => throw OfficialMasterDataMutationGuard.Create();
+
+    public override Task DeleteAsync(IEnumerable<int> ids) => throw OfficialMasterDataMutationGuard.Create();
+
+    #endregion
+
     #region Private Methods
 
     private async Task ExecuteDeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
     {
-        await ExecuteMutationAsync(async () =>
+        await _mutations.ExecuteAsync(async () =>
         {
-            DateTimeOffset now = TimeProvider.GetUtcNow();
-            Customer customer = await _customers.GetForUpdateAsync(id, cancellationToken) ?? throw NotFound("customer");
-            EnsureVersion(customer.RowVersion, expectedVersion);
-            if (await _customers.HasReferencesAsync(id, cancellationToken))
+            DateTimeOffset now = _mutations.UtcNow;
+            Customer customer = await Repository.GetForUpdateAsync(id, cancellationToken) ??
+                                throw MasterDataMutationCoordinator.NotFound("customer");
+            MasterDataMutationCoordinator.EnsureVersion(customer.RowVersion, expectedVersion);
+            if (await Repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_record", "The customer is referenced and cannot be deleted; deactivate it instead.");
 
-            _customers.Delete(customer);
-            AddAudit("customer", id, "deleted", recordedAt: now);
+            await Repository.DeleteAsync(customer);
+            _mutations.AddAudit("customer", id, "deleted", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_record");
     }
+
+    private async Task<PageResult<CustomerDto>> SearchLegacyAsync(CustomerSearchRequest request,
+        CancellationToken cancellationToken)
+    {
+        PageResult<CustomerView> result = await ViewRepository.SearchAsync(request, cancellationToken);
+        return new PageResult<CustomerDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
+            result.TotalPages, result.ItemsCount);
+    }
+
+    private static CustomerDto ToDto(CustomerView customer) => new(
+        customer.Id, customer.AccountNumber, customer.Name, customer.Email, customer.Phone, customer.CreditLimit,
+        customer.PaymentTermsDays, customer.IsActive, customer.CreatedByUserId, customer.CreationDate,
+        customer.ModifiedByUserId, customer.ModificationDate, VersionTokenCodec.Encode(customer.RowVersion));
 
     #endregion
 }

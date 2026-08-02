@@ -3,7 +3,7 @@ using Paradigm.Enterprise.Domain.Repositories;
 
 namespace BeaconAr.Domain.MasterData.Repositories;
 
-public interface ICustomerRepository : IRepository
+public interface ICustomerRepository : IEditRepository<Customer, int>
 {
     Task<Customer?> GetForUpdateAsync(int id, CancellationToken cancellationToken);
 
@@ -13,7 +13,4 @@ public interface ICustomerRepository : IRepository
 
     Task<bool> HasReferencesAsync(int id, CancellationToken cancellationToken);
 
-    void Add(Customer customer);
-
-    void Delete(Customer customer);
 }
