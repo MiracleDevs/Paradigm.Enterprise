@@ -99,15 +99,15 @@ internal static class SalesDomainValidation
             throw Error("lines", "At least one line is required.");
     }
 
+    #endregion
+
+    #region Private Methods
+
     internal static void ValidateLineSyntax(IReadOnlyList<SalesLineRequest>? lines) => ValidateLineRequests(lines);
 
     internal static void ValidateStoredPricing(IEnumerable<QuoteLine> lines) => ValidateLineRequests(lines
         .Select(line => new SalesLineRequest(line.ProductId, line.Quantity, line.UnitPrice, line.DiscountPercent))
         .ToArray());
-
-    #endregion
-
-    #region Private Methods
 
     private static ProductSalesReference GetProduct(
         IReadOnlyDictionary<int, ProductSalesReference> products,

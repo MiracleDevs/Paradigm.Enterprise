@@ -140,8 +140,8 @@ public sealed class LayerBoundaryTests
             .Where(type => type.IsPublic && !type.IsAbstract && typeof(IProvider).IsAssignableFrom(type))
             .ToArray();
 
-        Assert.HasCount(15, repositoryTypes);
-        Assert.HasCount(8, providerTypes);
+        Assert.HasCount(17, repositoryTypes);
+        Assert.HasCount(10, providerTypes);
         foreach (Type implementation in repositoryTypes.Concat(providerTypes))
         {
             Type[] exactInterfaces = implementation.GetInterfaces()

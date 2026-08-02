@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.15.0
       - name: Register Paradigm problem matcher
         run: echo "::add-matcher::${{ github.workspace }}/.github/problem-matchers/paradigm.json"
       - name: Restore
@@ -47,7 +50,11 @@ jobs:
           dotnet tool restore --add-source ../../artifacts
           dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
           dotnet build src/BeaconAr.sln --configuration Release --no-restore
-          dotnet test src/BeaconAr.sln --configuration Release --no-build --no-restore
+          dotnet test tests/BeaconAr.DatabaseBootstrap.Tests/BeaconAr.DatabaseBootstrap.Tests.csproj --configuration Release --no-build --no-restore
+          dotnet test tests/BeaconAr.Domain.Tests/BeaconAr.Domain.Tests.csproj --configuration Release --no-build --no-restore
+          dotnet test tests/BeaconAr.Providers.Tests/BeaconAr.Providers.Tests.csproj --configuration Release --no-build --no-restore
+          dotnet test tests/BeaconAr.Architecture.Tests/BeaconAr.Architecture.Tests.csproj --configuration Release --no-build --no-restore
+          dotnet test tests/BeaconAr.WebApi.Tests/BeaconAr.WebApi.Tests.csproj --configuration Release --no-build --no-restore --filter "TestCategory!=Integration"
           if dotnet run --project src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj --configuration Release --no-build -- invalid; then
             echo "Code generation unexpectedly accepted an unknown target." >&2
             exit 1
@@ -85,6 +92,7 @@ jobs:
           docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$BEACON_AR_CI_SQL_PASSWORD" -Q "CREATE DATABASE [BeaconAr]"
           dotnet run --project src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj --configuration Release --no-build
           dotnet test tests/BeaconAr.Database.IntegrationTests/BeaconAr.Database.IntegrationTests.csproj --configuration Release --no-build --no-restore
+          dotnet test tests/BeaconAr.WebApi.Tests/BeaconAr.WebApi.Tests.csproj --configuration Release --no-build --no-restore --filter "TestCategory=Integration"
           dotnet run --project src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj --configuration Release --no-build
           pwsh build/regenerate-persistence.ps1
           git diff --exit-code -- src/BeaconAr.Data/Receivables/Generated src/BeaconAr.Domain/Receivables/Generated
@@ -100,6 +108,20 @@ jobs:
               print("Second publication reported schema operations:", [item.get("Name") for item in operations], file=sys.stderr)
               raise SystemExit(1)
           PY
+      - name: Generate and compile Beacon AR API client
+        working-directory: examples/beacon-ar
+        run: |
+          dotnet run --project src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj --configuration Release --no-build -- openapi-typescript ../../artifacts/openapi/beacon-ar-v1.json ../../tests/BeaconAr.ClientContract/generated/beacon-ar-v1.ts
+          npm ci --prefix tests/BeaconAr.ClientContract
+          npm run check --prefix tests/BeaconAr.ClientContract
+      - name: Publish Beacon AR API v1 contract
+        uses: actions/upload-artifact@v6
+        with:
+          name: beacon-ar-api-v1
+          path: |
+            examples/beacon-ar/artifacts/openapi/beacon-ar-v1.json
+            examples/beacon-ar/tests/BeaconAr.ClientContract/generated/beacon-ar-v1.ts
+          if-no-files-found: error
       - name: Install and test the packed Paradigm CLI
         shell: pwsh
         run: |

@@ -56,6 +56,18 @@ public abstract class SalesProviderBase : IProvider
 
     protected async Task<T> ExecuteMutationAsync<T>(Func<Task<T>> operation)
     {
+        if (UnitOfWork.HasActiveTransaction)
+        {
+            try
+            {
+                return await operation();
+            }
+            catch (Exception exception)
+            {
+                throw Translate(exception);
+            }
+        }
+
         using ITransaction transaction = UnitOfWork.CreateTransaction();
         try
         {
@@ -68,18 +80,7 @@ public abstract class SalesProviderBase : IProvider
             if (transaction.IsActive)
                 transaction.Rollback();
             _persistenceSession.DiscardTrackedChanges();
-            if (exception is OperationCanceledException or SalesException)
-                throw;
-            PersistenceConflictKind conflict = _errorClassifier.Classify(exception);
-            if (conflict == PersistenceConflictKind.None)
-                throw;
-            throw conflict switch
-            {
-                PersistenceConflictKind.Concurrency => new SalesException("concurrency_conflict", "The record was changed by another user.", exception),
-                PersistenceConflictKind.Duplicate => new SalesException("duplicate_key", "A conflicting sales record already exists.", exception),
-                PersistenceConflictKind.Referenced => new SalesException("reference_conflict", "A referenced record changed while the operation was being processed.", exception),
-                _ => new InvalidOperationException("Unsupported persistence conflict classification.", exception),
-            };
+            throw Translate(exception);
         }
     }
 
@@ -117,6 +118,25 @@ public abstract class SalesProviderBase : IProvider
 
     protected static SalesValidationException InvalidReference(string field, string message) =>
         new(new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { [field] = [message] });
+
+    #endregion
+
+    #region Private Methods
+
+    private Exception Translate(Exception exception)
+    {
+        if (exception is OperationCanceledException or SalesException)
+            return exception;
+        PersistenceConflictKind conflict = _errorClassifier.Classify(exception);
+        return conflict switch
+        {
+            PersistenceConflictKind.None => exception,
+            PersistenceConflictKind.Concurrency => new SalesException("concurrency_conflict", "The record was changed by another user.", exception),
+            PersistenceConflictKind.Duplicate => new SalesException("duplicate_key", "A conflicting sales record already exists.", exception),
+            PersistenceConflictKind.Referenced => new SalesException("reference_conflict", "A referenced record changed while the operation was being processed.", exception),
+            _ => new InvalidOperationException("Unsupported persistence conflict classification.", exception),
+        };
+    }
 
     #endregion
 }

@@ -89,11 +89,13 @@ public sealed class ProductProviderTests
 
     private sealed class FakeTransaction : ITransaction
     {
-        public bool IsActive { get; private set; } = true;
+        public bool IsActive { get; private set; }
 
         public int CommitCalls { get; private set; }
 
         public int RollbackCalls { get; private set; }
+
+        public void Activate() => IsActive = true;
 
         public void Commit()
         {
@@ -138,7 +140,11 @@ public sealed class ProductProviderTests
             return Task.CompletedTask;
         }
 
-        public ITransaction CreateTransaction() => Transaction;
+        public ITransaction CreateTransaction()
+        {
+            Transaction.Activate();
+            return Transaction;
+        }
 
         public void RegisterCommiteable(ICommiteable commiteable)
         {

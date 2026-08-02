@@ -45,7 +45,6 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
 
     public async Task<QuoteConversionResult> ConvertAsync(
         int quoteId,
-        string expectedVersion,
         CancellationToken cancellationToken)
     {
         if (quoteId <= 0)
@@ -62,19 +61,12 @@ public sealed class QuoteConversionProvider : SalesProviderBase, IQuoteConversio
                 return new QuoteConversionResult(await GetOrderAsync(existing.Id, cancellationToken), false);
             }
 
-            EnsureVersion(quote.RowVersion, expectedVersion);
             quote.ValidateForConversion();
             DateTimeOffset now = TimeProvider.GetUtcNow();
             string number = await _orders.AllocateNumberAsync(cancellationToken);
             SalesOrder order = SalesOrder.CreateFromQuote(number, quote, OperationContext.UserId, now);
             _orders.Add(order);
-            _orders.AddHistory(new SalesOrderStatusHistory
-            {
-                SalesOrder = order,
-                StatusId = (int)Domain.Sales.SalesOrderStatus.Draft,
-                CreatedByUserId = OperationContext.UserId,
-                CreationDate = now,
-            });
+            _orders.AddHistory(SalesOrderStatusHistory.Create(order, OperationContext.UserId, now));
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             cancellationToken.ThrowIfCancellationRequested();
