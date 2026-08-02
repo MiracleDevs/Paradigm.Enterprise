@@ -50,14 +50,14 @@ For a stateful entity such as `SalesOrder`, add append-only `SalesOrderStatusHis
 
 ## Publish safely
 
-Commit SqlPackage to the repository-local tool manifest and restore it before AppHost starts; a running bootstrap must never install it. Build first, then use the complete target connection string:
+For Aspire solutions, pin SqlPackage and SQLCMD 18 in the repository-owned bootstrap Dockerfile, install them during image construction, and keep them out of the host tool manifest. Build the SQL project into the image first, then use the complete target connection string from the Aspire reference:
 
 ```powershell
-dotnet tool run sqlpackage /Action:Publish /SourceFile:<database.dacpac> /TargetConnectionString:<connection-string>
+/opt/sqlpackage/sqlpackage /Action:Publish /SourceFile:<database.dacpac> /TargetConnectionString:<connection-string>
 ```
 
 Keep destructive publish properties disabled by default. Generate and review a deployment report/script before approving possible data loss.
 
-Execute `scripts/prepredeployment/PrePreDeployment.sql` through an explicit, idempotent pre-publish bootstrap step after optional BACPAC import and a successful DACPAC build, but before SqlPackage creates its deployment plan. Use a SQLCMD-compatible batch executor that supports `GO`, reviewed includes/variables, bounded timeouts, cancellation, nonzero failure propagation, and secret-free logs; do not feed the whole file to a naive `SqlCommand`. Merely registering it as DACPAC `PreDeploy` does not move it before plan generation. Apply the same managed/external publication gate, require human review for destructive statements, make the step visible in Aspire ordering, and fail the bootstrap when it fails.
+Execute `scripts/prepredeployment/PrePreDeployment.sql` through an explicit, idempotent pre-publish bootstrap step after optional BACPAC import and verification of the image-built DACPAC, but before SqlPackage creates its deployment plan. Use image-owned SQLCMD 18 with `GO`, reviewed includes/variables, bounded timeouts, cancellation, nonzero failure propagation, and secret-free logs; do not feed the whole file to a naive `SqlCommand`. Merely registering it as DACPAC `PreDeploy` does not move it before plan generation. Apply the same managed/external publication gate, require human review for destructive statements, make the finite Dockerfile resource visible in Aspire ordering, and fail the bootstrap when it fails.
 
 An optional BACPAC is a developer baseline, not schema source. Store at most one under `bootstrap`, import it only when an Aspire-managed local database is empty, and always publish the current DACPAC afterward. Never regenerate it automatically or import it into an external database.

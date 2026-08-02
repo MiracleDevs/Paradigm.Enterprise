@@ -9,7 +9,6 @@
     <PackageReference Include="Aspire.Hosting.SqlServer" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BeaconAr.DatabaseBootstrap\BeaconAr.DatabaseBootstrap.csproj" />
     <ProjectReference Include="..\BeaconAr.WebApi\BeaconAr.WebApi.csproj" />
   </ItemGroup>
 </Project>

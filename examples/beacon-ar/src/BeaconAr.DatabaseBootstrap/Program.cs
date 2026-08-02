@@ -30,6 +30,11 @@ finally
 
 static async Task RunBootstrapAsync(ILogger logger, CancellationToken cancellationToken)
 {
+    const string applicationRoot = "/app";
+    const string sqlCmdPath = "/opt/mssql-tools18/bin/sqlcmd";
+    const string sqlPackagePath = "/opt/sqlpackage/sqlpackage";
+    const int sqlCmdMajorVersion = 18;
+
     var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DatabaseConnection")
         ?? throw new InvalidOperationException("ConnectionStrings__DatabaseConnection is required.");
     var mode = Environment.GetEnvironmentVariable("Database__Mode") ?? "Managed";
@@ -40,20 +45,14 @@ static async Task RunBootstrapAsync(ILogger logger, CancellationToken cancellati
         return;
     }
 
-    var sqlCmdPath = Environment.GetEnvironmentVariable("Database__SqlCmdPath") ?? "sqlcmd";
-    var sqlCmdMajorVersionValue = Environment.GetEnvironmentVariable("Database__SqlCmdMajorVersion") ?? "18";
-    if (!int.TryParse(sqlCmdMajorVersionValue, out var sqlCmdMajorVersion) || sqlCmdMajorVersion < 1)
-        throw new InvalidOperationException("Database__SqlCmdMajorVersion must be a positive integer.");
-
-    var root = FindExampleRoot();
-    var sqlProject = Path.Combine(root, "src", "database", "BeaconAr.Database.sqlproj");
-    var artifactDirectory = Path.Combine(root, "artifacts", "database");
+    var databaseDirectory = Path.Combine(applicationRoot, "database");
+    var artifactDirectory = Path.Combine(applicationRoot, "artifacts");
     Directory.CreateDirectory(artifactDirectory);
 
     await BootstrapPhase.RunAsync(logger, "database-wait", TimeSpan.FromMinutes(2),
         token => WaitForDatabaseAsync(connectionString, TimeSpan.FromMinutes(2), token), cancellationToken);
 
-    var baseline = Path.Combine(root, "src", "database", "bootstrap", "BeaconAr.bacpac");
+    var baseline = Path.Combine(databaseDirectory, "bootstrap", "BeaconAr.bacpac");
     if (File.Exists(baseline))
     {
         await BootstrapPhase.RunAsync(logger, "baseline-decision", TimeSpan.FromMinutes(15), async token =>
@@ -64,7 +63,7 @@ static async Task RunBootstrapAsync(ILogger logger, CancellationToken cancellati
             if (!await IsDatabaseEmptyAsync(connectionString, TimeSpan.FromMinutes(2), token))
                 throw new InvalidOperationException("The managed database is not provably empty; baseline import was refused.");
 
-            await ProcessRunner.RunAsync(root, TimeSpan.FromMinutes(15), "dotnet", ["tool", "run", "sqlpackage", "/Action:Import", $"/SourceFile:{baseline}", $"/TargetConnectionString:{connectionString}"], token);
+            await ProcessRunner.RunAsync(applicationRoot, TimeSpan.FromMinutes(15), sqlPackagePath, ["/Action:Import", $"/SourceFile:{baseline}", $"/TargetConnectionString:{connectionString}"], token);
         }, cancellationToken);
     }
     else
@@ -72,24 +71,26 @@ static async Task RunBootstrapAsync(ILogger logger, CancellationToken cancellati
 
     var expectedDacpac = Path.Combine(artifactDirectory, "BeaconAr.Database.dacpac");
     var report = Path.Combine(artifactDirectory, "BeaconAr.Database.deployreport.xml");
-    await BootstrapPhase.RunAsync(logger, "dacpac-build", TimeSpan.FromMinutes(15), async token =>
+    var imageDacpac = Path.Combine(databaseDirectory, "BeaconAr.Database.dacpac");
+    await BootstrapPhase.RunAsync(logger, "dacpac-verify", TimeSpan.FromSeconds(15), token =>
     {
-        File.Delete(expectedDacpac);
+        token.ThrowIfCancellationRequested();
         File.Delete(report);
-        await ProcessRunner.RunAsync(root, TimeSpan.FromMinutes(15), "dotnet", ["build", sqlProject, "--configuration", "Release", $"/p:OutputPath={artifactDirectory}{Path.DirectorySeparatorChar}"], token);
-        var dacpacs = Directory.GetFiles(artifactDirectory, "*.dacpac", SearchOption.TopDirectoryOnly);
-        if (dacpacs.Length != 1 || !StringComparer.OrdinalIgnoreCase.Equals(dacpacs[0], expectedDacpac))
-            throw new InvalidOperationException($"Expected exactly one BeaconAr.Database.dacpac, found {dacpacs.Length} DACPAC artifact(s).");
+        var dacpacs = Directory.GetFiles(databaseDirectory, "*.dacpac", SearchOption.TopDirectoryOnly);
+        if (dacpacs.Length != 1 || !StringComparer.Ordinal.Equals(dacpacs[0], imageDacpac))
+            throw new InvalidOperationException($"Expected exactly one image-owned BeaconAr.Database.dacpac, found {dacpacs.Length} DACPAC artifact(s).");
+        File.Copy(imageDacpac, expectedDacpac, overwrite: true);
+        return Task.CompletedTask;
     }, cancellationToken);
 
-    var prePre = Path.Combine(root, "src", "database", "scripts", "prepredeployment", "PrePreDeployment.sql");
+    var prePre = Path.Combine(databaseDirectory, "scripts", "prepredeployment", "PrePreDeployment.sql");
     await BootstrapPhase.RunAsync(logger, "pre-pre", TimeSpan.FromMinutes(15),
-        token => SqlCmdRunner.ExecuteAsync(root, sqlCmdPath, sqlCmdMajorVersion, connectionString, prePre, TimeSpan.FromMinutes(15), token), cancellationToken);
+        token => SqlCmdRunner.ExecuteAsync(applicationRoot, sqlCmdPath, sqlCmdMajorVersion, connectionString, prePre, TimeSpan.FromMinutes(15), token), cancellationToken);
 
     await BootstrapPhase.RunAsync(logger, "deploy-report", TimeSpan.FromMinutes(15),
-        token => ProcessRunner.RunAsync(root, TimeSpan.FromMinutes(15), "dotnet", ["tool", "run", "sqlpackage", "/Action:DeployReport", $"/SourceFile:{expectedDacpac}", $"/TargetConnectionString:{connectionString}", $"/OutputPath:{report}"], token), cancellationToken);
+        token => ProcessRunner.RunAsync(applicationRoot, TimeSpan.FromMinutes(15), sqlPackagePath, ["/Action:DeployReport", $"/SourceFile:{expectedDacpac}", $"/TargetConnectionString:{connectionString}", $"/OutputPath:{report}"], token), cancellationToken);
     await BootstrapPhase.RunAsync(logger, "publish", TimeSpan.FromMinutes(15),
-        token => ProcessRunner.RunAsync(root, TimeSpan.FromMinutes(15), "dotnet", ["tool", "run", "sqlpackage", "/Action:Publish", $"/SourceFile:{expectedDacpac}", $"/TargetConnectionString:{connectionString}"], token), cancellationToken);
+        token => ProcessRunner.RunAsync(applicationRoot, TimeSpan.FromMinutes(15), sqlPackagePath, ["/Action:Publish", $"/SourceFile:{expectedDacpac}", $"/TargetConnectionString:{connectionString}"], token), cancellationToken);
     await BootstrapPhase.RunAsync(logger, "probe", TimeSpan.FromMinutes(2),
         token => ProbeSchemaAsync(connectionString, TimeSpan.FromMinutes(2), token), cancellationToken);
 }
@@ -144,13 +145,4 @@ static async Task ProbeSchemaAsync(string connectionString, TimeSpan timeout, Ca
     await using var command = new SqlCommand(sql, connection) { CommandTimeout = checked((int)Math.Ceiling(timeout.TotalSeconds)) };
     if (Convert.ToInt32(await command.ExecuteScalarAsync(linked.Token), System.Globalization.CultureInfo.InvariantCulture) != 1)
         throw new InvalidOperationException("Schema publication probe failed.");
-}
-
-static string FindExampleRoot()
-{
-    var directory = new DirectoryInfo(AppContext.BaseDirectory);
-    while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "aspire.config.json")))
-        directory = directory.Parent;
-
-    return directory?.FullName ?? throw new DirectoryNotFoundException("Beacon AR example root was not found.");
 }

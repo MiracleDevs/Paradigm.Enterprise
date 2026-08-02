@@ -96,6 +96,93 @@ public class DatabaseProjectValidatorTests
     }
 
     [TestMethod]
+    public void Containerized_aspire_bootstrap_satisfies_sql_tooling_policy()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root);
+            var diagnostics = Validate(project, solution, strict: true);
+            Assert.IsFalse(diagnostics.Any(item => item.Code == "PEDB111"), string.Join(Environment.NewLine, diagnostics.Select(item => item.Message)));
+        });
+    }
+
+    [TestMethod]
+    public void Project_backed_aspire_bootstrap_is_reported()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root, "var bootstrap = builder.AddProject<Projects.Product_DatabaseBootstrap>(\"database-bootstrap\"); api.WaitForCompletion(bootstrap);");
+            var legacyDiagnostics = Validate(project, solution, strict: false);
+            var strictDiagnostics = Validate(project, solution, strict: true);
+            Assert.IsTrue(legacyDiagnostics.Any(item => item.Code == "PEDB111" && item.Severity == "warning" && item.Message.Contains("host-process", StringComparison.Ordinal)));
+            Assert.IsTrue(strictDiagnostics.Any(item => item.Code == "PEDB111" && item.Severity == "error" && item.Message.Contains("host-process", StringComparison.Ordinal)));
+        });
+    }
+
+    [TestMethod]
+    public void Missing_aspire_bootstrap_dockerfile_is_reported()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root, dockerfileText: null);
+            var diagnostics = Validate(project, solution, strict: true);
+            Assert.IsTrue(diagnostics.Any(item => item.Code == "PEDB111" && item.Message.Contains("Dockerfile", StringComparison.Ordinal)));
+        });
+    }
+
+    [TestMethod]
+    public void Incomplete_aspire_bootstrap_image_tooling_is_reported()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root, dockerfileText: "FROM scratch");
+            var diagnostics = Validate(project, solution, strict: true);
+            Assert.IsTrue(diagnostics.Count(item => item.Code == "PEDB111") >= 3);
+        });
+    }
+
+    [TestMethod]
+    public void Aspire_bootstrap_requires_api_completion_ordering()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root, "var bootstrap = builder.AddDockerfile(\"database-bootstrap\", \".\");");
+            var diagnostics = Validate(project, solution, strict: true);
+            Assert.IsTrue(diagnostics.Any(item => item.Code == "PEDB111" && item.Message.Contains("WaitForCompletion", StringComparison.Ordinal)));
+        });
+    }
+
+    [TestMethod]
+    public void Aspire_bootstrap_requires_dockerfile_resource_registration()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root, "var api = builder.AddProject<Projects.Product_WebApi>(\"webapi\");");
+            var diagnostics = Validate(project, solution, strict: true);
+            Assert.IsTrue(diagnostics.Any(item => item.Code == "PEDB111" && item.Message.Contains("AddDockerfile", StringComparison.Ordinal)));
+        });
+    }
+
+    [TestMethod]
+    public void Aspire_bootstrap_rejects_host_sql_tool_prerequisites()
+    {
+        WithTemporary(root =>
+        {
+            var (project, solution) = CreateSqlProject(root);
+            CreateAspireBootstrap(root);
+            File.WriteAllText(Path.Combine(root, "start.sh"), "sqlcmd -? && sqlpackage /Version");
+            var diagnostics = Validate(project, solution, strict: true);
+            Assert.IsTrue(diagnostics.Any(item => item.Code == "PEDB111" && item.Message.Contains("developer host", StringComparison.Ordinal)));
+        });
+    }
+
+    [TestMethod]
     public void Valid_postgresql_project_allows_native_defaults()
     {
         WithTemporary(root => Assert.AreEqual(0, Validate(CreatePostgreSqlProject(root), null, strict: true).Count));
@@ -176,6 +263,18 @@ public class DatabaseProjectValidatorTests
         Directory.CreateDirectory(bootstrap);
         File.WriteAllText(Path.Combine(bootstrap, "Program.cs"), "var path = \"PrePreDeployment.sql\";");
         return (project, solution);
+    }
+
+    private static void CreateAspireBootstrap(
+        string root,
+        string appHostText = "var bootstrap = builder.AddDockerfile(\"database-bootstrap\", \".\"); api.WaitForCompletion(bootstrap);",
+        string? dockerfileText = "FROM runtime\nRUN apt-get install mssql-tools18 && sqlcmd_help='^Version 18'\nRUN dotnet tool install Microsoft.SqlPackage --tool-path /tools --version 170.4.83\nRUN dotnet build $DATABASE_PROJECT")
+    {
+        var appHost = Path.Combine(root, "Product.AppHost");
+        Directory.CreateDirectory(appHost);
+        File.WriteAllText(Path.Combine(appHost, "Program.cs"), appHostText);
+        if (dockerfileText is not null)
+            File.WriteAllText(Path.Combine(root, "Product.DatabaseBootstrap", "Dockerfile"), dockerfileText);
     }
 
     private static string CreatePostgreSqlProject(string root)

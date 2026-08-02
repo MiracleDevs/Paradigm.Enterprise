@@ -59,6 +59,8 @@ public class SolutionScaffolderTests
             StringAssert.Contains(starter, "dotnet --list-sdks");
             StringAssert.Contains(starter, "src/Contoso.Product.AppHost/Contoso.Product.AppHost.csproj");
             StringAssert.Contains(starter, "aspire stop --apphost");
+            Assert.IsFalse(starter.Contains("sqlcmd", StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(starter.Contains("sqlpackage", StringComparison.OrdinalIgnoreCase));
 
             var problemMatcher = Path.Combine(output, ".github", "problem-matchers", "paradigm.json");
             using var matcherDocument = JsonDocument.Parse(File.ReadAllText(problemMatcher));

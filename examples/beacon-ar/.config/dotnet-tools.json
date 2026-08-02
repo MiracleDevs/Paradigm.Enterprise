@@ -7,11 +7,6 @@
       "commands": [ "aspire" ],
       "rollForward": false
     },
-    "microsoft.sqlpackage": {
-      "version": "170.4.83",
-      "commands": [ "sqlpackage" ],
-      "rollForward": false
-    },
     "dotnet-ef": {
       "version": "10.0.9",
       "commands": [ "dotnet-ef" ],

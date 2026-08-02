@@ -14,7 +14,7 @@ Outside Development/Testing, HTTP business requests are rejected with `https_req
 
 ## Database and startup
 
-Use `./start.sh doctor` before starting managed mode. Managed mode publishes the DACPAC once through `BeaconAr.DatabaseBootstrap`; external mode needs an encrypted `ConnectionStrings__DatabaseConnection`. `/alive` reports process liveness. `/health` includes the bounded SQL readiness check and returns no connection or exception detail.
+Use `./start.sh doctor` before starting managed mode. Managed mode builds the repository-owned database-bootstrap image and publishes the DACPAC through its finite container; SQLCMD and SqlPackage are image-owned tools rather than workstation prerequisites. External mode needs an encrypted `ConnectionStrings__DatabaseConnection` and never imports the optional local BACPAC. `/alive` reports process liveness. `/health` includes the bounded SQL readiness check and returns no connection or exception detail.
 
 ## Calling the API
 

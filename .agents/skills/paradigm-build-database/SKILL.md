@@ -41,7 +41,7 @@ Then build or compile the engine-specific project and inspect the complete outpu
 
 ## Finish
 
-- SQL Server: run `dotnet build <database.sqlproj>`, publish to a disposable database with SqlPackage, and compare the produced DACPAC when converting project formats.
+- SQL Server without Aspire: run `dotnet build <database.sqlproj>`, publish to a disposable database with a reviewed SqlPackage environment, and compare the produced DACPAC when converting project formats. With Aspire, build and publish through the repository-owned bootstrap image from `$paradigm-setup-aspire`; do not require SQLCMD or SqlPackage on the host.
 - PostgreSQL: generate the aggregate publish script, inspect its deterministic order, execute against a disposable database, and verify the installed DbPublisher reports failures reliably.
 - Regenerate EF/database-first output only after the database build succeeds. Build the application solution and review the generated diff.
 - With Aspire, verify first-run creation, optional baseline import, subsequent DACPAC/DbPublisher updates, and restart idempotency before accepting the change.

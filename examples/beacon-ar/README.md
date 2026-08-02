@@ -8,7 +8,7 @@ The solution is a modular monolith with inward dependencies: `WebApi -> Provider
 
 - .NET SDK 10.0.302 or a compatible later patch
 - Docker using Linux containers
-- Bash and Microsoft SQLCMD 18
+- Bash
 - Node.js compatible with the pinned Angular packages when validating the generated client
 - repository-packed Paradigm packages in `../../artifacts` for a source checkout
 
@@ -21,7 +21,7 @@ dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../..
 ./start.sh start
 ```
 
-Managed mode provisions SQL Server, publishes the DACPAC through the finite bootstrap, and starts the API after publication. External mode requires `ConnectionStrings__DatabaseConnection`. `/alive` is process liveness and `/health` is dependency readiness; both intentionally expose only status.
+Managed mode provisions SQL Server, builds the repository-owned database-bootstrap image, publishes the DACPAC through that finite container, and starts the API after publication. The image owns SQLCMD and SqlPackage, so neither tool is a workstation prerequisite. External mode requires `ConnectionStrings__DatabaseConnection`. `/alive` is process liveness and `/health` is dependency readiness; both intentionally expose only status.
 
 ## API and security
 

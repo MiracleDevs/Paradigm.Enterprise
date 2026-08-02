@@ -26,6 +26,6 @@ Source code is authoritative for API behavior. Architecture and security guides 
 
 Use `paradigm-evolve-guidance` when a repeatable review lesson should become a fixture, built-in metadata or semantic rule, reviewed dry-run fixer, or concise judgment-only instruction. Prefer deterministic enforcement whenever stable evidence exists.
 
-Use `paradigm-setup-aspire` for AppHost, ServiceDefaults, root `.env`, database bootstrap ordering, and Bicep publishing. Install Microsoft's current [Aspire workflow skills](https://aspire.dev/get-started/aspire-skills/) in the consuming repository with `aspire agent init`; the Paradigm skill adds project-specific policy instead of vendoring that bundle.
+Use `paradigm-setup-aspire` for AppHost, ServiceDefaults, root `.env`, database bootstrap ordering, and Bicep publishing. Its governed SQL Server bootstrap assets build the DACPAC and install SQLCMD 18 plus pinned SqlPackage inside a repository-owned image, keeping those tools off the developer host. Install Microsoft's current [Aspire workflow skills](https://aspire.dev/get-started/aspire-skills/) in the consuming repository with `aspire agent init`; the Paradigm skill adds project-specific policy instead of vendoring that bundle.
 
 Use `paradigm-build-database` for SDK-style SQL Server projects, DACPAC/BACPAC handling, PostgreSQL DbPublisher projects, schema scripts, keys, audit fields, and seed data. The built-in `paradigm database validate` command is read-only and supports strict new-project enforcement plus warning-oriented legacy audits.
