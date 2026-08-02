@@ -8,11 +8,24 @@ The solution is a modular monolith with inward dependencies: `WebApi -> Provider
 
 Every consumer-facing entity or transactional table has a schema-bound `{Entity}View` projection. These views expose the entity's complete mapping surface and expand foreign keys with commonly needed names, codes, and display values while preserving one row per base entity. `SearchQuote` and `SearchSalesOrder` now query these projections directly, establishing the database DTO contract.
 
-The intended application boundary is that EF Core Power Tools generates matching entity/view types and their shared domain interfaces, repositories retrieve entities or view shapes, and Providers own entity-to-view mapping and validation orchestration. That generated model/context work, detail-repository adoption of the views, and provider mapping remain pending Tasks 2 and 3; the current detail repositories still use the existing entity/pricing projections.
+EF Core Power Tools generates matching entity/view types and `ReceivablesDbContext`. The Domain analyzer derives a getter-only `I{Entity}` scalar contract from each mapped table entity, and both the entity and its `{Entity}View` implement that interface. Repositories retrieve entities or view shapes; Providers own entity-to-view mapping and validation orchestration. Detail-repository adoption of the generated views and Provider-owned mapping remain Task 3; current detail repositories still use their existing entity/pricing projections.
 
 `QuoteView` and `SalesOrderView` are the public pricing projections and expose the schema's `Subtotal`, `DiscountTotal`, and `GrandTotal` values. Their schema-bound pricing helpers are database implementation details rather than standalone API DTOs. Status catalogs, audit history, idempotency storage, and other internal tables do not receive API views unless a concrete consumer requires one.
 
 The SQL Server project is `src/database/BeaconAr.Database.sqlproj` and is included in `src/BeaconAr.sln`. Its Microsoft.Build.Sql item groups explicitly include tables, views, functions, routines, types, sequences, and deployment/support scripts so the full schema is visible when the solution is opened in Visual Studio.
+
+## Database-first regeneration
+
+The deterministic regeneration path is the repository-local EF Core Power Tools CLI, pinned as `ErikEJ.EFCorePowerTools.Cli` 10.1.1386 in `.config/dotnet-tools.json`. The checked-in `src/BeaconAr.Data/efcpt-config.json` explicitly selects all 17 persistence tables, the nine public `{Entity}View` projections, and only the two internal pricing helper views. It contains no connection string. Custom EF Core 10 T4 templates under `src/BeaconAr.Data/CodeTemplates/EFCore` own the Paradigm bases, mapping hooks, collection trackers, auditing contracts, context constructor, and the `CustomerAddress` one-to-many correction.
+
+Build and publish `src/database/BeaconAr.Database.sqlproj` to a disposable SQL Server database before regenerating. Live-database generation is required because DACPAC reverse engineering can omit view/computed-column metadata. Supply that disposable connection only through the process environment, then run:
+
+```powershell
+$env:ConnectionStrings__DatabaseConnection = '<disposable SQL Server connection>'
+./build/regenerate-persistence.ps1
+```
+
+The script restores the local tool, verifies the pin/config/templates, builds before generation, runs `dotnet tool run efcpt`, validates all generated ownership markers, and builds afterward. It never deletes output itself. EFPT owns only `src/BeaconAr.Domain/Receivables/Entities` and `src/BeaconAr.Data/Receivables/Context`; do not hand-edit those files. Keep behavior in partials outside those directories and review the complete generated diff after every run. The Visual Studio extension is optional convenience, not the source of truth.
 
 ## Prerequisites and local start
 

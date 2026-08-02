@@ -1,6 +1,6 @@
 using BeaconAr.Data.MasterData;
 using BeaconAr.Data.Operations;
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Data.Reporting;
 using BeaconAr.Data.Sales;
 using BeaconAr.Domain.MasterData.Application;

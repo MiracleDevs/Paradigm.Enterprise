@@ -41,7 +41,7 @@ Use `dotnet tool run paradigm api show/search` only to resolve an exact signatur
 2. Correctness: invariants, identifier consistency, nullability, query bounds/order, stored-procedure result ordering, assigned system IDs and enum/seed parity, status-transition history, pre-pre/DACPAC ordering, database bootstrap idempotency, baseline/import rules, transaction and external-side-effect claims.
 3. Architecture: HTTP only in controllers, orchestration in Providers, invariants in Domain, persistence only in repositories, inward references.
 4. Conventions: one semantic type per file, required member regions/order, least visibility, immutability, meaningful folders, public discoverable types only where required, exact `I{ConcreteName}` interfaces, marker inheritance, reachable assemblies, correct lifetimes.
-5. Generation: no edits to replaceable output; JSON/request/response metadata complete.
+5. Generation: no edits to replaceable output; generated source has an early ownership marker and generated types have compiled `GeneratedCodeAttribute` metadata when assembly checks are used; JSON/request/response metadata complete.
 6. Operations: cancellation, standard trace correlation, structured logs, metrics, liveness/readiness, dependency health, Aspire wait ordering, retry/idempotency, secret-free generated deployment artifacts.
 7. Tests: behavior and failure paths at the cheapest effective boundary.
 

@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using Microsoft.Data.SqlClient;
 using Paradigm.Enterprise.Domain.Uow;
 

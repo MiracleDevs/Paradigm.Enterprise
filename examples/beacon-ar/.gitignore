@@ -1,5 +1,6 @@
 .env
 .aspire/
 artifacts/
+src/BeaconAr.Data/efcpt-readme.md
 **/bin/
 **/obj/
