@@ -6,21 +6,13 @@ namespace BeaconAr.Providers.MasterData;
 
 public interface ICustomerProvider : IEditProvider<CustomerView, int>
 {
-    Task<PageResult<CustomerDto>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken);
+    Task<PageResult<CustomerView>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken);
 
-    Task<CustomerDto> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<CustomerView> GetByIdAsync(int id, CancellationToken cancellationToken);
 
-    Task<CustomerDto> CreateAsync(CustomerCreateRequest request, CancellationToken cancellationToken);
+    Task<CustomerView> CreateAsync(CustomerCreateRequest request, CancellationToken cancellationToken);
 
-    Task<CustomerDto> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
-
-    Task<PageResult<CustomerView>> SearchForApiAsync(CustomerSearchRequest request, CancellationToken cancellationToken);
-
-    Task<CustomerView> GetForApiAsync(int id, CancellationToken cancellationToken);
-
-    Task<CustomerView> CreateForApiAsync(CustomerCreateRequest request, CancellationToken cancellationToken);
-
-    Task<CustomerView> UpdateForApiAsync(int id, CustomerUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
+    Task<CustomerView> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
 
     Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken);
 }

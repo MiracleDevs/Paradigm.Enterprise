@@ -143,11 +143,11 @@ public sealed class MasterDataLiveTests
             IAddressProvider addresses = scope.ServiceProvider.GetRequiredService<IAddressProvider>();
             ICarrierProvider carriers = scope.ServiceProvider.GetRequiredService<ICarrierProvider>();
 
-            ProductDto firstProduct = await products.CreateAsync(new ProductCreateRequest(
+            ProductView firstProduct = await products.CreateAsync(new ProductCreateRequest(
                 $"sku-{key}", "Alpha Product", "Live Search", 12.3456m, 3, "https://example.test/product.png"), CancellationToken.None);
-            ProductDto secondProduct = await products.CreateAsync(new ProductCreateRequest(
+            ProductView secondProduct = await products.CreateAsync(new ProductCreateRequest(
                 $"other-{key}", "Alpha Product", "Other", 1m, 0, null, false), CancellationToken.None);
-            PageResult<ProductDto> productPage = await products.SearchAsync(new ProductSearchRequest
+            PageResult<ProductView> productPage = await products.SearchAsync(new ProductSearchRequest
             {
                 Search = "alpha product",
                 Active = true,
@@ -159,7 +159,7 @@ public sealed class MasterDataLiveTests
             Assert.AreEqual(1, productPage.ItemsCount);
             Assert.AreEqual(1, productPage.TotalPages);
             Assert.AreEqual(firstProduct.Id, productPage.Items.Single().Id);
-            Assert.IsFalse(string.IsNullOrWhiteSpace(firstProduct.Version));
+            Assert.IsFalse(string.IsNullOrWhiteSpace(Version(firstProduct.RowVersion)));
 
             PaginatedResultDto<ProductView> officialProductPage = await products.SearchAsync(
                 new MasterDataViewSearchParameters
@@ -179,16 +179,16 @@ public sealed class MasterDataLiveTests
                 new ProductCreateRequest($"SKU-{key}", "Duplicate", "Other", 1m, 0, null), CancellationToken.None));
             Assert.AreEqual("duplicate_key", duplicateProduct.Code);
 
-            ProductDto deactivated = await products.UpdateAsync(firstProduct.Id, new ProductUpdateRequest(
+            ProductView deactivated = await products.UpdateAsync(firstProduct.Id, new ProductUpdateRequest(
                 firstProduct.Sku, firstProduct.Name, firstProduct.Category, firstProduct.UnitPrice,
-                firstProduct.StockQuantity, firstProduct.ThumbnailUrl, false), firstProduct.Version, CancellationToken.None);
+                firstProduct.StockQuantity, firstProduct.ThumbnailUrl, false), Version(firstProduct.RowVersion), CancellationToken.None);
             MasterDataException stale = await Assert.ThrowsAsync<MasterDataException>(() => products.UpdateAsync(firstProduct.Id,
                 new ProductUpdateRequest(firstProduct.Sku, "Stale overwrite", firstProduct.Category, firstProduct.UnitPrice,
-                    firstProduct.StockQuantity, null, true), firstProduct.Version, CancellationToken.None));
+                    firstProduct.StockQuantity, null, true), Version(firstProduct.RowVersion), CancellationToken.None));
             Assert.AreEqual("concurrency_conflict", stale.Code);
             Assert.IsFalse(deactivated.IsActive);
 
-            CustomerDto customer = await customers.CreateAsync(new CustomerCreateRequest(
+            CustomerView customer = await customers.CreateAsync(new CustomerCreateRequest(
                 $"account-{key}", "Live Customer", "live@example.test", null, 100m, 30), CancellationToken.None);
             MasterDataException duplicateCustomer = await Assert.ThrowsAsync<MasterDataException>(() => customers.CreateAsync(
                 new CustomerCreateRequest($"ACCOUNT-{key}", "Duplicate", "duplicate@example.test", null, 0, 0), CancellationToken.None));
@@ -198,11 +198,11 @@ public sealed class MasterDataLiveTests
             Assert.AreEqual(customer.Id, officialCustomerPage.Results.Single().Id);
             Assert.IsFalse(string.IsNullOrWhiteSpace(officialCustomerPage.Results.Single().CreatedByUserDisplayName));
 
-            AddressDto firstAddress = await addresses.CreateAsync(new AddressCreateRequest(
+            CustomerAddressView firstAddress = await addresses.CreateAsync(new AddressCreateRequest(
                 customer.Id, "shipping", "First", "1 First Street", null, "Buenos Aires", null, "1000", "ar", false, true), CancellationToken.None);
-            AddressDto secondAddress = await addresses.CreateAsync(new AddressCreateRequest(
+            CustomerAddressView secondAddress = await addresses.CreateAsync(new AddressCreateRequest(
                 customer.Id, "both", "Second", "2 Second Street", null, "Buenos Aires", null, "1001", "AR", true, true), CancellationToken.None);
-            PageResult<AddressDto> addressPage = await addresses.SearchAsync(new AddressSearchRequest
+            PageResult<CustomerAddressView> addressPage = await addresses.SearchAsync(new AddressSearchRequest
             {
                 CustomerId = customer.Id,
                 Usage = AddressUsage.Shipping,
@@ -210,9 +210,9 @@ public sealed class MasterDataLiveTests
                 SortField = "name",
             }, CancellationToken.None);
             Assert.HasCount(2, addressPage.Items);
-            Assert.AreEqual(1, addressPage.Items.Count(address => address.DefaultShipping));
-            Assert.AreEqual(secondAddress.Id, addressPage.Items.Single(address => address.DefaultShipping).Id);
-            Assert.IsFalse(addressPage.Items.Single(address => address.Id == firstAddress.Id).DefaultShipping);
+            Assert.AreEqual(1, addressPage.Items.Count(address => address.IsDefaultShipping));
+            Assert.AreEqual(secondAddress.Id, addressPage.Items.Single(address => address.IsDefaultShipping).Id);
+            Assert.IsFalse(addressPage.Items.Single(address => address.Id == firstAddress.Id).IsDefaultShipping);
             Assert.AreEqual("AR", secondAddress.Country);
             PaginatedResultDto<CustomerAddressView> officialAddressPage = await addresses.SearchAsync(
                 new MasterDataViewSearchParameters
@@ -225,7 +225,7 @@ public sealed class MasterDataLiveTests
             Assert.AreEqual(2, officialAddressPage.PageInfo.ItemsCount);
             Assert.IsTrue(officialAddressPage.Results.All(address => address.CustomerName == "Live Customer"));
 
-            CarrierDto carrier = await carriers.CreateAsync(new CarrierCreateRequest(
+            CarrierView carrier = await carriers.CreateAsync(new CarrierCreateRequest(
                 $"carrier-{key}", "Live Carrier", "Priority", "https://carrier.example/track/{trackingNumber}"), CancellationToken.None);
             PaginatedResultDto<CarrierView> officialCarrierPage = await carriers.SearchAsync(
                 new MasterDataViewSearchParameters { Search = "Live Carrier", PageSize = 10, SortBy = "name" });
@@ -240,18 +240,18 @@ public sealed class MasterDataLiveTests
             Assert.AreEqual(secondProduct.Id, (await products.GetByIdAsync(secondProduct.Id, CancellationToken.None)).Id);
 
             MasterDataException staleDelete = await Assert.ThrowsAsync<MasterDataException>(() =>
-                products.DeleteAsync(firstProduct.Id, firstProduct.Version, CancellationToken.None));
+                products.DeleteAsync(firstProduct.Id, Version(firstProduct.RowVersion), CancellationToken.None));
             Assert.AreEqual("concurrency_conflict", staleDelete.Code);
-            await products.DeleteAsync(secondProduct.Id, secondProduct.Version, CancellationToken.None);
-            await carriers.DeleteAsync(carrier.Id, carrier.Version, CancellationToken.None);
+            await products.DeleteAsync(secondProduct.Id, Version(secondProduct.RowVersion), CancellationToken.None);
+            await carriers.DeleteAsync(carrier.Id, Version(carrier.RowVersion), CancellationToken.None);
 
             MasterDataException referencedCustomer = await Assert.ThrowsAsync<MasterDataException>(() =>
-                customers.DeleteAsync(customer.Id, customer.Version, CancellationToken.None));
+                customers.DeleteAsync(customer.Id, Version(customer.RowVersion), CancellationToken.None));
             Assert.AreEqual("referenced_record", referencedCustomer.Code);
-            AddressDto currentFirstAddress = await addresses.GetByIdAsync(firstAddress.Id, CancellationToken.None);
-            await addresses.DeleteAsync(currentFirstAddress.Id, currentFirstAddress.Version, CancellationToken.None);
-            await addresses.DeleteAsync(secondAddress.Id, secondAddress.Version, CancellationToken.None);
-            await customers.DeleteAsync(customer.Id, customer.Version, CancellationToken.None);
+            CustomerAddressView currentFirstAddress = await addresses.GetByIdAsync(firstAddress.Id, CancellationToken.None);
+            await addresses.DeleteAsync(currentFirstAddress.Id, Version(currentFirstAddress.RowVersion), CancellationToken.None);
+            await addresses.DeleteAsync(secondAddress.Id, Version(secondAddress.RowVersion), CancellationToken.None);
+            await customers.DeleteAsync(customer.Id, Version(customer.RowVersion), CancellationToken.None);
         }
         finally
         {
@@ -276,16 +276,16 @@ public sealed class MasterDataLiveTests
         try
         {
             ProductCreateRequest request = new($"race-{key}", "Concurrent product", "Race", 1m, 0, null);
-            Task<(ProductDto? Result, Exception? Error)> firstAttempt = CaptureCreateAsync(first, request);
-            Task<(ProductDto? Result, Exception? Error)> secondAttempt = CaptureCreateAsync(second, request);
-            (ProductDto? Result, Exception? Error)[] attempts = await Task.WhenAll(firstAttempt, secondAttempt);
+            Task<(ProductView? Result, Exception? Error)> firstAttempt = CaptureCreateAsync(first, request);
+            Task<(ProductView? Result, Exception? Error)> secondAttempt = CaptureCreateAsync(second, request);
+            (ProductView? Result, Exception? Error)[] attempts = await Task.WhenAll(firstAttempt, secondAttempt);
 
             Assert.AreEqual(1, attempts.Count(attempt => attempt.Result is not null));
             MasterDataException conflict = (MasterDataException)attempts.Single(attempt => attempt.Error is not null).Error!;
             Assert.AreEqual("duplicate_key", conflict.Code);
 
             IProductProvider failedProvider = attempts[0].Error is not null ? first : second;
-            ProductDto recovered = await failedProvider.CreateAsync(new ProductCreateRequest(
+            ProductView recovered = await failedProvider.CreateAsync(new ProductCreateRequest(
                 $"recovered-{key}", "Recovered product", "Race", 2m, 0, null), CancellationToken.None);
             Assert.IsTrue(recovered.Id > 0);
             Assert.AreEqual(2, await CountProductsAsync(connectionString, key));
@@ -307,10 +307,10 @@ public sealed class MasterDataLiveTests
 
         try
         {
-            CustomerDto firstCustomer;
-            CustomerDto secondCustomer;
-            AddressDto firstAddress;
-            AddressDto secondAddress;
+            CustomerView firstCustomer;
+            CustomerView secondCustomer;
+            CustomerAddressView firstAddress;
+            CustomerAddressView secondAddress;
             using (IServiceScope setupScope = services.CreateScope())
             {
                 ICustomerProvider customers = setupScope.ServiceProvider.GetRequiredService<ICustomerProvider>();
@@ -332,11 +332,11 @@ public sealed class MasterDataLiveTests
                 int firstDestination = firstAddress.CustomerId == firstCustomer.Id ? secondCustomer.Id : firstCustomer.Id;
                 int secondDestination = secondAddress.CustomerId == secondCustomer.Id ? firstCustomer.Id : secondCustomer.Id;
 
-                Task<AddressDto> firstMove = firstMover.UpdateAsync(firstAddress.Id,
-                    AddressUpdate(firstDestination, firstAddress.Label), firstAddress.Version, CancellationToken.None);
-                Task<AddressDto> secondMove = secondMover.UpdateAsync(secondAddress.Id,
-                    AddressUpdate(secondDestination, secondAddress.Label), secondAddress.Version, CancellationToken.None);
-                AddressDto[] moved = await Task.WhenAll(firstMove, secondMove).WaitAsync(TimeSpan.FromSeconds(15));
+                Task<CustomerAddressView> firstMove = firstMover.UpdateAsync(firstAddress.Id,
+                    AddressUpdate(firstDestination, firstAddress.Label), Version(firstAddress.RowVersion), CancellationToken.None);
+                Task<CustomerAddressView> secondMove = secondMover.UpdateAsync(secondAddress.Id,
+                    AddressUpdate(secondDestination, secondAddress.Label), Version(secondAddress.RowVersion), CancellationToken.None);
+                CustomerAddressView[] moved = await Task.WhenAll(firstMove, secondMove).WaitAsync(TimeSpan.FromSeconds(15));
                 firstAddress = moved[0];
                 secondAddress = moved[1];
             }
@@ -366,33 +366,33 @@ public sealed class MasterDataLiveTests
             using IServiceScope scope = services.CreateScope();
             ICustomerProvider customers = scope.ServiceProvider.GetRequiredService<ICustomerProvider>();
             IAddressProvider addresses = scope.ServiceProvider.GetRequiredService<IAddressProvider>();
-            CustomerDto source = await customers.CreateAsync(new CustomerCreateRequest(
+            CustomerView source = await customers.CreateAsync(new CustomerCreateRequest(
                 $"move-source-{key}", "Move Source", "source@example.test", null, 0, 0), CancellationToken.None);
-            CustomerDto destination = await customers.CreateAsync(new CustomerCreateRequest(
+            CustomerView destination = await customers.CreateAsync(new CustomerCreateRequest(
                 $"move-destination-{key}", "Move Destination", "destination@example.test", null, 0, 0), CancellationToken.None);
-            AddressDto moving = await addresses.CreateAsync(AddressRequest(source.Id, "Moving") with
+            CustomerAddressView moving = await addresses.CreateAsync(AddressRequest(source.Id, "Moving") with
             {
                 DefaultBilling = billing,
                 DefaultShipping = shipping,
             }, CancellationToken.None);
-            AddressDto previous = await addresses.CreateAsync(AddressRequest(destination.Id, "Previous") with
+            CustomerAddressView previous = await addresses.CreateAsync(AddressRequest(destination.Id, "Previous") with
             {
                 DefaultBilling = billing,
                 DefaultShipping = shipping,
             }, CancellationToken.None);
 
-            AddressDto moved = await addresses.UpdateAsync(moving.Id, AddressUpdate(destination.Id, moving.Label) with
+            CustomerAddressView moved = await addresses.UpdateAsync(moving.Id, AddressUpdate(destination.Id, moving.Label) with
             {
                 DefaultBilling = billing,
                 DefaultShipping = shipping,
-            }, moving.Version, CancellationToken.None);
-            AddressDto cleared = await addresses.GetByIdAsync(previous.Id, CancellationToken.None);
+            }, Version(moving.RowVersion), CancellationToken.None);
+            CustomerAddressView cleared = await addresses.GetByIdAsync(previous.Id, CancellationToken.None);
 
             Assert.AreEqual(destination.Id, moved.CustomerId);
-            Assert.AreEqual(billing, moved.DefaultBilling);
-            Assert.AreEqual(shipping, moved.DefaultShipping);
-            Assert.IsFalse(cleared.DefaultBilling);
-            Assert.IsFalse(cleared.DefaultShipping);
+            Assert.AreEqual(billing, moved.IsDefaultBilling);
+            Assert.AreEqual(shipping, moved.IsDefaultShipping);
+            Assert.IsFalse(cleared.IsDefaultBilling);
+            Assert.IsFalse(cleared.IsDefaultShipping);
         }
         finally
         {
@@ -417,12 +417,12 @@ public sealed class MasterDataLiveTests
             IAddressProvider addresses = scope.ServiceProvider.GetRequiredService<IAddressProvider>();
             ICarrierProvider carriers = scope.ServiceProvider.GetRequiredService<ICarrierProvider>();
             string literal = $"%_[{key}";
-            ProductDto product = await products.CreateAsync(new ProductCreateRequest(
+            ProductView product = await products.CreateAsync(new ProductCreateRequest(
                 $"p-{key}", $"Product {literal}", "Search", 1m, 0, null), CancellationToken.None);
-            CustomerDto customer = await customers.CreateAsync(new CustomerCreateRequest(
+            CustomerView customer = await customers.CreateAsync(new CustomerCreateRequest(
                 $"c-{key}", $"Customer {literal}", $"{key}@example.test", null, 0, 0), CancellationToken.None);
-            AddressDto address = await addresses.CreateAsync(AddressRequest(customer.Id, $"Address {literal}"), CancellationToken.None);
-            CarrierDto carrier = await carriers.CreateAsync(new CarrierCreateRequest(
+            CustomerAddressView address = await addresses.CreateAsync(AddressRequest(customer.Id, $"Address {literal}"), CancellationToken.None);
+            CarrierView carrier = await carriers.CreateAsync(new CarrierCreateRequest(
                 $"k-{key}", $"Carrier {literal}", "Search", null), CancellationToken.None);
 
             Assert.AreEqual(product.Id, (await products.SearchAsync(new ProductSearchRequest { Search = literal, Active = true }, CancellationToken.None)).Items.Single().Id);
@@ -491,9 +491,9 @@ public sealed class MasterDataLiveTests
 
         try
         {
-            CustomerDto customer;
-            AddressDto first;
-            AddressDto second;
+            CustomerView customer;
+            CustomerAddressView first;
+            CustomerAddressView second;
             using (IServiceScope setup = services.CreateScope())
             {
                 ICustomerProvider customers = setup.ServiceProvider.GetRequiredService<ICustomerProvider>();
@@ -513,18 +513,18 @@ public sealed class MasterDataLiveTests
                 {
                     DefaultBilling = true,
                     DefaultShipping = true,
-                }, first.Version, CancellationToken.None),
+                }, Version(first.RowVersion), CancellationToken.None),
                 secondProvider.UpdateAsync(second.Id, AddressUpdate(customer.Id, second.Label) with
                 {
                     DefaultBilling = true,
                     DefaultShipping = true,
-                }, second.Version, CancellationToken.None)).WaitAsync(TimeSpan.FromSeconds(15));
+                }, Version(second.RowVersion), CancellationToken.None)).WaitAsync(TimeSpan.FromSeconds(15));
 
             using IServiceScope readScope = services.CreateScope();
-            PageResult<AddressDto> page = await readScope.ServiceProvider.GetRequiredService<IAddressProvider>()
+            PageResult<CustomerAddressView> page = await readScope.ServiceProvider.GetRequiredService<IAddressProvider>()
                 .SearchAsync(new AddressSearchRequest { CustomerId = customer.Id, PageSize = 10 }, CancellationToken.None);
-            Assert.AreEqual(1, page.Items.Count(item => item.DefaultBilling));
-            Assert.AreEqual(1, page.Items.Count(item => item.DefaultShipping));
+            Assert.AreEqual(1, page.Items.Count(item => item.IsDefaultBilling));
+            Assert.AreEqual(1, page.Items.Count(item => item.IsDefaultShipping));
         }
         finally
         {
@@ -548,23 +548,23 @@ public sealed class MasterDataLiveTests
             ICustomerProvider customers = scope.ServiceProvider.GetRequiredService<ICustomerProvider>();
             IAddressProvider addresses = scope.ServiceProvider.GetRequiredService<IAddressProvider>();
             ICarrierProvider carriers = scope.ServiceProvider.GetRequiredService<ICarrierProvider>();
-            ProductDto product = await products.CreateAsync(new ProductCreateRequest(
+            ProductView product = await products.CreateAsync(new ProductCreateRequest(
                 $"ref-{key}", "Referenced product", "References", 1m, 0, null), CancellationToken.None);
-            CustomerDto customer = await customers.CreateAsync(new CustomerCreateRequest(
+            CustomerView customer = await customers.CreateAsync(new CustomerCreateRequest(
                 $"ref-{key}", "Referenced customer", "referenced@example.test", null, 0, 0), CancellationToken.None);
-            AddressDto address = await addresses.CreateAsync(AddressRequest(customer.Id, "Referenced"), CancellationToken.None);
-            CarrierDto carrier = await carriers.CreateAsync(new CarrierCreateRequest(
+            CustomerAddressView address = await addresses.CreateAsync(AddressRequest(customer.Id, "Referenced"), CancellationToken.None);
+            CarrierView carrier = await carriers.CreateAsync(new CarrierCreateRequest(
                 $"ref-{key}", "Referenced carrier", "Ground", null), CancellationToken.None);
             await InsertReferencesAsync(connectionString, key, userId, product.Id, customer.Id, address.Id, carrier.Id);
 
             Assert.AreEqual("referenced_record", (await Assert.ThrowsAsync<MasterDataException>(() =>
-                products.DeleteAsync(product.Id, product.Version, CancellationToken.None))).Code);
+                products.DeleteAsync(product.Id, Version(product.RowVersion), CancellationToken.None))).Code);
             Assert.AreEqual("referenced_record", (await Assert.ThrowsAsync<MasterDataException>(() =>
-                customers.DeleteAsync(customer.Id, customer.Version, CancellationToken.None))).Code);
+                customers.DeleteAsync(customer.Id, Version(customer.RowVersion), CancellationToken.None))).Code);
             Assert.AreEqual("referenced_address", (await Assert.ThrowsAsync<MasterDataException>(() =>
-                addresses.DeleteAsync(address.Id, address.Version, CancellationToken.None))).Code);
+                addresses.DeleteAsync(address.Id, Version(address.RowVersion), CancellationToken.None))).Code);
             Assert.AreEqual("referenced_record", (await Assert.ThrowsAsync<MasterDataException>(() =>
-                carriers.DeleteAsync(carrier.Id, carrier.Version, CancellationToken.None))).Code);
+                carriers.DeleteAsync(carrier.Id, Version(carrier.RowVersion), CancellationToken.None))).Code);
         }
         finally
         {
@@ -609,6 +609,7 @@ public sealed class MasterDataLiveTests
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IMasterDataPersistenceErrorClassifier, MasterDataPersistenceErrorClassifier>();
         services.AddScoped<IPersistenceSession, PersistenceSession>();
+        services.AddScoped<MasterDataMutationCoordinator>();
         services.AddScoped<IApplicationOperationContext>(_ => new TestOperationContext(userId, correlationId));
         services.AddSingleton<TimeProvider>(new FixedTimeProvider(new DateTimeOffset(2026, 8, 1, 15, 30, 0, TimeSpan.Zero)));
         services.AddScoped<IProductProvider, ProductProvider>();
@@ -618,7 +619,7 @@ public sealed class MasterDataLiveTests
         return services.BuildServiceProvider(validateScopes: true);
     }
 
-    private static async Task<(ProductDto? Result, Exception? Error)> CaptureCreateAsync(
+    private static async Task<(ProductView? Result, Exception? Error)> CaptureCreateAsync(
         IProductProvider provider, ProductCreateRequest request)
     {
         try
@@ -636,6 +637,8 @@ public sealed class MasterDataLiveTests
 
     private static AddressUpdateRequest AddressUpdate(int customerId, string label) => new(
         customerId, "both", label, $"{label} Street", null, "Buenos Aires", null, "1000", "AR", false, false);
+
+    private static string Version(byte[] rowVersion) => Convert.ToBase64String(rowVersion);
 
     private static async Task<int> CountProductsAsync(string connectionString, string key)
     {

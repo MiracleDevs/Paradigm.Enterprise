@@ -41,7 +41,7 @@ public sealed class CustomersController : ControllerBase
         [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
         [FromQuery(Name = "active")] bool? active = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchForApiAsync(new CustomerSearchRequest
+        Ok(await _provider.SearchAsync(new CustomerSearchRequest
         {
             Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
             SortDirection = sortDirection, Active = active,
@@ -51,7 +51,7 @@ public sealed class CustomersController : ControllerBase
     public async Task<ActionResult<CustomerView>> Get(int id, CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        CustomerView value = await _provider.GetForApiAsync(id, cancellationToken);
+        CustomerView value = await _provider.GetByIdAsync(id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }
@@ -64,7 +64,7 @@ public sealed class CustomersController : ControllerBase
     public async Task<ActionResult<CustomerView>> Create([FromBody] CustomerCreateRequest request, [FromHeader(Name = "Idempotency-Key")] string? key, CancellationToken cancellationToken)
     {
         (CustomerView value, bool replayed) = await _idempotency.ExecuteAsync("create-customer", key, request,
-            () => _provider.CreateForApiAsync(request, cancellationToken), id => _provider.GetForApiAsync(id, cancellationToken), static value => value.Id, cancellationToken);
+            () => _provider.CreateAsync(request, cancellationToken), id => _provider.GetByIdAsync(id, cancellationToken), static value => value.Id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         if (replayed) Response.Headers["Idempotency-Replayed"] = "true";
         return CreatedAtRoute("getCustomer", new { id = value.Id }, value);
@@ -80,7 +80,7 @@ public sealed class CustomersController : ControllerBase
         CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        CustomerView value = await _provider.UpdateForApiAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
+        CustomerView value = await _provider.UpdateAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }

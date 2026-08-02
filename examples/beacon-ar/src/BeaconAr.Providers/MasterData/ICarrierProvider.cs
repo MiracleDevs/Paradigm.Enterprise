@@ -6,21 +6,13 @@ namespace BeaconAr.Providers.MasterData;
 
 public interface ICarrierProvider : IEditProvider<CarrierView, int>
 {
-    Task<PageResult<CarrierDto>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
+    Task<PageResult<CarrierView>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
 
-    Task<CarrierDto> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<CarrierView> GetByIdAsync(int id, CancellationToken cancellationToken);
 
-    Task<CarrierDto> CreateAsync(CarrierCreateRequest request, CancellationToken cancellationToken);
+    Task<CarrierView> CreateAsync(CarrierCreateRequest request, CancellationToken cancellationToken);
 
-    Task<CarrierDto> UpdateAsync(int id, CarrierUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
-
-    Task<PageResult<CarrierView>> SearchForApiAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
-
-    Task<CarrierView> GetForApiAsync(int id, CancellationToken cancellationToken);
-
-    Task<CarrierView> CreateForApiAsync(CarrierCreateRequest request, CancellationToken cancellationToken);
-
-    Task<CarrierView> UpdateForApiAsync(int id, CarrierUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
+    Task<CarrierView> UpdateAsync(int id, CarrierUpdateRequest request, string expectedVersion, CancellationToken cancellationToken);
 
     Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken);
 }

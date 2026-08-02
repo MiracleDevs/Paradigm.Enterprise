@@ -39,36 +39,19 @@ public sealed class AddressProvider
 
     #region Public Methods
 
-    public async Task<PageResult<AddressDto>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken)
-    {
-        PageResult<CustomerAddressView> result = await SearchForApiAsync(request, cancellationToken);
-        return new PageResult<AddressDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
-            result.TotalPages, result.ItemsCount);
-    }
-
-    public async Task<AddressDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        ToDto(await GetForApiAsync(id, cancellationToken));
-
-    public async Task<AddressDto> CreateAsync(AddressCreateRequest request, CancellationToken cancellationToken) =>
-        ToDto(await CreateForApiAsync(request, cancellationToken));
-
-    public async Task<AddressDto> UpdateAsync(int id, AddressUpdateRequest request, string expectedVersion,
-        CancellationToken cancellationToken) =>
-        ToDto(await UpdateForApiAsync(id, request, expectedVersion, cancellationToken));
-
-    public Task<PageResult<CustomerAddressView>> SearchForApiAsync(AddressSearchRequest request, CancellationToken cancellationToken)
+    public Task<PageResult<CustomerAddressView>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken)
     {
         MasterDataRequestValidator.ValidateSearch(request, "id", "name");
         return ViewRepository.SearchAsync(request, cancellationToken);
     }
 
-    public async Task<CustomerAddressView> GetForApiAsync(int id, CancellationToken cancellationToken)
+    public async Task<CustomerAddressView> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
     }
 
-    public async Task<CustomerAddressView> CreateForApiAsync(AddressCreateRequest request, CancellationToken cancellationToken)
+    public async Task<CustomerAddressView> CreateAsync(AddressCreateRequest request, CancellationToken cancellationToken)
     {
         AddressCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
@@ -90,10 +73,10 @@ public sealed class AddressProvider
             await UnitOfWork.CommitChangesAsync();
             return address.Id;
         }, "referenced_address");
-        return await GetForApiAsync(id, cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task<CustomerAddressView> UpdateForApiAsync(int id, AddressUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
+    public async Task<CustomerAddressView> UpdateAsync(int id, AddressUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
     {
         AddressUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
@@ -130,7 +113,7 @@ public sealed class AddressProvider
             await UnitOfWork.CommitChangesAsync();
             return address.Id;
         }, "referenced_address");
-        return await GetForApiAsync(id, cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -236,12 +219,6 @@ public sealed class AddressProvider
             return id;
         }, "referenced_address");
     }
-
-    private static AddressDto ToDto(CustomerAddressView address) => new(
-        address.Id, address.CustomerId, address.AddressTypeCode, address.Label, address.Line1, address.Line2,
-        address.City, address.State, address.PostalCode, address.Country.Trim(), address.IsDefaultBilling,
-        address.IsDefaultShipping, address.CreatedByUserId, address.CreationDate, address.ModifiedByUserId,
-        address.ModificationDate, VersionTokenCodec.Encode(address.RowVersion));
 
     #endregion
 }

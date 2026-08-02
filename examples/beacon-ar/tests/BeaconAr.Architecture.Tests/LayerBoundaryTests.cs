@@ -248,7 +248,7 @@ public sealed class LayerBoundaryTests
     }
 
     [TestMethod]
-    public void MasterDataRepositoriesQueryGeneratedViewsAndProvidersOwnLegacyMapping()
+    public void MasterDataRepositoriesAndProvidersUseGeneratedViewsWithoutCompatibilityDtos()
     {
         string root = FindExampleRoot();
         string dataRoot = Path.Combine(root, "src", "BeaconAr.Data", "MasterData");
@@ -268,7 +268,8 @@ public sealed class LayerBoundaryTests
             Assert.IsFalse(repository.Contains($"{name}Dto", StringComparison.Ordinal));
 
             string provider = File.ReadAllText(Path.Combine(providerRoot, $"{name}Provider.cs"));
-            StringAssert.Contains(provider, "ToDto(");
+            Assert.IsFalse(provider.Contains("ToDto(", StringComparison.Ordinal));
+            Assert.IsFalse(provider.Contains($"{name}Dto", StringComparison.Ordinal));
         }
 
         foreach (string repositoryPath in Directory.GetFiles(dataRoot, "*Repository.cs", SearchOption.TopDirectoryOnly))
@@ -290,7 +291,24 @@ public sealed class LayerBoundaryTests
     }
 
     [TestMethod]
-    public void OfficialMasterDataMutationsAreExplicitlyGuardedUntilTaskFour()
+    public void ProvidersDoNotClassifyConcreteDatabaseDriverExceptions()
+    {
+        string root = FindExampleRoot();
+        string providerRoot = Path.Combine(root, "src", "BeaconAr.Providers");
+        foreach (string path in Directory.GetFiles(providerRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            string source = File.ReadAllText(path);
+            Assert.IsFalse(source.Contains("Microsoft.Data.SqlClient", StringComparison.Ordinal), path);
+            Assert.IsFalse(source.Contains("Microsoft.EntityFrameworkCore", StringComparison.Ordinal), path);
+        }
+
+        string classifier = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.Data", "Operations",
+            "IdempotencyPersistenceErrorClassifier.cs"));
+        StringAssert.Contains(classifier, "UQ_IdempotencyRequest_UserId_Operation_KeyHash");
+    }
+
+    [TestMethod]
+    public void OfficialMasterDataMutationsRemainExplicitlyGuardedUntilTheTransportConcurrencyContractExists()
     {
         AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.ProductProvider, ProductView>();
         AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.CustomerProvider, CustomerView>();
@@ -421,21 +439,27 @@ public sealed class LayerBoundaryTests
     }
 
     [TestMethod]
-    public void DatabaseProjectFoldersDoNotConflictWithSolutionIdentity()
+    public void DatabaseProjectFoldersAndVisualStudioIdentityStayAligned()
     {
+        const string projectGuid = "A09E027B-4428-49A6-9A92-C43CF35D9206";
         string root = FindExampleRoot();
         string project = File.ReadAllText(Path.Combine(root, "src", "database", "BeaconAr.Database.sqlproj"));
-        Assert.IsFalse(project.Contains("<ProjectGuid>", StringComparison.Ordinal));
-        Assert.IsFalse(project.Contains("<TargetDatabaseSet>", StringComparison.Ordinal));
+        XDocument document = XDocument.Parse(project);
+        Assert.AreEqual($"{{{projectGuid}}}", document.Descendants("ProjectGuid").Single().Value.ToUpperInvariant());
+        Assert.AreEqual("True", document.Descendants("TargetDatabaseSet").Single().Value);
         StringAssert.Contains(project, "<Folder Include=\"tables\\MasterData\\\" />");
         StringAssert.Contains(project, "<Folder Include=\"views\\MasterData\\\" />");
         StringAssert.Contains(project, "<Folder Include=\"routines\\MasterData\\\" />");
+
+        string solution = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.sln")).ToUpperInvariant();
+        Assert.AreEqual(14, solution.Split(projectGuid, StringSplitOptions.None).Length - 1);
+        Assert.IsFalse(solution.Contains("36012A89-DEB7-49AF-AA8F-2C0B1C3289BF", StringComparison.Ordinal));
     }
 
     [TestMethod]
     public void MasterDataContractsDoNotLeakInfrastructureOrPersistenceEntities()
     {
-        Type[] contracts = typeof(BeaconAr.Domain.MasterData.Contracts.ProductDto).Assembly.GetTypes()
+        Type[] contracts = typeof(BeaconAr.Domain.MasterData.Contracts.ProductCreateRequest).Assembly.GetTypes()
             .Where(type => type.Namespace?.StartsWith("BeaconAr.Domain.MasterData", StringComparison.Ordinal) == true)
             .ToArray();
         foreach (Type contract in contracts)

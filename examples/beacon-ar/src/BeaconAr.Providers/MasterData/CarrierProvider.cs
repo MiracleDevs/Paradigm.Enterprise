@@ -31,36 +31,19 @@ public sealed class CarrierProvider
 
     #region Public Methods
 
-    public async Task<PageResult<CarrierDto>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken)
-    {
-        PageResult<CarrierView> result = await SearchForApiAsync(request, cancellationToken);
-        return new PageResult<CarrierDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
-            result.TotalPages, result.ItemsCount);
-    }
-
-    public async Task<CarrierDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        ToDto(await GetForApiAsync(id, cancellationToken));
-
-    public async Task<CarrierDto> CreateAsync(CarrierCreateRequest request, CancellationToken cancellationToken) =>
-        ToDto(await CreateForApiAsync(request, cancellationToken));
-
-    public async Task<CarrierDto> UpdateAsync(int id, CarrierUpdateRequest request, string expectedVersion,
-        CancellationToken cancellationToken) =>
-        ToDto(await UpdateForApiAsync(id, request, expectedVersion, cancellationToken));
-
-    public Task<PageResult<CarrierView>> SearchForApiAsync(CarrierSearchRequest request, CancellationToken cancellationToken)
+    public Task<PageResult<CarrierView>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken)
     {
         MasterDataRequestValidator.ValidateSearch(request, "id", "name");
         return ViewRepository.SearchAsync(request, cancellationToken);
     }
 
-    public async Task<CarrierView> GetForApiAsync(int id, CancellationToken cancellationToken)
+    public async Task<CarrierView> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("carrier");
     }
 
-    public async Task<CarrierView> CreateForApiAsync(CarrierCreateRequest request, CancellationToken cancellationToken)
+    public async Task<CarrierView> CreateAsync(CarrierCreateRequest request, CancellationToken cancellationToken)
     {
         CarrierCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
@@ -78,10 +61,10 @@ public sealed class CarrierProvider
             await UnitOfWork.CommitChangesAsync();
             return carrier.Id;
         }, "referenced_record");
-        return await GetForApiAsync(id, cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
-    public async Task<CarrierView> UpdateForApiAsync(int id, CarrierUpdateRequest request, string expectedVersion,
+    public async Task<CarrierView> UpdateAsync(int id, CarrierUpdateRequest request, string expectedVersion,
         CancellationToken cancellationToken)
     {
         CarrierUpdateRequest value = MasterDataRequestValidator.Normalize(request);
@@ -105,7 +88,7 @@ public sealed class CarrierProvider
             await UnitOfWork.CommitChangesAsync();
             return carrier.Id;
         }, "referenced_record");
-        return await GetForApiAsync(id, cancellationToken);
+        return await GetByIdAsync(id, cancellationToken);
     }
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -164,11 +147,6 @@ public sealed class CarrierProvider
             return id;
         }, "referenced_record");
     }
-
-    private static CarrierDto ToDto(CarrierView carrier) => new(
-        carrier.Id, carrier.Code, carrier.Name, carrier.ServiceLevel, carrier.TrackingUrlTemplate, carrier.IsActive,
-        carrier.CreatedByUserId, carrier.CreationDate, carrier.ModifiedByUserId, carrier.ModificationDate,
-        VersionTokenCodec.Encode(carrier.RowVersion));
 
     #endregion
 }

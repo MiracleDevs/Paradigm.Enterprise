@@ -7,9 +7,12 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.MasterData.Contracts;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.WebApi.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -56,14 +59,14 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        CustomerDto customer = await CreateCustomer(client);
+        CustomerView customer = await CreateCustomer(client);
         _ = await CreateAddress(client, customer.Id, "First", true);
         _ = await CreateAddress(client, customer.Id, "Second", true);
 
-        PageResult<AddressDto> page = await Read<PageResult<AddressDto>>(await client.GetAsync($"/api/v1/addresses?customerId={customer.Id}&pageSize=100"));
+        PageResult<CustomerAddressView> page = await Read<PageResult<CustomerAddressView>>(await client.GetAsync($"/api/v1/addresses?customerId={customer.Id}&pageSize=100"));
 
-        Assert.AreEqual(1, page.Items.Count(static address => address.DefaultShipping));
-        Assert.AreEqual("Second", page.Items.Single(static address => address.DefaultShipping).Label);
+        Assert.AreEqual(1, page.Items.Count(static address => address.IsDefaultShipping));
+        Assert.AreEqual("Second", page.Items.Single(static address => address.IsDefaultShipping).Label);
     }
 
     [TestMethod]
@@ -88,7 +91,7 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        (ProductDto product, CustomerDto customer, AddressDto address, _) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, _) = await CreateMasters(client);
         (QuoteDto quote, string etag) = await CreateQuote(client, product, customer, address);
         HttpResponseMessage skipped = await Transition(client, $"/api/v1/quotes/{quote.Id}/status-transitions", etag, new { status = "accepted" });
         Assert.AreEqual(HttpStatusCode.Conflict, skipped.StatusCode);
@@ -121,8 +124,8 @@ public sealed class BeaconArApiAcceptanceTests
         using HttpClient client = Client(factory);
         QuoteDto quote = await CreateAcceptedQuote(client);
         SalesOrderDto order = await Read<SalesOrderDto>(await client.PutAsync($"/api/v1/quotes/{quote.Id}/sales-order", null));
-        ProductDto product = await GetWithETag<ProductDto>(client, $"/api/v1/products/{order.Lines[0].ProductId}");
-        HttpResponseMessage changed = await Put(client, $"/api/v1/products/{product.Id}", new { sku = product.Sku, name = "Changed product", category = product.Category, unitPrice = product.UnitPrice, stockQuantity = product.StockQuantity, thumbnailUrl = product.ThumbnailUrl, isActive = false }, $"\"{product.Version}\"");
+        ProductView product = await GetWithETag<ProductView>(client, $"/api/v1/products/{order.Lines[0].ProductId}");
+        HttpResponseMessage changed = await Put(client, $"/api/v1/products/{product.Id}", new { sku = product.Sku, name = "Changed product", category = product.Category, unitPrice = product.UnitPrice, stockQuantity = product.StockQuantity, thumbnailUrl = product.ThumbnailUrl, isActive = false }, $"\"{Version(product.RowVersion)}\"");
         Assert.AreEqual(HttpStatusCode.OK, changed.StatusCode);
         SalesOrderDto after = await Read<SalesOrderDto>(await client.GetAsync($"/api/v1/sales-orders/{order.Id}"));
         Assert.AreEqual(order.Lines[0].ProductName, after.Lines[0].ProductName);
@@ -136,7 +139,7 @@ public sealed class BeaconArApiAcceptanceTests
         using HttpClient client = Client(factory);
         QuoteDto quote = await CreateAcceptedQuote(client);
         SalesOrderDto order = await Read<SalesOrderDto>(await client.PutAsync($"/api/v1/quotes/{quote.Id}/sales-order", null));
-        CarrierDto carrier = await CreateCarrier(client);
+        CarrierView carrier = await CreateCarrier(client);
         HttpResponseMessage confirmed = await Transition(client, $"/api/v1/sales-orders/{order.Id}/status-transitions", $"\"{order.Version}\"", new { status = "confirmed" });
         HttpResponseMessage processing = await Transition(client, $"/api/v1/sales-orders/{order.Id}/status-transitions", ETag(confirmed), new { status = "processing" });
         Assert.AreEqual(HttpStatusCode.Conflict, (await Transition(client, $"/api/v1/sales-orders/{order.Id}/status-transitions", ETag(processing), new { status = "shipped" })).StatusCode);
@@ -150,14 +153,14 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        (ProductDto product, CustomerDto customer, AddressDto address, _) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, _) = await CreateMasters(client);
         (QuoteDto quote, string etag) = await CreateQuote(client, product, customer, address);
         using HttpRequestMessage deleteQuote = new(HttpMethod.Delete, $"/api/v1/quotes/{quote.Id}");
         deleteQuote.Headers.TryAddWithoutValidation("If-Match", etag);
         Assert.AreEqual(HttpStatusCode.NoContent, (await client.SendAsync(deleteQuote)).StatusCode);
         (QuoteDto referenced, _) = await CreateQuote(client, product, customer, address);
         using HttpRequestMessage deleteProduct = new(HttpMethod.Delete, $"/api/v1/products/{product.Id}");
-        deleteProduct.Headers.TryAddWithoutValidation("If-Match", $"\"{product.Version}\"");
+        deleteProduct.Headers.TryAddWithoutValidation("If-Match", $"\"{Version(product.RowVersion)}\"");
         Assert.AreEqual(HttpStatusCode.Conflict, (await client.SendAsync(deleteProduct)).StatusCode);
         Assert.IsTrue(referenced.Id > 0);
     }
@@ -168,10 +171,10 @@ public sealed class BeaconArApiAcceptanceTests
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient first = Client(factory);
         using HttpClient second = Client(factory);
-        ProductDto product = await CreateProduct(first);
+        ProductView product = await CreateProduct(first);
         object replacement = new { sku = product.Sku, name = "Winner", category = product.Category, unitPrice = product.UnitPrice, stockQuantity = product.StockQuantity, thumbnailUrl = product.ThumbnailUrl, isActive = true };
-        Assert.AreEqual(HttpStatusCode.OK, (await Put(first, $"/api/v1/products/{product.Id}", replacement, $"\"{product.Version}\"")).StatusCode);
-        Assert.AreEqual(HttpStatusCode.PreconditionFailed, (await Put(second, $"/api/v1/products/{product.Id}", replacement, $"\"{product.Version}\"")).StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, (await Put(first, $"/api/v1/products/{product.Id}", replacement, $"\"{Version(product.RowVersion)}\"")).StatusCode);
+        Assert.AreEqual(HttpStatusCode.PreconditionFailed, (await Put(second, $"/api/v1/products/{product.Id}", replacement, $"\"{Version(product.RowVersion)}\"")).StatusCode);
     }
 
     [TestMethod]
@@ -191,12 +194,12 @@ public sealed class BeaconArApiAcceptanceTests
         object body = new { sku = $"SKU-{Suffix()}", name = "Idempotent", category = "Test", unitPrice = 2m, stockQuantity = 1, isActive = true };
         using HttpClient first = Client(firstFactory);
         HttpResponseMessage created = await PostWithIdempotency(first, "/api/v1/products", body, key);
-        ProductDto original = await Read<ProductDto>(created);
+        ProductView original = await Read<ProductView>(created);
 
         await using LiveApiFactory secondFactory = CreateFactory();
         using HttpClient second = Client(secondFactory);
         HttpResponseMessage replay = await PostWithIdempotency(second, "/api/v1/products", body, key);
-        ProductDto repeated = await Read<ProductDto>(replay);
+        ProductView repeated = await Read<ProductView>(replay);
 
         Assert.AreEqual(HttpStatusCode.Created, replay.StatusCode);
         Assert.AreEqual("true", replay.Headers.GetValues("Idempotency-Replayed").Single());
@@ -257,7 +260,7 @@ public sealed class BeaconArApiAcceptanceTests
         HttpResponseMessage[] responses = await Task.WhenAll(
             PostWithIdempotency(first, "/api/v1/products", body, key),
             PostWithIdempotency(second, "/api/v1/products", body, key));
-        ProductDto[] products = await Task.WhenAll(responses.Select(Read<ProductDto>));
+        ProductView[] products = await Task.WhenAll(responses.Select(Read<ProductView>));
 
         Assert.IsTrue(responses.All(static response => response.StatusCode == HttpStatusCode.Created));
         Assert.AreEqual(products[0].Id, products[1].Id);
@@ -269,7 +272,7 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        (ProductDto product, CustomerDto customer, AddressDto address, _) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, _) = await CreateMasters(client);
 
         await AssertQuoteTransition(client, product, customer, address, [], "sent", HttpStatusCode.OK);
         await AssertQuoteTransition(client, product, customer, address, ["sent"], "accepted", HttpStatusCode.OK);
@@ -305,7 +308,7 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        (ProductDto product, CustomerDto customer, AddressDto address, CarrierDto carrier) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, CarrierView carrier) = await CreateMasters(client);
         string[][] legalPaths =
         [
             ["confirmed"], ["cancelled"], ["confirmed", "processing"], ["confirmed", "cancelled"],
@@ -337,14 +340,14 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        (ProductDto product, CustomerDto customer, AddressDto address, CarrierDto carrier) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, CarrierView carrier) = await CreateMasters(client);
         _ = await CreateQuote(client, product, customer, address);
         (SalesOrderDto order, _) = await CreateAndAdvanceOrder(client, product, customer, address, carrier, ["confirmed", "processing", "shipped"]);
 
         foreach ((string path, int id, string version) in new[]
         {
-            ("products", product.Id, product.Version), ("customers", customer.Id, customer.Version),
-            ("addresses", address.Id, address.Version), ("carriers", carrier.Id, carrier.Version),
+            ("products", product.Id, Version(product.RowVersion)), ("customers", customer.Id, Version(customer.RowVersion)),
+            ("addresses", address.Id, Version(address.RowVersion)), ("carriers", carrier.Id, Version(carrier.RowVersion)),
         })
         {
             using HttpRequestMessage delete = new(HttpMethod.Delete, $"/api/v1/{path}/{id}");
@@ -362,7 +365,7 @@ public sealed class BeaconArApiAcceptanceTests
         await using LiveApiFactory secondFactory = new(connection);
         using HttpClient first = Client(firstFactory);
         using HttpClient second = Client(secondFactory);
-        (ProductDto product, CustomerDto customer, AddressDto address, _) = await CreateMasters(first);
+        (ProductView product, CustomerView customer, CustomerAddressView address, _) = await CreateMasters(first);
         string suffix = Suffix();
         (string Path, object Body, object Changed)[] cases =
         [
@@ -401,7 +404,7 @@ public sealed class BeaconArApiAcceptanceTests
     {
         await using LiveApiFactory factory = CreateFactory();
         using HttpClient client = Client(factory);
-        (ProductDto product, CustomerDto customer, AddressDto address, _) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, _) = await CreateMasters(client);
         string[][] rejectedSourcePaths = [[], ["sent"], ["sent", "rejected"], ["sent", "expired"]];
         foreach (string[] path in rejectedSourcePaths)
         {
@@ -474,9 +477,9 @@ public sealed class BeaconArApiAcceptanceTests
 
     private static async Task AssertQuoteTransition(
         HttpClient client,
-        ProductDto product,
-        CustomerDto customer,
-        AddressDto address,
+        ProductView product,
+        CustomerView customer,
+        CustomerAddressView address,
         string[] sourcePath,
         string target,
         HttpStatusCode expected)
@@ -492,10 +495,10 @@ public sealed class BeaconArApiAcceptanceTests
 
     private static async Task<(SalesOrderDto Order, string ETag)> CreateAndAdvanceOrder(
         HttpClient client,
-        ProductDto product,
-        CustomerDto customer,
-        AddressDto address,
-        CarrierDto carrier,
+        ProductView product,
+        CustomerView customer,
+        CustomerAddressView address,
+        CarrierView carrier,
         string[] path)
     {
         HttpResponseMessage created = await Post(client, "/api/v1/sales-orders", new
@@ -540,37 +543,37 @@ public sealed class BeaconArApiAcceptanceTests
         return result is null or DBNull ? default : (T)Convert.ChangeType(result, typeof(T), CultureInfo.InvariantCulture);
     }
 
-    private static async Task<(ProductDto, CustomerDto, AddressDto, CarrierDto)> CreateMasters(HttpClient client)
+    private static async Task<(ProductView, CustomerView, CustomerAddressView, CarrierView)> CreateMasters(HttpClient client)
     {
-        ProductDto product = await CreateProduct(client);
-        CustomerDto customer = await CreateCustomer(client);
-        AddressDto address = await CreateAddress(client, customer.Id, "Shipping", true);
-        CarrierDto carrier = await CreateCarrier(client);
+        ProductView product = await CreateProduct(client);
+        CustomerView customer = await CreateCustomer(client);
+        CustomerAddressView address = await CreateAddress(client, customer.Id, "Shipping", true);
+        CarrierView carrier = await CreateCarrier(client);
         return (product, customer, address, carrier);
     }
 
-    private static async Task<ProductDto> CreateProduct(HttpClient client)
+    private static async Task<ProductView> CreateProduct(HttpClient client)
     {
         string suffix = Suffix();
-        return await Read<ProductDto>(await Post(client, "/api/v1/products", new { sku = $"SKU-{suffix}", name = $"Product {suffix}", category = "Test", unitPrice = 10.005m, stockQuantity = 10, isActive = true }));
+        return await Read<ProductView>(await Post(client, "/api/v1/products", new { sku = $"SKU-{suffix}", name = $"Product {suffix}", category = "Test", unitPrice = 10.005m, stockQuantity = 10, isActive = true }));
     }
 
-    private static async Task<CustomerDto> CreateCustomer(HttpClient client)
+    private static async Task<CustomerView> CreateCustomer(HttpClient client)
     {
         string suffix = Suffix();
-        return await Read<CustomerDto>(await Post(client, "/api/v1/customers", new { accountNumber = $"ACC-{suffix}", name = $"Customer {suffix}", email = $"{suffix}@example.test", creditLimit = 1000m, paymentTermsDays = 30, isActive = true }));
+        return await Read<CustomerView>(await Post(client, "/api/v1/customers", new { accountNumber = $"ACC-{suffix}", name = $"Customer {suffix}", email = $"{suffix}@example.test", creditLimit = 1000m, paymentTermsDays = 30, isActive = true }));
     }
 
-    private static async Task<AddressDto> CreateAddress(HttpClient client, int customerId, string label, bool defaultShipping) =>
-        await Read<AddressDto>(await Post(client, "/api/v1/addresses", new { customerId, type = "shipping", label, line1 = "1 Main St", city = "Beacon", postalCode = "1000", country = "US", defaultBilling = false, defaultShipping }));
+    private static async Task<CustomerAddressView> CreateAddress(HttpClient client, int customerId, string label, bool defaultShipping) =>
+        await Read<CustomerAddressView>(await Post(client, "/api/v1/addresses", new { customerId, type = "shipping", label, line1 = "1 Main St", city = "Beacon", postalCode = "1000", country = "US", defaultBilling = false, defaultShipping }));
 
-    private static async Task<CarrierDto> CreateCarrier(HttpClient client)
+    private static async Task<CarrierView> CreateCarrier(HttpClient client)
     {
         string suffix = Suffix();
-        return await Read<CarrierDto>(await Post(client, "/api/v1/carriers", new { code = $"CAR-{suffix}", name = "Carrier", serviceLevel = "Ground", trackingUrlTemplate = "https://tracking.example.test/{trackingNumber}", isActive = true }));
+        return await Read<CarrierView>(await Post(client, "/api/v1/carriers", new { code = $"CAR-{suffix}", name = "Carrier", serviceLevel = "Ground", trackingUrlTemplate = "https://tracking.example.test/{trackingNumber}", isActive = true }));
     }
 
-    private static async Task<(QuoteDto Quote, string ETag)> CreateQuote(HttpClient client, ProductDto product, CustomerDto customer, AddressDto address)
+    private static async Task<(QuoteDto Quote, string ETag)> CreateQuote(HttpClient client, ProductView product, CustomerView customer, CustomerAddressView address)
     {
         HttpResponseMessage response = await Post(client, "/api/v1/quotes", new { customerId = customer.Id, shippingAddressId = address.Id, quoteDate = "2026-08-01", validUntil = "2026-08-31", notes = "acceptance", lines = new[] { new { productId = product.Id, quantity = 1, unitPrice = 10.005m, discountPercent = 0m } } });
         return (await Read<QuoteDto>(response), ETag(response));
@@ -578,7 +581,7 @@ public sealed class BeaconArApiAcceptanceTests
 
     private static async Task<QuoteDto> CreateAcceptedQuote(HttpClient client)
     {
-        (ProductDto product, CustomerDto customer, AddressDto address, _) = await CreateMasters(client);
+        (ProductView product, CustomerView customer, CustomerAddressView address, _) = await CreateMasters(client);
         (QuoteDto quote, string etag) = await CreateQuote(client, product, customer, address);
         HttpResponseMessage sent = await Transition(client, $"/api/v1/quotes/{quote.Id}/status-transitions", etag, new { status = "sent" });
         return await Read<QuoteDto>(await Transition(client, $"/api/v1/quotes/{quote.Id}/status-transitions", ETag(sent), new { status = "accepted" }));
@@ -618,11 +621,15 @@ public sealed class BeaconArApiAcceptanceTests
 
     private static string ETag(HttpResponseMessage response) => response.Headers.ETag?.Tag ?? throw new AssertFailedException("ETag was missing.");
 
+    private static string Version(byte[] rowVersion) => Convert.ToBase64String(rowVersion);
+
     private static string Suffix() => Guid.NewGuid().ToString("N")[..10];
 
     private static JsonSerializerOptions CreateJsonOptions()
     {
         JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
+        options.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContract.CreateResolver());
+        options.TypeInfoResolverChain.Add(new DefaultJsonTypeInfoResolver());
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, false));
         return options;
     }

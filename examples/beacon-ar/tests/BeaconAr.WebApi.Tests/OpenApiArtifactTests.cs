@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace BeaconAr.WebApi.Tests;
@@ -9,6 +10,7 @@ public sealed class OpenApiArtifactTests
 
     private const int ExpectedOperationCount = 36;
     private const int ExpectedPathCount = 18;
+    private const string ExpectedSha256 = "dd12b0365570e8bd1662ae0040a6384f969792717dc7fb95a7456ea2a1650150";
 
     #endregion
 
@@ -68,7 +70,9 @@ public sealed class OpenApiArtifactTests
     [TestMethod]
     public void GeneratedDocumentIsACompleteClientContract()
     {
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(FindArtifact()));
+        string artifact = FindArtifact();
+        VerifyCanonicalBytes(artifact);
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(artifact));
         JsonElement root = document.RootElement;
         JsonElement paths = root.GetProperty("paths");
         List<JsonElement> operations = GetOperations(paths);
@@ -92,6 +96,19 @@ public sealed class OpenApiArtifactTests
     #endregion
 
     #region Private Methods
+
+    private static void VerifyCanonicalBytes(string path)
+    {
+        byte[] bytes = File.ReadAllBytes(path);
+
+        Assert.IsGreaterThan(1, bytes.Length);
+        Assert.AreEqual(0, bytes.Count(static value => value == (byte)'\r'));
+        Assert.AreEqual((byte)'\n', bytes[^1]);
+        Assert.AreNotEqual((byte)'\n', bytes[^2]);
+        Assert.AreEqual(ExpectedSha256, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant());
+        using JsonDocument document = JsonDocument.Parse(bytes);
+        Assert.AreEqual(JsonValueKind.Object, document.RootElement.ValueKind);
+    }
 
     private static string FindArtifact()
     {

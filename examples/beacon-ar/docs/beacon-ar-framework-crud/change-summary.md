@@ -32,7 +32,7 @@
 - `MasterDataMutationCoordinator` and `SalesWorkflowCoordinator` are registered as scoped in the Web API host. Existing repository/provider convention discovery remains unchanged.
 - Architecture tests prove the official typed repository/provider inheritance, generated-view DbSet reads, provider-owned legacy DTO mapping, absence of local provider bases, generated mapper ownership/stale-artifact removal, and the narrow custom sales-provider boundary.
 - Provider tests retain commit-count, rollback, concurrency, validation, referenced-delete, and audit assertions, and exercise official search plus every guarded mutation overload through `IEditProvider`. Existing sales workflow regression tests continue to exercise transaction and conversion behavior.
-- The SQL project retains explicit nested `Folder` items so Visual Studio shows its complete logical tree. Conflicting `ProjectGuid` and unexplained `TargetDatabaseSet` metadata were removed; the solution remains the sole project-identity owner.
+- The SQL project retains explicit nested `Folder` items so Visual Studio shows its complete logical tree. Final validation observed Visual Studio restoring `TargetDatabaseSet` and its project GUID; the solution entry and every mapping are now aligned to that single IDE-owned GUID. See the final-validation decision record for the superseding evidence.
 
 ## Verification
 
