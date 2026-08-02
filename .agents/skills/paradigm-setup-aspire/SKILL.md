@@ -40,6 +40,7 @@ Create a root `start.sh` for new Aspire solutions. `$paradigm-setup-project` gen
 - pin Paradigm CLI to the solution's approved Paradigm version, let the first stable Aspire install record its resolved version in the manifest, and restore without silently upgrading either tool afterward;
 - before `start` or `doctor`, check both the Docker command and `docker info`; prompt an interactive developer to install/start Docker and retry, but fail with an actionable message in noninteractive execution;
 - invoke Aspire through `dotnet tool run aspire`; do not require the developer's global `PATH` or install tools from an AppHost/bootstrap resource.
+- enforce LF checkout line endings for `*.sh` in the repository `.gitattributes`, and execute `./start.sh doctor` from a normal Windows Git checkout when Windows contributors are supported; a script that only works before Git's line-ending conversion is not portable.
 
 Use the official [Aspire CLI installation guidance](https://aspire.dev/get-started/install-cli/) to verify the current package ID. Do not pipe a remote installer into the starter script.
 

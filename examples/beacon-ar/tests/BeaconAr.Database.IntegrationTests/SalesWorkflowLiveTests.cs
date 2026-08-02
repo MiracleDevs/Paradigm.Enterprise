@@ -725,6 +725,7 @@ public sealed class SalesWorkflowLiveTests
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<ISalesPersistenceErrorClassifier, SalesPersistenceErrorClassifier>();
         services.AddScoped<IPersistenceSession, PersistenceSession>();
+        services.AddScoped<SalesWorkflowCoordinator>();
         services.AddScoped<IApplicationOperationContext>(_ => new TestOperationContext(userId, correlationId));
         services.AddSingleton<TimeProvider, FixedTimeProvider>();
         services.AddScoped<IQuoteProvider, QuoteProvider>();

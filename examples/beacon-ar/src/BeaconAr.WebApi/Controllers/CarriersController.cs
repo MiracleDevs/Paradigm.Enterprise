@@ -41,7 +41,7 @@ public sealed class CarriersController : ControllerBase
         [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
         [FromQuery(Name = "active")] bool? active = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchForApiAsync(new CarrierSearchRequest
+        Ok(await _provider.SearchAsync(new CarrierSearchRequest
         {
             Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
             SortDirection = sortDirection, Active = active,
@@ -51,7 +51,7 @@ public sealed class CarriersController : ControllerBase
     public async Task<ActionResult<CarrierView>> Get(int id, CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        CarrierView value = await _provider.GetForApiAsync(id, cancellationToken);
+        CarrierView value = await _provider.GetByIdAsync(id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }
@@ -63,7 +63,7 @@ public sealed class CarriersController : ControllerBase
     public async Task<ActionResult<CarrierView>> Create([FromBody] CarrierCreateRequest request, [FromHeader(Name = "Idempotency-Key")] string? key, CancellationToken cancellationToken)
     {
         (CarrierView value, bool replayed) = await _idempotency.ExecuteAsync("create-carrier", key, request,
-            () => _provider.CreateForApiAsync(request, cancellationToken), id => _provider.GetForApiAsync(id, cancellationToken), static value => value.Id, cancellationToken);
+            () => _provider.CreateAsync(request, cancellationToken), id => _provider.GetByIdAsync(id, cancellationToken), static value => value.Id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         if (replayed) Response.Headers["Idempotency-Replayed"] = "true";
         return CreatedAtRoute("getCarrier", new { id = value.Id }, value);
@@ -79,7 +79,7 @@ public sealed class CarriersController : ControllerBase
         CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        CarrierView value = await _provider.UpdateForApiAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
+        CarrierView value = await _provider.UpdateAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }

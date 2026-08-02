@@ -30,7 +30,7 @@ Quote, SalesOrder, and QuoteConversion do not use `EditProviderBase` because the
 
 ## SQL project identity and folders
 
-Explicit nested `Folder` items are retained because they describe Visual Studio's logical project tree while the `Build`/`None` globs determine compilation and deployment content. The project does not declare a separate `ProjectGuid`; the solution's existing project identifier remains authoritative. `TargetDatabaseSet` was removed because the normal Microsoft.Build.Sql build and strict database validator do not require it.
+Explicit nested `Folder` items are retained because they describe Visual Studio's logical project tree while the `Build`/`None` globs determine compilation and deployment content. Final validation supersedes the earlier metadata-removal decision: Visual Studio 18 repeatedly restored `TargetDatabaseSet` and project GUID `{A09E027B-4428-49A6-9A92-C43CF35D9206}` while the project was loaded. The solution project entry, all configuration mappings, and the solution-folder mapping are now aligned to that single IDE-owned GUID. The normal SQL build and strict validator remain clean; see `docs/beacon-ar-final-validation/decisions.md`.
 
 ## Guidance scope
 

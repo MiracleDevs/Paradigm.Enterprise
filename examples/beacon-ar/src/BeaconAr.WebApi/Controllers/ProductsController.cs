@@ -41,7 +41,7 @@ public sealed class ProductsController : ControllerBase
         [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
         [FromQuery(Name = "active")] bool? active = null,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchForApiAsync(new ProductSearchRequest
+        Ok(await _provider.SearchAsync(new ProductSearchRequest
         {
             Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
             SortDirection = sortDirection, Active = active,
@@ -51,7 +51,7 @@ public sealed class ProductsController : ControllerBase
     public async Task<ActionResult<ProductView>> Get(int id, CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        ProductView value = await _provider.GetForApiAsync(id, cancellationToken);
+        ProductView value = await _provider.GetByIdAsync(id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }
@@ -67,8 +67,8 @@ public sealed class ProductsController : ControllerBase
         CancellationToken cancellationToken)
     {
         (ProductView value, bool replayed) = await _idempotency.ExecuteAsync(
-            "create-product", idempotencyKey, request, () => _provider.CreateForApiAsync(request, cancellationToken),
-            id => _provider.GetForApiAsync(id, cancellationToken), static value => value.Id, cancellationToken);
+            "create-product", idempotencyKey, request, () => _provider.CreateAsync(request, cancellationToken),
+            id => _provider.GetByIdAsync(id, cancellationToken), static value => value.Id, cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         if (replayed)
             Response.Headers["Idempotency-Replayed"] = "true";
@@ -86,7 +86,7 @@ public sealed class ProductsController : ControllerBase
         CancellationToken cancellationToken)
     {
         ApiContract.EnsurePositiveId(id);
-        ProductView value = await _provider.UpdateForApiAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
+        ProductView value = await _provider.UpdateAsync(id, request, ETagCodec.ParseRequired(ifMatch), cancellationToken);
         ApiContract.SetETag(Response, value.RowVersion);
         return Ok(value);
     }

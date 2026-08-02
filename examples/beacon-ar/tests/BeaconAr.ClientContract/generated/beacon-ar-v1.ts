@@ -19,28 +19,30 @@ export interface IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param customerId (optional) 
-     * @param type (optional) 
-     * @param usage (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param customerId (optional)
+     * @param type (optional)
+     * @param usage (optional)
      * @return OK
      */
-    searchAddresses(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, customerId: number | undefined, type: string | undefined, usage: AddressUsage | null | undefined): Observable<PageResultOfAddressDto>;
+    searchAddresses(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, customerId: number | undefined, type: string | undefined, usage: AddressUsage | undefined): Observable<CustomerAddressViewPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createAddress(idempotency_Key: string | undefined, body: AddressCreateRequest): Observable<AddressDto>;
+    createAddress(idempotency_Key: string | undefined, body: AddressCreateRequest | undefined): Observable<CustomerAddressView>;
     /**
      * @return OK
      */
-    getAddress(id: number): Observable<AddressDto>;
+    getAddress(id: number): Observable<CustomerAddressView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateAddress(id: number, if_Match: string, body: AddressUpdateRequest): Observable<AddressDto>;
+    updateAddress(id: number, if_Match: string, body: AddressUpdateRequest | undefined): Observable<CustomerAddressView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
      * @return No Content
@@ -50,26 +52,28 @@ export interface IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param active (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param active (optional)
      * @return OK
      */
-    searchCarriers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<PageResultOfCarrierDto>;
+    searchCarriers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<CarrierViewPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createCarrier(idempotency_Key: string | undefined, body: CarrierCreateRequest): Observable<CarrierDto>;
+    createCarrier(idempotency_Key: string | undefined, body: CarrierCreateRequest | undefined): Observable<CarrierView>;
     /**
      * @return OK
      */
-    getCarrier(id: number): Observable<CarrierDto>;
+    getCarrier(id: number): Observable<CarrierView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateCarrier(id: number, if_Match: string, body: CarrierUpdateRequest): Observable<CarrierDto>;
+    updateCarrier(id: number, if_Match: string, body: CarrierUpdateRequest | undefined): Observable<CarrierView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
      * @return No Content
@@ -79,26 +83,28 @@ export interface IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param active (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param active (optional)
      * @return OK
      */
-    searchCustomers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<PageResultOfCustomerDto>;
+    searchCustomers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<CustomerViewPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createCustomer(idempotency_Key: string | undefined, body: CustomerCreateRequest): Observable<CustomerDto>;
+    createCustomer(idempotency_Key: string | undefined, body: CustomerCreateRequest | undefined): Observable<CustomerView>;
     /**
      * @return OK
      */
-    getCustomer(id: number): Observable<CustomerDto>;
+    getCustomer(id: number): Observable<CustomerView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateCustomer(id: number, if_Match: string, body: CustomerUpdateRequest): Observable<CustomerDto>;
+    updateCustomer(id: number, if_Match: string, body: CustomerUpdateRequest | undefined): Observable<CustomerView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
      * @return No Content
@@ -111,31 +117,37 @@ export interface IClient {
     /**
      * @return OK
      */
+    getApiRoot(): Observable<ApiRootResponse>;
+    /**
+     * @return OK
+     */
     getCurrentUser(): Observable<CurrentUserDto>;
     /**
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param active (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param active (optional)
      * @return OK
      */
-    searchProducts(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<PageResultOfProductDto>;
+    searchProducts(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<ProductViewPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createProduct(idempotency_Key: string | undefined, body: ProductCreateRequest): Observable<ProductDto>;
+    createProduct(idempotency_Key: string | undefined, body: ProductCreateRequest | undefined): Observable<ProductView>;
     /**
      * @return OK
      */
-    getProduct(id: number): Observable<ProductDto>;
+    getProduct(id: number): Observable<ProductView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateProduct(id: number, if_Match: string, body: ProductUpdateRequest): Observable<ProductDto>;
+    updateProduct(id: number, if_Match: string, body: ProductUpdateRequest | undefined): Observable<ProductView>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
      * @return No Content
@@ -143,29 +155,31 @@ export interface IClient {
     deleteProduct(id: number, if_Match: string): Observable<void>;
     /**
      * @param search (optional) Trimmed, case-insensitive free-text search.
-     * @param status (optional) 
-     * @param customerId (optional) 
+     * @param status (optional)
+     * @param customerId (optional)
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
      * @return OK
      */
-    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<PageResultOfQuoteSummaryDto>;
+    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<QuoteSummaryDtoPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createQuote(idempotency_Key: string | undefined, body: QuoteCreateRequest): Observable<QuoteDto>;
+    createQuote(idempotency_Key: string | undefined, body: QuoteCreateRequest | undefined): Observable<QuoteDto>;
     /**
      * @return OK
      */
     getQuote(id: number): Observable<QuoteDto>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateQuote(id: number, if_Match: string, body: QuoteUpdateRequest): Observable<QuoteDto>;
+    updateQuote(id: number, if_Match: string, body: QuoteUpdateRequest | undefined): Observable<QuoteDto>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
      * @return No Content
@@ -173,39 +187,42 @@ export interface IClient {
     deleteQuote(id: number, if_Match: string): Observable<void>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    transitionQuoteStatus(id: number, if_Match: string, body: QuoteStatusTransitionRequest): Observable<QuoteDto>;
+    transitionQuoteStatus(id: number, if_Match: string, body: QuoteStatusTransitionRequest | undefined): Observable<QuoteDto>;
     /**
      * @return OK
      */
     convertQuoteToSalesOrder(id: number): Observable<SalesOrderDto>;
     /**
      * @param search (optional) Trimmed, case-insensitive free-text search.
-     * @param status (optional) 
-     * @param customerId (optional) 
-     * @param sourceQuoteId (optional) 
+     * @param status (optional)
+     * @param customerId (optional)
+     * @param sourceQuoteId (optional)
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
      * @return OK
      */
-    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<PageResultOfSalesOrderSummaryDto>;
+    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<SalesOrderSummaryDtoPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createSalesOrder(idempotency_Key: string | undefined, body: SalesOrderCreateRequest): Observable<SalesOrderDto>;
+    createSalesOrder(idempotency_Key: string | undefined, body: SalesOrderCreateRequest | undefined): Observable<SalesOrderDto>;
     /**
      * @return OK
      */
     getSalesOrder(id: number): Observable<SalesOrderDto>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateSalesOrder(id: number, if_Match: string, body: SalesOrderUpdateRequest): Observable<SalesOrderDto>;
+    updateSalesOrder(id: number, if_Match: string, body: SalesOrderUpdateRequest | undefined): Observable<SalesOrderDto>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
      * @return No Content
@@ -213,9 +230,10 @@ export interface IClient {
     deleteSalesOrder(id: number, if_Match: string): Observable<void>;
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    transitionSalesOrderStatus(id: number, if_Match: string, body: SalesOrderStatusTransitionRequest): Observable<SalesOrderDto>;
+    transitionSalesOrderStatus(id: number, if_Match: string, body: SalesOrderStatusTransitionRequest | undefined): Observable<SalesOrderDto>;
 }
 
 @Injectable()
@@ -233,14 +251,14 @@ export class Client implements IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param customerId (optional) 
-     * @param type (optional) 
-     * @param usage (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param customerId (optional)
+     * @param type (optional)
+     * @param usage (optional)
      * @return OK
      */
-    searchAddresses(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, customerId: number | undefined, type: string | undefined, usage: AddressUsage | null | undefined): Observable<PageResultOfAddressDto> {
+    searchAddresses(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, customerId: number | undefined, type: string | undefined, usage: AddressUsage | undefined): Observable<CustomerAddressViewPageResult> {
         let url_ = this.baseUrl + "/api/v1/addresses?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -270,7 +288,9 @@ export class Client implements IClient {
             throw new globalThis.Error("The parameter 'type' cannot be null.");
         else if (type !== undefined)
             url_ += "type=" + encodeURIComponent("" + type) + "&";
-        if (usage !== undefined && usage !== null)
+        if (usage === null)
+            throw new globalThis.Error("The parameter 'usage' cannot be null.");
+        else if (usage !== undefined)
             url_ += "usage=" + encodeURIComponent("" + usage) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -289,14 +309,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchAddresses(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PageResultOfAddressDto>;
+                    return _observableThrow(e) as any as Observable<CustomerAddressViewPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PageResultOfAddressDto>;
+                return _observableThrow(response_) as any as Observable<CustomerAddressViewPageResult>;
         }));
     }
 
-    protected processSearchAddresses(response: HttpResponseBase): Observable<PageResultOfAddressDto> {
+    protected processSearchAddresses(response: HttpResponseBase): Observable<CustomerAddressViewPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -306,7 +326,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PageResultOfAddressDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerAddressViewPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -343,9 +363,10 @@ export class Client implements IClient {
 
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createAddress(idempotency_Key: string | undefined, body: AddressCreateRequest): Observable<AddressDto> {
+    createAddress(idempotency_Key: string | undefined, body: AddressCreateRequest | undefined): Observable<CustomerAddressView> {
         let url_ = this.baseUrl + "/api/v1/addresses";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -369,14 +390,14 @@ export class Client implements IClient {
                 try {
                     return this.processCreateAddress(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<AddressDto>;
+                    return _observableThrow(e) as any as Observable<CustomerAddressView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<AddressDto>;
+                return _observableThrow(response_) as any as Observable<CustomerAddressView>;
         }));
     }
 
-    protected processCreateAddress(response: HttpResponseBase): Observable<AddressDto> {
+    protected processCreateAddress(response: HttpResponseBase): Observable<CustomerAddressView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -386,7 +407,7 @@ export class Client implements IClient {
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
-            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AddressDto;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerAddressView;
             return _observableOf(result201);
             }));
         } else if (status === 400) {
@@ -448,7 +469,7 @@ export class Client implements IClient {
     /**
      * @return OK
      */
-    getAddress(id: number): Observable<AddressDto> {
+    getAddress(id: number): Observable<CustomerAddressView> {
         let url_ = this.baseUrl + "/api/v1/addresses/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -470,14 +491,14 @@ export class Client implements IClient {
                 try {
                     return this.processGetAddress(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<AddressDto>;
+                    return _observableThrow(e) as any as Observable<CustomerAddressView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<AddressDto>;
+                return _observableThrow(response_) as any as Observable<CustomerAddressView>;
         }));
     }
 
-    protected processGetAddress(response: HttpResponseBase): Observable<AddressDto> {
+    protected processGetAddress(response: HttpResponseBase): Observable<CustomerAddressView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -487,7 +508,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AddressDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerAddressView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -530,9 +551,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateAddress(id: number, if_Match: string, body: AddressUpdateRequest): Observable<AddressDto> {
+    updateAddress(id: number, if_Match: string, body: AddressUpdateRequest | undefined): Observable<CustomerAddressView> {
         let url_ = this.baseUrl + "/api/v1/addresses/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -559,14 +581,14 @@ export class Client implements IClient {
                 try {
                     return this.processUpdateAddress(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<AddressDto>;
+                    return _observableThrow(e) as any as Observable<CustomerAddressView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<AddressDto>;
+                return _observableThrow(response_) as any as Observable<CustomerAddressView>;
         }));
     }
 
-    protected processUpdateAddress(response: HttpResponseBase): Observable<AddressDto> {
+    protected processUpdateAddress(response: HttpResponseBase): Observable<CustomerAddressView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -576,7 +598,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as AddressDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerAddressView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -751,12 +773,12 @@ export class Client implements IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param active (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param active (optional)
      * @return OK
      */
-    searchCarriers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<PageResultOfCarrierDto> {
+    searchCarriers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<CarrierViewPageResult> {
         let url_ = this.baseUrl + "/api/v1/carriers?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -799,14 +821,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchCarriers(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PageResultOfCarrierDto>;
+                    return _observableThrow(e) as any as Observable<CarrierViewPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PageResultOfCarrierDto>;
+                return _observableThrow(response_) as any as Observable<CarrierViewPageResult>;
         }));
     }
 
-    protected processSearchCarriers(response: HttpResponseBase): Observable<PageResultOfCarrierDto> {
+    protected processSearchCarriers(response: HttpResponseBase): Observable<CarrierViewPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -816,7 +838,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PageResultOfCarrierDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierViewPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -853,9 +875,10 @@ export class Client implements IClient {
 
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createCarrier(idempotency_Key: string | undefined, body: CarrierCreateRequest): Observable<CarrierDto> {
+    createCarrier(idempotency_Key: string | undefined, body: CarrierCreateRequest | undefined): Observable<CarrierView> {
         let url_ = this.baseUrl + "/api/v1/carriers";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -879,14 +902,14 @@ export class Client implements IClient {
                 try {
                     return this.processCreateCarrier(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CarrierDto>;
+                    return _observableThrow(e) as any as Observable<CarrierView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CarrierDto>;
+                return _observableThrow(response_) as any as Observable<CarrierView>;
         }));
     }
 
-    protected processCreateCarrier(response: HttpResponseBase): Observable<CarrierDto> {
+    protected processCreateCarrier(response: HttpResponseBase): Observable<CarrierView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -896,7 +919,7 @@ export class Client implements IClient {
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
-            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierDto;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierView;
             return _observableOf(result201);
             }));
         } else if (status === 400) {
@@ -952,7 +975,7 @@ export class Client implements IClient {
     /**
      * @return OK
      */
-    getCarrier(id: number): Observable<CarrierDto> {
+    getCarrier(id: number): Observable<CarrierView> {
         let url_ = this.baseUrl + "/api/v1/carriers/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -974,14 +997,14 @@ export class Client implements IClient {
                 try {
                     return this.processGetCarrier(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CarrierDto>;
+                    return _observableThrow(e) as any as Observable<CarrierView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CarrierDto>;
+                return _observableThrow(response_) as any as Observable<CarrierView>;
         }));
     }
 
-    protected processGetCarrier(response: HttpResponseBase): Observable<CarrierDto> {
+    protected processGetCarrier(response: HttpResponseBase): Observable<CarrierView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -991,7 +1014,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -1034,9 +1057,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateCarrier(id: number, if_Match: string, body: CarrierUpdateRequest): Observable<CarrierDto> {
+    updateCarrier(id: number, if_Match: string, body: CarrierUpdateRequest | undefined): Observable<CarrierView> {
         let url_ = this.baseUrl + "/api/v1/carriers/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1063,14 +1087,14 @@ export class Client implements IClient {
                 try {
                     return this.processUpdateCarrier(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CarrierDto>;
+                    return _observableThrow(e) as any as Observable<CarrierView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CarrierDto>;
+                return _observableThrow(response_) as any as Observable<CarrierView>;
         }));
     }
 
-    protected processUpdateCarrier(response: HttpResponseBase): Observable<CarrierDto> {
+    protected processUpdateCarrier(response: HttpResponseBase): Observable<CarrierView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1080,7 +1104,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CarrierView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -1255,12 +1279,12 @@ export class Client implements IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param active (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param active (optional)
      * @return OK
      */
-    searchCustomers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<PageResultOfCustomerDto> {
+    searchCustomers(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<CustomerViewPageResult> {
         let url_ = this.baseUrl + "/api/v1/customers?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -1303,14 +1327,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchCustomers(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PageResultOfCustomerDto>;
+                    return _observableThrow(e) as any as Observable<CustomerViewPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PageResultOfCustomerDto>;
+                return _observableThrow(response_) as any as Observable<CustomerViewPageResult>;
         }));
     }
 
-    protected processSearchCustomers(response: HttpResponseBase): Observable<PageResultOfCustomerDto> {
+    protected processSearchCustomers(response: HttpResponseBase): Observable<CustomerViewPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1320,7 +1344,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PageResultOfCustomerDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerViewPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -1357,9 +1381,10 @@ export class Client implements IClient {
 
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createCustomer(idempotency_Key: string | undefined, body: CustomerCreateRequest): Observable<CustomerDto> {
+    createCustomer(idempotency_Key: string | undefined, body: CustomerCreateRequest | undefined): Observable<CustomerView> {
         let url_ = this.baseUrl + "/api/v1/customers";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1383,14 +1408,14 @@ export class Client implements IClient {
                 try {
                     return this.processCreateCustomer(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CustomerDto>;
+                    return _observableThrow(e) as any as Observable<CustomerView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CustomerDto>;
+                return _observableThrow(response_) as any as Observable<CustomerView>;
         }));
     }
 
-    protected processCreateCustomer(response: HttpResponseBase): Observable<CustomerDto> {
+    protected processCreateCustomer(response: HttpResponseBase): Observable<CustomerView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1400,7 +1425,7 @@ export class Client implements IClient {
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
-            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerDto;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerView;
             return _observableOf(result201);
             }));
         } else if (status === 400) {
@@ -1456,7 +1481,7 @@ export class Client implements IClient {
     /**
      * @return OK
      */
-    getCustomer(id: number): Observable<CustomerDto> {
+    getCustomer(id: number): Observable<CustomerView> {
         let url_ = this.baseUrl + "/api/v1/customers/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1478,14 +1503,14 @@ export class Client implements IClient {
                 try {
                     return this.processGetCustomer(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CustomerDto>;
+                    return _observableThrow(e) as any as Observable<CustomerView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CustomerDto>;
+                return _observableThrow(response_) as any as Observable<CustomerView>;
         }));
     }
 
-    protected processGetCustomer(response: HttpResponseBase): Observable<CustomerDto> {
+    protected processGetCustomer(response: HttpResponseBase): Observable<CustomerView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1495,7 +1520,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -1538,9 +1563,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateCustomer(id: number, if_Match: string, body: CustomerUpdateRequest): Observable<CustomerDto> {
+    updateCustomer(id: number, if_Match: string, body: CustomerUpdateRequest | undefined): Observable<CustomerView> {
         let url_ = this.baseUrl + "/api/v1/customers/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -1567,14 +1593,14 @@ export class Client implements IClient {
                 try {
                     return this.processUpdateCustomer(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<CustomerDto>;
+                    return _observableThrow(e) as any as Observable<CustomerView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<CustomerDto>;
+                return _observableThrow(response_) as any as Observable<CustomerView>;
         }));
     }
 
-    protected processUpdateCustomer(response: HttpResponseBase): Observable<CustomerDto> {
+    protected processUpdateCustomer(response: HttpResponseBase): Observable<CustomerView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1584,7 +1610,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CustomerView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -1826,6 +1852,56 @@ export class Client implements IClient {
     /**
      * @return OK
      */
+    getApiRoot(): Observable<ApiRootResponse> {
+        let url_ = this.baseUrl + "/";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetApiRoot(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetApiRoot(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ApiRootResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ApiRootResponse>;
+        }));
+    }
+
+    protected processGetApiRoot(response: HttpResponseBase): Observable<ApiRootResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ApiRootResponse;
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
     getCurrentUser(): Observable<CurrentUserDto> {
         let url_ = this.baseUrl + "/api/v1/me";
         url_ = url_.replace(/[?&]$/, "");
@@ -1895,12 +1971,12 @@ export class Client implements IClient {
      * @param search (optional) Trimmed, case-insensitive free-text search.
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
-     * @param active (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
+     * @param active (optional)
      * @return OK
      */
-    searchProducts(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<PageResultOfProductDto> {
+    searchProducts(search: string | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined, active: boolean | undefined): Observable<ProductViewPageResult> {
         let url_ = this.baseUrl + "/api/v1/products?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -1943,14 +2019,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchProducts(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PageResultOfProductDto>;
+                    return _observableThrow(e) as any as Observable<ProductViewPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PageResultOfProductDto>;
+                return _observableThrow(response_) as any as Observable<ProductViewPageResult>;
         }));
     }
 
-    protected processSearchProducts(response: HttpResponseBase): Observable<PageResultOfProductDto> {
+    protected processSearchProducts(response: HttpResponseBase): Observable<ProductViewPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1960,7 +2036,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PageResultOfProductDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductViewPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -1997,9 +2073,10 @@ export class Client implements IClient {
 
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createProduct(idempotency_Key: string | undefined, body: ProductCreateRequest): Observable<ProductDto> {
+    createProduct(idempotency_Key: string | undefined, body: ProductCreateRequest | undefined): Observable<ProductView> {
         let url_ = this.baseUrl + "/api/v1/products";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2023,14 +2100,14 @@ export class Client implements IClient {
                 try {
                     return this.processCreateProduct(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<ProductDto>;
+                    return _observableThrow(e) as any as Observable<ProductView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<ProductDto>;
+                return _observableThrow(response_) as any as Observable<ProductView>;
         }));
     }
 
-    protected processCreateProduct(response: HttpResponseBase): Observable<ProductDto> {
+    protected processCreateProduct(response: HttpResponseBase): Observable<ProductView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2040,7 +2117,7 @@ export class Client implements IClient {
         if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result201: any = null;
-            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductDto;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductView;
             return _observableOf(result201);
             }));
         } else if (status === 400) {
@@ -2096,7 +2173,7 @@ export class Client implements IClient {
     /**
      * @return OK
      */
-    getProduct(id: number): Observable<ProductDto> {
+    getProduct(id: number): Observable<ProductView> {
         let url_ = this.baseUrl + "/api/v1/products/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -2118,14 +2195,14 @@ export class Client implements IClient {
                 try {
                     return this.processGetProduct(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<ProductDto>;
+                    return _observableThrow(e) as any as Observable<ProductView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<ProductDto>;
+                return _observableThrow(response_) as any as Observable<ProductView>;
         }));
     }
 
-    protected processGetProduct(response: HttpResponseBase): Observable<ProductDto> {
+    protected processGetProduct(response: HttpResponseBase): Observable<ProductView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2135,7 +2212,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -2178,9 +2255,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateProduct(id: number, if_Match: string, body: ProductUpdateRequest): Observable<ProductDto> {
+    updateProduct(id: number, if_Match: string, body: ProductUpdateRequest | undefined): Observable<ProductView> {
         let url_ = this.baseUrl + "/api/v1/products/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -2207,14 +2285,14 @@ export class Client implements IClient {
                 try {
                     return this.processUpdateProduct(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<ProductDto>;
+                    return _observableThrow(e) as any as Observable<ProductView>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<ProductDto>;
+                return _observableThrow(response_) as any as Observable<ProductView>;
         }));
     }
 
-    protected processUpdateProduct(response: HttpResponseBase): Observable<ProductDto> {
+    protected processUpdateProduct(response: HttpResponseBase): Observable<ProductView> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2224,7 +2302,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ProductView;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -2397,15 +2475,15 @@ export class Client implements IClient {
 
     /**
      * @param search (optional) Trimmed, case-insensitive free-text search.
-     * @param status (optional) 
-     * @param customerId (optional) 
+     * @param status (optional)
+     * @param customerId (optional)
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
      * @return OK
      */
-    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<PageResultOfQuoteSummaryDto> {
+    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<QuoteSummaryDtoPageResult> {
         let url_ = this.baseUrl + "/api/v1/quotes?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -2452,14 +2530,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchQuotes(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PageResultOfQuoteSummaryDto>;
+                    return _observableThrow(e) as any as Observable<QuoteSummaryDtoPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PageResultOfQuoteSummaryDto>;
+                return _observableThrow(response_) as any as Observable<QuoteSummaryDtoPageResult>;
         }));
     }
 
-    protected processSearchQuotes(response: HttpResponseBase): Observable<PageResultOfQuoteSummaryDto> {
+    protected processSearchQuotes(response: HttpResponseBase): Observable<QuoteSummaryDtoPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2469,7 +2547,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PageResultOfQuoteSummaryDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as QuoteSummaryDtoPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -2506,9 +2584,10 @@ export class Client implements IClient {
 
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createQuote(idempotency_Key: string | undefined, body: QuoteCreateRequest): Observable<QuoteDto> {
+    createQuote(idempotency_Key: string | undefined, body: QuoteCreateRequest | undefined): Observable<QuoteDto> {
         let url_ = this.baseUrl + "/api/v1/quotes";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2687,9 +2766,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateQuote(id: number, if_Match: string, body: QuoteUpdateRequest): Observable<QuoteDto> {
+    updateQuote(id: number, if_Match: string, body: QuoteUpdateRequest | undefined): Observable<QuoteDto> {
         let url_ = this.baseUrl + "/api/v1/quotes/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -2906,9 +2986,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    transitionQuoteStatus(id: number, if_Match: string, body: QuoteStatusTransitionRequest): Observable<QuoteDto> {
+    transitionQuoteStatus(id: number, if_Match: string, body: QuoteStatusTransitionRequest | undefined): Observable<QuoteDto> {
         let url_ = this.baseUrl + "/api/v1/quotes/{id}/status-transitions";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -3120,16 +3201,16 @@ export class Client implements IClient {
 
     /**
      * @param search (optional) Trimmed, case-insensitive free-text search.
-     * @param status (optional) 
-     * @param customerId (optional) 
-     * @param sourceQuoteId (optional) 
+     * @param status (optional)
+     * @param customerId (optional)
+     * @param sourceQuoteId (optional)
      * @param pageNumber (optional) One-based page number. Defaults to 1.
      * @param pageSize (optional) Number of results per page. Maximum 100.
-     * @param sortField (optional) 
-     * @param sortDirection (optional) 
+     * @param sortField (optional)
+     * @param sortDirection (optional)
      * @return OK
      */
-    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<PageResultOfSalesOrderSummaryDto> {
+    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<SalesOrderSummaryDtoPageResult> {
         let url_ = this.baseUrl + "/api/v1/sales-orders?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -3180,14 +3261,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchSalesOrders(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<PageResultOfSalesOrderSummaryDto>;
+                    return _observableThrow(e) as any as Observable<SalesOrderSummaryDtoPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<PageResultOfSalesOrderSummaryDto>;
+                return _observableThrow(response_) as any as Observable<SalesOrderSummaryDtoPageResult>;
         }));
     }
 
-    protected processSearchSalesOrders(response: HttpResponseBase): Observable<PageResultOfSalesOrderSummaryDto> {
+    protected processSearchSalesOrders(response: HttpResponseBase): Observable<SalesOrderSummaryDtoPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -3197,7 +3278,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PageResultOfSalesOrderSummaryDto;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SalesOrderSummaryDtoPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -3234,9 +3315,10 @@ export class Client implements IClient {
 
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
+     * @param body (optional)
      * @return Created
      */
-    createSalesOrder(idempotency_Key: string | undefined, body: SalesOrderCreateRequest): Observable<SalesOrderDto> {
+    createSalesOrder(idempotency_Key: string | undefined, body: SalesOrderCreateRequest | undefined): Observable<SalesOrderDto> {
         let url_ = this.baseUrl + "/api/v1/sales-orders";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -3415,9 +3497,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    updateSalesOrder(id: number, if_Match: string, body: SalesOrderUpdateRequest): Observable<SalesOrderDto> {
+    updateSalesOrder(id: number, if_Match: string, body: SalesOrderUpdateRequest | undefined): Observable<SalesOrderDto> {
         let url_ = this.baseUrl + "/api/v1/sales-orders/{id}";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -3634,9 +3717,10 @@ export class Client implements IClient {
 
     /**
      * @param if_Match Required strong ETag from the latest resource response. Wildcards, weak tags, and multiple tags are rejected.
+     * @param body (optional)
      * @return OK
      */
-    transitionSalesOrderStatus(id: number, if_Match: string, body: SalesOrderStatusTransitionRequest): Observable<SalesOrderDto> {
+    transitionSalesOrderStatus(id: number, if_Match: string, body: SalesOrderStatusTransitionRequest | undefined): Observable<SalesOrderDto> {
         let url_ = this.baseUrl + "/api/v1/sales-orders/{id}/status-transitions";
         if (id === undefined || id === null)
             throw new globalThis.Error("The parameter 'id' must be defined.");
@@ -3764,30 +3848,6 @@ export interface AddressCreateRequest {
     country: string | null;
     defaultBilling: boolean;
     defaultShipping: boolean;
-
-    [key: string]: any;
-}
-
-export interface AddressDto {
-    id: number;
-    customerId: number;
-    type: string;
-    label: string;
-    line1: string;
-    line2: string | null;
-    city: string;
-    state: string | null;
-    postalCode: string;
-    country: string;
-    defaultBilling: boolean;
-    defaultShipping: boolean;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
-
-    [key: string]: any;
 }
 
 export interface AddressUpdateRequest {
@@ -3802,8 +3862,6 @@ export interface AddressUpdateRequest {
     country: string | null;
     defaultBilling: boolean;
     defaultShipping: boolean;
-
-    [key: string]: any;
 }
 
 export enum AddressUsage {
@@ -3827,30 +3885,17 @@ export interface ApiProblemDetails {
     [key: string]: any;
 }
 
+export interface ApiRootResponse {
+    name?: string | null;
+    version?: string | null;
+}
+
 export interface CarrierCreateRequest {
     code: string | null;
     name: string | null;
     serviceLevel: string | null;
     trackingUrlTemplate?: string | null;
     isActive?: boolean;
-
-    [key: string]: any;
-}
-
-export interface CarrierDto {
-    id: number;
-    code: string;
-    name: string;
-    serviceLevel: string;
-    trackingUrlTemplate: string | null;
-    isActive: boolean;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
-
-    [key: string]: any;
 }
 
 export interface CarrierUpdateRequest {
@@ -3859,17 +3904,71 @@ export interface CarrierUpdateRequest {
     serviceLevel: string | null;
     trackingUrlTemplate?: string | null;
     isActive: boolean;
+}
 
-    [key: string]: any;
+export interface CarrierView {
+    id?: number;
+    code?: string | null;
+    name?: string | null;
+    serviceLevel?: string | null;
+    trackingUrlTemplate?: string | null;
+    isActive?: boolean;
+    createdByUserId?: number | null;
+    createdByUserDisplayName?: string | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modifiedByUserDisplayName?: string | null;
+    modificationDate?: Date | null;
+    version?: string | null;
+}
+
+export interface CarrierViewPageResult {
+    items?: CarrierView[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface CurrentUserDto {
-    id: number;
-    displayName: string;
-    email: string | null;
-    policies: string[];
+    id?: number;
+    displayName?: string | null;
+    email?: string | null;
+    policies?: string[] | null;
+}
 
-    [key: string]: any;
+export interface CustomerAddressView {
+    id?: number;
+    customerId?: number;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    addressTypeId?: number;
+    type?: string | null;
+    addressTypeDisplayName?: string | null;
+    label?: string | null;
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    defaultBilling?: boolean;
+    defaultShipping?: boolean;
+    createdByUserId?: number | null;
+    createdByUserDisplayName?: string | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modifiedByUserDisplayName?: string | null;
+    modificationDate?: Date | null;
+    version?: string | null;
+}
+
+export interface CustomerAddressViewPageResult {
+    items?: CustomerAddressView[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface CustomerCreateRequest {
@@ -3880,26 +3979,6 @@ export interface CustomerCreateRequest {
     creditLimit: number;
     paymentTermsDays: CustomerCreateRequestPaymentTermsDays;
     isActive?: boolean;
-
-    [key: string]: any;
-}
-
-export interface CustomerDto {
-    id: number;
-    accountNumber: string;
-    name: string;
-    email: string;
-    phone: string | null;
-    creditLimit: number;
-    paymentTermsDays: CustomerDtoPaymentTermsDays;
-    isActive: boolean;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
-
-    [key: string]: any;
 }
 
 export interface CustomerUpdateRequest {
@@ -3910,79 +3989,41 @@ export interface CustomerUpdateRequest {
     creditLimit: number;
     paymentTermsDays: CustomerUpdateRequestPaymentTermsDays;
     isActive: boolean;
+}
 
-    [key: string]: any;
+export interface CustomerView {
+    id?: number;
+    accountNumber?: string | null;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    creditLimit?: number;
+    paymentTermsDays?: CustomerViewPaymentTermsDays;
+    isActive?: boolean;
+    createdByUserId?: number | null;
+    createdByUserDisplayName?: string | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modifiedByUserDisplayName?: string | null;
+    modificationDate?: Date | null;
+    version?: string | null;
+}
+
+export interface CustomerViewPageResult {
+    items?: CustomerView[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface DashboardSummaryDto {
-    products: any;
-    customers: any;
-    carriers: any;
-    openQuotes: any;
-    activeOrders: any;
-    asOf: any;
-
-    [key: string]: any;
-}
-
-export interface PageResultOfAddressDto {
-    items: AddressDto[];
-    pageNumber: number;
-    pageSize: number;
-    totalPages: any;
-    itemsCount: any;
-
-    [key: string]: any;
-}
-
-export interface PageResultOfCarrierDto {
-    items: CarrierDto[];
-    pageNumber: number;
-    pageSize: number;
-    totalPages: any;
-    itemsCount: any;
-
-    [key: string]: any;
-}
-
-export interface PageResultOfCustomerDto {
-    items: CustomerDto[];
-    pageNumber: number;
-    pageSize: number;
-    totalPages: any;
-    itemsCount: any;
-
-    [key: string]: any;
-}
-
-export interface PageResultOfProductDto {
-    items: ProductDto[];
-    pageNumber: number;
-    pageSize: number;
-    totalPages: any;
-    itemsCount: any;
-
-    [key: string]: any;
-}
-
-export interface PageResultOfQuoteSummaryDto {
-    items: QuoteSummaryDto[];
-    pageNumber: number;
-    pageSize: number;
-    totalPages: any;
-    itemsCount: any;
-
-    [key: string]: any;
-}
-
-export interface PageResultOfSalesOrderSummaryDto {
-    items: SalesOrderSummaryDto[];
-    pageNumber: number;
-    pageSize: number;
-    totalPages: any;
-    itemsCount: any;
-
-    [key: string]: any;
+    products?: number;
+    customers?: number;
+    carriers?: number;
+    openQuotes?: number;
+    activeOrders?: number;
+    asOf?: Date;
 }
 
 export interface ProductCreateRequest {
@@ -3993,26 +4034,6 @@ export interface ProductCreateRequest {
     stockQuantity: number;
     thumbnailUrl?: string | null;
     isActive?: boolean;
-
-    [key: string]: any;
-}
-
-export interface ProductDto {
-    id: number;
-    sku: string;
-    name: string;
-    category: string;
-    unitPrice: number;
-    stockQuantity: number;
-    thumbnailUrl: string | null;
-    isActive: boolean;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
-
-    [key: string]: any;
 }
 
 export interface ProductUpdateRequest {
@@ -4023,8 +4044,32 @@ export interface ProductUpdateRequest {
     stockQuantity: number;
     thumbnailUrl?: string | null;
     isActive: boolean;
+}
 
-    [key: string]: any;
+export interface ProductView {
+    id?: number;
+    sku?: string | null;
+    name?: string | null;
+    category?: string | null;
+    unitPrice?: number;
+    stockQuantity?: number;
+    thumbnailUrl?: string | null;
+    isActive?: boolean;
+    createdByUserId?: number | null;
+    createdByUserDisplayName?: string | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modifiedByUserDisplayName?: string | null;
+    modificationDate?: Date | null;
+    version?: string | null;
+}
+
+export interface ProductViewPageResult {
+    items?: ProductView[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface QuoteCreateRequest {
@@ -4033,44 +4078,40 @@ export interface QuoteCreateRequest {
     quoteDate: Date;
     validUntil: Date;
     notes?: string | null;
-    lines: SalesLineRequest[];
-
-    [key: string]: any;
+    lines: SalesLineRequest[] | null;
 }
 
 export interface QuoteDto {
-    id: number;
-    quoteNumber: string;
-    customerId: number;
-    shippingAddressId: number;
-    quoteDate: Date;
-    validUntil: Date;
-    status: QuoteStatus;
-    notes: string | null;
-    customerAccountNumber: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string | null;
-    shippingLabel: string;
-    shippingLine1: string;
-    shippingLine2: string | null;
-    shippingCity: string;
-    shippingState: string | null;
-    shippingPostalCode: string;
-    shippingCountry: string;
-    shippingAddressTypeCode: string;
-    lines: SalesLineDto[];
-    subtotal: number;
-    discountTotal: number;
-    grandTotal: number;
-    salesOrderId: number | null;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
-
-    [key: string]: any;
+    id?: number;
+    quoteNumber?: string | null;
+    customerId?: number;
+    shippingAddressId?: number;
+    quoteDate?: Date;
+    validUntil?: Date;
+    status?: QuoteStatus;
+    notes?: string | null;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    customerEmail?: string | null;
+    customerPhone?: string | null;
+    shippingLabel?: string | null;
+    shippingLine1?: string | null;
+    shippingLine2?: string | null;
+    shippingCity?: string | null;
+    shippingState?: string | null;
+    shippingPostalCode?: string | null;
+    shippingCountry?: string | null;
+    shippingAddressTypeCode?: string | null;
+    lines?: SalesLineDto[] | null;
+    subtotal?: number;
+    discountTotal?: number;
+    grandTotal?: number;
+    salesOrderId?: number | null;
+    createdByUserId?: number | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modificationDate?: Date | null;
+    version?: string | null;
 }
 
 export enum QuoteStatus {
@@ -4083,30 +4124,34 @@ export enum QuoteStatus {
 
 export interface QuoteStatusTransitionRequest {
     status: QuoteStatus;
-
-    [key: string]: any;
 }
 
 export interface QuoteSummaryDto {
-    id: number;
-    quoteNumber: string;
-    customerId: number;
-    customerAccountNumber: string;
-    customerName: string;
-    quoteDate: Date;
-    validUntil: Date;
-    status: QuoteStatus;
-    subtotal: number;
-    discountTotal: number;
-    grandTotal: number;
-    salesOrderId: number | null;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
+    id?: number;
+    quoteNumber?: string | null;
+    customerId?: number;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    quoteDate?: Date;
+    validUntil?: Date;
+    status?: QuoteStatus;
+    subtotal?: number;
+    discountTotal?: number;
+    grandTotal?: number;
+    salesOrderId?: number | null;
+    createdByUserId?: number | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modificationDate?: Date | null;
+    version?: string | null;
+}
 
-    [key: string]: any;
+export interface QuoteSummaryDtoPageResult {
+    items?: QuoteSummaryDto[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface QuoteUpdateRequest {
@@ -4115,33 +4160,27 @@ export interface QuoteUpdateRequest {
     quoteDate: Date;
     validUntil: Date;
     notes?: string | null;
-    lines: SalesLineRequest[];
-
-    [key: string]: any;
+    lines: SalesLineRequest[] | null;
 }
 
 export interface SalesLineDto {
-    id: number;
-    productId: number;
-    sku: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-    discountPercent: number;
-    lineSubtotal: number;
-    discountAmount: number;
-    lineTotal: number;
-
-    [key: string]: any;
+    id?: number;
+    productId?: number;
+    sku?: string | null;
+    productName?: string | null;
+    quantity?: number;
+    unitPrice?: number;
+    discountPercent?: number;
+    lineSubtotal?: number;
+    discountAmount?: number;
+    lineTotal?: number;
 }
 
 export interface SalesLineRequest {
-    productId: number;
-    quantity: number;
-    unitPrice: number;
-    discountPercent: number;
-
-    [key: string]: any;
+    productId?: number;
+    quantity?: number;
+    unitPrice?: number;
+    discountPercent?: number;
 }
 
 export interface SalesOrderCreateRequest {
@@ -4150,45 +4189,41 @@ export interface SalesOrderCreateRequest {
     requestedShipDate?: Date | null;
     carrierId?: number | null;
     trackingNumber?: string | null;
-    lines: SalesLineRequest[];
-
-    [key: string]: any;
+    lines: SalesLineRequest[] | null;
 }
 
 export interface SalesOrderDto {
-    id: number;
-    orderNumber: string;
-    sourceQuoteId: number | null;
-    customerId: number;
-    shippingAddressId: number;
-    status: SalesOrderStatus;
-    requestedShipDate: Date | null;
-    carrierId: number | null;
-    carrierName: string | null;
-    trackingNumber: string | null;
-    customerAccountNumber: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string | null;
-    shippingLabel: string;
-    shippingLine1: string;
-    shippingLine2: string | null;
-    shippingCity: string;
-    shippingState: string | null;
-    shippingPostalCode: string;
-    shippingCountry: string;
-    shippingAddressTypeCode: string;
-    lines: SalesLineDto[];
-    subtotal: number;
-    discountTotal: number;
-    grandTotal: number;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
-
-    [key: string]: any;
+    id?: number;
+    orderNumber?: string | null;
+    sourceQuoteId?: number | null;
+    customerId?: number;
+    shippingAddressId?: number;
+    status?: SalesOrderStatus;
+    requestedShipDate?: Date | null;
+    carrierId?: number | null;
+    carrierName?: string | null;
+    trackingNumber?: string | null;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    customerEmail?: string | null;
+    customerPhone?: string | null;
+    shippingLabel?: string | null;
+    shippingLine1?: string | null;
+    shippingLine2?: string | null;
+    shippingCity?: string | null;
+    shippingState?: string | null;
+    shippingPostalCode?: string | null;
+    shippingCountry?: string | null;
+    shippingAddressTypeCode?: string | null;
+    lines?: SalesLineDto[] | null;
+    subtotal?: number;
+    discountTotal?: number;
+    grandTotal?: number;
+    createdByUserId?: number | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modificationDate?: Date | null;
+    version?: string | null;
 }
 
 export enum SalesOrderStatus {
@@ -4204,32 +4239,36 @@ export interface SalesOrderStatusTransitionRequest {
     status: SalesOrderStatus;
     carrierId?: number | null;
     trackingNumber?: string | null;
-
-    [key: string]: any;
 }
 
 export interface SalesOrderSummaryDto {
-    id: number;
-    orderNumber: string;
-    sourceQuoteId: number | null;
-    customerId: number;
-    customerAccountNumber: string;
-    customerName: string;
-    status: SalesOrderStatus;
-    requestedShipDate: Date | null;
-    carrierId: number | null;
-    carrierName: string | null;
-    trackingNumber: string | null;
-    subtotal: number;
-    discountTotal: number;
-    grandTotal: number;
-    createdByUserId: number | null;
-    creationDate: any;
-    modifiedByUserId: number | null;
-    modificationDate: Date | null;
-    version: string;
+    id?: number;
+    orderNumber?: string | null;
+    sourceQuoteId?: number | null;
+    customerId?: number;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    status?: SalesOrderStatus;
+    requestedShipDate?: Date | null;
+    carrierId?: number | null;
+    carrierName?: string | null;
+    trackingNumber?: string | null;
+    subtotal?: number;
+    discountTotal?: number;
+    grandTotal?: number;
+    createdByUserId?: number | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modificationDate?: Date | null;
+    version?: string | null;
+}
 
-    [key: string]: any;
+export interface SalesOrderSummaryDtoPageResult {
+    items?: SalesOrderSummaryDto[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface SalesOrderUpdateRequest {
@@ -4238,9 +4277,7 @@ export interface SalesOrderUpdateRequest {
     requestedShipDate?: Date | null;
     carrierId?: number | null;
     trackingNumber?: string | null;
-    lines: SalesLineRequest[];
-
-    [key: string]: any;
+    lines: SalesLineRequest[] | null;
 }
 
 export enum SortDirection {
@@ -4256,7 +4293,7 @@ export enum CustomerCreateRequestPaymentTermsDays {
     _60 = 60,
 }
 
-export enum CustomerDtoPaymentTermsDays {
+export enum CustomerUpdateRequestPaymentTermsDays {
     _0 = 0,
     _15 = 15,
     _30 = 30,
@@ -4264,7 +4301,7 @@ export enum CustomerDtoPaymentTermsDays {
     _60 = 60,
 }
 
-export enum CustomerUpdateRequestPaymentTermsDays {
+export enum CustomerViewPaymentTermsDays {
     _0 = 0,
     _15 = 15,
     _30 = 30,

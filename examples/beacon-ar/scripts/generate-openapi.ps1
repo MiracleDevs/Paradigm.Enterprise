@@ -63,9 +63,10 @@ try {
     $null = $content | ConvertFrom-Json
     $artifactDirectory = Split-Path -Parent $artifactPath
     [System.IO.Directory]::CreateDirectory($artifactDirectory) | Out-Null
+    $normalizedContent = $content.Replace("`r`n", "`n").Replace("`r", "`n").TrimEnd() + "`n"
     [System.IO.File]::WriteAllText(
         $artifactPath,
-        $content.TrimEnd() + [Environment]::NewLine,
+        $normalizedContent,
         [System.Text.UTF8Encoding]::new($false))
     Write-Output "Generated $artifactPath"
 }
