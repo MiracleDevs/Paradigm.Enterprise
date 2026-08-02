@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BeaconAr.Data.Access;
@@ -15,6 +16,7 @@ using BeaconAr.Providers.MasterData;
 using BeaconAr.Providers.Sales;
 using BeaconAr.WebApi;
 using BeaconAr.WebApi.Access;
+using BeaconAr.WebApi.Endpoints;
 using BeaconAr.WebApi.Http;
 using BeaconAr.WebApi.OpenApi;
 using BeaconAr.WebApi.Security;
@@ -22,9 +24,12 @@ using BeaconAr.WebApi.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Paradigm.Enterprise.Data.SqlServer.Context;
 using Paradigm.Enterprise.Data.SqlServer.Extensions;
 using Paradigm.Enterprise.Data.Uow;
@@ -36,18 +41,15 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = ApiContract.MaxJsonRequestBodySize);
 
-string? authority = builder.Configuration["Authentication:Authority"];
-string? audience = builder.Configuration["Authentication:Audience"];
-string? issuer = builder.Configuration["Authentication:Issuer"];
+string? identityInstance = builder.Configuration["AzureAd:Instance"];
+string? tenantId = builder.Configuration["AzureAd:TenantId"];
+string? clientId = builder.Configuration["AzureAd:ClientId"];
 string? configuredSigningKey = builder.Configuration["Authentication:SigningKey"];
 string[] origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 bool isLocal = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing");
-bool isOpenApiGeneration =
-    string.Equals(Assembly.GetEntryAssembly()?.GetName().Name, "GetDocument.Insider", StringComparison.OrdinalIgnoreCase) ||
-    AppDomain.CurrentDomain.GetAssemblies().Any(static assembly => assembly.GetName().Name?.Contains("ApiDescription", StringComparison.OrdinalIgnoreCase) == true) ||
-    Environment.GetCommandLineArgs().Any(static argument => argument.Contains("dotnet-getdocument", StringComparison.OrdinalIgnoreCase));
-if (!isLocal && !isOpenApiGeneration && (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience) || string.IsNullOrWhiteSpace(issuer) || origins.Length == 0))
-    throw new InvalidOperationException("Authentication authority, audience, issuer, and at least one CORS origin are required outside local environments.");
+if (!isLocal && (string.IsNullOrWhiteSpace(identityInstance) || string.IsNullOrWhiteSpace(tenantId) ||
+                 string.IsNullOrWhiteSpace(clientId) || origins.Length == 0 || origins.Any(string.IsNullOrWhiteSpace)))
+    throw new InvalidOperationException("AzureAd instance, tenant ID, client ID, and at least one CORS origin are required outside local environments.");
 if (!string.IsNullOrWhiteSpace(configuredSigningKey) && !builder.Environment.IsEnvironment("Testing"))
     throw new InvalidOperationException("Authentication:SigningKey is permitted only in the isolated Testing environment.");
 
@@ -69,7 +71,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.QuoteStatus>());
         options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.SalesOrderStatus>());
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeOffsetJsonConverter());
-        options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContext.Default);
+        options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContract.CreateResolver());
     });
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
 {
@@ -80,7 +82,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
     options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.QuoteStatus>());
     options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.SalesOrderStatus>());
     options.SerializerOptions.Converters.Add(new UtcDateTimeOffsetJsonConverter());
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContract.CreateResolver());
 });
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -110,41 +112,65 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddSingleton<PermissionEvaluator>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+builder.Services.AddSingleton<IAuthorizationHandler, DelegatedUserAuthorizationHandler>();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.MapInboundClaims = false;
     options.SaveToken = false;
     options.RequireHttpsMetadata = !isLocal;
-    options.Authority = authority;
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.TokenValidationParameters.NameClaimType = "name";
+    options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(2);
+    options.Events ??= new JwtBearerEvents();
+    options.Events.OnChallenge = async context =>
     {
-        ValidateIssuerSigningKey = true,
-        ValidateIssuer = true,
-        ValidIssuer = issuer,
-        ValidateAudience = true,
-        ValidAudience = audience,
-        ValidateLifetime = true,
-        RequireExpirationTime = true,
-        RequireSignedTokens = true,
-        ClockSkew = TimeSpan.FromMinutes(2),
-        NameClaimType = "name",
+        context.HandleResponse();
+        await AuthenticationProblemWriter.WriteAsync(context.HttpContext, 401, "unauthorized", "Unauthorized", "A valid bearer access token is required.");
     };
-    options.Events = new JwtBearerEvents
+    options.Events.OnForbidden = context => AuthenticationProblemWriter.WriteAsync(
+        context.HttpContext,
+        403,
+        "forbidden",
+        "Forbidden",
+        "The authenticated user is not authorized for this operation.");
+
+    if (!string.IsNullOrWhiteSpace(configuredSigningKey))
     {
-        OnChallenge = async context =>
-        {
-            context.HandleResponse();
-            await AuthenticationProblemWriter.WriteAsync(context.HttpContext, 401, "unauthorized", "Unauthorized", "A valid bearer access token is required.");
-        },
-        OnForbidden = context => AuthenticationProblemWriter.WriteAsync(context.HttpContext, 403, "forbidden", "Forbidden", "The authenticated user is not authorized for this operation."),
-    };
+        string testingIssuer = builder.Configuration["Authentication:Issuer"] ??
+            throw new InvalidOperationException("Authentication:Issuer is required with the Testing signing key.");
+        string testingAudience = builder.Configuration["Authentication:Audience"] ??
+            throw new InvalidOperationException("Authentication:Audience is required with the Testing signing key.");
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(configuredSigningKey));
+        options.Authority = null;
+        options.Configuration = new OpenIdConnectConfiguration { Issuer = testingIssuer };
+        options.Configuration.SigningKeys.Add(key);
+        options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.Configuration);
+        options.TokenValidationParameters.IssuerSigningKey = key;
+        options.TokenValidationParameters.ValidIssuer = testingIssuer;
+        options.TokenValidationParameters.ValidAudience = testingAudience;
+        options.TokenValidationParameters.ValidateIssuerSigningKey = true;
+        options.TokenValidationParameters.ValidateIssuer = true;
+        options.TokenValidationParameters.ValidateAudience = true;
+        options.TokenValidationParameters.ValidateLifetime = true;
+        options.TokenValidationParameters.RequireExpirationTime = true;
+        options.TokenValidationParameters.RequireSignedTokens = true;
+    }
 });
 builder.Services.AddAuthorization(options =>
 {
-    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-    options.AddPolicy(BeaconPolicies.Read, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+    AuthorizationPolicy delegatedUserPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .AddRequirements(DelegatedUserRequirement.Instance)
+        .Build();
+    options.DefaultPolicy = delegatedUserPolicy;
+    options.FallbackPolicy = delegatedUserPolicy;
+    options.AddPolicy(BeaconPolicies.Read, policy => policy.RequireAuthenticatedUser()
+        .AddRequirements(DelegatedUserRequirement.Instance).RequireAssertion(context =>
         context.Resource is HttpContext http && http.RequestServices.GetRequiredService<PermissionEvaluator>().HasPolicy(context.User, BeaconPolicies.Read)));
-    options.AddPolicy(BeaconPolicies.Write, policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+    options.AddPolicy(BeaconPolicies.Write, policy => policy.RequireAuthenticatedUser()
+        .AddRequirements(DelegatedUserRequirement.Instance).RequireAssertion(context =>
         context.Resource is HttpContext http && http.RequestServices.GetRequiredService<PermissionEvaluator>().HasPolicy(context.User, BeaconPolicies.Write)));
 });
 builder.Services.AddCors(options => options.AddPolicy("beacon-spa", policy => policy
@@ -152,10 +178,19 @@ builder.Services.AddCors(options => options.AddPolicy("beacon-spa", policy => po
     .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
     .WithHeaders("Authorization", "Content-Type", "If-Match", "Idempotency-Key", "traceparent", "tracestate", "baggage")
     .WithExposedHeaders("ETag", "Location", "Idempotency-Replayed")));
-builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer<BearerSecurityDocumentTransformer>());
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc(ApiMetadata.OpenApiVersion, new OpenApiInfo
+    {
+        Title = ApiMetadata.Name,
+        Version = ApiMetadata.OpenApiVersion,
+    });
+    options.DocumentFilter<BeaconArDocumentFilter>();
+});
 
 string connectionString = builder.Configuration.GetConnectionString("DatabaseConnection")
-    ?? (isOpenApiGeneration ? "Server=(local);Database=BeaconAr;Integrated Security=true;TrustServerCertificate=true" : throw new InvalidOperationException("DatabaseConnection is required."));
+    ?? throw new InvalidOperationException("DatabaseConnection is required.");
 builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database", timeout: TimeSpan.FromSeconds(3), tags: ["ready"]);
 builder.Services.AddScoped<SqlServerDbContextConnectionProvider>();
 builder.Services.RegisterContext<ReceivablesDbContext>("DatabaseConnection");
@@ -202,6 +237,18 @@ app.UseStatusCodePages(async statusCodeContext =>
 });
 if (!isLocal)
     app.UseMiddleware<HttpsRequirementMiddleware>();
+if (app.Environment.IsDevelopment())
+{
+    app.UseStaticFiles();
+    app.UseSwagger(options => options.RouteTemplate = "openapi/{documentName}.json");
+    app.UseSwaggerUI(options =>
+    {
+        options.DocumentTitle = $"{ApiMetadata.Name} documentation";
+        options.RoutePrefix = "swagger";
+        options.SwaggerEndpoint($"/openapi/{ApiMetadata.OpenApiVersion}.json", $"{ApiMetadata.Name} {ApiMetadata.OpenApiVersion}");
+        options.InjectStylesheet("/swagger/style.css");
+    });
+}
 app.UseRouting();
 app.UseCors();
 app.UseAuthentication();
@@ -209,7 +256,7 @@ app.UseAuthorization();
 app.UseMiddleware<RequestBodyLimitMiddleware>();
 app.UseMiddleware<CurrentUserMiddleware>();
 app.MapDefaultEndpoints();
-app.MapOpenApi("/openapi/{documentName}.json").AllowAnonymous();
+app.MapApiRoot();
 app.MapControllers().RequireCors("beacon-spa");
 app.Run();
 

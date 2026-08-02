@@ -20,6 +20,9 @@ public static class ApiContract
 
     public static void SetETag(HttpResponse response, string version) => response.Headers.ETag = ETagCodec.Format(version);
 
+    public static void SetETag(HttpResponse response, byte[] rowVersion) =>
+        SetETag(response, Domain.MasterData.Application.VersionTokenCodec.Encode(rowVersion));
+
     public static string StatusCode(int status) => status switch
     {
         StatusCodes.Status400BadRequest => "malformed_request",

@@ -33,16 +33,33 @@ public sealed class ProductProvider
 
     #region Public Methods
 
-    public Task<PageResult<ProductDto>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
+    public async Task<PageResult<ProductDto>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
     {
-        MasterDataRequestValidator.ValidateSearch(request, "id", "sku", "name");
-        return SearchLegacyAsync(request, cancellationToken);
+        PageResult<ProductView> result = await SearchForApiAsync(request, cancellationToken);
+        return new PageResult<ProductDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
+            result.TotalPages, result.ItemsCount);
     }
 
     public async Task<ProductDto> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        ToDto(await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product"));
+        ToDto(await GetForApiAsync(id, cancellationToken));
 
-    public async Task<ProductDto> CreateAsync(ProductCreateRequest request, CancellationToken cancellationToken)
+    public async Task<ProductDto> CreateAsync(ProductCreateRequest request, CancellationToken cancellationToken) =>
+        ToDto(await CreateForApiAsync(request, cancellationToken));
+
+    public async Task<ProductDto> UpdateAsync(int id, ProductUpdateRequest request, string expectedVersion,
+        CancellationToken cancellationToken) =>
+        ToDto(await UpdateForApiAsync(id, request, expectedVersion, cancellationToken));
+
+    public Task<PageResult<ProductView>> SearchForApiAsync(ProductSearchRequest request, CancellationToken cancellationToken)
+    {
+        MasterDataRequestValidator.ValidateSearch(request, "id", "sku", "name");
+        return ViewRepository.SearchAsync(request, cancellationToken);
+    }
+
+    public async Task<ProductView> GetForApiAsync(int id, CancellationToken cancellationToken) =>
+        await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
+
+    public async Task<ProductView> CreateForApiAsync(ProductCreateRequest request, CancellationToken cancellationToken)
     {
         ProductCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
@@ -60,10 +77,10 @@ public sealed class ProductProvider
             await UnitOfWork.CommitChangesAsync();
             return product.Id;
         }, "referenced_record");
-        return await GetByIdAsync(id, cancellationToken);
+        return await GetForApiAsync(id, cancellationToken);
     }
 
-    public async Task<ProductDto> UpdateAsync(int id, ProductUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
+    public async Task<ProductView> UpdateForApiAsync(int id, ProductUpdateRequest request, string expectedVersion, CancellationToken cancellationToken)
     {
         ProductUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
@@ -83,7 +100,7 @@ public sealed class ProductProvider
             await UnitOfWork.CommitChangesAsync();
             return product.Id;
         }, "referenced_record");
-        return await GetByIdAsync(id, cancellationToken);
+        return await GetForApiAsync(id, cancellationToken);
     }
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -140,13 +157,6 @@ public sealed class ProductProvider
             await UnitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_record");
-    }
-
-    private async Task<PageResult<ProductDto>> SearchLegacyAsync(ProductSearchRequest request, CancellationToken cancellationToken)
-    {
-        PageResult<ProductView> result = await ViewRepository.SearchAsync(request, cancellationToken);
-        return new PageResult<ProductDto>(result.Items.Select(ToDto).ToArray(), result.PageNumber, result.PageSize,
-            result.TotalPages, result.ItemsCount);
     }
 
     private static ProductDto ToDto(ProductView product) => new(

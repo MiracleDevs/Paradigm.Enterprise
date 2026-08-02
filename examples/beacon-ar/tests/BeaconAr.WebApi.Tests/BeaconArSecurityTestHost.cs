@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,10 +22,28 @@ internal sealed class BeaconArSecurityTestHost : WebApplicationFactory<Program>
 
     private sealed class FakeCurrentUserProvider : ICurrentUserProvider
     {
+        #region Fields
+
+        private readonly BeaconArSecurityTestHost _owner;
+
+        #endregion
+
+        #region Constructors
+
+        public FakeCurrentUserProvider(BeaconArSecurityTestHost owner)
+        {
+            _owner = owner;
+        }
+
+        #endregion
+
         #region Public Methods
 
-        public Task<CurrentUserDto> ResolveAsync(AuthenticatedIdentity identity, CancellationToken cancellationToken) =>
-            Task.FromResult(new CurrentUserDto(42, identity.DisplayName, identity.Email, identity.Policies));
+        public Task<CurrentUserDto> ResolveAsync(AuthenticatedIdentity identity, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _owner._currentUserResolutionCount);
+            return Task.FromResult(new CurrentUserDto(42, identity.DisplayName, identity.Email, identity.Policies));
+        }
 
         #endregion
     }
@@ -64,6 +83,13 @@ internal sealed class BeaconArSecurityTestHost : WebApplicationFactory<Program>
     private readonly string _environment;
     private readonly HealthStatus _readiness;
     private readonly bool _useProductionIdentityProvider;
+    private int _currentUserResolutionCount;
+
+    #endregion
+
+    #region Properties
+
+    public int CurrentUserResolutionCount => Volatile.Read(ref _currentUserResolutionCount);
 
     #endregion
 
@@ -86,7 +112,9 @@ internal sealed class BeaconArSecurityTestHost : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(_environment);
-        builder.UseSetting("Authentication:Authority", BeaconArTestTokenFactory.Issuer);
+        builder.UseSetting("AzureAd:Instance", "https://login.microsoftonline.com/");
+        builder.UseSetting("AzureAd:TenantId", "beacon-security-tests");
+        builder.UseSetting("AzureAd:ClientId", BeaconArTestTokenFactory.Audience);
         builder.UseSetting("Authentication:Audience", BeaconArTestTokenFactory.Audience);
         builder.UseSetting("Authentication:Issuer", BeaconArTestTokenFactory.Issuer);
         builder.UseSetting("Authentication:Permissions:Read", "business.read");
@@ -118,7 +146,7 @@ internal sealed class BeaconArSecurityTestHost : WebApplicationFactory<Program>
             if (!_useProductionIdentityProvider)
             {
                 services.RemoveAll<ICurrentUserProvider>();
-                services.AddScoped<ICurrentUserProvider, FakeCurrentUserProvider>();
+                services.AddScoped<ICurrentUserProvider>(_ => new FakeCurrentUserProvider(this));
             }
         });
     }
@@ -133,7 +161,10 @@ internal sealed class BeaconArSecurityTestHost : WebApplicationFactory<Program>
         options.Authority = null;
         options.Configuration = new OpenIdConnectConfiguration { Issuer = BeaconArTestTokenFactory.Issuer };
         options.Configuration.SigningKeys.Add(key);
+        options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.Configuration);
         options.TokenValidationParameters.IssuerSigningKey = key;
+        options.TokenValidationParameters.ValidIssuer = BeaconArTestTokenFactory.Issuer;
+        options.TokenValidationParameters.ValidAudience = BeaconArTestTokenFactory.Audience;
     }
 
     #endregion
