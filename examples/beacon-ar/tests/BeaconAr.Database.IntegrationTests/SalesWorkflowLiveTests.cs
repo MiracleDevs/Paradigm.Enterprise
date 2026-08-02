@@ -193,10 +193,26 @@ public sealed class SalesWorkflowLiveTests
               (SELECT COUNT(1) FROM [dbo].[SalesOrderStatusHistory] WHERE [SalesOrderId] = @OrderId),
               (SELECT COUNT(1) FROM [dbo].[SalesOrder] WHERE [SourceQuoteId] = @QuoteId),
               (SELECT COUNT(1) FROM [dbo].[AuditLog] WHERE [ResourceType] = N'quote' AND [ResourceId] = CONVERT(NVARCHAR(50), @QuoteId)),
-              (SELECT COUNT(1) FROM [dbo].[AuditLog] WHERE [ResourceType] = N'salesOrder' AND [ResourceId] = CONVERT(NVARCHAR(50), @OrderId));
+              (SELECT COUNT(1) FROM [dbo].[AuditLog] WHERE [ResourceType] = N'salesOrder' AND [ResourceId] = CONVERT(NVARCHAR(50), @OrderId)),
+              (SELECT COUNT(1) FROM [dbo].[ApplicationUserView] WHERE [Id] = @UserId),
+              (SELECT COUNT(1) FROM [dbo].[ProductView] WHERE [Id] = @ProductId),
+              (SELECT COUNT(1) FROM [dbo].[CustomerView] WHERE [Id] = @CustomerId),
+              (SELECT COUNT(1) FROM [dbo].[CustomerAddressView] WHERE [Id] = @AddressId AND [CustomerId] = @CustomerId),
+              (SELECT COUNT(1) FROM [dbo].[CarrierView] WHERE [Id] = @CarrierId),
+              (SELECT COUNT(1) FROM [dbo].[QuoteView] WHERE [Id] = @QuoteId AND [SalesOrderId] = @OrderId),
+              (SELECT COUNT(1) FROM [dbo].[QuoteLineView] WHERE [QuoteId] = @QuoteId AND [ProductId] = @ProductId),
+              (SELECT COUNT(1) FROM [dbo].[SalesOrderView] WHERE [Id] = @OrderId AND [SourceQuoteId] = @QuoteId),
+              (SELECT COUNT(1) FROM [dbo].[SalesOrderLineView] WHERE [SalesOrderId] = @OrderId AND [ProductId] = @ProductId),
+              (SELECT [GrandTotal] FROM [dbo].[QuoteView] WHERE [Id] = @QuoteId),
+              (SELECT [GrandTotal] FROM [dbo].[SalesOrderView] WHERE [Id] = @OrderId);
             """, connection);
         command.Parameters.AddWithValue("@QuoteId", quote.Id);
         command.Parameters.AddWithValue("@OrderId", order.Id);
+        command.Parameters.AddWithValue("@UserId", fixture.UserId);
+        command.Parameters.AddWithValue("@ProductId", fixture.ProductId);
+        command.Parameters.AddWithValue("@CustomerId", fixture.CustomerId);
+        command.Parameters.AddWithValue("@AddressId", fixture.AddressId);
+        command.Parameters.AddWithValue("@CarrierId", fixture.CarrierId);
         await using SqlDataReader reader = await command.ExecuteReaderAsync();
         Assert.IsTrue(await reader.ReadAsync());
         Assert.AreEqual(3, reader.GetInt32(0));
@@ -204,6 +220,10 @@ public sealed class SalesWorkflowLiveTests
         Assert.AreEqual(1, reader.GetInt32(2));
         Assert.AreEqual(4, reader.GetInt32(3));
         Assert.AreEqual(5, reader.GetInt32(4));
+        for (int ordinal = 5; ordinal <= 13; ordinal++)
+            Assert.AreEqual(1, reader.GetInt32(ordinal));
+        Assert.AreEqual(1.01m, reader.GetDecimal(14));
+        Assert.AreEqual(1.01m, reader.GetDecimal(15));
     }
 
     [TestMethod]
