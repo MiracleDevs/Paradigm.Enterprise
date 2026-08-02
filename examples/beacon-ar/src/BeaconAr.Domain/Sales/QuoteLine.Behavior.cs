@@ -1,6 +1,6 @@
 using BeaconAr.Domain.Sales.Contracts;
 
-namespace BeaconAr.Domain.Receivables.Generated;
+namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class QuoteLine
 {

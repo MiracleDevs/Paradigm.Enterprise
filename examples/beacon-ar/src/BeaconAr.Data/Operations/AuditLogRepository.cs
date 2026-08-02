@@ -1,6 +1,6 @@
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Data.Repositories;
 
 namespace BeaconAr.Data.Operations;

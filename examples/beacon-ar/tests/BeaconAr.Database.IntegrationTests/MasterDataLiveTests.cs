@@ -1,12 +1,12 @@
 using BeaconAr.Data.MasterData;
 using BeaconAr.Data.Operations;
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Providers.MasterData;
 using System.Data;
 using Microsoft.Data.SqlClient;

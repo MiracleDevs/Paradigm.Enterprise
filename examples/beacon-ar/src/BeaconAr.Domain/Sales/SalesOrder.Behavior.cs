@@ -3,7 +3,7 @@ using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
 using BeaconAr.Domain.Sales.Validation;
 
-namespace BeaconAr.Domain.Receivables.Generated;
+namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class SalesOrder
 {

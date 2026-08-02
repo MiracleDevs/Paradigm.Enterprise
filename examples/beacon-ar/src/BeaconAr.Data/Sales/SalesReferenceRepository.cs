@@ -1,4 +1,4 @@
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Domain.Sales.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Repositories;

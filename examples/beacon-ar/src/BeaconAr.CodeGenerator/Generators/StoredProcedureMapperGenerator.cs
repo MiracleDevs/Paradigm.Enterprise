@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using BeaconAr.CodeGenerator.Extensions;
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 
 using System.Reflection;
 using System.Text;

@@ -4,7 +4,7 @@ using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Providers.MasterData;
 using Paradigm.Enterprise.Domain.Uow;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;

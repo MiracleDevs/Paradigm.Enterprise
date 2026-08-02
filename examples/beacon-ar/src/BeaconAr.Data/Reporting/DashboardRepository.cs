@@ -1,5 +1,5 @@
 using BeaconAr.Data.Mappers;
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Data.Reporting.StoredProcedures;
 using BeaconAr.Domain.Reporting.Contracts;
 using BeaconAr.Domain.Reporting.Repositories;

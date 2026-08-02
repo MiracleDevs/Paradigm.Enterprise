@@ -1,7 +1,7 @@
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.Access.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Repositories;
 

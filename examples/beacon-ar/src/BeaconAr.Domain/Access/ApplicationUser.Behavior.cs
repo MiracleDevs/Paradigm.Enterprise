@@ -1,6 +1,6 @@
 using BeaconAr.Domain.Access.Contracts;
 
-namespace BeaconAr.Domain.Receivables.Generated;
+namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class ApplicationUser
 {

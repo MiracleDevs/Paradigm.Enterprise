@@ -1,7 +1,7 @@
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Validation;
 
-namespace BeaconAr.Domain.Receivables.Generated;
+namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class Carrier
 {
