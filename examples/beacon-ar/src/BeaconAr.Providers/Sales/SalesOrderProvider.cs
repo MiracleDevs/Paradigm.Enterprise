@@ -68,13 +68,7 @@ public sealed class SalesOrderProvider : SalesProviderBase, ISalesOrderProvider
             SalesOrder order = SalesOrder.CreateDirectDraft(number, request, customer, address, products,
                 carrier, OperationContext.UserId, now);
             _orders.Add(order);
-            _orders.AddHistory(new SalesOrderStatusHistory
-            {
-                SalesOrder = order,
-                StatusId = (int)OrderState.Draft,
-                CreatedByUserId = OperationContext.UserId,
-                CreationDate = now,
-            });
+            _orders.AddHistory(SalesOrderStatusHistory.Create(order, OperationContext.UserId, now));
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
             cancellationToken.ThrowIfCancellationRequested();
@@ -137,13 +131,7 @@ public sealed class SalesOrderProvider : SalesProviderBase, ISalesOrderProvider
                 : null;
             DateTimeOffset now = TimeProvider.GetUtcNow();
             OrderState previous = order.TransitionTo(request, carrier, OperationContext.UserId, now);
-            _orders.AddHistory(new SalesOrderStatusHistory
-            {
-                SalesOrderId = order.Id,
-                StatusId = (int)request.Status,
-                CreatedByUserId = OperationContext.UserId,
-                CreationDate = now,
-            });
+            _orders.AddHistory(SalesOrderStatusHistory.Create(order, OperationContext.UserId, now));
             AddAudit("salesOrder", order.Id, "statusTransition", now, Code(previous), Code(request.Status));
             await UnitOfWork.CommitChangesAsync();
             return order.Id;

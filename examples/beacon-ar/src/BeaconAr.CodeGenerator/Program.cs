@@ -6,6 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 Directory.SetCurrentDirectory(FindGeneratorProjectDirectory());
+if (args.Length > 0 && string.Equals(args[0], "openapi-typescript", StringComparison.OrdinalIgnoreCase))
+{
+    if (args.Length != 3)
+        throw new ArgumentException("Usage: openapi-typescript <openapi-document> <output-file>", nameof(args));
+    await OpenApiTypeScriptGenerator.GenerateAsync(args[1], args[2]);
+    return;
+}
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((_, config) =>
     {

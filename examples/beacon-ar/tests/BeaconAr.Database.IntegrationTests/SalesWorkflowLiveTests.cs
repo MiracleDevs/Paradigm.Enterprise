@@ -169,8 +169,8 @@ public sealed class SalesWorkflowLiveTests
 
         quote = await quotes.TransitionAsync(quote.Id, new(QuoteState.Sent), quote.Version, CancellationToken.None);
         quote = await quotes.TransitionAsync(quote.Id, new(QuoteState.Accepted), quote.Version, CancellationToken.None);
-        QuoteConversionResult first = await conversion.ConvertAsync(quote.Id, quote.Version, CancellationToken.None);
-        QuoteConversionResult replay = await conversion.ConvertAsync(quote.Id, "replay-token-is-ignored", CancellationToken.None);
+        QuoteConversionResult first = await conversion.ConvertAsync(quote.Id, CancellationToken.None);
+        QuoteConversionResult replay = await conversion.ConvertAsync(quote.Id, CancellationToken.None);
         Assert.IsTrue(first.Created);
         Assert.IsFalse(replay.Created);
         Assert.AreEqual(first.SalesOrder.Id, replay.SalesOrder.Id);
@@ -261,12 +261,12 @@ public sealed class SalesWorkflowLiveTests
         Task<QuoteConversionResult> firstTask = Task.Run(async () =>
         {
             await start.Task;
-            return await firstProvider.ConvertAsync(accepted.Id, accepted.Version, CancellationToken.None);
+            return await firstProvider.ConvertAsync(accepted.Id, CancellationToken.None);
         });
         Task<QuoteConversionResult> secondTask = Task.Run(async () =>
         {
             await start.Task;
-            return await secondProvider.ConvertAsync(accepted.Id, accepted.Version, CancellationToken.None);
+            return await secondProvider.ConvertAsync(accepted.Id, CancellationToken.None);
         });
         start.SetResult();
         QuoteConversionResult[] results = await Task.WhenAll(firstTask, secondTask);
@@ -408,7 +408,7 @@ public sealed class SalesWorkflowLiveTests
         Assert.AreEqual(capturedAddress, quote.ShippingLine1);
         quote = await quotes.TransitionAsync(quote.Id, new(QuoteState.Sent), quote.Version, CancellationToken.None);
         quote = await quotes.TransitionAsync(quote.Id, new(QuoteState.Accepted), quote.Version, CancellationToken.None);
-        SalesOrderDto converted = (await conversion.ConvertAsync(quote.Id, quote.Version, CancellationToken.None)).SalesOrder;
+        SalesOrderDto converted = (await conversion.ConvertAsync(quote.Id, CancellationToken.None)).SalesOrder;
         Assert.AreEqual(capturedSku, converted.Lines.Single().Sku);
         Assert.AreEqual(capturedCustomer, converted.CustomerName);
         Assert.AreEqual(capturedAddress, converted.ShippingLine1);
