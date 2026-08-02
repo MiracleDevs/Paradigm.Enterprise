@@ -12,6 +12,7 @@ using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Providers.Access;
 using BeaconAr.Providers.MasterData;
+using BeaconAr.Providers.Sales;
 using BeaconAr.WebApi;
 using BeaconAr.WebApi.Access;
 using BeaconAr.WebApi.Http;
@@ -166,6 +167,8 @@ Assembly domainAssembly = typeof(BeaconAr.Domain.Receivables.Entities.Product).A
 builder.Services.RegisterMappers(domainAssembly);
 builder.Services.RegisterEntities(domainAssembly);
 builder.Services.AddScoped<IMasterDataPersistenceErrorClassifier, MasterDataPersistenceErrorClassifier>();
+builder.Services.AddScoped<MasterDataMutationCoordinator>();
+builder.Services.AddScoped<SalesWorkflowCoordinator>();
 builder.Services.AddScoped<ISalesPersistenceErrorClassifier, SalesPersistenceErrorClassifier>();
 builder.Services.AddScoped<IPersistenceSession, PersistenceSession>();
 builder.Services.AddSingleton(TimeProvider.System);

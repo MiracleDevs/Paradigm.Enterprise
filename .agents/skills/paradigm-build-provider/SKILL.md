@@ -32,6 +32,11 @@ Constructor-inject stable application collaborators. `ProviderBase` supplies onl
 - Coordinate repositories, domain behavior, identity/policy checks, mapping, and infrastructure adapters.
 - Put intrinsic invariants in Domain; put EF/query mechanics in repositories.
 - Use lifecycle hooks for checks that belong around generic edit behavior.
+- Treat a typed provider interface as an executable contract, not an inheritance marker. Before exposing
+  `IEditProvider<TView, TId>`, exercise every single and bulk add, update, save, delete, get, and search
+  operation through that interface. A migration may temporarily override unsupported mutations to fail
+  closed, but it must cover every overload and document what transport or concurrency decision will enable
+  them; never leave unsafe inherited behavior callable.
 - Return application results/exceptions, not HTTP status codes or MVC results.
 - Add and propagate `CancellationToken` on custom contracts that support it. The current generic CRUD contracts do not accept a token; do not claim controller cancellation reaches those calls.
 - Define optimistic-concurrency ownership and translate update conflicts to an application exception; never silently overwrite a newer write.
@@ -42,4 +47,4 @@ Read [transaction patterns](references/transactions.md) for custom multi-reposit
 
 ## Test
 
-Mock focused contracts for orchestration tests. Cover allowed/denied operations, hook ordering, mapping/validation failures, commit count, rollback, cancellation, and collaborator failures. Use a database integration test for transaction guarantees.
+Mock focused contracts for orchestration tests. Cover allowed/denied operations, hook ordering, mapping/validation failures, commit count, rollback, cancellation, and collaborator failures. When inheriting a typed provider contract, test its full single and bulk surface through the interface; reflection-only inheritance assertions do not prove lifecycle safety. Use a database integration test for transaction guarantees.

@@ -39,5 +39,25 @@
     <Folder Include="types\" />
     <Folder Include="sequences\" />
     <Folder Include="scripts\" />
+    <Folder Include="tables\Access\" />
+    <Folder Include="tables\MasterData\" />
+    <Folder Include="tables\Operations\" />
+    <Folder Include="tables\Sales\" />
+    <Folder Include="views\Access\" />
+    <Folder Include="views\MasterData\" />
+    <Folder Include="views\Sales\" />
+    <Folder Include="routines\MasterData\" />
+    <Folder Include="routines\Reporting\" />
+    <Folder Include="routines\Sales\" />
+    <Folder Include="sequences\Sales\" />
+    <Folder Include="scripts\predeployment\" />
+    <Folder Include="scripts\postdeployment\" />
+    <Folder Include="scripts\prepredeployment\" />
+    <Folder Include="scripts\postdeployment\MasterData\" />
+    <Folder Include="scripts\postdeployment\Operations\" />
+    <Folder Include="scripts\postdeployment\Sales\" />
+    <Folder Include="scripts\verification\" />
+    <Folder Include="scripts\maintenance\" />
+    <Folder Include="bootstrap\" />
   </ItemGroup>
 </Project>

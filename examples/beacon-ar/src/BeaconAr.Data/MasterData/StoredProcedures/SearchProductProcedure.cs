@@ -1,8 +1,9 @@
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
 namespace BeaconAr.Data.MasterData.StoredProcedures;
 
-internal sealed class SearchProductProcedure : ResultStoredProcedureBase<ProductSearchParameters, int, List<ProductSearchRow>>
+internal sealed class SearchProductProcedure : ResultStoredProcedureBase<ProductSearchParameters, int, List<ProductView>>
 {
     #region Properties
 

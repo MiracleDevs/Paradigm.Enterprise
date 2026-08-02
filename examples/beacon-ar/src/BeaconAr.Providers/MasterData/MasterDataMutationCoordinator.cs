@@ -1,61 +1,59 @@
 using System.Security.Cryptography;
 using BeaconAr.Domain.MasterData.Application;
-using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Domain.Uow;
-using Paradigm.Enterprise.Providers;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
-public abstract class MasterDataProviderBase : IProvider
+public sealed class MasterDataMutationCoordinator
 {
     #region Fields
 
+    private readonly IAuditLogRepository _auditLogs;
     private readonly IMasterDataPersistenceErrorClassifier _errorClassifier;
+    private readonly IApplicationOperationContext _operationContext;
     private readonly IPersistenceSession _persistenceSession;
+    private readonly TimeProvider _timeProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     #endregion
 
     #region Properties
 
-    protected IUnitOfWork UnitOfWork { get; }
+    public int UserId => _operationContext.UserId;
 
-    protected IAuditLogRepository AuditLogs { get; }
-
-    protected IApplicationOperationContext OperationContext { get; }
-
-    protected TimeProvider TimeProvider { get; }
+    public DateTimeOffset UtcNow => _timeProvider.GetUtcNow();
 
     #endregion
 
     #region Constructors
 
-    protected MasterDataProviderBase(
-        IUnitOfWork unitOfWork,
+    public MasterDataMutationCoordinator(
         IAuditLogRepository auditLogs,
+        IUnitOfWork unitOfWork,
         IApplicationOperationContext operationContext,
         TimeProvider timeProvider,
         IMasterDataPersistenceErrorClassifier errorClassifier,
         IPersistenceSession persistenceSession)
     {
-        UnitOfWork = unitOfWork;
-        AuditLogs = auditLogs;
-        OperationContext = operationContext;
-        TimeProvider = timeProvider;
+        _auditLogs = auditLogs;
+        _unitOfWork = unitOfWork;
+        _operationContext = operationContext;
+        _timeProvider = timeProvider;
         _errorClassifier = errorClassifier;
         _persistenceSession = persistenceSession;
     }
 
     #endregion
 
-    #region Protected Methods
+    #region Public Methods
 
-    protected async Task<T> ExecuteMutationAsync<T>(Func<Task<T>> operation, string referenceCode)
+    public async Task<T> ExecuteAsync<T>(Func<Task<T>> operation, string referenceCode)
     {
-        if (UnitOfWork.HasActiveTransaction)
+        if (_unitOfWork.HasActiveTransaction)
         {
             try
             {
@@ -67,7 +65,7 @@ public abstract class MasterDataProviderBase : IProvider
             }
         }
 
-        using ITransaction transaction = UnitOfWork.CreateTransaction();
+        using ITransaction transaction = _unitOfWork.CreateTransaction();
         try
         {
             T result = await operation();
@@ -80,40 +78,39 @@ public abstract class MasterDataProviderBase : IProvider
                 transaction.Rollback();
 
             _persistenceSession.DiscardTrackedChanges();
-
             throw Translate(exception, referenceCode);
         }
     }
 
-    protected static void EnsureVersion(byte[] currentVersion, string expectedVersion)
+    public static void EnsureVersion(byte[] currentVersion, string expectedVersion)
     {
         byte[] expected = VersionTokenCodec.Decode(expectedVersion);
         if (!CryptographicOperations.FixedTimeEquals(currentVersion, expected))
             throw new MasterDataException("concurrency_conflict", "The record was changed by another user.");
     }
 
-    protected void AddAudit(string resourceType, int resourceId, string action, string? metadataJson = null,
+    public void AddAudit(string resourceType, int resourceId, string action, string? metadataJson = null,
         DateTimeOffset? recordedAt = null)
     {
-        AuditLogs.Add(new AuditLog
+        _auditLogs.Add(new AuditLog
         {
             ResourceType = resourceType,
             ResourceId = resourceId.ToString(System.Globalization.CultureInfo.InvariantCulture),
             Action = action,
-            UserId = OperationContext.UserId,
-            RecordedAt = recordedAt ?? TimeProvider.GetUtcNow(),
-            CorrelationId = OperationContext.CorrelationId,
+            UserId = _operationContext.UserId,
+            RecordedAt = recordedAt ?? _timeProvider.GetUtcNow(),
+            CorrelationId = _operationContext.CorrelationId,
             MetadataJson = metadataJson,
         });
     }
 
-    protected static MasterDataException NotFound(string resourceName) =>
+    public static MasterDataException NotFound(string resourceName) =>
         new("not_found", $"The {resourceName} was not found.");
 
-    protected static MasterDataException Duplicate(string fieldName) =>
+    public static MasterDataException Duplicate(string fieldName) =>
         new("duplicate_key", $"A record with the same {fieldName} already exists.");
 
-    protected static string GetUpdateAction(bool wasActive, bool isActive) =>
+    public static string GetUpdateAction(bool wasActive, bool isActive) =>
         wasActive == isActive ? "updated" : isActive ? "activated" : "deactivated";
 
     #endregion
@@ -124,6 +121,7 @@ public abstract class MasterDataProviderBase : IProvider
     {
         if (exception is OperationCanceledException or MasterDataException)
             return exception;
+
         PersistenceConflictKind conflict = _errorClassifier.Classify(exception);
         return conflict switch
         {

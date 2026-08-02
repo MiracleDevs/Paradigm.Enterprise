@@ -6,7 +6,10 @@ using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Providers.MasterData;
+using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Uow;
+using Paradigm.Enterprise.Providers;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 
 namespace BeaconAr.Providers.Tests;
@@ -32,14 +35,45 @@ public sealed class ProductProviderTests
 
         public Task<bool> HasReferencesAsync(int id, CancellationToken cancellationToken) => Task.FromResult(Referenced);
 
-        public void Add(Product product)
+        public Task<Product> AddAsync(Product product)
         {
             product.Id = 42;
             product.RowVersion = CurrentVersion;
             Current = product;
+            return Task.FromResult(product);
         }
 
-        public void Delete(Product product) => Deleted = true;
+        public Task AddAsync(IEnumerable<Product> products) => Task.WhenAll(products.Select(AddAsync));
+
+        public Task<Product> UpdateAsync(Product product) => Task.FromResult(product);
+
+        public Task UpdateAsync(IEnumerable<Product> products) => Task.CompletedTask;
+
+        public Task DeleteAsync(Product product)
+        {
+            Deleted = true;
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteAsync(IEnumerable<Product> products)
+        {
+            Deleted = true;
+            return Task.CompletedTask;
+        }
+
+        public Task<Product?> GetByIdAsync(int id) => Task.FromResult(Current);
+
+        public Task<IEnumerable<Product>> GetByIdsAsync(IEnumerable<int> ids) =>
+            Task.FromResult<IEnumerable<Product>>(Current is null ? [] : [Current]);
+
+        public Task<IEnumerable<Product>> GetAllAsync() =>
+            Task.FromResult<IEnumerable<Product>>(Current is null ? [] : [Current]);
+
+        public Task<PaginatedResultDto<Product>> SearchAsync<TParameters>(TParameters parameters)
+            where TParameters : PaginationParametersBase => throw new NotSupportedException();
+
+        public Task<PaginatedResultDto<Product>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters) =>
+            throw new NotSupportedException();
 
         public void Dispose()
         {
@@ -52,28 +86,71 @@ public sealed class ProductProviderTests
 
         public int SearchCalls { get; private set; }
 
+        public CancellationToken LastIdentifierCancellationToken { get; private set; }
+
         public FakeProductViewRepository(FakeProductRepository products)
         {
             _products = products;
         }
 
-        public Task<ProductDto?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-            Task.FromResult(_products.Current is null ? null : ToDto(_products.Current));
+        public Task<ProductView?> GetByIdAsync(int id) =>
+            Task.FromResult(_products.Current is null ? null : ToView(_products.Current));
 
-        public Task<PageResult<ProductDto>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
+        public Task<ProductView?> GetByIdAsync(int id, CancellationToken cancellationToken)
+        {
+            LastIdentifierCancellationToken = cancellationToken;
+            cancellationToken.ThrowIfCancellationRequested();
+            return GetByIdAsync(id);
+        }
+
+        public Task<PageResult<ProductView>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
         {
             SearchCalls++;
-            return Task.FromResult(new PageResult<ProductDto>(Array.Empty<ProductDto>(), request.PageNumber, request.PageSize, 0, 0));
+            return Task.FromResult(new PageResult<ProductView>(Array.Empty<ProductView>(), request.PageNumber, request.PageSize, 0, 0));
         }
+
+        public Task<IEnumerable<ProductView>> GetByIdsAsync(IEnumerable<int> ids) =>
+            Task.FromResult<IEnumerable<ProductView>>(_products.Current is null ? [] : [ToView(_products.Current)]);
+
+        public Task<IEnumerable<ProductView>> GetAllAsync() =>
+            Task.FromResult<IEnumerable<ProductView>>(_products.Current is null ? [] : [ToView(_products.Current)]);
+
+        public Task<PaginatedResultDto<ProductView>> SearchAsync<TParameters>(TParameters parameters)
+            where TParameters : PaginationParametersBase
+        {
+            SearchCalls++;
+            ProductView[] results = _products.Current is null ? [] : [ToView(_products.Current)];
+            return Task.FromResult(new PaginatedResultDto<ProductView>(new PaginationInfo
+            {
+                ItemsCount = results.Length,
+                PageNumber = parameters.PageNumber ?? 1,
+                TotalPages = results.Length,
+            }, results));
+        }
+
+        public Task<PaginatedResultDto<ProductView>> SearchPaginatedAsync(FilterTextPaginatedParameters parameters) =>
+            throw new NotSupportedException();
 
         public void Dispose()
         {
         }
 
-        private static ProductDto ToDto(Product product) => new(
-            product.Id, product.Sku, product.Name, product.Category, product.UnitPrice, product.StockQuantity,
-            product.ThumbnailUrl, product.IsActive, product.CreatedByUserId, product.CreationDate,
-            product.ModifiedByUserId, product.ModificationDate, VersionTokenCodec.Encode(product.RowVersion));
+        private static ProductView ToView(Product product) => new()
+        {
+            Id = product.Id,
+            Sku = product.Sku,
+            Name = product.Name,
+            Category = product.Category,
+            UnitPrice = product.UnitPrice,
+            StockQuantity = product.StockQuantity,
+            ThumbnailUrl = product.ThumbnailUrl,
+            IsActive = product.IsActive,
+            CreatedByUserId = product.CreatedByUserId,
+            CreationDate = product.CreationDate,
+            ModifiedByUserId = product.ModifiedByUserId,
+            ModificationDate = product.ModificationDate,
+            RowVersion = product.RowVersion,
+        };
     }
 
     private sealed class FakeAuditLogRepository : IAuditLogRepository
@@ -326,14 +403,90 @@ public sealed class ProductProviderTests
         Assert.IsFalse(repository.Current!.IsActive);
     }
 
+    [TestMethod]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "The test intentionally exercises the official provider interface.")]
+    public async Task OfficialSearchReturnsGeneratedViewsThroughTypedContract()
+    {
+        var repository = new FakeProductRepository { Current = CreateProduct() };
+        var views = new FakeProductViewRepository(repository);
+        IEditProvider<ProductView, int> provider = CreateProvider(
+            repository, views, new FakeAuditLogRepository(), new FakeUnitOfWork());
+
+        PaginatedResultDto<ProductView> result = await provider.SearchAsync(new MasterDataViewSearchParameters
+        {
+            Search = "SKU",
+            PageNumber = 1,
+            PageSize = 10,
+            SortBy = "sku",
+            SortDirection = "asc",
+        });
+
+        Assert.AreEqual(1, result.PageInfo.ItemsCount);
+        Assert.AreEqual("SKU", result.Results.Single().Sku);
+        Assert.AreEqual(1, views.SearchCalls);
+
+        await Assert.ThrowsAsync<MasterDataValidationException>(() => provider.SearchAsync(
+            new MasterDataViewSearchParameters { PageSize = 101 }));
+        Assert.AreEqual(1, views.SearchCalls);
+    }
+
+    [TestMethod]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "The test intentionally exercises every official provider-interface overload.")]
+    public async Task OfficialMutationSurfaceRejectsEveryUnsafeOverloadWithoutSaving()
+    {
+        var repository = new FakeProductRepository { Current = CreateProduct() };
+        var views = new FakeProductViewRepository(repository);
+        var unitOfWork = new FakeUnitOfWork();
+        var audits = new FakeAuditLogRepository();
+        IEditProvider<ProductView, int> provider = CreateProvider(repository, views, audits, unitOfWork);
+        ProductView view = (await views.GetByIdAsync(1))!;
+
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.AddAsync(view));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.AddAsync([view]));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.UpdateAsync(view));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.UpdateAsync([view]));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.SaveAsync(view));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.SaveAsync([view]));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DeleteAsync(1));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DeleteAsync([1]));
+
+        Assert.AreEqual(0, unitOfWork.SaveCalls);
+        Assert.AreEqual(0, unitOfWork.Transaction.CommitCalls);
+        Assert.AreEqual(0, unitOfWork.Transaction.RollbackCalls);
+        Assert.HasCount(0, audits.Entries);
+        Assert.IsFalse(repository.Deleted);
+    }
+
+    [TestMethod]
+    public async Task LegacyIdentifierReadPropagatesCancellationToken()
+    {
+        var repository = new FakeProductRepository { Current = CreateProduct() };
+        var views = new FakeProductViewRepository(repository);
+        ProductProvider provider = CreateProvider(repository, views, new FakeAuditLogRepository(), new FakeUnitOfWork());
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => provider.GetByIdAsync(1, cancellation.Token));
+
+        Assert.AreEqual(cancellation.Token, views.LastIdentifierCancellationToken);
+    }
+
     #endregion
 
     #region Private Methods
 
     private static ProductProvider CreateProvider(FakeProductRepository repository, FakeProductViewRepository views,
-        FakeAuditLogRepository audits, FakeUnitOfWork unitOfWork, FakePersistenceSession? persistenceSession = null) => new(
-        repository, views, audits, unitOfWork, new FakeOperationContext(), new FakeTimeProvider(), new FakeClassifier(),
-        persistenceSession ?? new FakePersistenceSession());
+        FakeAuditLogRepository audits, FakeUnitOfWork unitOfWork, FakePersistenceSession? persistenceSession = null)
+    {
+        ServiceProvider services = new ServiceCollection()
+            .AddSingleton<IProductRepository>(repository)
+            .AddSingleton<IProductViewRepository>(views)
+            .AddSingleton<IUnitOfWork>(unitOfWork)
+            .BuildServiceProvider();
+        var coordinator = new MasterDataMutationCoordinator(audits, unitOfWork, new FakeOperationContext(),
+            new FakeTimeProvider(), new FakeClassifier(), persistenceSession ?? new FakePersistenceSession());
+        return new ProductProvider(services, coordinator);
+    }
 
     private static Product CreateProduct() => new()
     {

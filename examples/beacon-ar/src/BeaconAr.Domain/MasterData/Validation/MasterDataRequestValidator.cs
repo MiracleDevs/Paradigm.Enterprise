@@ -168,6 +168,33 @@ public static class MasterDataRequestValidator
         errors.ThrowIfAny();
     }
 
+    public static void ValidateSearch(MasterDataViewSearchParameters request, params string[] allowedSortFields)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var errors = new ValidationErrorBuilder();
+        int pageNumber = request.PageNumber ?? 1;
+        int pageSize = request.PageSize ?? 10;
+        errors.Assert(pageNumber > 0, "pageNumber", "Page number must be greater than zero.");
+        errors.Assert(pageSize is > 0 and <= 100, "pageSize", "Page size must be between 1 and 100.");
+        errors.Assert(string.IsNullOrWhiteSpace(request.SortDirection) ||
+                      request.SortDirection.Equals("asc", StringComparison.OrdinalIgnoreCase) ||
+                      request.SortDirection.Equals("desc", StringComparison.OrdinalIgnoreCase),
+            "sortDirection", "Sort direction must be asc or desc.");
+        string? search = Optional(request.Search);
+        errors.Assert(search is null || search.Length <= 320, "search", "Search cannot exceed 320 characters.");
+
+        string sortField = string.IsNullOrWhiteSpace(request.SortBy) ? "id" : request.SortBy.Trim();
+        errors.Assert(allowedSortFields.Contains(sortField, StringComparer.OrdinalIgnoreCase),
+            "sortField", "Sort field is not supported.");
+        errors.Assert(request.CustomerId is null or > 0, "customerId", "Customer ID must be greater than zero.");
+        string? type = Optional(request.Type);
+        errors.Assert(type is null || type.Length <= 32 && !type.Any(char.IsControl),
+            "type", "Address type cannot exceed 32 characters or contain control characters.");
+        errors.Assert(!request.Usage.HasValue || Enum.IsDefined(request.Usage.Value),
+            "usage", "Address usage must be billing or shipping.");
+        errors.ThrowIfAny();
+    }
+
     #endregion
 
     #region Private Methods

@@ -5,6 +5,7 @@ using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Interfaces.Receivables.Entities;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
+using Paradigm.Enterprise.Data.Repositories;
 using Paradigm.Enterprise.Domain.Repositories;
 using Paradigm.Enterprise.Providers;
 using System.Reflection;
@@ -205,6 +206,233 @@ public sealed class LayerBoundaryTests
     }
 
     [TestMethod]
+    public void MasterDataCrudUsesOfficialTypedBasesAndGeneratedViews()
+    {
+        Assert.IsTrue(typeof(IEditRepository<Product, int>).IsAssignableFrom(typeof(BeaconAr.Domain.MasterData.Repositories.IProductRepository)));
+        Assert.IsTrue(typeof(IEditRepository<Customer, int>).IsAssignableFrom(typeof(BeaconAr.Domain.MasterData.Repositories.ICustomerRepository)));
+        Assert.IsTrue(typeof(IEditRepository<CustomerAddress, int>).IsAssignableFrom(typeof(BeaconAr.Domain.MasterData.Repositories.IAddressRepository)));
+        Assert.IsTrue(typeof(IEditRepository<Carrier, int>).IsAssignableFrom(typeof(BeaconAr.Domain.MasterData.Repositories.ICarrierRepository)));
+
+        Assert.AreEqual(typeof(EditRepositoryBase<Product, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.ProductRepository).BaseType);
+        Assert.AreEqual(typeof(EditRepositoryBase<Customer, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.CustomerRepository).BaseType);
+        Assert.AreEqual(typeof(EditRepositoryBase<CustomerAddress, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.AddressRepository).BaseType);
+        Assert.AreEqual(typeof(EditRepositoryBase<Carrier, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.CarrierRepository).BaseType);
+
+        Assert.AreEqual(typeof(ReadRepositoryBase<ProductView, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.ProductViewRepository).BaseType);
+        Assert.AreEqual(typeof(ReadRepositoryBase<CustomerView, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.CustomerViewRepository).BaseType);
+        Assert.AreEqual(typeof(ReadRepositoryBase<CustomerAddressView, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.AddressViewRepository).BaseType);
+        Assert.AreEqual(typeof(ReadRepositoryBase<CarrierView, ReceivablesDbContext, int>), typeof(BeaconAr.Data.MasterData.CarrierViewRepository).BaseType);
+
+        Assert.IsTrue(typeof(IEditProvider<ProductView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.IProductProvider)));
+        Assert.IsTrue(typeof(IEditProvider<CustomerView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.ICustomerProvider)));
+        Assert.IsTrue(typeof(IEditProvider<CustomerAddressView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.IAddressProvider)));
+        Assert.IsTrue(typeof(IEditProvider<CarrierView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.ICarrierProvider)));
+
+        Assert.AreEqual(
+            typeof(EditProviderBase<IProduct, Product, ProductView, BeaconAr.Domain.MasterData.Repositories.IProductRepository,
+                BeaconAr.Domain.MasterData.Repositories.IProductViewRepository, int>),
+            typeof(BeaconAr.Providers.MasterData.ProductProvider).BaseType);
+        Assert.AreEqual(
+            typeof(EditProviderBase<ICustomer, Customer, CustomerView, BeaconAr.Domain.MasterData.Repositories.ICustomerRepository,
+                BeaconAr.Domain.MasterData.Repositories.ICustomerViewRepository, int>),
+            typeof(BeaconAr.Providers.MasterData.CustomerProvider).BaseType);
+        Assert.AreEqual(
+            typeof(EditProviderBase<ICustomerAddress, CustomerAddress, CustomerAddressView,
+                BeaconAr.Domain.MasterData.Repositories.IAddressRepository,
+                BeaconAr.Domain.MasterData.Repositories.IAddressViewRepository, int>),
+            typeof(BeaconAr.Providers.MasterData.AddressProvider).BaseType);
+        Assert.AreEqual(
+            typeof(EditProviderBase<ICarrier, Carrier, CarrierView, BeaconAr.Domain.MasterData.Repositories.ICarrierRepository,
+                BeaconAr.Domain.MasterData.Repositories.ICarrierViewRepository, int>),
+            typeof(BeaconAr.Providers.MasterData.CarrierProvider).BaseType);
+    }
+
+    [TestMethod]
+    public void MasterDataRepositoriesQueryGeneratedViewsAndProvidersOwnLegacyMapping()
+    {
+        string root = FindExampleRoot();
+        string dataRoot = Path.Combine(root, "src", "BeaconAr.Data", "MasterData");
+        string providerRoot = Path.Combine(root, "src", "BeaconAr.Providers", "MasterData");
+        var boundaries = new[]
+        {
+            ("Product", "ProductViews"),
+            ("Customer", "CustomerViews"),
+            ("Address", "CustomerAddressViews"),
+            ("Carrier", "CarrierViews"),
+        };
+
+        foreach ((string name, string dbSet) in boundaries)
+        {
+            string repository = File.ReadAllText(Path.Combine(dataRoot, $"{name}ViewRepository.cs"));
+            StringAssert.Contains(repository, $"EntityContext.{dbSet}.AsNoTracking()");
+            Assert.IsFalse(repository.Contains($"{name}Dto", StringComparison.Ordinal));
+
+            string provider = File.ReadAllText(Path.Combine(providerRoot, $"{name}Provider.cs"));
+            StringAssert.Contains(provider, "ToDto(");
+        }
+
+        foreach (string repositoryPath in Directory.GetFiles(dataRoot, "*Repository.cs", SearchOption.TopDirectoryOnly))
+        {
+            string repository = File.ReadAllText(repositoryPath);
+            Assert.IsFalse(repository.Contains("CommitChangesAsync", StringComparison.Ordinal), repositoryPath);
+        }
+    }
+
+    [TestMethod]
+    public void ProvidersDoNotReintroduceLocalProviderBaseClasses()
+    {
+        string root = FindExampleRoot();
+        Assert.IsFalse(File.Exists(Path.Combine(root, "src", "BeaconAr.Providers", "MasterData", "MasterDataProviderBase.cs")));
+        Assert.IsFalse(File.Exists(Path.Combine(root, "src", "BeaconAr.Providers", "Sales", "SalesProviderBase.cs")));
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.Sales.QuoteProvider).BaseType);
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.Sales.SalesOrderProvider).BaseType);
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.Sales.QuoteConversionProvider).BaseType);
+    }
+
+    [TestMethod]
+    public void OfficialMasterDataMutationsAreExplicitlyGuardedUntilTaskFour()
+    {
+        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.ProductProvider, ProductView>();
+        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.CustomerProvider, CustomerView>();
+        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.AddressProvider, CustomerAddressView>();
+        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.CarrierProvider, CarrierView>();
+    }
+
+    [TestMethod]
+    public void MasterDataSearchesMaterializeGeneratedViewsInOneProcedureRoundTrip()
+    {
+        string root = FindExampleRoot();
+        string dataRoot = Path.Combine(root, "src", "BeaconAr.Data", "MasterData");
+        string databaseRoot = Path.Combine(root, "src", "database", "routines", "MasterData");
+        var boundaries = new[]
+        {
+            ("Product", "ProductView", "CreatedByUserDisplayName"),
+            ("Customer", "CustomerView", "CreatedByUserDisplayName"),
+            ("Address", "CustomerAddressView", "CustomerAccountNumber"),
+            ("Carrier", "CarrierView", "CreatedByUserDisplayName"),
+        };
+
+        foreach ((string name, string view, string expandedField) in boundaries)
+        {
+            string repository = File.ReadAllText(Path.Combine(dataRoot, $"{name}ViewRepository.cs"));
+            StringAssert.Contains(repository, "GetSearchPaginatedFunction");
+            Assert.IsFalse(repository.Contains("Dictionary<", StringComparison.Ordinal));
+            Assert.IsFalse(repository.Contains("ids.Contains", StringComparison.Ordinal));
+
+            string procedure = File.ReadAllText(Path.Combine(databaseRoot, $"Search{name}.sql"));
+            StringAssert.Contains(procedure, $"[dbo].[{view}]");
+            StringAssert.Contains(procedure, expandedField);
+        }
+    }
+
+    [TestMethod]
+    public void MasterDataProcedureViewMappersHaveOneGeneratedOwner()
+    {
+        string root = FindExampleRoot();
+        string dataRoot = Path.Combine(root, "src", "BeaconAr.Data");
+        string generatedMapperRoot = Path.Combine(dataRoot, "Mappers", "DataReaders");
+        string registerer = File.ReadAllText(Path.Combine(dataRoot, "Mappers", "StoreProcedureMappersRegisterer.cs"));
+        var boundaries = new[]
+        {
+            (Procedure: "Product", View: "ProductView", ObsoleteRow: "ProductSearchRow"),
+            (Procedure: "Customer", View: "CustomerView", ObsoleteRow: "CustomerSearchRow"),
+            (Procedure: "Address", View: "CustomerAddressView", ObsoleteRow: "AddressSearchRow"),
+            (Procedure: "Carrier", View: "CarrierView", ObsoleteRow: "CarrierSearchRow"),
+        };
+
+        foreach ((string procedure, string view, string obsoleteRow) in boundaries)
+        {
+            string wrapper = File.ReadAllText(Path.Combine(
+                dataRoot, "MasterData", "StoredProcedures", $"Search{procedure}Procedure.cs"));
+            StringAssert.Contains(wrapper, $"List<{view}>");
+            Assert.IsFalse(File.Exists(Path.Combine(
+                dataRoot, "MasterData", "StoredProcedures", $"{obsoleteRow}.cs")));
+
+            string generatedMapper = File.ReadAllText(Path.Combine(generatedMapperRoot, $"{view}DataReaderMapper.cs"));
+            StringAssert.StartsWith(generatedMapper, "// <auto-generated/>");
+            StringAssert.Contains(generatedMapper, $"internal partial class {view}DataReaderMapper");
+            StringAssert.Contains(registerer,
+                $"DataReaderMapperFactory.RegisterMapper<Domain.Receivables.Entities.{view}>(() => new DataReaders.{view}DataReaderMapper());");
+            Assert.IsFalse(registerer.Contains(obsoleteRow, StringComparison.Ordinal));
+        }
+
+        string parallelMapperRoot = Path.Combine(dataRoot, "MasterData", "Mappers");
+        Assert.IsFalse(Directory.Exists(parallelMapperRoot) &&
+            Directory.EnumerateFiles(parallelMapperRoot, "*.cs", SearchOption.AllDirectories).Any());
+
+        string generatorRoot = Path.Combine(root, "src", "BeaconAr.CodeGenerator");
+        string generator = File.ReadAllText(Path.Combine(generatorRoot, "Generators", "StoredProcedureMapperGenerator.cs"));
+        string configuration = File.ReadAllText(Path.Combine(generatorRoot, "appsettings.json"));
+        StringAssert.Contains(generator, "using var output = new AtomicOutputDirectory(outputPath)");
+        StringAssert.Contains(generator, "OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal)");
+        StringAssert.Contains(configuration, "../BeaconAr.Data/Mappers");
+        Assert.AreEqual(1, CountOccurrences(configuration, "dataReaderMapperGenerator"));
+    }
+
+    [TestMethod]
+    public void WorkflowCoordinatorIsScopedAndConstructorInjected()
+    {
+        string root = FindExampleRoot();
+        string program = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.WebApi", "Program.cs"));
+        StringAssert.Contains(program, "AddScoped<SalesWorkflowCoordinator>()");
+
+        Type coordinator = typeof(BeaconAr.Providers.Sales.SalesWorkflowCoordinator);
+        Assert.IsTrue(coordinator.IsPublic);
+        Assert.AreEqual(1, coordinator.GetConstructors(BindingFlags.Public | BindingFlags.Instance).Length);
+        Assert.AreEqual(0, coordinator.GetProperties(BindingFlags.Public | BindingFlags.Instance |
+            BindingFlags.Static | BindingFlags.DeclaredOnly).Length);
+        Assert.AreEqual(0, coordinator.GetMethods(BindingFlags.Public | BindingFlags.Instance |
+            BindingFlags.Static | BindingFlags.DeclaredOnly).Length);
+
+        foreach (string propertyName in new[]
+                 {
+                     "ErrorClassifier", "PersistenceSession", "UnitOfWork", "UserId", "UtcNow",
+                 })
+        {
+            PropertyInfo? property = coordinator.GetProperty(propertyName,
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            Assert.IsNotNull(property, propertyName);
+            Assert.IsTrue(property.GetMethod?.IsAssembly, propertyName);
+        }
+
+        foreach (string methodName in new[]
+                 {
+                     "ExecuteAsync", "EnsureVersion", "AddAudit", "NotFound", "InvalidReference",
+                 })
+        {
+            MethodInfo? method = coordinator.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance |
+                    BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .SingleOrDefault(candidate => candidate.Name == methodName);
+            Assert.IsNotNull(method, methodName);
+            Assert.IsTrue(method.IsAssembly, methodName);
+        }
+
+        foreach (Type provider in new[]
+                 {
+                     typeof(BeaconAr.Providers.Sales.QuoteProvider),
+                     typeof(BeaconAr.Providers.Sales.SalesOrderProvider),
+                     typeof(BeaconAr.Providers.Sales.QuoteConversionProvider),
+                 })
+        {
+            Assert.IsTrue(provider.GetConstructors().Single().GetParameters().Any(parameter => parameter.ParameterType == coordinator));
+            string source = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.Providers", "Sales", $"{provider.Name}.cs"));
+            Assert.IsFalse(source.Contains("new SalesWorkflowCoordinator", StringComparison.Ordinal));
+        }
+    }
+
+    [TestMethod]
+    public void DatabaseProjectFoldersDoNotConflictWithSolutionIdentity()
+    {
+        string root = FindExampleRoot();
+        string project = File.ReadAllText(Path.Combine(root, "src", "database", "BeaconAr.Database.sqlproj"));
+        Assert.IsFalse(project.Contains("<ProjectGuid>", StringComparison.Ordinal));
+        Assert.IsFalse(project.Contains("<TargetDatabaseSet>", StringComparison.Ordinal));
+        StringAssert.Contains(project, "<Folder Include=\"tables\\MasterData\\\" />");
+        StringAssert.Contains(project, "<Folder Include=\"views\\MasterData\\\" />");
+        StringAssert.Contains(project, "<Folder Include=\"routines\\MasterData\\\" />");
+    }
+
+    [TestMethod]
     public void MasterDataContractsDoNotLeakInfrastructureOrPersistenceEntities()
     {
         Type[] contracts = typeof(BeaconAr.Domain.MasterData.Contracts.ProductDto).Assembly.GetTypes()
@@ -331,6 +559,33 @@ public sealed class LayerBoundaryTests
                 $"Entity nullability differs for {typeof(TContract).Name}.{contractProperty.Name}.");
             Assert.AreEqual(contractNullability, nullability.Create(viewProperty).ReadState,
                 $"View nullability differs for {typeof(TContract).Name}.{contractProperty.Name}.");
+        }
+    }
+
+    private static void AssertOfficialMutationsAreDeclared<TProvider, TView>()
+    {
+        Type provider = typeof(TProvider);
+        Type view = typeof(TView);
+        Type list = typeof(List<>).MakeGenericType(view);
+        Type enumerableView = typeof(IEnumerable<>).MakeGenericType(view);
+        Type enumerableId = typeof(IEnumerable<int>);
+        var operations = new[]
+        {
+            ("AddAsync", new[] { view }),
+            ("AddAsync", new[] { list }),
+            ("UpdateAsync", new[] { view }),
+            ("UpdateAsync", new[] { list }),
+            ("SaveAsync", new[] { view }),
+            ("SaveAsync", new[] { enumerableView }),
+            ("DeleteAsync", new[] { typeof(int) }),
+            ("DeleteAsync", new[] { enumerableId }),
+        };
+
+        foreach ((string name, Type[] parameters) in operations)
+        {
+            MethodInfo? method = provider.GetMethod(name, parameters);
+            Assert.IsNotNull(method, $"{provider.Name}.{name}");
+            Assert.AreEqual(provider, method.DeclaringType, $"{provider.Name}.{name} must explicitly guard the official overload.");
         }
     }
 
