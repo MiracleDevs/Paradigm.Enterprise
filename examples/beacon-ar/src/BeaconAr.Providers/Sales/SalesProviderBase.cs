@@ -3,7 +3,7 @@ using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Repositories;
 using BeaconAr.Domain.Sales.Validation;

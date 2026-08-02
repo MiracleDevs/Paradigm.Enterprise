@@ -1,11 +1,11 @@
 using BeaconAr.Data.Mappers;
 using BeaconAr.Data.MasterData.StoredProcedures;
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Domain.MasterData;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Repositories;
 

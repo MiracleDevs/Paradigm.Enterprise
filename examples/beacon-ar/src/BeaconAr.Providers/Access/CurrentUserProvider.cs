@@ -1,7 +1,7 @@
 using BeaconAr.Domain.Access.Application;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.Access.Repositories;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Domain.Uow;
 
 namespace BeaconAr.Providers.Access;

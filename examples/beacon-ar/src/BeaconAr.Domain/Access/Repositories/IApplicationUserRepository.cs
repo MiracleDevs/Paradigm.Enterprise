@@ -1,5 +1,5 @@
 using BeaconAr.Domain.Access.Contracts;
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 
 namespace BeaconAr.Domain.Access.Repositories;

@@ -1,6 +1,6 @@
 using BeaconAr.Data.Mappers;
 using BeaconAr.Data.MasterData;
-using BeaconAr.Data.Receivables;
+using BeaconAr.Data.Receivables.Context;
 using BeaconAr.Data.Sales.StoredProcedures;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Sales.Contracts;

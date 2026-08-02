@@ -1,4 +1,4 @@
-using BeaconAr.Domain.Receivables.Generated;
+using BeaconAr.Domain.Receivables.Entities;
 using BeaconAr.Domain.MasterData.Contracts;
 using Paradigm.Enterprise.Domain.Repositories;
 
