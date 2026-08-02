@@ -67,18 +67,7 @@ jobs:
           Database__Mode: Managed
           Database__PublishOnStart: true
         run: |
-          if [ ! -x /opt/mssql-tools18/bin/sqlcmd ]; then
-            curl -sSL -o /tmp/packages-microsoft-prod.deb "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
-            sudo dpkg -i /tmp/packages-microsoft-prod.deb
-            sudo apt-get update
-            sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18
-          fi
-          export PATH="/opt/mssql-tools18/bin:$PATH"
-          sqlcmd_help="$(sqlcmd -? 2>&1 || true)"
-          grep -Eq '^Version 18\.' <<<"$sqlcmd_help" || {
-            echo "Microsoft SQLCMD major version 18 is required." >&2
-            exit 1
-          }
+          docker build --file src/BeaconAr.DatabaseBootstrap/Dockerfile --tag beacon-ar-database-bootstrap:ci ../..
           for attempt in {1..60}; do
             if docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$BEACON_AR_CI_SQL_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; then
               break
@@ -90,10 +79,29 @@ jobs:
             sleep 2
           done
           docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$BEACON_AR_CI_SQL_PASSWORD" -Q "CREATE DATABASE [BeaconAr]"
-          dotnet run --project src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj --configuration Release --no-build
+          bootstrap_container=""
+          cleanup_bootstrap() {
+            if [ -n "$bootstrap_container" ]; then
+              docker rm --force "$bootstrap_container" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup_bootstrap EXIT
+          run_database_bootstrap() {
+            bootstrap_container="$(docker create --network host \
+              --env ConnectionStrings__DatabaseConnection \
+              --env Database__Mode \
+              --env Database__PublishOnStart \
+              beacon-ar-database-bootstrap:ci)"
+            docker start --attach "$bootstrap_container"
+            mkdir -p artifacts/database
+            docker cp "$bootstrap_container:/app/artifacts/." artifacts/database/
+            docker rm "$bootstrap_container" >/dev/null
+            bootstrap_container=""
+          }
+          run_database_bootstrap
           dotnet test tests/BeaconAr.Database.IntegrationTests/BeaconAr.Database.IntegrationTests.csproj --configuration Release --no-build --no-restore
           dotnet test tests/BeaconAr.WebApi.Tests/BeaconAr.WebApi.Tests.csproj --configuration Release --no-build --no-restore --filter "TestCategory=Integration"
-          dotnet run --project src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj --configuration Release --no-build
+          run_database_bootstrap
           pwsh build/regenerate-persistence.ps1
           git diff --exit-code -- src/BeaconAr.Data/Receivables/Generated src/BeaconAr.Domain/Receivables/Generated
           test -z "$(git status --porcelain --untracked-files=all -- src/BeaconAr.Data/Receivables/Generated src/BeaconAr.Domain/Receivables/Generated)"
@@ -108,6 +116,7 @@ jobs:
               print("Second publication reported schema operations:", [item.get("Name") for item in operations], file=sys.stderr)
               raise SystemExit(1)
           PY
+          trap - EXIT
       - name: Generate and compile Beacon AR API client
         working-directory: examples/beacon-ar
         run: |

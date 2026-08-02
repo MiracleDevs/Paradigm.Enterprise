@@ -2,6 +2,7 @@ using Aspire.Hosting;
 using BeaconAr.AppHost;
 
 var root = FindExampleRoot();
+var repositoryRoot = Path.GetFullPath(Path.Combine(root, "..", ".."));
 var marker = Path.Combine(root, "aspire.config.json");
 if (!File.Exists(marker))
 {
@@ -20,8 +21,6 @@ var provider = builder.Configuration["Database:Provider"] ?? "SqlServer";
 var mode = builder.Configuration["Database:Mode"] ?? "Managed";
 var databaseName = builder.Configuration["Database:Name"] ?? "BeaconAr";
 var publishSetting = builder.Configuration["Database:PublishOnStart"];
-var sqlCmdPath = builder.Configuration["Database:SqlCmdPath"] ?? "sqlcmd";
-var sqlCmdMajorVersion = builder.Configuration["Database:SqlCmdMajorVersion"] ?? "18";
 var publishOnStart = publishSetting is null
     ? mode.Equals("Managed", StringComparison.OrdinalIgnoreCase)
     : bool.TryParse(publishSetting, out var publish)
@@ -73,13 +72,14 @@ var api = builder.AddProject<Projects.BeaconAr_WebApi>("webapi")
 
 if (publishOnStart)
 {
-    var bootstrap = builder.AddProject<Projects.BeaconAr_DatabaseBootstrap>("database-bootstrap")
+    var bootstrap = builder.AddDockerfile(
+            "database-bootstrap",
+            repositoryRoot,
+            "examples/beacon-ar/src/BeaconAr.DatabaseBootstrap/Dockerfile")
         .WithReference(database, "DatabaseConnection")
         .WithEnvironment("Database__Mode", mode)
         .WithEnvironment("Database__Name", databaseName)
         .WithEnvironment("Database__PublishOnStart", "true")
-        .WithEnvironment("Database__SqlCmdPath", sqlCmdPath)
-        .WithEnvironment("Database__SqlCmdMajorVersion", sqlCmdMajorVersion)
         .WaitFor(database);
     api.WaitForCompletion(bootstrap);
 }

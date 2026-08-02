@@ -71,6 +71,28 @@ for skill in sorted(canonical.iterdir()):
     expected_redirect = f"../../.agents/skills/{skill.name}/SKILL.md"
     if expected_redirect not in redirect_text:
         errors.append(f"{skill.name}: packaging redirect does not target the canonical skill")
+aspire_assets = canonical / "paradigm-setup-aspire" / "assets" / "sql-server-bootstrap"
+dockerfile = aspire_assets / "Dockerfile"
+dockerignore = aspire_assets / "Dockerfile.dockerignore"
+if not dockerfile.exists() or not dockerignore.exists():
+    errors.append("paradigm-setup-aspire: missing governed SQL Server bootstrap container assets")
+else:
+    dockerfile_text = dockerfile.read_text(encoding="utf-8")
+    for required in [
+        "DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0.302-noble",
+        "DOTNET_RUNTIME_IMAGE=mcr.microsoft.com/dotnet/runtime:10.0.10-noble",
+        "SQLPACKAGE_VERSION=170.4.83",
+        "Microsoft.SqlPackage",
+        "mssql-tools18",
+        "dotnet build \"${DATABASE_PROJECT}\"",
+        "USER ${APP_UID}",
+    ]:
+        if required not in dockerfile_text:
+            errors.append(f"paradigm-setup-aspire: SQL Server bootstrap Dockerfile is missing {required}")
+    dockerignore_text = dockerignore.read_text(encoding="utf-8")
+    for required in [".git/", ".env", "**/artifacts/", "**/bin/", "**/obj/"]:
+        if required not in dockerignore_text:
+            errors.append(f"paradigm-setup-aspire: SQL Server bootstrap Dockerfile.dockerignore is missing {required}")
 if errors:
     print("\n".join(errors), file=sys.stderr)
     raise SystemExit(1)

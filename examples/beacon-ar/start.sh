@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 PARADIGM_CLI_VERSION="1.1.0"
-SQLCMD_MAJOR_VERSION="18"
 APPHOST_PROJECT="${ROOT}/src/BeaconAr.AppHost/BeaconAr.AppHost.csproj"
 LOCAL_PACKAGES="$(cd "${ROOT}/../.." && pwd -P)/artifacts"
 
@@ -46,16 +45,6 @@ ensure_tools() {
     restore_tools
     dotnet tool run paradigm --version | grep -Fq "${PARADIGM_CLI_VERSION}" || fail "Paradigm CLI ${PARADIGM_CLI_VERSION} is required."
     dotnet tool run aspire --version >/dev/null
-    dotnet tool run sqlpackage /Version >/dev/null
-    sqlcmd_path="${Database__SqlCmdPath:-sqlcmd}"
-    if ! command -v "${sqlcmd_path}" >/dev/null 2>&1; then
-        [[ -x /opt/mssql-tools18/bin/sqlcmd ]] || fail "Microsoft SQLCMD ${SQLCMD_MAJOR_VERSION} is required. Install mssql-tools18 and retry."
-        sqlcmd_path=/opt/mssql-tools18/bin/sqlcmd
-    fi
-    sqlcmd_help="$("${sqlcmd_path}" -? 2>&1 || true)"
-    grep -Eq "^Version ${SQLCMD_MAJOR_VERSION}\." <<<"${sqlcmd_help}" || fail "Microsoft SQLCMD major version ${SQLCMD_MAJOR_VERSION} is required."
-    export Database__SqlCmdPath="${sqlcmd_path}"
-    export Database__SqlCmdMajorVersion="${SQLCMD_MAJOR_VERSION}"
 }
 
 wait_for_docker() {

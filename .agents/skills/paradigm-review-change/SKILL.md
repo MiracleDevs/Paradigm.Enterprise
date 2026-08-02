@@ -21,7 +21,7 @@ dotnet tool run paradigm validate --project <solution>
 dotnet tool run paradigm checks run --project <solution>
 ```
 
-When the change contains an AppHost, also run `./start.sh doctor`, `dotnet tool run aspire restore`, and inspect the starter's local-tool/Docker checks, resource graph, waits, root `.env` handling, secret parameters, health endpoints, and finite database bootstrap. Use `$paradigm-setup-aspire` for the Paradigm-specific review.
+When the change contains an AppHost, also run `./start.sh doctor`, `dotnet tool run aspire restore`, and inspect the starter's local-tool/Docker checks, resource graph, waits, root `.env` handling, secret parameters, health endpoints, and finite database bootstrap. For SQL Server, reject host SQLCMD/SqlPackage prerequisites: require a Dockerfile-backed finite bootstrap whose image builds the DACPAC and owns both tools. Use `$paradigm-setup-aspire` for the Paradigm-specific review.
 
 When the change contains a `.sqlproj` or DbPublisher config, run:
 

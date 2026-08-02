@@ -50,6 +50,7 @@ Run `dotnet tool run paradigm api search <term> --project <solution>` only when 
 
 - Use `$paradigm-build-database` to create or validate the SQL Server or PostgreSQL project and include it in the application solution under `src/database`.
 - Use `$paradigm-setup-aspire` to add AppHost, ServiceDefaults, root `.env`, database bootstrap ordering, and optional deployment publishing.
+- For Aspire SQL Server projects, use its governed container-bootstrap assets so SQLCMD, SqlPackage, and DACPAC publication stay inside Docker rather than becoming workstation prerequisites.
 - Keep credentials in user secrets or environment configuration.
 - Review EF Core Power Tools selection, context/namespace/output settings, key types, nullability, views, and routines.
 - Treat EF/T4 and analyzer output as generated. Put behavior in partial entity/context files or change the owning template.

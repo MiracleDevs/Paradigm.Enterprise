@@ -35,7 +35,7 @@ Apply these rules to handwritten SQL Server and PostgreSQL database source. Pres
 - Use source-deleting synchronization only for an explicitly authoritative closed catalog. Never use it for users, tenant data, or data with an independent lifecycle.
 - Require review for destructive transitions, data rewrites, baseline refresh, external publication, cascade changes, and any disabled data-loss protection.
 
-For SQL Server, keep `scripts/prepredeployment/PrePreDeployment.sql` as an idempotent phase executed by the finite bootstrap after optional baseline import and a successful DACPAC build, but before SqlPackage creates the deployment plan. Use it only for reviewed compatibility cleanup that must precede plan generation, such as removing an obstructing legacy object. Exclude it from model build and do not confuse it with DACPAC `PreDeploy`, which runs after plan generation. Execute it with a SQLCMD-compatible batch runner; do not split `GO` batches with ad hoc string logic.
+For SQL Server, keep `scripts/prepredeployment/PrePreDeployment.sql` as an idempotent phase executed by the finite bootstrap after optional baseline import and verification of a successful DACPAC build, but before SqlPackage creates the deployment plan. Use it only for reviewed compatibility cleanup that must precede plan generation, such as removing an obstructing legacy object. Exclude it from model build and do not confuse it with DACPAC `PreDeploy`, which runs after plan generation. In Aspire solutions, build the DACPAC and install SQLCMD 18 plus pinned SqlPackage in the repository-owned bootstrap image so those tools are not host prerequisites. Execute pre-pre with SQLCMD; do not split `GO` batches with ad hoc string logic.
 
 ## Secrets and baselines
 

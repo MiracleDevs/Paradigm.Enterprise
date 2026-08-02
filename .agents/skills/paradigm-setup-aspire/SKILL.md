@@ -47,10 +47,10 @@ Use the official [Aspire CLI installation guidance](https://aspire.dev/get-start
 
 Use `$paradigm-build-database` to create or review the database project and its bootstrap contract.
 
-- SQL Server: wait for the database; import the optional BACPAC only when the managed database is empty; build and verify the DACPAC; run pre-pre-deployment with a SQLCMD-compatible executor; only then generate the SqlPackage plan and publish; verify completion; then start the API. Restore a committed local SqlPackage tool before AppHost starts.
+- SQL Server: copy and adapt the governed files under `assets/sql-server-bootstrap`; have Aspire build that repository-owned image, wait for the database, import the optional BACPAC only when the managed database is empty, verify the image-owned DACPAC, run pre-pre-deployment with image-owned SQLCMD 18, generate the image-owned SqlPackage plan, publish, verify completion, and only then start the API. Do not require SQLCMD or SqlPackage on the developer host.
 - PostgreSQL: wait for the database; run the pinned DbPublisher version with `Paradigm_ORM_ConnectionString` explicitly mapped from the Aspire resource; verify the schema before releasing dependents.
-- Never import a baseline into an external database automatically. Never install tools from inside a running bootstrap resource.
-- Model bootstrap as a finite project or executable resource and make the API use `WaitForCompletion`; do not hide schema work inside API startup.
+- Never import a baseline into an external database automatically. Install pinned database tools while building the bootstrap image, never from the running bootstrap resource.
+- Model SQL Server bootstrap as a finite Dockerfile resource and make the API use `WaitForCompletion`; do not hide schema work inside API startup. Treat this wait as local orchestration only and design deployment-target job/init ordering separately.
 
 ## Configure publishing
 

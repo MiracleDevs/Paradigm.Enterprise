@@ -6,6 +6,5 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
-    <ProjectReference Include="..\BeaconAr.ServiceDefaults\BeaconAr.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>
