@@ -1,5 +1,7 @@
 # Beacon AR Database Views — Review Feedback
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Findings
 
 ### High — the documented view boundary is not yet implemented in the data layer

@@ -1,5 +1,7 @@
 # Beacon AR EF Core Power Tools — Review Feedback
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Findings
 
 ### High — Generated entity/view mapping cannot be resolved by the application host

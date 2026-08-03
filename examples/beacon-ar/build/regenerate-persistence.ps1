@@ -13,7 +13,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $exampleRoot = Split-Path -Parent $PSScriptRoot
-$solution = Join-Path $exampleRoot 'src/BeaconAr.sln'
+$solution = Join-Path $exampleRoot 'BeaconAr.slnx'
 $dataDirectory = Join-Path $exampleRoot 'src/BeaconAr.Data'
 $config = Join-Path $dataDirectory 'efcpt-config.json'
 $contextTemplate = Join-Path $dataDirectory 'CodeTemplates/EFCore/DbContext.t4'

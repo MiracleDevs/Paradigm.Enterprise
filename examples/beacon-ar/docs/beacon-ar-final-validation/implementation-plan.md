@@ -84,7 +84,7 @@ Fix stale references by removing obsolete code/config/docs, or document a delibe
 
 Inspect:
 
-- `src/BeaconAr.sln` and `src/database/BeaconAr.Database.sqlproj`;
+- root `BeaconAr.slnx` and `src/database/BeaconAr.Database.sqlproj`;
 - `src/database/scripts/{prepredeployment,predeployment,postdeployment,verification}`;
 - `src/BeaconAr.DatabaseBootstrap/{Dockerfile,Program.cs,BeaconAr.DatabaseBootstrap.csproj}`;
 - `src/BeaconAr.AppHost/Program.cs`, `.env.example`, `aspire.config.json`, `start.sh`, and database/bootstrap tests.
@@ -96,7 +96,7 @@ Run:
 ```powershell
 Set-Location examples/beacon-ar
 dotnet build src/database/BeaconAr.Database.sqlproj --configuration Release
-dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict --format json
+dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict --format json
 ```
 
 ### Database views and joins
@@ -190,9 +190,9 @@ Run:
 
 ```powershell
 dotnet tool restore
-dotnet tool run paradigm doctor --project src/BeaconAr.sln
-dotnet tool run paradigm packages check --project src/BeaconAr.sln
-dotnet tool run paradigm packages audit --project src/BeaconAr.sln
+dotnet tool run paradigm doctor --project BeaconAr.slnx
+dotnet tool run paradigm packages check --project BeaconAr.slnx
+dotnet tool run paradigm packages audit --project BeaconAr.slnx
 ```
 
 Inspect Aspire's resource graph and finite bootstrap contract. Run `./start.sh doctor` and `dotnet tool run aspire restore`; verify `sqlserver -> database -> database-bootstrap -> webapi` ordering, waits, external-mode guards, managed versus external publication policy, local `.env` precedence/ignore rules, secret parameters, no secret defaults, and liveness/readiness split. The bootstrap image must own SqlPackage/SQLCMD and DACPAC publication; neither API startup nor a developer workstation may publish an external schema implicitly.
@@ -228,15 +228,15 @@ If target ownership/disposability, Docker/Aspire availability, or connectivity i
 Run from `examples/beacon-ar`, retain raw command output as CI/artifact evidence when it contains no secrets, and record result/diagnostics:
 
 ```powershell
-dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../../artifacts
-dotnet build src/BeaconAr.sln --configuration Release --no-restore
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
-dotnet tool run paradigm doctor --project src/BeaconAr.sln
-dotnet tool run paradigm packages check --project src/BeaconAr.sln
-dotnet tool run paradigm packages audit --project src/BeaconAr.sln
-dotnet tool run paradigm validate --project src/BeaconAr.sln
-dotnet tool run paradigm checks run --project src/BeaconAr.sln
-dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict --format json
+dotnet restore BeaconAr.slnx --property:RestoreAdditionalProjectSources=../../artifacts
+dotnet build BeaconAr.slnx --configuration Release --no-restore
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet tool run paradigm doctor --project BeaconAr.slnx
+dotnet tool run paradigm packages check --project BeaconAr.slnx
+dotnet tool run paradigm packages audit --project BeaconAr.slnx
+dotnet tool run paradigm validate --project BeaconAr.slnx
+dotnet tool run paradigm checks run --project BeaconAr.slnx
+dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict --format json
 dotnet build src/database/BeaconAr.Database.sqlproj --configuration Release --no-restore
 ./build/regenerate-persistence.ps1 -TestFailureRecovery
 ./build/regenerate-persistence.ps1 -TestRedaction

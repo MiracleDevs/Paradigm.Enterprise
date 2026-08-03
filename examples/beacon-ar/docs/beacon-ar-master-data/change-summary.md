@@ -1,5 +1,7 @@
 # Beacon AR master-data change summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Implemented
 
 - Added transport-neutral application contracts for Products, Customers, Customer Addresses, and Carriers: separate create/update requests, immutable response DTOs, resource-specific search inputs, allow-listed sorting, filters, and the required `items/pageNumber/pageSize/totalPages/itemsCount` page shape.

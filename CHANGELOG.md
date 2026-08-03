@@ -18,6 +18,7 @@ Version `1.1.0`
 - Updated the Inventory CRUD example to .NET 10, current generic identifier APIs, behavior-owned entity transitions, and aligned Paradigm 1.1.0 packages.
 - Added PR and scheduled dependency workflows, Copilot review guidance, centralized release-version validation, expanded CLI/tool fixtures, and warning-as-error documentation validation.
 - Embedded a README in every distributable NuGet package and added archive-level package README validation to local and GitHub quality workflows.
+- Fixed application-command project discovery for mixed `.slnx` files so SQL database projects and DACPAC outputs are not treated as managed assemblies while listed C# projects remain fully validated.
 
 Version `1.0.33`
 

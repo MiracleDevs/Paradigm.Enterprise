@@ -8,7 +8,7 @@ Replace Beacon AR's hand-invoked `dotnet ef dbcontext scaffold` workflow with a 
 
 ## Evidence and constraints
 
-- The source of truth is the SQL Server project `src/database/BeaconAr.Database.sqlproj`, already included in `src/BeaconAr.sln`; it explicitly compiles tables, views, routines, functions, types, and sequences. No database-project relocation is required.
+- The source of truth is the SQL Server project `src/database/BeaconAr.Database.sqlproj`, included in root `BeaconAr.slnx`; it explicitly compiles tables, views, routines, functions, types, and sequences. No database-project relocation is required.
 - Task 1 created the consumer DTO views: `ApplicationUserView`, `ProductView`, `CustomerView`, `CustomerAddressView`, `CarrierView`, `QuoteView`, `QuoteLineView`, `SalesOrderView`, and `SalesOrderLineView`. Every one retains the base entity's mapping columns, including `Id`, so it can implement the corresponding entity interface. `QuotePricing` and `SalesOrderPricing` remain internal helper views, not DTO interfaces.
 - The current `database-first.json` and `build/regenerate-persistence.ps1` invoke `dotnet-ef`, write `*/Generated`, and do not select the new DTO views. They are legacy scaffolding artifacts, not EFPT configuration.
 - `CodeTemplates/EFCore/EntityType.t4` and `DbContext.t4` are valuable owning templates: they generate Paradigm `EntityBase<int>`/auditing shapes, `DbContextBase<int>`, the required service-provider context constructor, and the tested `FK_CustomerAddress_Customer` cardinality correction. Preserve and evolve them; never replace them with stock EF output.
@@ -62,7 +62,7 @@ Use the current `efcpt --help` output to produce a supported `efcpt-config.json`
 - Add a compile-time contract fixture (one assertion per DTO pair) proving `Product` and `ProductView` (and each of the other eight pairs) are assignable to the same `I{Entity}` interface. Add reflection/property assertions that the base entity's scalar interface members exist on the matching view with the same type/nullability contract.
 - Extend the live database integration tests to query all nine `DbSet<*View>` objects through the generated context, asserting they are keyless/read-only mappings and retain expected joined data. Keep existing view SQL tests.
 - Preserve/add metadata assertions for `FK_CustomerAddress_Customer` as one-to-many and for `DbContextBase<int>`/service-provider constructor availability.
-- Run `dotnet restore src/BeaconAr.sln`, `dotnet build src/BeaconAr.sln --configuration Release`, affected Domain/Data/Architecture/Database integration tests, `dotnet tool run paradigm doctor --project src/BeaconAr.sln`, `dotnet tool run paradigm validate --project src/BeaconAr.sln`, and `dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict`. Inspect the EFPT-generated diff before accepting it.
+- Run `dotnet restore BeaconAr.slnx`, `dotnet build BeaconAr.slnx --configuration Release`, affected Domain/Data/Architecture/Database integration tests, `dotnet tool run paradigm doctor --project BeaconAr.slnx`, `dotnet tool run paradigm validate --project BeaconAr.slnx`, and `dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict`. Inspect the EFPT-generated diff before accepting it.
 
 ## Non-goals
 

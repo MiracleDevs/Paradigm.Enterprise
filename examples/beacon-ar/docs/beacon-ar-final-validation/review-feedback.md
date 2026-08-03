@@ -1,5 +1,7 @@
 # Beacon AR final validation findings
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 Date: 2026-08-02  
 Audit range: user-request baseline `8a018ca` through merged Web API head `aaa5081`
 

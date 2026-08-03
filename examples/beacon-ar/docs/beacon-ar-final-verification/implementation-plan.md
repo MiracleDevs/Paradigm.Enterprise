@@ -9,13 +9,13 @@ Correct the final merged Beacon AR README so its documented offline test command
 In `examples/beacon-ar/README.md`, replace the legacy solution invocation:
 
 ```bash
-dotnet test src/BeaconAr.sln --configuration Release --filter "TestCategory!=Integration"
+dotnet test BeaconAr.slnx --configuration Release --filter "TestCategory!=Integration"
 ```
 
 with the supported MTP solution form:
 
 ```bash
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
 ```
 
 Keep the command in the existing Verification section. The explicit solution option avoids treating the solution path as a project under MTP, and the minimum-test guard prevents an empty discovery run from appearing successful. The database integration tests discover and self-skip when no connection is configured, which keeps every MTP test module non-empty while preserving an offline run. Do not rewrite unrelated README content.
@@ -25,9 +25,9 @@ Keep the command in the existing Verification section. The explicit solution opt
 Run from `examples/beacon-ar` after restoring prerequisites:
 
 ```powershell
-dotnet build src/BeaconAr.sln --configuration Release
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
-dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict --format json
+dotnet build BeaconAr.slnx --configuration Release
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict --format json
 dotnet build src/BeaconAr.WebApi/BeaconAr.WebApi.csproj --configuration Release --no-restore
 dotnet run --project src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj --configuration Release --no-build -- openapi-typescript ../../artifacts/openapi/beacon-ar-v1.json ../../tests/BeaconAr.ClientContract/generated/beacon-ar-v1.ts
 npm ci --prefix tests/BeaconAr.ClientContract

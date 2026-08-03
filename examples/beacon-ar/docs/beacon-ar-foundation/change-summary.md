@@ -1,5 +1,7 @@
 # Beacon AR foundation change summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Implemented
 
 - Scaffolded the .NET 10 `BeaconAr` modular monolith with the inward `WebApi -> Providers -> Data -> Domain -> Interfaces` dependency graph, Aspire AppHost, ServiceDefaults, finite DatabaseBootstrap, SQL project, and focused test projects.

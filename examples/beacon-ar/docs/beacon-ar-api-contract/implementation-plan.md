@@ -145,7 +145,7 @@ Use ASP.NET Core's current build-time OpenAPI support, explicitly emit OpenAPI 3
 
 ## Test plan
 
-Add `BeaconAr.WebApi.Tests` for cheap boundary/unit tests and `BeaconAr.WebApi.IntegrationTests` for the real middleware pipeline plus SQL Server. Add both projects to `BeaconAr.sln`. Use `WebApplicationFactory` with an explicit Testing configuration; use a real signed JWT validation configuration for auth tests rather than replacing authorization with an always-successful fake. SQL integration cases use a freshly published database and independent scopes/connections for races.
+Add `BeaconAr.WebApi.Tests` for cheap boundary/unit tests and `BeaconAr.WebApi.IntegrationTests` for the real middleware pipeline plus SQL Server. Add both projects to root `BeaconAr.slnx`. Use `WebApplicationFactory` with an explicit Testing configuration; use a real signed JWT validation configuration for auth tests rather than replacing authorization with an always-successful fake. SQL integration cases use a freshly published database and independent scopes/connections for races.
 
 ### Authentication and authorization
 
@@ -195,17 +195,17 @@ Run from `examples/beacon-ar`:
 
 ```powershell
 dotnet tool restore --add-source ../../artifacts
-dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../../artifacts
+dotnet restore BeaconAr.slnx --property:RestoreAdditionalProjectSources=../../artifacts
 dotnet build src/database/BeaconAr.Database.sqlproj --configuration Release
-dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict --format json
+dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict --format json
 ./build/regenerate-persistence.ps1
 git diff --exit-code -- src/BeaconAr.Domain/Receivables/Generated src/BeaconAr.Data/Receivables/Generated
-dotnet build src/BeaconAr.sln --configuration Release --no-restore
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
-dotnet tool run paradigm doctor --project src/BeaconAr.sln
-dotnet tool run paradigm packages check --project src/BeaconAr.sln
-dotnet tool run paradigm packages audit --project src/BeaconAr.sln
-dotnet tool run paradigm validate --project src/BeaconAr.sln
+dotnet build BeaconAr.slnx --configuration Release --no-restore
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet tool run paradigm doctor --project BeaconAr.slnx
+dotnet tool run paradigm packages check --project BeaconAr.slnx
+dotnet tool run paradigm packages audit --project BeaconAr.slnx
+dotnet tool run paradigm validate --project BeaconAr.slnx
 dotnet tool run paradigm checks run --project src/BeaconAr.Domain/BeaconAr.Domain.csproj
 dotnet tool run paradigm checks run --project src/BeaconAr.Data/BeaconAr.Data.csproj
 dotnet tool run paradigm checks run --project src/BeaconAr.Providers/BeaconAr.Providers.csproj
