@@ -144,8 +144,8 @@ examples/beacon-ar/
 |   |-- implementation-plan.md
 |   |-- change-summary.md
 |   `-- review-feedback.md
+|-- BeaconAr.slnx
 |-- src/
-|   |-- BeaconAr.sln
 |   |-- BeaconAr.Interfaces/
 |   |-- BeaconAr.Domain/
 |   |-- BeaconAr.Data/
@@ -333,7 +333,7 @@ The database owns keys, FKs, allowed scalar ranges, uniqueness, row versions, de
 
 ## Database project and generation steps
 
-1. Create `src/database/BeaconAr.Database.sqlproj` with the approved stable Microsoft.Build.Sql SDK. Add it to `src/BeaconAr.sln`; do not create another solution.
+1. Create `src/database/BeaconAr.Database.sqlproj` with the approved stable Microsoft.Build.Sql SDK. Add it to root `BeaconAr.slnx`; do not create another solution.
 2. Create one file per object in the capability layout. Exclude `scripts/prepredeployment`, included post-deploy fragments, verification, maintenance, and optional baseline files from model compilation.
 3. Register exactly one DACPAC PreDeploy and PostDeploy root. `PostDeployment.sql` includes AddressType, IdempotencyState, QuoteStatus, and SalesOrderStatus seed scripts in FK-safe order. Seeds are rerunnable and update by assigned ID/code without deleting missing rows.
 4. Keep `PrePreDeployment.sql` present and idempotent even when initially empty of compatibility operations. DatabaseBootstrap executes it with a SQLCMD-compatible runner after DACPAC build and optional managed-empty baseline import, but before SqlPackage plan generation.
@@ -413,7 +413,7 @@ Domain tests construct primitives directly and do not require EF, ASP.NET, or th
 ### 5. Add Aspire and quality integration
 
 1. Implement the managed/external resource graph and finite bootstrap contract.
-2. Update repository CI to pack current Paradigm packages, restore/build/test `examples/beacon-ar/src/BeaconAr.sln`, run Paradigm checks, strictly validate/build the SQL project, and run database integration tests when the SQL service is available.
+2. Update repository CI to pack current Paradigm packages, restore/build/test `examples/beacon-ar/BeaconAr.slnx`, run Paradigm checks, strictly validate/build the SQL project, and run database integration tests when the SQL service is available.
 3. Update `examples/README.md` and add a focused Beacon AR README with architecture, prerequisites, start commands, configuration, and explicit incomplete-feature list.
 
 ## Deterministic test and validation matrix
@@ -421,7 +421,7 @@ Domain tests construct primitives directly and do not require EF, ASP.NET, or th
 ### Always-run static/unit checks
 
 - `dotnet restore`, build, and test the solution in Release with no implicit second restore.
-- `paradigm packages check`, `packages audit`, `validate`, and `checks run` against `BeaconAr.sln` using the packed/current 1.1.0 CLI.
+- `paradigm packages check`, `packages audit`, `validate`, and `checks run` against `BeaconAr.slnx` using the packed/current 1.1.0 CLI.
 - `paradigm database validate --strict` against `BeaconAr.Database.sqlproj` and the same solution.
 - `dotnet build` of the SQL project; assert exactly the expected DACPAC is produced.
 - Architecture tests assert project references and namespaces follow the dependency direction and that Domain has no ASP.NET/host/concrete-database references.
@@ -463,7 +463,7 @@ Each later workflow task must name its transaction boundary and write resource c
 
 ## Foundation acceptance checklist
 
-- `examples/beacon-ar/src/BeaconAr.sln` targets .NET 10 and builds from repository-packed Paradigm 1.1.0 packages.
+- `examples/beacon-ar/BeaconAr.slnx` targets .NET 10 and builds from repository-packed Paradigm 1.1.0 packages.
 - The solution contains all layer, host, bootstrap, database, and test projects with no forbidden reverse references.
 - The SQL project represents every release-one table/relationship/integrity mechanism in this plan, validates strictly, builds a DACPAC, and publishes twice to a disposable SQL Server without drift.
 - Catalog seeds and .NET values have exact numeric/code parity and remain rerunnable without deleting published IDs.

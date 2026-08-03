@@ -1,5 +1,7 @@
 # Beacon AR EF Core Power Tools — Change Summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Implemented
 
 - Pinned the repository-local official `ErikEJ.EFCorePowerTools.Cli` tool at 10.1.1386 and verified its installed help/current config format.

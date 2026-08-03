@@ -1,5 +1,7 @@
 # Beacon AR Database Views — Change Summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Implemented changes
 
 - Added schema-bound, one-row-per-entity views named `ApplicationUserView`, `ProductView`, `CustomerView`, `CustomerAddressView`, `CarrierView`, `QuoteView`, `QuoteLineView`, `SalesOrderView`, and `SalesOrderLineView`.

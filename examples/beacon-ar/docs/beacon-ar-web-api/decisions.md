@@ -30,4 +30,4 @@ The anonymous root exposes only the stable application name and the Web API asse
 
 ## Semantic-check scope
 
-`paradigm checks run --project src/BeaconAr.sln` cannot resolve Aspire's generated `Projects` namespace in `BeaconAr.AppHost`, even though the full Release solution build succeeds. The deterministic checks were therefore also run directly against `BeaconAr.WebApi`, `BeaconAr.Providers`, and `BeaconAr.Domain`, where all checks pass. `paradigm validate` succeeds against the complete solution. This is a semantic-tool/Aspire design-time limitation, not a Web API compilation failure.
+`paradigm checks run --project BeaconAr.slnx` cannot resolve Aspire's generated `Projects` namespace in `BeaconAr.AppHost`, even though the full Release solution build succeeds. The deterministic checks are therefore also run directly against `BeaconAr.WebApi`, `BeaconAr.Providers`, and `BeaconAr.Domain`, where all checks pass. `paradigm validate` succeeds against the complete solution. This is a semantic-tool/Aspire design-time limitation, not a Web API compilation failure.

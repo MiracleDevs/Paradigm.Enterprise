@@ -19,7 +19,7 @@ Expose schema-bound read views that supply the Beacon AR API/domain entity shape
 - Select all base-table columns necessary to match the corresponding entity interfaces, then add useful joined names, codes, status descriptions, and pricing values.
 - Expose the existing subtotal, discount-total, and grand-total calculations through `QuoteView` and `SalesOrderView`; rework consumers so internal pricing helpers are not treated as API DTO projections.
 - Make `BeaconAr.Database.sqlproj` explicitly present database object categories (tables, views, functions, routines, types, and sequences) and relevant deployment scripts in the project structure without adding duplicate SDK `Build` items. Use an explicit Microsoft.Build.Sql-compatible project-item approach; do not use `None`/`Content` entries solely to create linked visibility.
-- Confirm the database project remains correctly named, is located at `src/database`, and is included by `BeaconAr.sln`.
+- Confirm the database project remains correctly named, is located at `src/database`, and is included by root `BeaconAr.slnx`.
 - Update affected documentation and tests, then validate strict database checks, the SQL project build, and the full solution build.
 
 ## Non-goals
@@ -39,7 +39,7 @@ Expose schema-bound read views that supply the Beacon AR API/domain entity shape
 | `examples/beacon-ar/src/...` domain/repository/provider/API code | Align read mappings, contracts, and queries with the new views where current projections depend on pricing views. |
 | `examples/beacon-ar/tests/...` | Add/adjust projection and database integration coverage. |
 | `examples/beacon-ar/docs/...` | Document the view contract, projection boundaries, and pricing consolidation. |
-| `examples/beacon-ar/src/BeaconAr.sln` | Verification only: ensure the project entry references `database/BeaconAr.Database.sqlproj`. |
+| `examples/beacon-ar/BeaconAr.slnx` | Verification only: ensure the project entry references `src/database/BeaconAr.Database.sqlproj` under `02.Modules`. |
 
 ## View design
 
@@ -64,7 +64,7 @@ All views should use `WITH SCHEMABINDING`, two-part object names, explicit colum
 3. Add the nine schema-bound views with explicit dependencies. Design totals so consumers read them through `QuoteView` and `SalesOrderView`, preserving existing business-calculation semantics and null/rounding behavior while retaining internal helpers if needed for schema-safe aggregation.
 4. Update repository/read-model mappings and dependent SQL so they select the consolidated quote/order projections instead of standalone pricing views.
 5. Update `BeaconAr.Database.sqlproj` using explicit item/folder metadata compatible with SDK-style Microsoft.Build.Sql. Verify that SQL source files are compiled once by default and that the project UI still clearly presents tables, views, functions, routines, types, sequences, and relevant pre/post-deployment or seed scripts.
-6. Verify `BeaconAr.Database.sqlproj` name/path and its existing `BeaconAr.sln` inclusion; correct only if evidence shows a discrepancy.
+6. Verify `BeaconAr.Database.sqlproj` name/path and its existing root `BeaconAr.slnx` inclusion; correct only if evidence shows a discrepancy.
 7. Update architecture/database documentation and tests to state that API DTO projections are limited to consumer-facing entities, not append-only/internal tables or status catalogs by default.
 8. Run the required validation commands and resolve any schema-binding, dependency, DACPAC, or mapping failures.
 
@@ -77,7 +77,7 @@ All views should use `WITH SCHEMABINDING`, two-part object names, explicit colum
 - Assert no consumer treats `QuotePricing` or `SalesOrderPricing` as an API DTO after the consolidation; schema-bound helper dependencies may remain internal.
 - Run the repository's strict database validation command.
 - Build `examples/beacon-ar/src/database/BeaconAr.Database.sqlproj` (including DACPAC/schema-binding validation).
-- Build `examples/beacon-ar/BeaconAr.sln` and run the affected test suite.
+- Build `examples/beacon-ar/BeaconAr.slnx` and run the affected test suite.
 
 ## Decisions and risks
 

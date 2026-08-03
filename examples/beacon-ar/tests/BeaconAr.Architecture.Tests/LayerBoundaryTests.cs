@@ -450,10 +450,107 @@ public sealed class LayerBoundaryTests
         StringAssert.Contains(project, "<Folder Include=\"tables\\MasterData\\\" />");
         StringAssert.Contains(project, "<Folder Include=\"views\\MasterData\\\" />");
         StringAssert.Contains(project, "<Folder Include=\"routines\\MasterData\\\" />");
+    }
 
-        string solution = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.sln")).ToUpperInvariant();
-        Assert.AreEqual(14, solution.Split(projectGuid, StringSplitOptions.None).Length - 1);
-        Assert.IsFalse(solution.Contains("36012A89-DEB7-49AF-AA8F-2C0B1C3289BF", StringComparison.Ordinal));
+    [TestMethod]
+    public void SolutionUsesTheCanonicalResponsibilityBasedLayout()
+    {
+        string root = FindExampleRoot();
+        string solutionPath = Path.Combine(root, "BeaconAr.slnx");
+        XDocument solution = XDocument.Load(solutionPath);
+        string[] expectedFolders =
+        [
+            "/00.SolutionItems/",
+            "/01.Shared/",
+            "/02.Modules/",
+            "/03.Hosts/",
+            "/04.Tools/",
+            "/05.Tests/",
+        ];
+        string[] expectedSolutionItems =
+        [
+            ".config/dotnet-tools.json",
+            ".env.example",
+            ".gitattributes",
+            ".gitignore",
+            "aspire.config.json",
+            "Directory.Build.props",
+            "Directory.Packages.props",
+            "global.json",
+        ];
+        Dictionary<string, string> expectedProjects = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["src/BeaconAr.ServiceDefaults/BeaconAr.ServiceDefaults.csproj"] = "/01.Shared/",
+            ["src/BeaconAr.Interfaces/BeaconAr.Interfaces.csproj"] = "/02.Modules/",
+            ["src/BeaconAr.Domain/BeaconAr.Domain.csproj"] = "/02.Modules/",
+            ["src/BeaconAr.Data/BeaconAr.Data.csproj"] = "/02.Modules/",
+            ["src/BeaconAr.Providers/BeaconAr.Providers.csproj"] = "/02.Modules/",
+            ["src/database/BeaconAr.Database.sqlproj"] = "/02.Modules/",
+            ["src/BeaconAr.WebApi/BeaconAr.WebApi.csproj"] = "/03.Hosts/",
+            ["src/BeaconAr.AppHost/BeaconAr.AppHost.csproj"] = "/03.Hosts/",
+            ["src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj"] = "/04.Tools/",
+            ["src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj"] = "/04.Tools/",
+            ["tests/BeaconAr.Domain.Tests/BeaconAr.Domain.Tests.csproj"] = "/05.Tests/",
+            ["tests/BeaconAr.Architecture.Tests/BeaconAr.Architecture.Tests.csproj"] = "/05.Tests/",
+            ["tests/BeaconAr.Database.IntegrationTests/BeaconAr.Database.IntegrationTests.csproj"] = "/05.Tests/",
+            ["tests/BeaconAr.DatabaseBootstrap.Tests/BeaconAr.DatabaseBootstrap.Tests.csproj"] = "/05.Tests/",
+            ["tests/BeaconAr.Providers.Tests/BeaconAr.Providers.Tests.csproj"] = "/05.Tests/",
+            ["tests/BeaconAr.WebApi.Tests/BeaconAr.WebApi.Tests.csproj"] = "/05.Tests/",
+        };
+
+        XElement solutionRoot = solution.Root ?? throw new AssertFailedException("BeaconAr.slnx has no root element.");
+        XElement[] folders = solutionRoot.Descendants("Folder").ToArray();
+        CollectionAssert.AreEquivalent(expectedFolders, folders.Select(folder => (string?)folder.Attribute("Name")).ToArray(),
+            "BeaconAr.slnx must contain exactly the six canonical solution folders.");
+        Assert.IsTrue(folders.All(folder => folder.Parent == solutionRoot),
+            "Canonical solution folders must be direct children of the solution root.");
+
+        XElement solutionItems = folders.Single(folder => (string?)folder.Attribute("Name") == "/00.SolutionItems/");
+        string[] actualSolutionItems = solutionItems.Elements("File")
+            .Select(file => ((string?)file.Attribute("Path") ?? string.Empty).Replace('\\', '/'))
+            .ToArray();
+        CollectionAssert.AreEquivalent(expectedSolutionItems, actualSolutionItems,
+            "00.SolutionItems must expose the example's checked-in governing configuration.");
+        Assert.AreEqual(expectedSolutionItems.Length, solutionRoot.Descendants("File").Count(),
+            "Configuration files must not appear outside 00.SolutionItems.");
+        foreach (string solutionItem in expectedSolutionItems)
+        {
+            Assert.IsTrue(File.Exists(Path.Combine(root, solutionItem.Replace('/', Path.DirectorySeparatorChar))),
+                $"Solution item '{solutionItem}' does not resolve from the example root.");
+        }
+
+        XElement[] projectElements = solutionRoot.Descendants("Project").ToArray();
+        Assert.AreEqual(expectedProjects.Count, projectElements.Length,
+            "BeaconAr.slnx must contain every existing project exactly once.");
+        string[] projectPaths = projectElements
+            .Select(project => ((string?)project.Attribute("Path") ?? string.Empty).Replace('\\', '/'))
+            .ToArray();
+        string[] duplicateProjectPaths = projectPaths
+            .GroupBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToArray();
+        Assert.AreEqual(0, duplicateProjectPaths.Length,
+            $"Solution projects must be unique. Duplicates: {string.Join(", ", duplicateProjectPaths)}");
+
+        Dictionary<string, string> actualProjects = projectElements.ToDictionary(
+            project => ((string?)project.Attribute("Path") ?? string.Empty).Replace('\\', '/'),
+            project => (string?)project.Parent?.Attribute("Name") ?? string.Empty,
+            StringComparer.OrdinalIgnoreCase);
+        CollectionAssert.AreEquivalent(expectedProjects.Keys.ToArray(), actualProjects.Keys.ToArray(),
+            "BeaconAr.slnx project membership differs from the canonical inventory.");
+        foreach ((string projectPath, string expectedFolder) in expectedProjects)
+        {
+            Assert.AreEqual(expectedFolder, actualProjects[projectPath], true,
+                $"Project '{projectPath}' is assigned to the wrong solution folder.");
+            Assert.IsTrue(File.Exists(Path.Combine(root, projectPath.Replace('/', Path.DirectorySeparatorChar))),
+                $"Solution project '{projectPath}' does not resolve from the example root.");
+        }
+
+        Assert.AreEqual("/02.Modules/", actualProjects["src/database/BeaconAr.Database.sqlproj"],
+            "The SQL Server schema belongs to 02.Modules, not the tools folder.");
+        Assert.IsFalse(File.Exists(Path.Combine(root, "src", "BeaconAr.sln")),
+            "The legacy solution must stay retired so solution definitions cannot drift.");
     }
 
     [TestMethod]

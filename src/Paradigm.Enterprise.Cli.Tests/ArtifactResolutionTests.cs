@@ -74,6 +74,69 @@ public class ArtifactResolutionTests
         }
     }
 
+    [TestMethod]
+    public async Task Doctor_and_validate_ignore_DACPAC_output_in_mixed_slnx()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"paradigm-mixed-output-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var project = Path.Combine(root, "Sample.csproj");
+            File.WriteAllText(project, """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0</TargetFramework>
+                  </PropertyGroup>
+                </Project>
+                """);
+            File.WriteAllText(Path.Combine(root, "SampleType.cs"), "public sealed class SampleType { }");
+            var databaseProject = Path.Combine(root, "Sample.Database.sqlproj");
+            File.WriteAllText(databaseProject, """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <PropertyGroup>
+                    <TargetFramework>net10.0</TargetFramework>
+                    <TargetPath>database\bin\Release\Sample.Database.dacpac</TargetPath>
+                  </PropertyGroup>
+                </Project>
+                """);
+            var dacpacDirectory = Path.Combine(root, "database", "bin", "Release");
+            Directory.CreateDirectory(dacpacDirectory);
+            File.WriteAllText(Path.Combine(dacpacDirectory, "Sample.Database.dacpac"), "not a managed assembly");
+            var solution = Path.Combine(root, "Sample.slnx");
+            File.WriteAllText(solution, """
+                <Solution>
+                  <Folder Name="/02.Modules/">
+                    <Project Path="Sample.csproj" />
+                    <Project Path="Sample.Database.sqlproj" />
+                  </Folder>
+                </Solution>
+                """);
+            RunDotNet(root, "restore", project);
+            RunDotNet(root, "build", project, "--no-restore");
+            RunDotNet(root, "restore", databaseProject);
+
+            var databaseAssets = AssetsReader.Read(databaseProject, null);
+            Assert.IsTrue(databaseAssets.Diagnostics.Any(x => x.Code == "PE1002" && x.Message.Contains("dacpac", StringComparison.OrdinalIgnoreCase)));
+
+            using var doctorOutput = new StringWriter();
+            var doctorExit = await TestCliApplication.RunAsync(["doctor", "--project", solution, "--format", "json"], doctorOutput, TextWriter.Null);
+            using var validateOutput = new StringWriter();
+            var validateExit = await TestCliApplication.RunAsync(["validate", "--project", solution, "--format", "json"], validateOutput, TextWriter.Null);
+
+            Assert.AreEqual(0, doctorExit, doctorOutput.ToString());
+            Assert.AreEqual(0, validateExit, validateOutput.ToString());
+            StringAssert.Contains(doctorOutput.ToString(), "Sample.dll");
+            Assert.IsFalse(doctorOutput.ToString().Contains("dacpac", StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(validateOutput.ToString().Contains("dacpac", StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(doctorOutput.ToString().Contains("PE1002", StringComparison.Ordinal));
+            Assert.IsFalse(validateOutput.ToString().Contains("PE1002", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
     #endregion
 
     #region Private Methods

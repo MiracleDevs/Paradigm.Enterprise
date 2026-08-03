@@ -1,5 +1,7 @@
 # Beacon AR sales-workflows final re-review feedback
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Outcome
 
 Approved. The final implementation resolves every blocking and non-blocking finding from the initial review. The aggregate-pricing boundary, immutable transaction snapshots, reference-eligibility races, multi-statement read consistency, workflow integration coverage, and shared rowversion codec were re-reviewed in source and exercised against a freshly published disposable SQL Server database. No implementation fix was made during this re-review.

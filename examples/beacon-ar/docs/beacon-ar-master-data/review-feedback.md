@@ -1,5 +1,7 @@
 # Beacon AR master-data final re-review feedback
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Outcome
 
 Approved. The second fix round resolves every release-facing finding from the prior review. Independent static review, framework validation, a clean Release build, the offline test matrix, and a fresh SQL Server 2025 LocalDB publication with all live tests found no remaining correctness, transaction, persistence, or database-contract defect. No source fix was made during this review.
