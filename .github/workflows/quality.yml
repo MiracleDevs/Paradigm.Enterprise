@@ -48,8 +48,8 @@ jobs:
         working-directory: examples/beacon-ar
         run: |
           dotnet tool restore --add-source ../../artifacts
-          dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
-          dotnet build src/BeaconAr.sln --configuration Release --no-restore
+          dotnet restore BeaconAr.slnx --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
+          dotnet build BeaconAr.slnx --configuration Release --no-restore
           dotnet test tests/BeaconAr.DatabaseBootstrap.Tests/BeaconAr.DatabaseBootstrap.Tests.csproj --configuration Release --no-build --no-restore
           dotnet test tests/BeaconAr.Domain.Tests/BeaconAr.Domain.Tests.csproj --configuration Release --no-build --no-restore
           dotnet test tests/BeaconAr.Providers.Tests/BeaconAr.Providers.Tests.csproj --configuration Release --no-build --no-restore
@@ -151,14 +151,14 @@ jobs:
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
           .paradigm/tools/paradigm validate --project examples/inventory-crud/InventoryCrud.sln
           .paradigm/tools/paradigm checks run --project examples/inventory-crud/InventoryCrud.sln
-          .paradigm/tools/paradigm packages check --project examples/beacon-ar/src/BeaconAr.sln
-          .paradigm/tools/paradigm packages audit --project examples/beacon-ar/src/BeaconAr.sln
-          .paradigm/tools/paradigm validate --project examples/beacon-ar/src/BeaconAr.sln
+          .paradigm/tools/paradigm packages check --project examples/beacon-ar/BeaconAr.slnx
+          .paradigm/tools/paradigm packages audit --project examples/beacon-ar/BeaconAr.slnx
+          .paradigm/tools/paradigm validate --project examples/beacon-ar/BeaconAr.slnx
           .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.Domain/BeaconAr.Domain.csproj
           .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.Data/BeaconAr.Data.csproj
           .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.Providers/BeaconAr.Providers.csproj
           .paradigm/tools/paradigm checks run --project examples/beacon-ar/src/BeaconAr.WebApi/BeaconAr.WebApi.csproj
-          .paradigm/tools/paradigm database validate --project examples/beacon-ar/src/database/BeaconAr.Database.sqlproj --solution examples/beacon-ar/src/BeaconAr.sln --strict
+          .paradigm/tools/paradigm database validate --project examples/beacon-ar/src/database/BeaconAr.Database.sqlproj --solution examples/beacon-ar/BeaconAr.slnx --strict
           pwsh build/verify-version.ps1
       - name: Validate skills and plugin
         run: |

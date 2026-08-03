@@ -4,6 +4,8 @@ Beacon AR is a complete .NET 10 and SQL Server example built on Paradigm.Enterpr
 
 The solution is a modular monolith with inward dependencies: `WebApi -> Providers -> Data -> Domain -> Interfaces`. Providers own transactions, audit facts, validation, lifecycle transitions, snapshots, concurrency, and creation idempotency. Controllers only own HTTP concerns. The SQL project in `src/database` is the schema source; runtime schema creation and cascading business-history deletes are intentionally absent.
 
+The canonical solution is `BeaconAr.slnx` at the example root. It organizes the unchanged physical project paths under `00.SolutionItems`, `01.Shared`, `02.Modules`, `03.Hosts`, `04.Tools`, and `05.Tests`. These solution folders classify responsibility and do not change the inward dependency graph. The SQL Server schema project remains owned by the application modules at `src/database/BeaconAr.Database.sqlproj`.
+
 ## Database read projections
 
 Every consumer-facing entity or transactional table has a schema-bound `{Entity}View` projection. These views expose the entity's complete mapping surface and expand foreign keys with commonly needed names, codes, and display values while preserving one row per base entity. `SearchQuote` and `SearchSalesOrder` now query these projections directly, establishing the database DTO contract.
@@ -12,7 +14,7 @@ EF Core Power Tools generates matching entity/view types and `ReceivablesDbConte
 
 `QuoteView` and `SalesOrderView` are the public pricing projections and expose the schema's `Subtotal`, `DiscountTotal`, and `GrandTotal` values. Their schema-bound pricing helpers are database implementation details rather than standalone API DTOs. Status catalogs, audit history, idempotency storage, and other internal tables do not receive API views unless a concrete consumer requires one.
 
-The SQL Server project is `src/database/BeaconAr.Database.sqlproj` and is included in `src/BeaconAr.sln`. Its Microsoft.Build.Sql item groups explicitly include tables, views, functions, routines, types, sequences, and deployment/support scripts so the full schema is visible when the solution is opened in Visual Studio.
+The SQL Server project is `src/database/BeaconAr.Database.sqlproj` and is included in root `BeaconAr.slnx` under `02.Modules`. Its Microsoft.Build.Sql item groups explicitly include tables, views, functions, routines, types, sequences, and deployment/support scripts so the full schema is visible when the solution is opened in Visual Studio.
 
 ## Database-first regeneration
 
@@ -39,7 +41,7 @@ Copy `.env.example` to `.env`, replace placeholders, then run:
 
 ```bash
 dotnet tool restore --add-source ../../artifacts
-dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../../artifacts
+dotnet restore BeaconAr.slnx --property:RestoreAdditionalProjectSources=../../artifacts
 ./start.sh doctor
 ./start.sh start
 ```
@@ -68,9 +70,9 @@ npm run check --prefix tests/BeaconAr.ClientContract
 ## Verification
 
 ```bash
-dotnet build src/BeaconAr.sln --configuration Release
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
-dotnet tool run paradigm validate --project src/BeaconAr.sln
+dotnet build BeaconAr.slnx --configuration Release
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet tool run paradigm validate --project BeaconAr.slnx
 dotnet tool run paradigm checks run --project src/BeaconAr.Domain/BeaconAr.Domain.csproj
 dotnet tool run paradigm checks run --project src/BeaconAr.Data/BeaconAr.Data.csproj
 dotnet tool run paradigm checks run --project src/BeaconAr.Providers/BeaconAr.Providers.csproj

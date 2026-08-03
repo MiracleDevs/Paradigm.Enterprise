@@ -1,5 +1,7 @@
 # Beacon AR Web API review feedback
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Result
 
 Changes requested. No P1 defects were found; two P2 gaps remain before this task is ready to merge.

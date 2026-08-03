@@ -261,15 +261,15 @@ Extend `BeaconAr.Database.IntegrationTests` against a freshly published disposab
 Run from `examples/beacon-ar`:
 
 ```powershell
-dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../../artifacts
+dotnet restore BeaconAr.slnx --property:RestoreAdditionalProjectSources=../../artifacts
 dotnet build src/database/BeaconAr.Database.sqlproj --configuration Release
-dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict --format json
+dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict --format json
 ./build/regenerate-persistence.ps1
 git diff --exit-code -- src/BeaconAr.Domain/Receivables/Generated src/BeaconAr.Data/Receivables/Generated
-dotnet build src/BeaconAr.sln --configuration Release --no-restore
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
-dotnet tool run paradigm validate --project src/BeaconAr.sln
-dotnet tool run paradigm checks run --project src/BeaconAr.sln
+dotnet build BeaconAr.slnx --configuration Release --no-restore
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet tool run paradigm validate --project BeaconAr.slnx
+dotnet tool run paradigm checks run --project BeaconAr.slnx
 ```
 
 Run the SQL integration suite with `ConnectionStrings__DatabaseConnection` targeting a freshly published disposable SQL Server database. If live SQL Server is unavailable, list every skipped live scenario explicitly; do not claim pricing translation, stored-procedure paging, rowversion races, lock behavior, transaction rollback, conversion singleton guarantees, or Dashboard consistency passed.

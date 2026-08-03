@@ -1,5 +1,7 @@
 # Beacon AR final validation change summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 Date: 2026-08-02
 
 ## Outcome

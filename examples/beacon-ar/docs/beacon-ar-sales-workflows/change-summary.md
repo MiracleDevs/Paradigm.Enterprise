@@ -1,5 +1,7 @@
 # Beacon AR sales-workflows change summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Delivered
 
 - Added transport-neutral Quote, Sales Order, conversion, search, line, and Dashboard contracts without introducing HTTP or ASP.NET dependencies.

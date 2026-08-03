@@ -78,7 +78,7 @@ case "${action}" in
     doctor)
         ensure_tools
         wait_for_docker
-        dotnet tool run paradigm doctor --project src/BeaconAr.sln
+        dotnet tool run paradigm doctor --project BeaconAr.slnx
         dotnet tool run aspire -- doctor --non-interactive
         ;;
     *)

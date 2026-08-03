@@ -1,5 +1,7 @@
 # Beacon AR final verification change summary
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Delivered
 
 - Corrected the README Verification command to use the Microsoft.Testing.Platform solution form with `--solution`, reuse the Release build with `--no-build --no-restore`, and require discovery with `--minimum-expected-tests 1`.

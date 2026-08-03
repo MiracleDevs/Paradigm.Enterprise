@@ -7,6 +7,8 @@ description: Promote an observed Paradigm.Enterprise engineering practice into g
 
 Read and preserve [Paradigm Good Coding Practices](../../references/good-coding-practices.md) when changing guidance or tooling.
 
+When changing solution scaffolding, discovery, or validation guidance, also read and preserve [Paradigm Solution Layout](../../references/solution-layout.md). Keep its durable policy centralized and link to it from task-specific skills rather than copying the folder taxonomy.
+
 ## Establish evidence
 
 Capture the observed practice as a minimal reproducible fixture. Record expected behavior, false-positive boundaries, and why the existing guidance or checks did not prevent it. Do not promote preference or a one-off workaround as a universal rule.

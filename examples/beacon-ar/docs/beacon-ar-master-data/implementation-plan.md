@@ -175,7 +175,7 @@ Extend `BeaconAr.Architecture.Tests` to require inward project references, no AS
 2. Add and unit-test generated-entity partial behavior and shared normalization/URL validators.
 3. Add edit/view/audit repository contracts, concrete `RepositoryBase<ReceivablesDbContext,int>` implementations, projections, bounded searches, conflict classification, and customer default locking.
 4. Add the four custom Provider interfaces and implementations with explicit mutation transactions and audit staging.
-5. Add Provider test project to `BeaconAr.sln`; implement Domain and service tests.
+5. Add the Provider test project to root `BeaconAr.slnx`; implement Domain and service tests.
 6. Add SQL integration fixtures for searches, duplicates, references, concurrency, default-address atomicity, and audit rollback.
 7. Extend architecture/discovery checks and verify generation still produces no diff.
 
@@ -184,12 +184,12 @@ Extend `BeaconAr.Architecture.Tests` to require inward project references, no AS
 Run from `examples/beacon-ar`:
 
 ```powershell
-dotnet restore src/BeaconAr.sln --property:RestoreAdditionalProjectSources=../../artifacts
-dotnet build src/BeaconAr.sln --configuration Release --no-restore
-dotnet test --solution src/BeaconAr.sln --configuration Release --no-build --no-restore --minimum-expected-tests 1
-dotnet tool run paradigm validate --project src/BeaconAr.sln
-dotnet tool run paradigm checks run --project src/BeaconAr.sln
-dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution src/BeaconAr.sln --strict --format json
+dotnet restore BeaconAr.slnx --property:RestoreAdditionalProjectSources=../../artifacts
+dotnet build BeaconAr.slnx --configuration Release --no-restore
+dotnet test --solution BeaconAr.slnx --configuration Release --no-build --no-restore --minimum-expected-tests 1
+dotnet tool run paradigm validate --project BeaconAr.slnx
+dotnet tool run paradigm checks run --project BeaconAr.slnx
+dotnet tool run paradigm database validate --project src/database/BeaconAr.Database.sqlproj --solution BeaconAr.slnx --strict --format json
 dotnet build src/database/BeaconAr.Database.sqlproj --configuration Release
 ```
 

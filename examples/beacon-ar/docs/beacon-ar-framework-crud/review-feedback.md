@@ -1,5 +1,7 @@
 # Beacon AR framework CRUD review feedback
 
+> Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+
 ## Review result
 
 Changes requested. The solution builds and the existing tests pass, but the newly advertised official provider surface is not behaviorally equivalent to the legacy master-data surface and is not ready for the official controllers planned in Task 4.
