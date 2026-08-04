@@ -10,7 +10,7 @@ public sealed class OpenApiArtifactTests
 
     private const int ExpectedOperationCount = 36;
     private const int ExpectedPathCount = 18;
-    private const string ExpectedSha256 = "dd12b0365570e8bd1662ae0040a6384f969792717dc7fb95a7456ea2a1650150";
+    private const string ExpectedSha256 = "f0398f38eda2976bc7937fcd673d70e1f40c17bef92a7b02c3fe96223ee1b3eb";
 
     #endregion
 

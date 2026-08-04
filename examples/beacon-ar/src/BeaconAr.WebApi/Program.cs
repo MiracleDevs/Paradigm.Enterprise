@@ -71,8 +71,8 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.MasterData.Contracts.SortDirection>());
         options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.MasterData.Contracts.AddressUsage>());
-        options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.QuoteStatus>());
-        options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.SalesOrderStatus>());
+        options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Interfaces.Sales.Enums.QuoteStatus>());
+        options.JsonSerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus>());
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeOffsetJsonConverter());
         options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContract.CreateResolver());
     });
@@ -82,8 +82,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
     options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.MasterData.Contracts.SortDirection>());
     options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.MasterData.Contracts.AddressUsage>());
-    options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.QuoteStatus>());
-    options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.SalesOrderStatus>());
+    options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Interfaces.Sales.Enums.QuoteStatus>());
+    options.SerializerOptions.Converters.Add(new CamelCaseStringEnumConverter<BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus>());
     options.SerializerOptions.Converters.Add(new UtcDateTimeOffsetJsonConverter());
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, BeaconArApiJsonContract.CreateResolver());
 });

@@ -28,6 +28,7 @@ $handwrittenPartials = @(
     'src/BeaconAr.Domain/MasterData/Entities/CustomerAddress.Behavior.cs'
     'src/BeaconAr.Domain/MasterData/Entities/Product.Behavior.cs'
     'src/BeaconAr.Domain/Operations/Entities/IdempotencyRequest.Behavior.cs'
+    'src/BeaconAr.Domain/Operations/Entities/AuditLog.Behavior.cs'
     'src/BeaconAr.Domain/Sales/Entities/Quote.Behavior.cs'
     'src/BeaconAr.Domain/Sales/Entities/QuoteLine.Behavior.cs'
     'src/BeaconAr.Domain/Sales/Entities/QuoteStatusHistory.Behavior.cs'

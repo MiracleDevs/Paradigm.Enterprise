@@ -1,5 +1,7 @@
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.Domain.Sales.Entities;
+using QuoteStatus = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
 using BeaconAr.Providers.Sales;
 using BeaconAr.WebApi.Http;
 using BeaconAr.WebApi.Security;
@@ -35,9 +37,9 @@ public sealed class QuotesController : ControllerBase
     #region Public Methods
 
     [HttpGet(Name = "searchQuotes")]
-    public async Task<ActionResult<PageResult<QuoteSummaryDto>>> Search(
+    public async Task<ActionResult<PageResult<QuoteView>>> Search(
         [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "status")] BeaconAr.Domain.Sales.QuoteStatus? status = null,
+        [FromQuery(Name = "status")] QuoteStatus? status = null,
         [FromQuery(Name = "customerId")] int? customerId = null,
         [FromQuery(Name = "pageNumber")] int pageNumber = 1,
         [FromQuery(Name = "pageSize")] int pageSize = 10,

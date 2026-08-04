@@ -1,5 +1,7 @@
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.Domain.Sales.Entities;
+using SalesOrderStatus = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
 using BeaconAr.Providers.Sales;
 using BeaconAr.WebApi.Http;
 using BeaconAr.WebApi.Security;
@@ -33,9 +35,9 @@ public sealed class SalesOrdersController : ControllerBase
     #region Public Methods
 
     [HttpGet(Name = "searchSalesOrders")]
-    public async Task<ActionResult<PageResult<SalesOrderSummaryDto>>> Search(
+    public async Task<ActionResult<PageResult<SalesOrderView>>> Search(
         [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "status")] BeaconAr.Domain.Sales.SalesOrderStatus? status = null,
+        [FromQuery(Name = "status")] SalesOrderStatus? status = null,
         [FromQuery(Name = "customerId")] int? customerId = null,
         [FromQuery(Name = "sourceQuoteId")] int? sourceQuoteId = null,
         [FromQuery(Name = "pageNumber")] int pageNumber = 1,

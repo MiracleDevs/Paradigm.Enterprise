@@ -26,6 +26,7 @@
   <Folder Name="/04.Tools/">
     <Project Path="src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj" />
     <Project Path="src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj" />
+    <Project Path="src/BeaconAr.InterfaceGenerator/BeaconAr.InterfaceGenerator.csproj" />
   </Folder>
   <Folder Name="/05.Tests/">
     <Project Path="tests/BeaconAr.Domain.Tests/BeaconAr.Domain.Tests.csproj" />

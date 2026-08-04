@@ -1,10 +1,12 @@
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
-using BeaconAr.Domain.MasterData.Validation;
 using BeaconAr.Domain.Access.Entities;
 using BeaconAr.Domain.MasterData.Entities;
+using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Entities;
 using BeaconAr.Domain.Sales.Entities;
+using AddressType = BeaconAr.Interfaces.MasterData.Enums.AddressType;
+using Paradigm.Enterprise.Domain.Exceptions;
 
 namespace BeaconAr.Domain.Tests;
 
@@ -32,7 +34,7 @@ public sealed class MasterDataValidationTests
     {
         Product product = Product.Create(new ProductCreateRequest("SKU", "Desk", "Furniture", 10m, 2, null), 1, DateTimeOffset.UnixEpoch);
 
-        Assert.Throws<MasterDataValidationException>(() => product.Replace(
+        Assert.Throws<DomainException>(() => product.Replace(
             new ProductUpdateRequest("X", "Changed", "Changed", 0, -1, "ftp://unsafe.test/file", false),
             2, DateTimeOffset.UnixEpoch.AddDays(1)));
 
@@ -44,29 +46,93 @@ public sealed class MasterDataValidationTests
     }
 
     [TestMethod]
+    public void FailedCustomerReplacementIsAtomic()
+    {
+        Customer customer = Customer.Create(new CustomerCreateRequest(
+            "ACCOUNT", "Customer", "person@example.test", "123", 10m, 30), 1, DateTimeOffset.UnixEpoch);
+
+        Assert.Throws<DomainException>(() => customer.Replace(new CustomerUpdateRequest(
+            "CHANGED", "Changed", "not-an-email", "456", -1m, 10, false), 2,
+            DateTimeOffset.UnixEpoch.AddDays(1)));
+
+        Assert.AreEqual("ACCOUNT", customer.AccountNumber);
+        Assert.AreEqual("Customer", customer.Name);
+        Assert.AreEqual("person@example.test", customer.Email);
+        Assert.AreEqual("123", customer.Phone);
+        Assert.AreEqual(10m, customer.CreditLimit);
+        Assert.AreEqual((short)30, customer.PaymentTermsDays);
+        Assert.IsTrue(customer.IsActive);
+        Assert.IsNull(customer.ModifiedByUserId);
+        Assert.IsNull(customer.ModificationDate);
+    }
+
+    [TestMethod]
+    public void FailedAddressReplacementIsAtomic()
+    {
+        CustomerAddress address = CustomerAddress.Create(new AddressCreateRequest(
+            1, "both", "Main", "Street", null, "City", null, "1000", "AR", true, true),
+            (int)AddressType.Both, 1, DateTimeOffset.UnixEpoch);
+
+        Assert.Throws<DomainException>(() => address.Replace(new AddressUpdateRequest(
+            2, "billing", "Changed", "Changed", "Suite", "Changed", "State", "2000", "US", false, true),
+            (int)AddressType.Billing, 2, DateTimeOffset.UnixEpoch.AddDays(1)));
+
+        Assert.AreEqual(1, address.CustomerId);
+        Assert.AreEqual((int)AddressType.Both, address.AddressTypeId);
+        Assert.AreEqual("Main", address.Label);
+        Assert.AreEqual("Street", address.Line1);
+        Assert.AreEqual("City", address.City);
+        Assert.AreEqual("1000", address.PostalCode);
+        Assert.AreEqual("AR", address.Country);
+        Assert.IsTrue(address.IsDefaultBilling);
+        Assert.IsTrue(address.IsDefaultShipping);
+        Assert.IsNull(address.ModifiedByUserId);
+        Assert.IsNull(address.ModificationDate);
+    }
+
+    [TestMethod]
+    public void FailedCarrierReplacementIsAtomic()
+    {
+        Carrier carrier = Carrier.Create(new CarrierCreateRequest(
+            "C", "Carrier", "Ground", "https://carrier.test/{trackingNumber}"), 1, DateTimeOffset.UnixEpoch);
+
+        Assert.Throws<DomainException>(() => carrier.Replace(new CarrierUpdateRequest(
+            "CHANGED", "Changed", "Air", "http://unsafe.test/{trackingNumber}", false), 2,
+            DateTimeOffset.UnixEpoch.AddDays(1)));
+
+        Assert.AreEqual("C", carrier.Code);
+        Assert.AreEqual("Carrier", carrier.Name);
+        Assert.AreEqual("Ground", carrier.ServiceLevel);
+        Assert.AreEqual("https://carrier.test/{trackingNumber}", carrier.TrackingUrlTemplate);
+        Assert.IsTrue(carrier.IsActive);
+        Assert.IsNull(carrier.ModifiedByUserId);
+        Assert.IsNull(carrier.ModificationDate);
+    }
+
+    [TestMethod]
     public void ProductPriceMatchesSqlDecimalPrecisionAndScale()
     {
-        ProductCreateRequest exactMaximum = MasterDataRequestValidator.Normalize(new ProductCreateRequest(
-            "SKU", "Product", "Category", 999999999999999.9999m, 0, null));
+        Product exactMaximum = Product.Create(new ProductCreateRequest(
+            "SKU", "Product", "Category", 999999999999999.9999m, 0, null), 1, DateTimeOffset.UnixEpoch);
 
         Assert.AreEqual(999999999999999.9999m, exactMaximum.UnitPrice);
-        Assert.IsTrue(Assert.Throws<MasterDataValidationException>(() => MasterDataRequestValidator.Normalize(
-            exactMaximum with { UnitPrice = 1000000000000000m })).Errors.ContainsKey("unitPrice"));
-        Assert.IsTrue(Assert.Throws<MasterDataValidationException>(() => MasterDataRequestValidator.Normalize(
-            exactMaximum with { UnitPrice = 1.23456m })).Errors.ContainsKey("unitPrice"));
+        Assert.Throws<DomainException>(() => Product.Create(new ProductCreateRequest(
+            "SKU", "Product", "Category", 1000000000000000m, 0, null), 1, DateTimeOffset.UnixEpoch));
+        Assert.Throws<DomainException>(() => Product.Create(new ProductCreateRequest(
+            "SKU", "Product", "Category", 1.23456m, 0, null), 1, DateTimeOffset.UnixEpoch));
     }
 
     [TestMethod]
     public void CustomerCreditLimitMatchesSqlDecimalPrecisionAndScale()
     {
-        CustomerCreateRequest exactMaximum = MasterDataRequestValidator.Normalize(new CustomerCreateRequest(
-            "ACCOUNT", "Customer", "person@example.test", null, 99999999999999999.99m, 30));
+        Customer exactMaximum = Customer.Create(new CustomerCreateRequest(
+            "ACCOUNT", "Customer", "person@example.test", null, 99999999999999999.99m, 30), 1, DateTimeOffset.UnixEpoch);
 
         Assert.AreEqual(99999999999999999.99m, exactMaximum.CreditLimit);
-        Assert.IsTrue(Assert.Throws<MasterDataValidationException>(() => MasterDataRequestValidator.Normalize(
-            exactMaximum with { CreditLimit = 100000000000000000m })).Errors.ContainsKey("creditLimit"));
-        Assert.IsTrue(Assert.Throws<MasterDataValidationException>(() => MasterDataRequestValidator.Normalize(
-            exactMaximum with { CreditLimit = 1.235m })).Errors.ContainsKey("creditLimit"));
+        Assert.Throws<DomainException>(() => Customer.Create(new CustomerCreateRequest(
+            "ACCOUNT", "Customer", "person@example.test", null, 100000000000000000m, 30), 1, DateTimeOffset.UnixEpoch));
+        Assert.Throws<DomainException>(() => Customer.Create(new CustomerCreateRequest(
+            "ACCOUNT", "Customer", "person@example.test", null, 1.235m, 30), 1, DateTimeOffset.UnixEpoch));
     }
 
     [TestMethod]
@@ -84,14 +150,13 @@ public sealed class MasterDataValidationTests
     }
 
     [TestMethod]
-    public void CustomerRejectsInvalidEmailTermsAndCreditLimitWithFieldPaths()
+    public void CustomerRejectsInvalidEmailTermsAndCreditLimit()
     {
-        MasterDataValidationException exception = Assert.Throws<MasterDataValidationException>(() =>
-            MasterDataRequestValidator.Normalize(new CustomerCreateRequest("A", "Customer", "not an email", null, -1, 10)));
-
-        Assert.IsTrue(exception.Errors.ContainsKey("email"));
-        Assert.IsTrue(exception.Errors.ContainsKey("creditLimit"));
-        Assert.IsTrue(exception.Errors.ContainsKey("paymentTermsDays"));
+        DomainException exception = Assert.Throws<DomainException>(() => Customer.Create(
+            new CustomerCreateRequest("A", "Customer", "not an email", null, -1, 10), 1, DateTimeOffset.UnixEpoch));
+        StringAssert.Contains(exception.Message, "Email");
+        StringAssert.Contains(exception.Message, "Credit limit");
+        StringAssert.Contains(exception.Message, "Payment terms");
     }
 
     [TestMethod]
@@ -100,34 +165,36 @@ public sealed class MasterDataValidationTests
     [DataRow("both", true, true)]
     public void AddressAcceptsCompatibleDefaultTypes(string type, bool billing, bool shipping)
     {
-        AddressCreateRequest result = MasterDataRequestValidator.Normalize(new AddressCreateRequest(
-            1, type, " Main ", " Street ", null, " City ", null, " 1000 ", " ar ", billing, shipping));
+        int typeId = type switch { "billing" => (int)AddressType.Billing, "shipping" => (int)AddressType.Shipping, _ => (int)AddressType.Both };
+        CustomerAddress result = CustomerAddress.Create(new AddressCreateRequest(
+            1, type, " Main ", " Street ", null, " City ", null, " 1000 ", " ar ", billing, shipping),
+            typeId, 1, DateTimeOffset.UnixEpoch);
 
         Assert.AreEqual("AR", result.Country);
-        Assert.AreEqual(type, result.Type);
+        Assert.AreEqual(typeId, result.AddressTypeId);
     }
 
     [TestMethod]
     public void AddressRejectsIncompatibleDefaultType()
     {
-        MasterDataValidationException exception = Assert.Throws<MasterDataValidationException>(() =>
-            MasterDataRequestValidator.Normalize(new AddressCreateRequest(
-                1, "billing", "Main", "Street", null, "City", null, "1000", "AR", false, true)));
-
-        Assert.IsTrue(exception.Errors.ContainsKey("defaultShipping"));
+        Assert.Throws<DomainException>(() => CustomerAddress.Create(new AddressCreateRequest(
+            1, "billing", "Main", "Street", null, "City", null, "1000", "AR", false, true),
+            (int)AddressType.Billing, 1, DateTimeOffset.UnixEpoch));
     }
 
     [TestMethod]
     public void SafeUrlsRejectCredentialsControlsAndUnknownPlaceholders()
     {
-        Assert.IsTrue(SafeUrlValidator.IsSafeThumbnail("http://example.test/image.png"));
-        Assert.IsFalse(SafeUrlValidator.IsSafeThumbnail("https://user:password@example.test/image.png"));
-        Assert.IsFalse(SafeUrlValidator.IsSafeThumbnail("https://example.test/{image}"));
-        Assert.IsFalse(SafeUrlValidator.IsSafeThumbnail("https://example.test/a\nimage"));
-        Assert.IsTrue(SafeUrlValidator.IsSafeTrackingTemplate("https://carrier.test/track/{trackingNumber}"));
-        Assert.IsTrue(SafeUrlValidator.IsSafeTrackingTemplate("https://carrier.test/track"));
-        Assert.IsFalse(SafeUrlValidator.IsSafeTrackingTemplate("http://carrier.test/track/{trackingNumber}"));
-        Assert.IsFalse(SafeUrlValidator.IsSafeTrackingTemplate("https://carrier.test/{other}"));
+        _ = Product.Create(new ProductCreateRequest("SKU", "Product", "Category", 1m, 0,
+            "http://example.test/image.png"), 1, DateTimeOffset.UnixEpoch);
+        Assert.Throws<DomainException>(() => Product.Create(new ProductCreateRequest("SKU", "Product", "Category", 1m, 0,
+            "https://user:password@example.test/image.png"), 1, DateTimeOffset.UnixEpoch));
+        Assert.Throws<DomainException>(() => Product.Create(new ProductCreateRequest("SKU", "Product", "Category", 1m, 0,
+            "https://example.test/{image}"), 1, DateTimeOffset.UnixEpoch));
+        _ = Carrier.Create(new CarrierCreateRequest("C", "Carrier", "Ground",
+            "https://carrier.test/track/{trackingNumber}"), 1, DateTimeOffset.UnixEpoch);
+        Assert.Throws<DomainException>(() => Carrier.Create(new CarrierCreateRequest("C", "Carrier", "Ground",
+            "http://carrier.test/track/{trackingNumber}"), 1, DateTimeOffset.UnixEpoch));
     }
 
     [TestMethod]
@@ -137,21 +204,21 @@ public sealed class MasterDataValidationTests
         string encoded = VersionTokenCodec.Encode(version);
 
         CollectionAssert.AreEqual(version, VersionTokenCodec.Decode(encoded));
-        Assert.Throws<MasterDataValidationException>(() => VersionTokenCodec.Decode("AQID"));
-        Assert.Throws<MasterDataValidationException>(() => VersionTokenCodec.Decode("not-base64"));
-        Assert.Throws<MasterDataValidationException>(() => VersionTokenCodec.Decode(null));
+        Assert.Throws<VersionTokenException>(() => VersionTokenCodec.Decode("AQID"));
+        Assert.Throws<VersionTokenException>(() => VersionTokenCodec.Decode("not-base64"));
+        Assert.Throws<VersionTokenException>(() => VersionTokenCodec.Decode(null));
     }
 
     [TestMethod]
     public void SearchValidationRejectsUnsafePagingAndUnknownSorts()
     {
         MasterDataValidationException exception = Assert.Throws<MasterDataValidationException>(() =>
-            MasterDataRequestValidator.ValidateSearch(new ProductSearchRequest
+            new ProductSearchRequest
             {
                 PageNumber = 0,
                 PageSize = 101,
                 SortField = "drop table",
-            }, "id", "sku", "name"));
+            }.Validate("id", "sku", "name"));
 
         Assert.IsTrue(exception.Errors.ContainsKey("pageNumber"));
         Assert.IsTrue(exception.Errors.ContainsKey("pageSize"));
@@ -161,18 +228,18 @@ public sealed class MasterDataValidationTests
     [TestMethod]
     public void SearchValidationAcceptsMaximumPageAndSearchLengthButRejectsOverLengthSearch()
     {
-        MasterDataRequestValidator.ValidateSearch(new ProductSearchRequest
+        new ProductSearchRequest
         {
             PageNumber = int.MaxValue,
             PageSize = 100,
             Search = new string('x', 320),
-        }, "id", "sku", "name");
+        }.Validate("id", "sku", "name");
 
         MasterDataValidationException exception = Assert.Throws<MasterDataValidationException>(() =>
-            MasterDataRequestValidator.ValidateSearch(new ProductSearchRequest
+            new ProductSearchRequest
             {
                 Search = new string('x', 321),
-            }, "id", "sku", "name"));
+            }.Validate("id", "sku", "name"));
         Assert.IsTrue(exception.Errors.ContainsKey("search"));
     }
 

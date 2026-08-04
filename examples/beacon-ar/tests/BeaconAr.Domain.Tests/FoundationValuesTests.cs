@@ -1,34 +1,32 @@
-using BeaconAr.Domain.MasterData;
-using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Sales;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
+using AddressType = BeaconAr.Interfaces.MasterData.Enums.AddressType;
+using IdempotencyState = BeaconAr.Interfaces.Operations.Enums.IdempotencyState;
+using QuoteStatus = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
+using SalesOrderStatus = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
 
 namespace BeaconAr.Domain.Tests;
 
 [TestClass]
 public sealed class FoundationValuesTests
 {
-    #region Fields
-
-    private static readonly int[] IdempotencyStateIds = [1, 2, 3];
-    private static readonly int[] QuoteStatusIds = [1, 2, 3, 4, 5];
-    private static readonly int[] SalesOrderStatusIds = [1, 2, 3, 4, 5, 6];
-
-    #endregion
-
     #region Public Methods
 
     [TestMethod]
     public void CatalogIdentifiersMatchPublishedAssignments()
     {
-        CollectionAssert.AreEqual(IdempotencyStateIds, Enum.GetValues<IdempotencyState>().Select(static value => (int)value).ToArray());
-        CollectionAssert.AreEqual(QuoteStatusIds, Enum.GetValues<QuoteStatus>().Select(static value => (int)value).ToArray());
-        CollectionAssert.AreEqual(SalesOrderStatusIds, Enum.GetValues<SalesOrderStatus>().Select(static value => (int)value).ToArray());
-
         var root = FindExampleRoot();
-        StringAssert.Contains(File.ReadAllText(Path.Combine(root, "src", "database", "scripts", "postdeployment", "MasterData", "AddressTypeData.sql")), "(3, N'both'");
-        StringAssert.Contains(File.ReadAllText(Path.Combine(root, "src", "database", "scripts", "postdeployment", "Operations", "IdempotencyStateData.sql")), "(3, N'failed'");
-        StringAssert.Contains(File.ReadAllText(Path.Combine(root, "src", "database", "scripts", "postdeployment", "Sales", "QuoteStatusData.sql")), "(5, N'expired'");
-        StringAssert.Contains(File.ReadAllText(Path.Combine(root, "src", "database", "scripts", "postdeployment", "Sales", "SalesOrderStatusData.sql")), "(6, N'cancelled'");
+        AssertCatalogParity<AddressType>(Path.Combine(root, "src", "database", "scripts", "postdeployment", "MasterData", "AddressTypeData.sql"));
+        AssertCatalogParity<IdempotencyState>(Path.Combine(root, "src", "database", "scripts", "postdeployment", "Operations", "IdempotencyStateData.sql"));
+        AssertCatalogParity<QuoteStatus>(Path.Combine(root, "src", "database", "scripts", "postdeployment", "Sales", "QuoteStatusData.sql"));
+        AssertCatalogParity<SalesOrderStatus>(Path.Combine(root, "src", "database", "scripts", "postdeployment", "Sales", "SalesOrderStatusData.sql"));
+
+        Assert.AreEqual("BeaconAr.Interfaces", typeof(AddressType).Assembly.GetName().Name);
+        Assert.AreEqual("BeaconAr.Interfaces", typeof(IdempotencyState).Assembly.GetName().Name);
+        Assert.AreEqual("BeaconAr.Interfaces", typeof(QuoteStatus).Assembly.GetName().Name);
+        Assert.AreEqual("BeaconAr.Interfaces", typeof(SalesOrderStatus).Assembly.GetName().Name);
     }
 
     [TestMethod]
@@ -44,6 +42,24 @@ public sealed class FoundationValuesTests
     #endregion
 
     #region Private Methods
+
+    private static void AssertCatalogParity<TEnum>(string seedPath) where TEnum : struct, Enum
+    {
+        string[] seeded = Regex.Matches(File.ReadAllText(seedPath), @"\((\d+),\s*N'([^']+)'", RegexOptions.CultureInvariant)
+            .Select(match => $"{match.Groups[1].Value}:{match.Groups[2].Value}")
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToArray();
+        string[] declared = Enum.GetValues<TEnum>()
+            .Select(value =>
+            {
+                FieldInfo field = typeof(TEnum).GetField(value.ToString())!;
+                string code = field.GetCustomAttribute<EnumMemberAttribute>()?.Value ?? string.Empty;
+                return $"{Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture)}:{code}";
+            })
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToArray();
+        CollectionAssert.AreEqual(seeded, declared, $"Seed parity failed for {typeof(TEnum).FullName}.");
+    }
 
     private static string FindExampleRoot()
     {

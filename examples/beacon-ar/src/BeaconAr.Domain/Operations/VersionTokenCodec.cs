@@ -27,5 +27,12 @@ public static class VersionTokenCodec
         }
     }
 
+    public static byte[] Decode(string? value)
+    {
+        if (!TryDecode(value, out byte[] decoded))
+            throw new VersionTokenException();
+        return decoded;
+    }
+
     #endregion
 }

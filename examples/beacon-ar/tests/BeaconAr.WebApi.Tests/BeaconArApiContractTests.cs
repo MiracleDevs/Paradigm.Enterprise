@@ -8,8 +8,8 @@ using System.Text.Json;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Operations.Contracts;
-using BeaconAr.Domain.Sales;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Providers.Access;
 using BeaconAr.Providers.Operations;
 using BeaconAr.WebApi;
@@ -145,13 +145,25 @@ public sealed class BeaconArApiContractTests
     [TestMethod]
     public void Scenario09JsonContractUsesCamelCaseStringEnumsAndDates()
     {
-        QuoteSummaryDto value = new(1, "Q-0001", 2, "A-1", "Customer", new DateOnly(2026, 8, 1),
-            new DateOnly(2026, 8, 31), QuoteStatus.Accepted, 12.3456m, 0m, 12.3456m, null, 42,
-            new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero), null, null, "AQID");
+        QuoteView value = new()
+        {
+            Id = 1,
+            QuoteNumber = "Q-0001",
+            QuoteDate = new DateOnly(2026, 8, 1),
+            ValidUntil = new DateOnly(2026, 8, 31),
+            StatusId = 3,
+            StatusCode = "accepted",
+            StatusDisplayName = "Accepted",
+            Subtotal = 12.3456m,
+            DiscountTotal = 0m,
+            GrandTotal = 12.3456m,
+            CreationDate = new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero),
+            RowVersion = [1, 2, 3],
+        };
         string json = JsonSerializer.Serialize(value, BeaconArApiJsonContext.Default.Options);
 
         StringAssert.Contains(json, "\"quoteDate\":\"2026-08-01\"");
-        StringAssert.Contains(json, "\"status\":\"accepted\"");
+        StringAssert.Contains(json, "\"statusCode\":\"accepted\"");
         StringAssert.Contains(json, "\"subtotal\":12.3456");
         StringAssert.Contains(json, "\"creationDate\":\"2026-08-01T12:00:00.0000000Z\"");
     }

@@ -22,6 +22,8 @@ public sealed class GeneratedMappingHostTests
         incoming.Name = "Mapped through Program";
         incoming.Sku = "HOST-1";
         incoming.Category = "Host test";
+        incoming.UnitPrice = 1m;
+        incoming.IsActive = true;
         incoming.RowVersion = [1, 2, 3];
 
         Product mapped = entity.MapFrom(scope.ServiceProvider, incoming);

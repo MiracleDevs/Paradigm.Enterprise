@@ -7,9 +7,8 @@ using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
-using BeaconAr.Domain.Sales.Validation;
 using Paradigm.Enterprise.Domain.Uow;
-using OrderState = BeaconAr.Domain.Sales.SalesOrderStatus;
+using OrderState = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
 
 namespace BeaconAr.Providers.Sales;
 
@@ -42,9 +41,9 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
 
     #region Public Methods
 
-    public Task<PageResult<SalesOrderSummaryDto>> SearchAsync(SalesOrderSearchRequest request, CancellationToken cancellationToken)
+    public Task<PageResult<SalesOrderView>> SearchAsync(SalesOrderSearchRequest request, CancellationToken cancellationToken)
     {
-        SalesRequestValidator.Validate(request);
+        request.Validate();
         return _views.SearchAsync(request, cancellationToken);
     }
 
@@ -54,7 +53,6 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
     public async Task<SalesOrderDto> CreateDirectAsync(SalesOrderCreateRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        SalesRequestValidator.Validate(request);
         int id = await _workflow.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _workflow.UtcNow;
@@ -82,17 +80,16 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        SalesRequestValidator.Validate(request);
-        SalesRequestValidator.ValidateVersion(expectedVersion);
+        _ = VersionTokenCodec.Decode(expectedVersion);
         await _workflow.ExecuteAsync(async () =>
         {
             SalesOrder order = await _orders.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("sales order");
             SalesWorkflowCoordinator.EnsureVersion(order.RowVersion, expectedVersion);
             var (customer, address, products, carrier) = await ResolveReferencesAsync(
                 request.CustomerId, request.ShippingAddressId, request.Lines, request.CarrierId, cancellationToken);
-            IReadOnlyList<SalesOrderLine> lines = order.PrepareReplacement(request, customer, address, products, carrier);
             DateTimeOffset now = _workflow.UtcNow;
-            order.ApplyReplacement(request, customer, address, _workflow.UserId, now);
+            IReadOnlyList<SalesOrderLine> lines = order.Replace(request, customer, address, products, carrier,
+                _workflow.UserId, now);
             _orders.ReplaceLines(order, lines);
             _workflow.AddAudit("salesOrder", order.Id, "updated", now, metadataJson: "{\"changedFields\":[\"header\",\"lines\"]}");
             await _workflow.UnitOfWork.CommitChangesAsync();
@@ -103,7 +100,7 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
     {
-        SalesRequestValidator.ValidateVersion(expectedVersion);
+        _ = VersionTokenCodec.Decode(expectedVersion);
         return DeleteCoreAsync(id, expectedVersion, cancellationToken);
     }
 
@@ -114,9 +111,7 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        SalesRequestValidator.ValidateVersion(expectedVersion);
-        if (!Enum.IsDefined(request.Status))
-            throw SalesWorkflowCoordinator.InvalidReference("status", "Status is invalid.");
+        _ = VersionTokenCodec.Decode(expectedVersion);
         await _workflow.ExecuteAsync(async () =>
         {
             SalesOrder order = await _orders.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("sales order");

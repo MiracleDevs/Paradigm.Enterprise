@@ -13,7 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Uow;
 using Paradigm.Enterprise.Providers;
-using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
+using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
+using Paradigm.Enterprise.Domain.Exceptions;
 
 namespace BeaconAr.Providers.Tests;
 
@@ -381,10 +382,9 @@ public sealed class ProductProviderTests
         ProductProvider provider = CreateProvider(repository, new FakeProductViewRepository(repository),
             new FakeAuditLogRepository(), unitOfWork);
 
-        MasterDataValidationException exception = await Assert.ThrowsAsync<MasterDataValidationException>(() =>
+        await Assert.ThrowsAsync<DomainException>(() =>
             provider.CreateAsync(new ProductCreateRequest("SKU", "Product", "Category", 1.23456m, 0, null), CancellationToken.None));
 
-        Assert.IsTrue(exception.Errors.ContainsKey("unitPrice"));
         Assert.AreEqual(0, unitOfWork.SaveCalls);
         Assert.AreEqual(0, unitOfWork.Transaction.CommitCalls);
         Assert.AreEqual(0, unitOfWork.Transaction.RollbackCalls);

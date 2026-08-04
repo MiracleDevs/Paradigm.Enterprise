@@ -163,7 +163,7 @@ export interface IClient {
      * @param sortDirection (optional)
      * @return OK
      */
-    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<QuoteSummaryDtoPageResult>;
+    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<QuoteViewPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
      * @param body (optional)
@@ -206,7 +206,7 @@ export interface IClient {
      * @param sortDirection (optional)
      * @return OK
      */
-    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<SalesOrderSummaryDtoPageResult>;
+    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<SalesOrderViewPageResult>;
     /**
      * @param idempotency_Key (optional) Optional opaque key of 1-128 visible ASCII characters. Reuse only for an exact retry by the same authenticated user and creation operation; a changed payload returns 409.
      * @param body (optional)
@@ -2483,7 +2483,7 @@ export class Client implements IClient {
      * @param sortDirection (optional)
      * @return OK
      */
-    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<QuoteSummaryDtoPageResult> {
+    searchQuotes(search: string | undefined, status: QuoteStatus | undefined, customerId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<QuoteViewPageResult> {
         let url_ = this.baseUrl + "/api/v1/quotes?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -2530,14 +2530,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchQuotes(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<QuoteSummaryDtoPageResult>;
+                    return _observableThrow(e) as any as Observable<QuoteViewPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<QuoteSummaryDtoPageResult>;
+                return _observableThrow(response_) as any as Observable<QuoteViewPageResult>;
         }));
     }
 
-    protected processSearchQuotes(response: HttpResponseBase): Observable<QuoteSummaryDtoPageResult> {
+    protected processSearchQuotes(response: HttpResponseBase): Observable<QuoteViewPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2547,7 +2547,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as QuoteSummaryDtoPageResult;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as QuoteViewPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -3210,7 +3210,7 @@ export class Client implements IClient {
      * @param sortDirection (optional)
      * @return OK
      */
-    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<SalesOrderSummaryDtoPageResult> {
+    searchSalesOrders(search: string | undefined, status: SalesOrderStatus | undefined, customerId: number | undefined, sourceQuoteId: number | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortField: string | undefined, sortDirection: SortDirection | undefined): Observable<SalesOrderViewPageResult> {
         let url_ = this.baseUrl + "/api/v1/sales-orders?";
         if (search === null)
             throw new globalThis.Error("The parameter 'search' cannot be null.");
@@ -3261,14 +3261,14 @@ export class Client implements IClient {
                 try {
                     return this.processSearchSalesOrders(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<SalesOrderSummaryDtoPageResult>;
+                    return _observableThrow(e) as any as Observable<SalesOrderViewPageResult>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<SalesOrderSummaryDtoPageResult>;
+                return _observableThrow(response_) as any as Observable<SalesOrderViewPageResult>;
         }));
     }
 
-    protected processSearchSalesOrders(response: HttpResponseBase): Observable<SalesOrderSummaryDtoPageResult> {
+    protected processSearchSalesOrders(response: HttpResponseBase): Observable<SalesOrderViewPageResult> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -3278,7 +3278,7 @@ export class Client implements IClient {
         if (status === 200) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SalesOrderSummaryDtoPageResult;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as SalesOrderViewPageResult;
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -4126,34 +4126,6 @@ export interface QuoteStatusTransitionRequest {
     status: QuoteStatus;
 }
 
-export interface QuoteSummaryDto {
-    id?: number;
-    quoteNumber?: string | null;
-    customerId?: number;
-    customerAccountNumber?: string | null;
-    customerName?: string | null;
-    quoteDate?: Date;
-    validUntil?: Date;
-    status?: QuoteStatus;
-    subtotal?: number;
-    discountTotal?: number;
-    grandTotal?: number;
-    salesOrderId?: number | null;
-    createdByUserId?: number | null;
-    creationDate?: Date;
-    modifiedByUserId?: number | null;
-    modificationDate?: Date | null;
-    version?: string | null;
-}
-
-export interface QuoteSummaryDtoPageResult {
-    items?: QuoteSummaryDto[] | null;
-    pageNumber?: number;
-    pageSize?: number;
-    totalPages?: number;
-    itemsCount?: number;
-}
-
 export interface QuoteUpdateRequest {
     customerId: number;
     shippingAddressId: number;
@@ -4161,6 +4133,65 @@ export interface QuoteUpdateRequest {
     validUntil: Date;
     notes?: string | null;
     lines: SalesLineRequest[] | null;
+}
+
+export interface QuoteView {
+    id?: number;
+    quoteNumber?: string | null;
+    customerId?: number;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    customerIsActive?: boolean;
+    shippingAddressId?: number;
+    shippingAddressLabel?: string | null;
+    shippingAddressLine1?: string | null;
+    shippingAddressLine2?: string | null;
+    shippingAddressCity?: string | null;
+    shippingAddressState?: string | null;
+    shippingAddressPostalCode?: string | null;
+    shippingAddressCountry?: string | null;
+    shippingAddressTypeCode?: string | null;
+    shippingAddressTypeDisplayName?: string | null;
+    quoteDate?: Date;
+    validUntil?: Date;
+    statusId?: number;
+    statusCode?: string | null;
+    statusDisplayName?: string | null;
+    notes?: string | null;
+    customerAccountNumberSnapshot?: string | null;
+    customerNameSnapshot?: string | null;
+    customerEmailSnapshot?: string | null;
+    customerPhoneSnapshot?: string | null;
+    shippingLabelSnapshot?: string | null;
+    shippingLine1Snapshot?: string | null;
+    shippingLine2Snapshot?: string | null;
+    shippingCitySnapshot?: string | null;
+    shippingStateSnapshot?: string | null;
+    shippingPostalCodeSnapshot?: string | null;
+    shippingCountrySnapshot?: string | null;
+    shippingAddressTypeCodeSnapshot?: string | null;
+    subtotal?: number | null;
+    discountTotal?: number | null;
+    grandTotal?: number | null;
+    salesOrderId?: number | null;
+    createdByUserId?: number | null;
+    createdByUserDisplayName?: string | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modifiedByUserDisplayName?: string | null;
+    modificationDate?: Date | null;
+    deletionDate?: Date | null;
+    deletedByUserId?: number | null;
+    deletedByUserDisplayName?: string | null;
+    rowVersion?: string | null;
+}
+
+export interface QuoteViewPageResult {
+    items?: QuoteView[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export interface SalesLineDto {
@@ -4241,36 +4272,6 @@ export interface SalesOrderStatusTransitionRequest {
     trackingNumber?: string | null;
 }
 
-export interface SalesOrderSummaryDto {
-    id?: number;
-    orderNumber?: string | null;
-    sourceQuoteId?: number | null;
-    customerId?: number;
-    customerAccountNumber?: string | null;
-    customerName?: string | null;
-    status?: SalesOrderStatus;
-    requestedShipDate?: Date | null;
-    carrierId?: number | null;
-    carrierName?: string | null;
-    trackingNumber?: string | null;
-    subtotal?: number;
-    discountTotal?: number;
-    grandTotal?: number;
-    createdByUserId?: number | null;
-    creationDate?: Date;
-    modifiedByUserId?: number | null;
-    modificationDate?: Date | null;
-    version?: string | null;
-}
-
-export interface SalesOrderSummaryDtoPageResult {
-    items?: SalesOrderSummaryDto[] | null;
-    pageNumber?: number;
-    pageSize?: number;
-    totalPages?: number;
-    itemsCount?: number;
-}
-
 export interface SalesOrderUpdateRequest {
     customerId: number;
     shippingAddressId: number;
@@ -4278,6 +4279,69 @@ export interface SalesOrderUpdateRequest {
     carrierId?: number | null;
     trackingNumber?: string | null;
     lines: SalesLineRequest[] | null;
+}
+
+export interface SalesOrderView {
+    id?: number;
+    orderNumber?: string | null;
+    sourceQuoteId?: number | null;
+    sourceQuoteNumber?: string | null;
+    customerId?: number;
+    customerAccountNumber?: string | null;
+    customerName?: string | null;
+    customerIsActive?: boolean;
+    shippingAddressId?: number;
+    shippingAddressLabel?: string | null;
+    shippingAddressLine1?: string | null;
+    shippingAddressLine2?: string | null;
+    shippingAddressCity?: string | null;
+    shippingAddressState?: string | null;
+    shippingAddressPostalCode?: string | null;
+    shippingAddressCountry?: string | null;
+    shippingAddressTypeCode?: string | null;
+    shippingAddressTypeDisplayName?: string | null;
+    statusId?: number;
+    statusCode?: string | null;
+    statusDisplayName?: string | null;
+    requestedShipDate?: Date | null;
+    carrierId?: number | null;
+    carrierCode?: string | null;
+    carrierName?: string | null;
+    carrierServiceLevel?: string | null;
+    trackingNumber?: string | null;
+    customerAccountNumberSnapshot?: string | null;
+    customerNameSnapshot?: string | null;
+    customerEmailSnapshot?: string | null;
+    customerPhoneSnapshot?: string | null;
+    shippingLabelSnapshot?: string | null;
+    shippingLine1Snapshot?: string | null;
+    shippingLine2Snapshot?: string | null;
+    shippingCitySnapshot?: string | null;
+    shippingStateSnapshot?: string | null;
+    shippingPostalCodeSnapshot?: string | null;
+    shippingCountrySnapshot?: string | null;
+    shippingAddressTypeCodeSnapshot?: string | null;
+    subtotal?: number | null;
+    discountTotal?: number | null;
+    grandTotal?: number | null;
+    createdByUserId?: number | null;
+    createdByUserDisplayName?: string | null;
+    creationDate?: Date;
+    modifiedByUserId?: number | null;
+    modifiedByUserDisplayName?: string | null;
+    modificationDate?: Date | null;
+    deletionDate?: Date | null;
+    deletedByUserId?: number | null;
+    deletedByUserDisplayName?: string | null;
+    rowVersion?: string | null;
+}
+
+export interface SalesOrderViewPageResult {
+    items?: SalesOrderView[] | null;
+    pageNumber?: number;
+    pageSize?: number;
+    totalPages?: number;
+    itemsCount?: number;
 }
 
 export enum SortDirection {
