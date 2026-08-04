@@ -3,8 +3,9 @@ using BeaconAr.Data.Sales.Context;
 using BeaconAr.Data.Sales.StoredProcedures;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Domain.Sales.Repositories;
-using BeaconAr.Domain.Sales.Validation;
+using BeaconAr.Domain.Operations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Paradigm.Enterprise.Data.Repositories;
@@ -37,7 +38,7 @@ public sealed class SalesOrderViewRepository : RepositoryBase<SalesDbContext, in
     public Task<SalesOrderDto?> GetByIdIncludingDeletedAsync(int id, CancellationToken cancellationToken) =>
         GetByIdAsync(id, true, cancellationToken);
 
-    public async Task<PageResult<SalesOrderSummaryDto>> SearchAsync(SalesOrderSearchRequest request, CancellationToken cancellationToken)
+    public async Task<PageResult<SalesOrderView>> SearchAsync(SalesOrderSearchRequest request, CancellationToken cancellationToken)
     {
         string? search = string.IsNullOrWhiteSpace(request.Search) ? null : request.Search.Trim();
         string sort = string.IsNullOrWhiteSpace(request.SortField) ? "orderNumber" : request.SortField.Trim();
@@ -54,14 +55,7 @@ public sealed class SalesOrderViewRepository : RepositoryBase<SalesDbContext, in
             SortDirection = request.SortDirection == SortDirection.Desc ? "desc" : "asc",
         }, UnitOfWork);
         cancellationToken.ThrowIfCancellationRequested();
-        SalesOrderSummaryDto[] items = (rows ?? []).Select(row => new SalesOrderSummaryDto(
-            row.Id, row.OrderNumber, row.SourceQuoteId, row.CustomerId, row.CustomerAccountNumberSnapshot,
-            row.CustomerNameSnapshot, (Domain.Sales.SalesOrderStatus)row.StatusId,
-            row.RequestedShipDate.HasValue ? DateOnly.FromDateTime(row.RequestedShipDate.Value) : null,
-            row.CarrierId, row.CarrierName, row.TrackingNumber, row.Subtotal, row.DiscountTotal, row.GrandTotal,
-            row.CreatedByUserId, row.CreationDate, row.ModifiedByUserId, row.ModificationDate,
-            SalesRequestValidator.EncodeVersion(row.RowVersion))).ToArray();
-        return PageResultFactory.Create(items, request.PageNumber, request.PageSize, count);
+        return PageResultFactory.Create(rows ?? [], request.PageNumber, request.PageSize, count);
     }
 
     #endregion
@@ -75,19 +69,9 @@ public sealed class SalesOrderViewRepository : RepositoryBase<SalesDbContext, in
             : null;
         try
         {
-            var header = await (
-                from order in EntityContext.SalesOrderViews.AsNoTracking()
-                join pricing in EntityContext.SalesOrderPricingViews on order.Id equals pricing.SalesOrderId
-                where order.Id == id && (includeDeleted || order.DeletionDate == null)
-                select new
-                {
-                    Order = order,
-                    order.CarrierName,
-                    pricing.Subtotal,
-                    pricing.DiscountTotal,
-                    pricing.GrandTotal
-                })
-                .SingleOrDefaultAsync(cancellationToken);
+            SalesOrderView? header = await EntityContext.SalesOrderViews.AsNoTracking()
+                .SingleOrDefaultAsync(order => order.Id == id && (includeDeleted || order.DeletionDate == null),
+                    cancellationToken);
             if (header is null)
             {
                 if (transaction is not null)
@@ -95,24 +79,23 @@ public sealed class SalesOrderViewRepository : RepositoryBase<SalesDbContext, in
                 return null;
             }
 
-            SalesLineDto[] lines = await EntityContext.SalesOrderLines.AsNoTracking()
+            SalesLineDto[] lines = await EntityContext.SalesOrderLineViews.AsNoTracking()
                 .Where(line => line.SalesOrderId == id)
                 .OrderBy(line => line.Id)
                 .Select(line => new SalesLineDto(line.Id, line.ProductId, line.SkuSnapshot, line.ProductNameSnapshot,
                     line.Quantity, line.UnitPrice, line.DiscountPercent, line.LineSubtotal!.Value,
                     line.DiscountAmount!.Value, line.LineTotal!.Value))
                 .ToArrayAsync(cancellationToken);
-            var entity = header.Order;
-            SalesOrderDto result = new(entity.Id, entity.OrderNumber, entity.SourceQuoteId, entity.CustomerId,
-                entity.ShippingAddressId, (Domain.Sales.SalesOrderStatus)entity.StatusId, entity.RequestedShipDate,
-                entity.CarrierId, header.CarrierName, entity.TrackingNumber,
-                entity.CustomerAccountNumberSnapshot!, entity.CustomerNameSnapshot!, entity.CustomerEmailSnapshot!,
-                entity.CustomerPhoneSnapshot, entity.ShippingLabelSnapshot!, entity.ShippingLine1Snapshot!,
-                entity.ShippingLine2Snapshot, entity.ShippingCitySnapshot!, entity.ShippingStateSnapshot,
-                entity.ShippingPostalCodeSnapshot!, entity.ShippingCountrySnapshot!, entity.ShippingAddressTypeCodeSnapshot!,
-                lines, header.Subtotal ?? 0m, header.DiscountTotal ?? 0m, header.GrandTotal ?? 0m, entity.CreatedByUserId,
-                entity.CreationDate, entity.ModifiedByUserId, entity.ModificationDate,
-                SalesRequestValidator.EncodeVersion(entity.RowVersion));
+            SalesOrderDto result = new(header.Id, header.OrderNumber, header.SourceQuoteId, header.CustomerId,
+                header.ShippingAddressId, (BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus)header.StatusId, header.RequestedShipDate,
+                header.CarrierId, header.CarrierName, header.TrackingNumber,
+                header.CustomerAccountNumberSnapshot!, header.CustomerNameSnapshot!, header.CustomerEmailSnapshot!,
+                header.CustomerPhoneSnapshot, header.ShippingLabelSnapshot!, header.ShippingLine1Snapshot!,
+                header.ShippingLine2Snapshot, header.ShippingCitySnapshot!, header.ShippingStateSnapshot,
+                header.ShippingPostalCodeSnapshot!, header.ShippingCountrySnapshot!, header.ShippingAddressTypeCodeSnapshot!,
+                lines, header.Subtotal ?? 0m, header.DiscountTotal ?? 0m, header.GrandTotal ?? 0m, header.CreatedByUserId,
+                header.CreationDate, header.ModifiedByUserId, header.ModificationDate,
+                VersionTokenCodec.Encode(header.RowVersion));
             if (transaction is not null)
                 await transaction.CommitAsync(cancellationToken);
             return result;

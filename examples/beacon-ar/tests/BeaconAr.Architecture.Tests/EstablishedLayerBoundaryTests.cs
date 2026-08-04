@@ -46,7 +46,7 @@ public sealed class EstablishedLayerBoundaryTests
     public void ProjectReferencesFollowTheInwardDependencyGraph()
     {
         var root = FindExampleRoot();
-        AssertReferences(root, "BeaconAr.Domain", "BeaconAr.Interfaces");
+        AssertReferences(root, "BeaconAr.Domain", "BeaconAr.Interfaces", "BeaconAr.InterfaceGenerator");
         AssertReferences(root, "BeaconAr.Data", "BeaconAr.Domain");
         AssertReferences(root, "BeaconAr.Providers", "BeaconAr.Data");
         AssertReferences(root, "BeaconAr.WebApi", "BeaconAr.Data", "BeaconAr.Domain", "BeaconAr.Providers", "BeaconAr.ServiceDefaults");
@@ -69,7 +69,7 @@ public sealed class EstablishedLayerBoundaryTests
         var root = FindExampleRoot();
         var contextTemplate = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.Data", "CodeTemplates", "EFCore", "DbContext.t4"));
         var entityTemplate = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.Data", "CodeTemplates", "EFCore", "EntityType.t4"));
-        var interfaceGenerator = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.Interfaces", "EntityInterfaceGenerator.cs"));
+        var interfaceGenerator = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.InterfaceGenerator", "EntityInterfaceGenerator.cs"));
         var provenance = File.ReadAllText(Path.Combine(root, "src", "BeaconAr.Data", "CodeTemplates", "EFCore", "PROVENANCE.md"));
 
         StringAssert.Contains(contextTemplate, "Model.GetEntityTypes()");
@@ -573,6 +573,7 @@ public sealed class EstablishedLayerBoundaryTests
             ["src/BeaconAr.AppHost/BeaconAr.AppHost.csproj"] = "/03.Hosts/",
             ["src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj"] = "/04.Tools/",
             ["src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj"] = "/04.Tools/",
+            ["src/BeaconAr.InterfaceGenerator/BeaconAr.InterfaceGenerator.csproj"] = "/04.Tools/",
             ["tests/BeaconAr.Domain.Tests/BeaconAr.Domain.Tests.csproj"] = "/05.Tests/",
             ["tests/BeaconAr.Architecture.Tests/BeaconAr.Architecture.Tests.csproj"] = "/05.Tests/",
             ["tests/BeaconAr.Database.IntegrationTests/BeaconAr.Database.IntegrationTests.csproj"] = "/05.Tests/",

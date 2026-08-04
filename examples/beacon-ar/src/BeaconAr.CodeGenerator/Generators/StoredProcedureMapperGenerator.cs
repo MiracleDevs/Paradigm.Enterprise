@@ -213,6 +213,7 @@ internal partial class {mapperClassName} : DataReaderMapperBase
             var t when t == typeof(decimal) => "GetDecimal",
             var t when t == typeof(byte) => "GetByte",
             var t when t == typeof(byte[]) => "GetBytes",
+            var t when t == typeof(DateOnly) => "GetDateTime",
             var t when t == typeof(string[]) => "GetArray<string>",
             var t when t == typeof(int[]) => "GetArray<int>",
             _ => null
@@ -221,7 +222,10 @@ internal partial class {mapperClassName} : DataReaderMapperBase
         if (getValueMethod is null)
             throw new InvalidOperationException($"Couldn't resolve property assignment for type {propertyType.Name}");
 
-        var propertyAssignment = $"instance.{propertyName} = {getValueMethod}(reader, nameof({targetTypeName}.{propertyName}));";
+        var mappedValue = propertyType == typeof(DateOnly)
+            ? $"DateOnly.FromDateTime({getValueMethod}(reader, nameof({targetTypeName}.{propertyName})))"
+            : $"{getValueMethod}(reader, nameof({targetTypeName}.{propertyName}))";
+        var propertyAssignment = $"instance.{propertyName} = {mappedValue};";
         propertyAssignments.AppendLine($"        if (FieldIsValid(reader, nameof({targetTypeName}.{propertyName}))) {propertyAssignment}");
     }
 

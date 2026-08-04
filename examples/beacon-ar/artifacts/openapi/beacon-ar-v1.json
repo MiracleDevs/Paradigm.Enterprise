@@ -4304,12 +4304,12 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuoteSummaryDtoPageResult"
+                  "$ref": "#/components/schemas/QuoteViewPageResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuoteSummaryDtoPageResult"
+                  "$ref": "#/components/schemas/QuoteViewPageResult"
                 },
                 "example": {
                   "items": [ ],
@@ -4321,7 +4321,7 @@
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuoteSummaryDtoPageResult"
+                  "$ref": "#/components/schemas/QuoteViewPageResult"
                 }
               }
             }
@@ -5985,12 +5985,12 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/SalesOrderSummaryDtoPageResult"
+                  "$ref": "#/components/schemas/SalesOrderViewPageResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SalesOrderSummaryDtoPageResult"
+                  "$ref": "#/components/schemas/SalesOrderViewPageResult"
                 },
                 "example": {
                   "items": [ ],
@@ -6002,7 +6002,7 @@
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SalesOrderSummaryDtoPageResult"
+                  "$ref": "#/components/schemas/SalesOrderViewPageResult"
                 }
               }
             }
@@ -8842,145 +8842,6 @@
           "status": "sent"
         }
       },
-      "QuoteSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "quoteNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerId": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "customerAccountNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerName": {
-            "type": "string",
-            "nullable": true
-          },
-          "quoteDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "validUntil": {
-            "type": "string",
-            "format": "date"
-          },
-          "status": {
-            "$ref": "#/components/schemas/QuoteStatus"
-          },
-          "subtotal": {
-            "multipleOf": 0.01,
-            "maximum": 99999999999999999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "decimal"
-          },
-          "discountTotal": {
-            "multipleOf": 0.01,
-            "maximum": 99999999999999999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "decimal"
-          },
-          "grandTotal": {
-            "multipleOf": 0.01,
-            "maximum": 99999999999999999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "decimal"
-          },
-          "salesOrderId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "createdByUserId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "creationDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedByUserId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "modificationDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "example": {
-          "id": 91,
-          "quoteNumber": "Q-2026-000091",
-          "customerId": 42,
-          "customerAccountNumber": "ACME-001",
-          "customerName": "Acme Distribution",
-          "quoteDate": "2026-08-01",
-          "validUntil": "2026-08-31",
-          "status": "sent",
-          "subtotal": 99.90,
-          "discountTotal": 5.00,
-          "grandTotal": 94.90,
-          "salesOrderId": null,
-          "createdByUserId": 42,
-          "creationDate": "2026-08-01T15:30:00Z",
-          "modifiedByUserId": null,
-          "modificationDate": null,
-          "version": "AQIDBAUGBwg="
-        }
-      },
-      "QuoteSummaryDtoPageResult": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/QuoteSummaryDto"
-            },
-            "nullable": true
-          },
-          "pageNumber": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "maximum": 100,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "itemsCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
       "QuoteUpdateRequest": {
         "required": [
           "customerId",
@@ -9039,6 +8900,276 @@
             }
           ]
         }
+      },
+      "QuoteView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "quoteNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerId": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerAccountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerIsActive": {
+            "type": "boolean"
+          },
+          "shippingAddressId": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "shippingAddressLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressLine1": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressLine2": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressState": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressPostalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressCountry": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressTypeDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "quoteDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date"
+          },
+          "statusId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "maxLength": 1000,
+            "type": "string",
+            "nullable": true
+          },
+          "customerAccountNumberSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerNameSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerEmailSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhoneSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingLabelSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingLine1Snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingLine2Snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingCitySnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingStateSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingPostalCodeSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingCountrySnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressTypeCodeSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtotal": {
+            "multipleOf": 0.01,
+            "maximum": 99999999999999999.99,
+            "minimum": 0,
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "discountTotal": {
+            "multipleOf": 0.01,
+            "maximum": 99999999999999999.99,
+            "minimum": 0,
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "grandTotal": {
+            "multipleOf": 0.01,
+            "maximum": 99999999999999999.99,
+            "minimum": 0,
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "salesOrderId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "createdByUserDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedByUserId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "modifiedByUserDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "modificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "deletionDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "deletedByUserId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "deletedByUserDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "id": 91,
+          "quoteNumber": "Q-2026-000091",
+          "customerId": 42,
+          "customerAccountNumber": "ACME-001",
+          "customerName": "Acme Distribution",
+          "quoteDate": "2026-08-01",
+          "validUntil": "2026-08-31",
+          "statusId": 2,
+          "statusCode": "sent",
+          "statusDisplayName": "Sent",
+          "subtotal": 99.90,
+          "discountTotal": 5.00,
+          "grandTotal": 94.90,
+          "salesOrderId": null,
+          "creationDate": "2026-08-01T15:30:00Z",
+          "rowVersion": "AQIDBAUGBwg="
+        }
+      },
+      "QuoteViewPageResult": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteView"
+            },
+            "nullable": true
+          },
+          "pageNumber": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemsCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "SalesLineDto": {
         "type": "object",
@@ -9452,158 +9583,6 @@
           "trackingNumber": "1Z999AA10123456784"
         }
       },
-      "SalesOrderSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "orderNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceQuoteId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "customerId": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "customerAccountNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerName": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/SalesOrderStatus"
-          },
-          "requestedShipDate": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "carrierId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "carrierName": {
-            "type": "string",
-            "nullable": true
-          },
-          "trackingNumber": {
-            "maxLength": 200,
-            "type": "string",
-            "nullable": true
-          },
-          "subtotal": {
-            "multipleOf": 0.01,
-            "maximum": 99999999999999999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "decimal"
-          },
-          "discountTotal": {
-            "multipleOf": 0.01,
-            "maximum": 99999999999999999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "decimal"
-          },
-          "grandTotal": {
-            "multipleOf": 0.01,
-            "maximum": 99999999999999999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "decimal"
-          },
-          "createdByUserId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "creationDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "modifiedByUserId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "modificationDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "example": {
-          "id": 101,
-          "orderNumber": "SO-2026-000101",
-          "sourceQuoteId": 91,
-          "customerId": 42,
-          "customerAccountNumber": "ACME-001",
-          "customerName": "Acme Distribution",
-          "status": "draft",
-          "requestedShipDate": "2026-08-15",
-          "carrierId": 3,
-          "carrierName": "United Parcel Service",
-          "trackingNumber": "1Z999AA10123456784",
-          "subtotal": 99.90,
-          "discountTotal": 5.00,
-          "grandTotal": 94.90,
-          "createdByUserId": 42,
-          "creationDate": "2026-08-01T15:30:00Z",
-          "modifiedByUserId": null,
-          "modificationDate": null,
-          "version": "AQIDBAUGBwg="
-        }
-      },
-      "SalesOrderSummaryDtoPageResult": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SalesOrderSummaryDto"
-            },
-            "nullable": true
-          },
-          "pageNumber": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "maximum": 100,
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "itemsCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
       "SalesOrderUpdateRequest": {
         "required": [
           "customerId",
@@ -9662,6 +9641,296 @@
             }
           ]
         }
+      },
+      "SalesOrderView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "orderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceQuoteId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sourceQuoteNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerId": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "customerAccountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerIsActive": {
+            "type": "boolean"
+          },
+          "shippingAddressId": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "shippingAddressLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressLine1": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressLine2": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressCity": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressState": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressPostalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressCountry": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressTypeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressTypeDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "statusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestedShipDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "carrierId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "carrierCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "carrierName": {
+            "type": "string",
+            "nullable": true
+          },
+          "carrierServiceLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "trackingNumber": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "customerAccountNumberSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerNameSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerEmailSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhoneSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingLabelSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingLine1Snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingLine2Snapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingCitySnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingStateSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingPostalCodeSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingCountrySnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressTypeCodeSnapshot": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtotal": {
+            "multipleOf": 0.01,
+            "maximum": 99999999999999999.99,
+            "minimum": 0,
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "discountTotal": {
+            "multipleOf": 0.01,
+            "maximum": 99999999999999999.99,
+            "minimum": 0,
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "grandTotal": {
+            "multipleOf": 0.01,
+            "maximum": 99999999999999999.99,
+            "minimum": 0,
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "createdByUserDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modifiedByUserId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "modifiedByUserDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "modificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "deletionDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "deletedByUserId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "deletedByUserDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "rowVersion": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "id": 101,
+          "orderNumber": "SO-2026-000101",
+          "sourceQuoteId": 91,
+          "customerId": 42,
+          "customerAccountNumber": "ACME-001",
+          "customerName": "Acme Distribution",
+          "statusId": 1,
+          "statusCode": "draft",
+          "statusDisplayName": "Draft",
+          "requestedShipDate": "2026-08-15",
+          "carrierId": 3,
+          "carrierName": "United Parcel Service",
+          "trackingNumber": "1Z999AA10123456784",
+          "subtotal": 99.90,
+          "discountTotal": 5.00,
+          "grandTotal": 94.90,
+          "creationDate": "2026-08-01T15:30:00Z",
+          "rowVersion": "AQIDBAUGBwg="
+        }
+      },
+      "SalesOrderViewPageResult": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesOrderView"
+            },
+            "nullable": true
+          },
+          "pageNumber": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "itemsCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "SortDirection": {
         "enum": [

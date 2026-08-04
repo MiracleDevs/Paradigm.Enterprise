@@ -4,6 +4,9 @@ using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.Operations.Contracts;
 using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.Domain.Sales.Entities;
+using QuoteStatus = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
+using SalesOrderStatus = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
 using BeaconAr.WebApi.Endpoints;
 using Microsoft.AspNetCore.Mvc;
 using BeaconAr.WebApi.Serialization;
@@ -17,8 +20,8 @@ namespace BeaconAr.WebApi;
     Converters = [
         typeof(CamelCaseStringEnumConverter<SortDirection>),
         typeof(CamelCaseStringEnumConverter<AddressUsage>),
-        typeof(CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.QuoteStatus>),
-        typeof(CamelCaseStringEnumConverter<BeaconAr.Domain.Sales.SalesOrderStatus>),
+        typeof(CamelCaseStringEnumConverter<QuoteStatus>),
+        typeof(CamelCaseStringEnumConverter<SalesOrderStatus>),
         typeof(UtcDateTimeOffsetJsonConverter)],
     GenerationMode = JsonSourceGenerationMode.Metadata)]
 [JsonSerializable(typeof(CurrentUserDto))]
@@ -46,17 +49,17 @@ namespace BeaconAr.WebApi;
 [JsonSerializable(typeof(QuoteCreateRequest))]
 [JsonSerializable(typeof(QuoteUpdateRequest))]
 [JsonSerializable(typeof(QuoteDto))]
-[JsonSerializable(typeof(QuoteSummaryDto))]
+[JsonSerializable(typeof(QuoteView))]
 [JsonSerializable(typeof(QuoteSearchRequest))]
 [JsonSerializable(typeof(QuoteStatusTransitionRequest))]
-[JsonSerializable(typeof(PageResult<QuoteSummaryDto>))]
+[JsonSerializable(typeof(PageResult<QuoteView>))]
 [JsonSerializable(typeof(SalesOrderCreateRequest))]
 [JsonSerializable(typeof(SalesOrderUpdateRequest))]
 [JsonSerializable(typeof(SalesOrderDto))]
-[JsonSerializable(typeof(SalesOrderSummaryDto))]
+[JsonSerializable(typeof(SalesOrderView))]
 [JsonSerializable(typeof(SalesOrderSearchRequest))]
 [JsonSerializable(typeof(SalesOrderStatusTransitionRequest))]
-[JsonSerializable(typeof(PageResult<SalesOrderSummaryDto>))]
+[JsonSerializable(typeof(PageResult<SalesOrderView>))]
 [JsonSerializable(typeof(SalesLineRequest))]
 [JsonSerializable(typeof(SalesLineDto))]
 [JsonSerializable(typeof(ProblemDetails))]

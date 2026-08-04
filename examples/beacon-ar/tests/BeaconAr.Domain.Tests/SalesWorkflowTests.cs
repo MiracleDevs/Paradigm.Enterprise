@@ -5,9 +5,10 @@ using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
-using BeaconAr.Domain.Sales.Validation;
-using OrderState = BeaconAr.Domain.Sales.SalesOrderStatus;
-using QuoteState = BeaconAr.Domain.Sales.QuoteStatus;
+using BeaconAr.Domain.Operations;
+using OrderState = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
+using QuoteState = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
+using Paradigm.Enterprise.Domain.Exceptions;
 
 namespace BeaconAr.Domain.Tests;
 
@@ -41,12 +42,16 @@ public sealed class SalesWorkflowTests
             Quote.CreateDraft("Q-00000001", request, Customer(), Address(), Products(), 1, DateTimeOffset.UnixEpoch));
         Assert.IsTrue(dates.Errors.ContainsKey("validUntil"));
 
+        Assert.Throws<DomainException>(() =>
+            Quote.CreateDraft("Q-00000001", QuoteRequest() with
+            {
+                Lines = [new(1, 1, 1.12345m, 0)],
+            }, Customer(), Address(), Products(), 1, DateTimeOffset.UnixEpoch));
         SalesValidationException lines = Assert.Throws<SalesValidationException>(() =>
             Quote.CreateDraft("Q-00000001", QuoteRequest() with
             {
-                Lines = [new(1, 1, 1.12345m, 0), new(1, 1, 1m, 0)],
+                Lines = [new(1, 1, 1m, 0), new(1, 1, 1m, 0)],
             }, Customer(), Address(), Products(), 1, DateTimeOffset.UnixEpoch));
-        Assert.IsTrue(lines.Errors.ContainsKey("lines.0.unitPrice"));
         Assert.IsTrue(lines.Errors.ContainsKey("lines.1.productId"));
     }
 
@@ -58,10 +63,63 @@ public sealed class SalesWorkflowTests
             [new SalesLineRequest(1, 2, 10m, 0)]);
         Dictionary<int, ProductSalesReference> inactive = new() { [1] = new(1, "NEW", "Changed", false) };
 
-        Assert.Throws<SalesValidationException>(() => quote.PrepareReplacement(invalid, Customer(), Address(), inactive));
+        Assert.Throws<SalesValidationException>(() => quote.Replace(invalid, Customer(), Address(), inactive, 8,
+            DateTimeOffset.UnixEpoch.AddMinutes(1)));
         Assert.IsNull(quote.Notes);
         Assert.AreEqual(1, quote.QuoteLines.Single().Quantity);
         Assert.IsNull(quote.ModificationDate);
+    }
+
+    [TestMethod]
+    public void QuoteReplacementRejectsInvalidNotesAndNonDraftStateWithoutAnyMutation()
+    {
+        Quote quote = CreateQuote();
+        string draft = Snapshot(quote);
+        var invalidNotes = new QuoteUpdateRequest(2, 20, new DateOnly(2025, 1, 2),
+            new DateOnly(2025, 3, 1), new string('x', 1001), [new SalesLineRequest(1, 2, 11m, 1)]);
+
+        Assert.Throws<SalesValidationException>(() => quote.Replace(invalidNotes, OtherCustomer(), OtherAddress(),
+            Products(), 8, DateTimeOffset.UnixEpoch.AddMinutes(1)));
+        Assert.AreEqual(draft, Snapshot(quote));
+
+        quote.TransitionTo(QuoteState.Sent, 8, DateTimeOffset.UnixEpoch.AddMinutes(1));
+        string sent = Snapshot(quote);
+        var valid = invalidNotes with { Notes = "changed" };
+        Assert.Throws<SalesException>(() => quote.Replace(valid, OtherCustomer(), OtherAddress(), Products(), 9,
+            DateTimeOffset.UnixEpoch.AddMinutes(2)));
+        Assert.AreEqual(sent, Snapshot(quote));
+    }
+
+    [TestMethod]
+    public void SalesOrderReplacementRejectsInvalidTrackingAndNonDraftStateWithoutAnyMutation()
+    {
+        SalesOrder order = CreateOrder();
+        string draft = Snapshot(order);
+        var invalidTracking = new SalesOrderUpdateRequest(2, 20, new DateOnly(2025, 1, 5), 3,
+            new string('x', 201), [new SalesLineRequest(1, 2, 11m, 1)]);
+        var carrier = new CarrierSalesReference(3, "Carrier", true);
+
+        Assert.Throws<SalesValidationException>(() => order.Replace(invalidTracking, OtherCustomer(), OtherAddress(),
+            Products(), carrier, 8, DateTimeOffset.UnixEpoch.AddMinutes(1)));
+        Assert.AreEqual(draft, Snapshot(order));
+
+        order.TransitionTo(new(OrderState.Confirmed), null, 8, DateTimeOffset.UnixEpoch.AddMinutes(1));
+        string confirmed = Snapshot(order);
+        var valid = invalidTracking with { TrackingNumber = "TRACK" };
+        Assert.Throws<SalesException>(() => order.Replace(valid, OtherCustomer(), OtherAddress(), Products(), carrier,
+            9, DateTimeOffset.UnixEpoch.AddMinutes(2)));
+        Assert.AreEqual(confirmed, Snapshot(order));
+    }
+
+    [TestMethod]
+    public void SalesAggregatesExposeOnlyOneReplacementOperation()
+    {
+        Assert.IsNotNull(typeof(Quote).GetMethod(nameof(Quote.Replace)));
+        Assert.IsNull(typeof(Quote).GetMethod("PrepareReplacement"));
+        Assert.IsNull(typeof(Quote).GetMethod("ApplyReplacement"));
+        Assert.IsNotNull(typeof(SalesOrder).GetMethod(nameof(SalesOrder.Replace)));
+        Assert.IsNull(typeof(SalesOrder).GetMethod("PrepareReplacement"));
+        Assert.IsNull(typeof(SalesOrder).GetMethod("ApplyReplacement"));
     }
 
     [TestMethod]
@@ -72,7 +130,8 @@ public sealed class SalesWorkflowTests
             [new SalesLineRequest(1, 1, 10m, 0)]);
         Dictionary<int, ProductSalesReference> inactive = new() { [1] = new(1, "NEW", "Changed", false) };
 
-        QuoteLine line = quote.PrepareReplacement(request, Customer(), Address(), inactive).Single();
+        QuoteLine line = quote.Replace(request, Customer(), Address(), inactive, 8,
+            DateTimeOffset.UnixEpoch.AddMinutes(1)).Single();
 
         Assert.AreEqual("SKU", line.SkuSnapshot);
         Assert.AreEqual("Product", line.ProductNameSnapshot);
@@ -89,8 +148,10 @@ public sealed class SalesWorkflowTests
         SalesOrderUpdateRequest orderRequest = new(1, 10, null, null, null,
             [new SalesLineRequest(1, 2, 10m, 0)]);
 
-        QuoteLine quoteLine = quote.PrepareReplacement(quoteRequest, Customer(), Address(), renamed).Single();
-        SalesOrderLine orderLine = order.PrepareReplacement(orderRequest, Customer(), Address(), renamed, null).Single();
+        QuoteLine quoteLine = quote.Replace(quoteRequest, Customer(), Address(), renamed, 8,
+            DateTimeOffset.UnixEpoch.AddMinutes(1)).Single();
+        SalesOrderLine orderLine = order.Replace(orderRequest, Customer(), Address(), renamed, null, 8,
+            DateTimeOffset.UnixEpoch.AddMinutes(1)).Single();
 
         Assert.AreEqual("SKU", quoteLine.SkuSnapshot);
         Assert.AreEqual("Product", quoteLine.ProductNameSnapshot);
@@ -113,14 +174,14 @@ public sealed class SalesWorkflowTests
         Dictionary<int, ProductSalesReference> products = Products();
         products.Add(2, new ProductSalesReference(2, "SKU-2", "Second product", true));
 
-        SalesValidationException quoteError = Assert.Throws<SalesValidationException>(() =>
+        DomainException quoteError = Assert.Throws<DomainException>(() =>
             Quote.CreateDraft("Q-00000002", quoteRequest, Customer(), Address(), products, 1, DateTimeOffset.UnixEpoch));
-        SalesValidationException orderError = Assert.Throws<SalesValidationException>(() =>
+        DomainException orderError = Assert.Throws<DomainException>(() =>
             SalesOrder.CreateDirectDraft("SO-00000002", new SalesOrderCreateRequest(1, 10, null, null, null, quoteRequest.Lines),
                 Customer(), Address(), products, null, 1, DateTimeOffset.UnixEpoch));
 
-        Assert.IsTrue(quoteError.Errors.ContainsKey("lines"));
-        Assert.IsTrue(orderError.Errors.ContainsKey("lines"));
+        StringAssert.Contains(quoteError.Message, "too large");
+        StringAssert.Contains(orderError.Message, "too large");
     }
 
     [TestMethod]
@@ -186,12 +247,12 @@ public sealed class SalesWorkflowTests
     public void SearchAndVersionValidationRejectUnsafeInputs()
     {
         SalesValidationException search = Assert.Throws<SalesValidationException>(() =>
-            SalesRequestValidator.Validate(new QuoteSearchRequest(PageNumber: 0, PageSize: 101, SortField: "DROP")));
+            new QuoteSearchRequest(PageNumber: 0, PageSize: 101, SortField: "DROP").Validate());
         Assert.IsTrue(search.Errors.ContainsKey("pageNumber"));
         Assert.IsTrue(search.Errors.ContainsKey("pageSize"));
         Assert.IsTrue(search.Errors.ContainsKey("sortField"));
-        Assert.Throws<SalesValidationException>(() => SalesRequestValidator.ValidateVersion("AQID"));
-        SalesRequestValidator.ValidateVersion(Convert.ToBase64String(new byte[8]));
+        Assert.Throws<VersionTokenException>(() => VersionTokenCodec.Decode("AQID"));
+        _ = VersionTokenCodec.Decode(Convert.ToBase64String(new byte[8]));
     }
 
     [TestMethod]
@@ -225,6 +286,37 @@ public sealed class SalesWorkflowTests
 
     private static Dictionary<int, ProductSalesReference> Products() =>
         new() { [1] = new(1, "SKU", "Product", true) };
+
+    private static CustomerSalesReference OtherCustomer() =>
+        new(2, "OTHER", "Other customer", "other@example.test", "555", true);
+
+    private static AddressSalesReference OtherAddress() =>
+        new(20, 2, "shipping", "Other dock", "2 Street", "Suite", "Other city", "State", "2000", "US");
+
+    private static string Snapshot(Quote quote) => string.Join('\u001f',
+        quote.QuoteNumber, quote.CustomerId, quote.ShippingAddressId, quote.QuoteDate, quote.ValidUntil, quote.StatusId,
+        quote.Notes, quote.CustomerAccountNumberSnapshot, quote.CustomerNameSnapshot, quote.CustomerEmailSnapshot,
+        quote.CustomerPhoneSnapshot, quote.ShippingLabelSnapshot, quote.ShippingLine1Snapshot,
+        quote.ShippingLine2Snapshot, quote.ShippingCitySnapshot, quote.ShippingStateSnapshot,
+        quote.ShippingPostalCodeSnapshot, quote.ShippingCountrySnapshot, quote.ShippingAddressTypeCodeSnapshot,
+        quote.CreatedByUserId, quote.CreationDate, quote.ModifiedByUserId, quote.ModificationDate,
+        quote.DeletedByUserId, quote.DeletionDate, Convert.ToBase64String(quote.RowVersion ?? []),
+        string.Join('|', quote.QuoteLines.OrderBy(line => line.Id).Select(line => string.Join(':', line.Id,
+            line.QuoteId, line.ProductId, line.SkuSnapshot, line.ProductNameSnapshot, line.Quantity, line.UnitPrice,
+            line.DiscountPercent, line.LineSubtotal, line.DiscountAmount, line.LineTotal))));
+
+    private static string Snapshot(SalesOrder order) => string.Join('\u001f',
+        order.OrderNumber, order.SourceQuoteId, order.CustomerId, order.ShippingAddressId, order.StatusId,
+        order.RequestedShipDate, order.CarrierId, order.TrackingNumber, order.CustomerAccountNumberSnapshot,
+        order.CustomerNameSnapshot, order.CustomerEmailSnapshot, order.CustomerPhoneSnapshot,
+        order.ShippingLabelSnapshot, order.ShippingLine1Snapshot, order.ShippingLine2Snapshot,
+        order.ShippingCitySnapshot, order.ShippingStateSnapshot, order.ShippingPostalCodeSnapshot,
+        order.ShippingCountrySnapshot, order.ShippingAddressTypeCodeSnapshot, order.CreatedByUserId,
+        order.CreationDate, order.ModifiedByUserId, order.ModificationDate, order.DeletedByUserId,
+        order.DeletionDate, Convert.ToBase64String(order.RowVersion ?? []),
+        string.Join('|', order.SalesOrderLines.OrderBy(line => line.Id).Select(line => string.Join(':', line.Id,
+            line.SalesOrderId, line.ProductId, line.SkuSnapshot, line.ProductNameSnapshot, line.Quantity,
+            line.UnitPrice, line.DiscountPercent, line.LineSubtotal, line.DiscountAmount, line.LineTotal))));
 
     #endregion
 }

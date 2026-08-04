@@ -7,9 +7,8 @@ using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
-using BeaconAr.Domain.Sales.Validation;
 using Paradigm.Enterprise.Domain.Uow;
-using QuoteState = BeaconAr.Domain.Sales.QuoteStatus;
+using QuoteState = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
 
 namespace BeaconAr.Providers.Sales;
 
@@ -42,9 +41,9 @@ public sealed class QuoteProvider : IQuoteProvider
 
     #region Public Methods
 
-    public Task<PageResult<QuoteSummaryDto>> SearchAsync(QuoteSearchRequest request, CancellationToken cancellationToken)
+    public Task<PageResult<QuoteView>> SearchAsync(QuoteSearchRequest request, CancellationToken cancellationToken)
     {
-        SalesRequestValidator.Validate(request);
+        request.Validate();
         return _views.SearchAsync(request, cancellationToken);
     }
 
@@ -54,7 +53,6 @@ public sealed class QuoteProvider : IQuoteProvider
     public async Task<QuoteDto> CreateAsync(QuoteCreateRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        SalesRequestValidator.Validate(request);
         int id = await _workflow.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _workflow.UtcNow;
@@ -82,17 +80,15 @@ public sealed class QuoteProvider : IQuoteProvider
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        SalesRequestValidator.Validate(request);
-        SalesRequestValidator.ValidateVersion(expectedVersion);
+        _ = VersionTokenCodec.Decode(expectedVersion);
         await _workflow.ExecuteAsync(async () =>
         {
             Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");
             SalesWorkflowCoordinator.EnsureVersion(quote.RowVersion, expectedVersion);
             var (customer, address, products) = await ResolveReferencesAsync(
                 request.CustomerId, request.ShippingAddressId, request.Lines, cancellationToken);
-            IReadOnlyList<QuoteLine> lines = quote.PrepareReplacement(request, customer, address, products);
             DateTimeOffset now = _workflow.UtcNow;
-            quote.ApplyReplacement(request, customer, address, _workflow.UserId, now);
+            IReadOnlyList<QuoteLine> lines = quote.Replace(request, customer, address, products, _workflow.UserId, now);
             _quotes.ReplaceLines(quote, lines);
             _workflow.AddAudit("quote", quote.Id, "updated", now, metadataJson: "{\"changedFields\":[\"header\",\"lines\"]}");
             await _workflow.UnitOfWork.CommitChangesAsync();
@@ -103,7 +99,7 @@ public sealed class QuoteProvider : IQuoteProvider
 
     public Task DeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
     {
-        SalesRequestValidator.ValidateVersion(expectedVersion);
+        _ = VersionTokenCodec.Decode(expectedVersion);
         return DeleteCoreAsync(id, expectedVersion, cancellationToken);
     }
 
@@ -114,9 +110,7 @@ public sealed class QuoteProvider : IQuoteProvider
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        SalesRequestValidator.ValidateVersion(expectedVersion);
-        if (!Enum.IsDefined(request.Status))
-            throw SalesWorkflowCoordinator.InvalidReference("status", "Status is invalid.");
+        _ = VersionTokenCodec.Decode(expectedVersion);
         await _workflow.ExecuteAsync(async () =>
         {
             Quote quote = await _quotes.GetForUpdateAsync(id, cancellationToken) ?? throw SalesWorkflowCoordinator.NotFound("quote");

@@ -5,7 +5,7 @@ using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Domain.Operations.Entities;
 using Paradigm.Enterprise.Domain.Uow;
-using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
+using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
@@ -93,16 +93,10 @@ public sealed class MasterDataMutationCoordinator
     public void AddAudit(string resourceType, int resourceId, string action, string? metadataJson = null,
         DateTimeOffset? recordedAt = null)
     {
-        _auditLogs.Add(new AuditLog
-        {
-            ResourceType = resourceType,
-            ResourceId = resourceId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            Action = action,
-            UserId = _operationContext.UserId,
-            RecordedAt = recordedAt ?? _timeProvider.GetUtcNow(),
-            CorrelationId = _operationContext.CorrelationId,
-            MetadataJson = metadataJson,
-        });
+        _auditLogs.Add(AuditLog.Create(resourceType,
+            resourceId.ToString(System.Globalization.CultureInfo.InvariantCulture), action,
+            _operationContext.UserId, recordedAt ?? _timeProvider.GetUtcNow(),
+            _operationContext.CorrelationId, metadataJson: metadataJson));
     }
 
     public static MasterDataException NotFound(string resourceName) =>

@@ -33,12 +33,7 @@ BEGIN
       AND (@StatusId IS NULL OR [Q].[StatusId] = @StatusId)
       AND (@CustomerId IS NULL OR [Q].[CustomerId] = @CustomerId);
 
-    SELECT [Q].[Id], [Q].[QuoteNumber], [Q].[CustomerId],
-           [Q].[CustomerAccountNumberSnapshot], [Q].[CustomerNameSnapshot],
-           [Q].[QuoteDate], [Q].[ValidUntil], [Q].[StatusId],
-           [Q].[Subtotal], [Q].[DiscountTotal], [Q].[GrandTotal],
-           [Q].[SalesOrderId], [Q].[CreatedByUserId], [Q].[CreationDate],
-           [Q].[ModifiedByUserId], [Q].[ModificationDate], [Q].[RowVersion]
+    SELECT [Q].*
     FROM [dbo].[QuoteView] AS [Q]
     WHERE [Q].[DeletionDate] IS NULL
       AND (@Search IS NULL OR [Q].[QuoteNumber] LIKE N'%' + @SearchPattern + N'%' ESCAPE N'\'

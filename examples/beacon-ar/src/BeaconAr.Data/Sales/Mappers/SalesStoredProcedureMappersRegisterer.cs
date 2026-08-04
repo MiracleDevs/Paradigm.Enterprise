@@ -18,8 +18,8 @@ public static class SalesStoredProcedureMappersRegisterer
         DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.CarrierSalesReferenceRow>(() => new DataReaders.CarrierSalesReferenceRowDataReaderMapper());
         DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.CustomerSalesReferenceRow>(() => new DataReaders.CustomerSalesReferenceRowDataReaderMapper());
         DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.ProductSalesReferenceRow>(() => new DataReaders.ProductSalesReferenceRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.QuoteSearchRow>(() => new DataReaders.QuoteSearchRowDataReaderMapper());
-        DataReaderMapperFactory.RegisterMapper<Data.Sales.StoredProcedures.SalesOrderSearchRow>(() => new DataReaders.SalesOrderSearchRowDataReaderMapper());
+        DataReaderMapperFactory.RegisterMapper<Domain.Sales.Entities.QuoteView>(() => new DataReaders.QuoteViewDataReaderMapper());
+        DataReaderMapperFactory.RegisterMapper<Domain.Sales.Entities.SalesOrderView>(() => new DataReaders.SalesOrderViewDataReaderMapper());
 
     }
 

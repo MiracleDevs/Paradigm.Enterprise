@@ -31,7 +31,7 @@ Constructor-inject stable application collaborators. `ProviderBase` supplies onl
 
 - Coordinate repositories, domain behavior, identity/policy checks, mapping, and infrastructure adapters.
 - Put intrinsic invariants in Domain; put EF/query mechanics in repositories.
-- When a generated database view is the reviewed read/API contract, return that canonical view from the provider and remove transitional parallel DTOs, `ToDto` helpers, and compatibility methods. Keep a second transport model only for a named external compatibility contract with tests and a documented removal trigger.
+- When a generated database view is the reviewed read/API contract, return that canonical view from the provider and remove transitional parallel DTOs, result rows, `ToDto` helpers, and compatibility methods. Keep a second transport model only for a named external compatibility contract with tests, a documented removal trigger, and mapping sourced from canonical views rather than persistence entities or a parallel query shape.
 - Use lifecycle hooks for checks that belong around generic edit behavior.
 - Treat a typed provider interface as an executable contract, not an inheritance marker. Before exposing
   `IEditProvider<TView, TId>`, exercise every single and bulk add, update, save, delete, get, and search

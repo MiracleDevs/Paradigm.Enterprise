@@ -5,7 +5,6 @@ using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Domain.Operations.Entities;
 using BeaconAr.Domain.Sales.Application;
-using BeaconAr.Domain.Sales.Validation;
 using Paradigm.Enterprise.Domain.Uow;
 
 namespace BeaconAr.Providers.Sales;
@@ -90,7 +89,7 @@ public sealed class SalesWorkflowCoordinator
 
     internal static void EnsureVersion(byte[] currentVersion, string expectedVersion)
     {
-        byte[] expected = SalesRequestValidator.DecodeVersion(expectedVersion);
+        byte[] expected = VersionTokenCodec.Decode(expectedVersion);
         if (!CryptographicOperations.FixedTimeEquals(currentVersion, expected))
             throw new SalesException("concurrency_conflict", "The record was changed by another user.");
     }
@@ -104,18 +103,10 @@ public sealed class SalesWorkflowCoordinator
         string? newStatus = null,
         string? metadataJson = null)
     {
-        _auditLogs.Add(new AuditLog
-        {
-            ResourceType = resourceType,
-            ResourceId = resourceId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            Action = action,
-            UserId = OperationContext.UserId,
-            RecordedAt = now,
-            CorrelationId = OperationContext.CorrelationId,
-            PreviousStatusCode = previousStatus,
-            NewStatusCode = newStatus,
-            MetadataJson = metadataJson,
-        });
+        _auditLogs.Add(AuditLog.Create(resourceType,
+            resourceId.ToString(System.Globalization.CultureInfo.InvariantCulture), action,
+            OperationContext.UserId, now, OperationContext.CorrelationId,
+            previousStatus, newStatus, metadataJson));
     }
 
     internal static SalesException NotFound(string resource) => new("not_found", $"The {resource} was not found.");

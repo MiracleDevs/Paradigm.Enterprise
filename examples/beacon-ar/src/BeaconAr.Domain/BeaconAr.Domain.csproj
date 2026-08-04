@@ -11,7 +11,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\BeaconAr.Interfaces\BeaconAr.Interfaces.csproj" OutputItemType="Analyzer" />
+		<ProjectReference Include="..\BeaconAr.Interfaces\BeaconAr.Interfaces.csproj" />
+		<ProjectReference Include="..\BeaconAr.InterfaceGenerator\BeaconAr.InterfaceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 </Project>
