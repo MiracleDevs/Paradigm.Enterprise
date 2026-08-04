@@ -38,15 +38,9 @@ public sealed class QuotesController : ControllerBase
 
     [HttpGet(Name = "searchQuotes")]
     public async Task<ActionResult<PageResult<QuoteView>>> Search(
-        [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "status")] QuoteStatus? status = null,
-        [FromQuery(Name = "customerId")] int? customerId = null,
-        [FromQuery(Name = "pageNumber")] int pageNumber = 1,
-        [FromQuery(Name = "pageSize")] int pageSize = 10,
-        [FromQuery(Name = "sortField")] string? sortField = null,
-        [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Desc,
+        [FromQuery] QuoteSearchRequest request,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchAsync(new QuoteSearchRequest(search, status, customerId, pageNumber, pageSize, sortField, sortDirection), cancellationToken));
+        Ok(await _provider.SearchAsync(request, cancellationToken));
 
     [HttpGet("{id:int}", Name = "getQuote")]
     public async Task<ActionResult<QuoteDto>> Get(int id, CancellationToken cancellationToken)

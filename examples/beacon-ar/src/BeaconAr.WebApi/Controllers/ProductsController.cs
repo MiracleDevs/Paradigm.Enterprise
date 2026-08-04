@@ -34,18 +34,9 @@ public sealed class ProductsController : ControllerBase
 
     [HttpGet(Name = "searchProducts")]
     public async Task<ActionResult<PageResult<ProductView>>> Search(
-        [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "pageNumber")] int pageNumber = 1,
-        [FromQuery(Name = "pageSize")] int pageSize = 10,
-        [FromQuery(Name = "sortField")] string? sortField = null,
-        [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
-        [FromQuery(Name = "active")] bool? active = null,
+        [FromQuery] ProductSearchRequest request,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchAsync(new ProductSearchRequest
-        {
-            Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
-            SortDirection = sortDirection, Active = active,
-        }, cancellationToken));
+        Ok(await _provider.SearchAsync(request, cancellationToken));
 
     [HttpGet("{id:int}", Name = "getProduct")]
     public async Task<ActionResult<ProductView>> Get(int id, CancellationToken cancellationToken)

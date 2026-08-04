@@ -12,6 +12,9 @@ using BeaconAr.Interfaces.Access.Entities;
 using BeaconAr.Interfaces.MasterData.Entities;
 using BeaconAr.Interfaces.Operations.Entities;
 using BeaconAr.Interfaces.Sales.Entities;
+using BeaconAr.WebApi.Security;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
 using Paradigm.Enterprise.Data.Repositories;
@@ -291,7 +294,7 @@ public sealed class EstablishedLayerBoundaryTests
     }
 
     [TestMethod]
-    public void MasterDataCrudUsesOfficialTypedBasesAndGeneratedViews()
+    public void MasterDataPersistenceUsesOfficialRepositoryBasesAndProvidersExposeHonestContracts()
     {
         Assert.IsTrue(typeof(IEditRepository<Product, int>).IsAssignableFrom(typeof(BeaconAr.Domain.MasterData.Repositories.IProductRepository)));
         Assert.IsTrue(typeof(IEditRepository<Customer, int>).IsAssignableFrom(typeof(BeaconAr.Domain.MasterData.Repositories.ICustomerRepository)));
@@ -308,28 +311,24 @@ public sealed class EstablishedLayerBoundaryTests
         Assert.AreEqual(typeof(ReadRepositoryBase<CustomerAddressView, MasterDataDbContext, int>), typeof(BeaconAr.Data.MasterData.Repositories.AddressViewRepository).BaseType);
         Assert.AreEqual(typeof(ReadRepositoryBase<CarrierView, MasterDataDbContext, int>), typeof(BeaconAr.Data.MasterData.Repositories.CarrierViewRepository).BaseType);
 
-        Assert.IsTrue(typeof(IEditProvider<ProductView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.IProductProvider)));
-        Assert.IsTrue(typeof(IEditProvider<CustomerView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.ICustomerProvider)));
-        Assert.IsTrue(typeof(IEditProvider<CustomerAddressView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.IAddressProvider)));
-        Assert.IsTrue(typeof(IEditProvider<CarrierView, int>).IsAssignableFrom(typeof(BeaconAr.Providers.MasterData.ICarrierProvider)));
+        Type[] contracts =
+        [
+            typeof(BeaconAr.Providers.MasterData.IProductProvider),
+            typeof(BeaconAr.Providers.MasterData.ICustomerProvider),
+            typeof(BeaconAr.Providers.MasterData.IAddressProvider),
+            typeof(BeaconAr.Providers.MasterData.ICarrierProvider),
+        ];
+        foreach (Type contract in contracts)
+        {
+            Assert.IsTrue(typeof(IProvider).IsAssignableFrom(contract), contract.FullName);
+            Assert.IsFalse(contract.GetInterfaces().Any(candidate => candidate.IsGenericType &&
+                candidate.GetGenericTypeDefinition() == typeof(IEditProvider<,>)), contract.FullName);
+        }
 
-        Assert.AreEqual(
-            typeof(EditProviderBase<IProduct, Product, ProductView, BeaconAr.Domain.MasterData.Repositories.IProductRepository,
-                BeaconAr.Domain.MasterData.Repositories.IProductViewRepository, int>),
-            typeof(BeaconAr.Providers.MasterData.ProductProvider).BaseType);
-        Assert.AreEqual(
-            typeof(EditProviderBase<ICustomer, Customer, CustomerView, BeaconAr.Domain.MasterData.Repositories.ICustomerRepository,
-                BeaconAr.Domain.MasterData.Repositories.ICustomerViewRepository, int>),
-            typeof(BeaconAr.Providers.MasterData.CustomerProvider).BaseType);
-        Assert.AreEqual(
-            typeof(EditProviderBase<ICustomerAddress, CustomerAddress, CustomerAddressView,
-                BeaconAr.Domain.MasterData.Repositories.IAddressRepository,
-                BeaconAr.Domain.MasterData.Repositories.IAddressViewRepository, int>),
-            typeof(BeaconAr.Providers.MasterData.AddressProvider).BaseType);
-        Assert.AreEqual(
-            typeof(EditProviderBase<ICarrier, Carrier, CarrierView, BeaconAr.Domain.MasterData.Repositories.ICarrierRepository,
-                BeaconAr.Domain.MasterData.Repositories.ICarrierViewRepository, int>),
-            typeof(BeaconAr.Providers.MasterData.CarrierProvider).BaseType);
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.MasterData.ProductProvider).BaseType);
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.MasterData.CustomerProvider).BaseType);
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.MasterData.AddressProvider).BaseType);
+        Assert.AreEqual(typeof(object), typeof(BeaconAr.Providers.MasterData.CarrierProvider).BaseType);
     }
 
     [TestMethod]
@@ -393,12 +392,54 @@ public sealed class EstablishedLayerBoundaryTests
     }
 
     [TestMethod]
-    public void OfficialMasterDataMutationsRemainExplicitlyGuardedUntilTheTransportConcurrencyContractExists()
+    public void MasterDataMutationContractsExcludeGeneratedViewsAndGenericEditOperations()
     {
-        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.ProductProvider, ProductView>();
-        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.CustomerProvider, CustomerView>();
-        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.AddressProvider, CustomerAddressView>();
-        AssertOfficialMutationsAreDeclared<BeaconAr.Providers.MasterData.CarrierProvider, CarrierView>();
+        Type[] contracts =
+        [
+            typeof(BeaconAr.Providers.MasterData.IProductProvider),
+            typeof(BeaconAr.Providers.MasterData.ICustomerProvider),
+            typeof(BeaconAr.Providers.MasterData.IAddressProvider),
+            typeof(BeaconAr.Providers.MasterData.ICarrierProvider),
+        ];
+        Type[] views = [typeof(ProductView), typeof(CustomerView), typeof(CustomerAddressView), typeof(CarrierView)];
+        foreach (Type contract in contracts)
+        {
+            MethodInfo[] methods = contract.GetMethods();
+            Assert.IsFalse(methods.Any(method => method.Name is "AddAsync" or "SaveAsync"), contract.FullName);
+            Assert.IsFalse(methods.SelectMany(method => method.GetParameters())
+                .Any(parameter => views.Contains(parameter.ParameterType)), contract.FullName);
+        }
+
+        Assert.IsFalse(File.Exists(Path.Combine(FindExampleRoot(), "src", "BeaconAr.Providers", "MasterData",
+            "OfficialMasterDataMutationGuard.cs")));
+    }
+
+    [TestMethod]
+    public void SearchControllersBindOneExistingComplexQueryRequest()
+    {
+        var boundaries = new (Type Controller, Type Request)[]
+        {
+            (typeof(BeaconAr.WebApi.Controllers.ProductsController), typeof(BeaconAr.Domain.MasterData.Contracts.ProductSearchRequest)),
+            (typeof(BeaconAr.WebApi.Controllers.CustomersController), typeof(BeaconAr.Domain.MasterData.Contracts.CustomerSearchRequest)),
+            (typeof(BeaconAr.WebApi.Controllers.CarriersController), typeof(BeaconAr.Domain.MasterData.Contracts.CarrierSearchRequest)),
+            (typeof(BeaconAr.WebApi.Controllers.AddressesController), typeof(BeaconAr.Domain.MasterData.Contracts.AddressSearchRequest)),
+            (typeof(BeaconAr.WebApi.Controllers.QuotesController), typeof(BeaconAr.Domain.Sales.Contracts.QuoteSearchRequest)),
+            (typeof(BeaconAr.WebApi.Controllers.SalesOrdersController), typeof(BeaconAr.Domain.Sales.Contracts.SalesOrderSearchRequest)),
+        };
+
+        foreach ((Type controller, Type request) in boundaries)
+        {
+            Assert.AreEqual(typeof(ControllerBase), controller.BaseType, controller.FullName);
+            AuthorizeAttribute authorization = controller.GetCustomAttributes<AuthorizeAttribute>().Single();
+            Assert.AreEqual(BeaconPolicies.Read, authorization.Policy, controller.FullName);
+            MethodInfo search = controller.GetMethod("Search") ?? throw new AssertFailedException(controller.FullName ?? controller.Name);
+            ParameterInfo[] parameters = search.GetParameters();
+            Assert.HasCount(2, parameters, controller.FullName);
+            Assert.AreEqual(request, parameters[0].ParameterType, controller.FullName);
+            Assert.HasCount(1, parameters[0].GetCustomAttributes<FromQueryAttribute>(), controller.FullName);
+            Assert.AreEqual(typeof(CancellationToken), parameters[1].ParameterType, controller.FullName);
+            Assert.IsFalse(parameters.Any(parameter => parameter.ParameterType.IsPrimitive), controller.FullName);
+        }
     }
 
     [TestMethod]
@@ -794,33 +835,6 @@ public sealed class EstablishedLayerBoundaryTests
                 $"Entity nullability differs for {typeof(TContract).Name}.{contractProperty.Name}.");
             Assert.AreEqual(contractNullability, nullability.Create(viewProperty).ReadState,
                 $"View nullability differs for {typeof(TContract).Name}.{contractProperty.Name}.");
-        }
-    }
-
-    private static void AssertOfficialMutationsAreDeclared<TProvider, TView>()
-    {
-        Type provider = typeof(TProvider);
-        Type view = typeof(TView);
-        Type list = typeof(List<>).MakeGenericType(view);
-        Type enumerableView = typeof(IEnumerable<>).MakeGenericType(view);
-        Type enumerableId = typeof(IEnumerable<int>);
-        var operations = new[]
-        {
-            ("AddAsync", new[] { view }),
-            ("AddAsync", new[] { list }),
-            ("UpdateAsync", new[] { view }),
-            ("UpdateAsync", new[] { list }),
-            ("SaveAsync", new[] { view }),
-            ("SaveAsync", new[] { enumerableView }),
-            ("DeleteAsync", new[] { typeof(int) }),
-            ("DeleteAsync", new[] { enumerableId }),
-        };
-
-        foreach ((string name, Type[] parameters) in operations)
-        {
-            MethodInfo? method = provider.GetMethod(name, parameters);
-            Assert.IsNotNull(method, $"{provider.Name}.{name}");
-            Assert.AreEqual(provider, method.DeclaringType, $"{provider.Name}.{name} must explicitly guard the official overload.");
         }
     }
 

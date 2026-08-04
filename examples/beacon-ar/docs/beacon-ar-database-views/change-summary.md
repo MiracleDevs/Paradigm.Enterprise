@@ -1,6 +1,8 @@
 # Beacon AR Database Views — Change Summary
 
 > Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+>
+> **Ownership note (superseded 2026-08-04):** The forward-looking Provider mapping/validation statements below record this task's original handoff. Current repositories materialize canonical views, entities/requests own intrinsic validation, and Providers own collaborator-dependent orchestration. See [current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
 
 ## Implemented changes
 

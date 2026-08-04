@@ -4,7 +4,7 @@ using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Providers.MasterData;
 
-public interface ICustomerProvider : IEditProvider<CustomerView, int>
+public interface ICustomerProvider : IProvider
 {
     Task<PageResult<CustomerView>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken);
 

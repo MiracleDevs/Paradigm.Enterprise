@@ -1,5 +1,7 @@
 # Beacon AR domain ownership — implementation plan
 
+> **Historical Provider/API note (superseded 2026-08-04):** This plan preserves evidence and decisions from an earlier implementation stage. Current ownership is: repositories materialize canonical views; entities own intrinsic invariants; request objects own query and proposed-input rules; Providers invoke those rules and own only collaborator-dependent orchestration and transactions; MasterData exposes explicit request-based `IProvider` contracts rather than `IEditProvider`, `EditProviderBase`, or a fail-closed mutation guard; and controllers bind one `[FromQuery]` request and own HTTP concerns. See [the current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 ## Outcome
 
 Move intrinsic rules into the objects that own the state, make the generated SQL Server views the normal read contracts, and move the four seeded catalog enums into `BeaconAr.Interfaces`. Preserve the database-first/generated boundary and the existing write-request boundary so this task does not create an overposting path while preparing the later Provider/API simplification task.

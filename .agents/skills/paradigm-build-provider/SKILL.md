@@ -33,6 +33,7 @@ Constructor-inject stable application collaborators. `ProviderBase` supplies onl
 - Put intrinsic invariants in Domain; put EF/query mechanics in repositories.
 - When a generated database view is the reviewed read/API contract, return that canonical view from the provider and remove transitional parallel DTOs, result rows, `ToDto` helpers, and compatibility methods. Keep a second transport model only for a named external compatibility contract with tests, a documented removal trigger, and mapping sourced from canonical views rather than persistence entities or a parallel query shape.
 - Use lifecycle hooks for checks that belong around generic edit behavior.
+- Do not inherit `IEditProvider` or `EditProviderBase` when the application write contract is intentionally incompatible with view-based single/bulk mutations and every inherited mutation would only throw. Expose the smallest honest command-oriented Provider contract, document the missing framework capability needed for a future migration, and preserve explicit concurrency, audit, overposting, cancellation, and transaction behavior.
 - Treat a typed provider interface as an executable contract, not an inheritance marker. Before exposing
   `IEditProvider<TView, TId>`, exercise every single and bulk add, update, save, delete, get, and search
   operation through that interface. A migration may temporarily override unsupported mutations to fail

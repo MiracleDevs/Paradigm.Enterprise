@@ -23,6 +23,7 @@ using BeaconAr.Providers.Operations;
 using BeaconAr.Providers.Sales;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Paradigm.Enterprise.Domain.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Data.SqlServer.Context;
@@ -372,15 +373,15 @@ public sealed class SalesWorkflowLiveTests
                 new(fixture.ProductId, 99, 999_999_999_999_999.9999m, 0),
                 new(secondProductId, 99, 999_999_999_999_999.9999m, 0),
             ];
-            SalesValidationException quoteError = await Assert.ThrowsAsync<SalesValidationException>(() =>
+            DomainException quoteError = await Assert.ThrowsAsync<DomainException>(() =>
                 scope.ServiceProvider.GetRequiredService<IQuoteProvider>().CreateAsync(new QuoteCreateRequest(
                     fixture.CustomerId, fixture.AddressId, new DateOnly(2026, 8, 1), new DateOnly(2026, 8, 2), null, lines),
                     CancellationToken.None));
-            SalesValidationException orderError = await Assert.ThrowsAsync<SalesValidationException>(() =>
+            DomainException orderError = await Assert.ThrowsAsync<DomainException>(() =>
                 scope.ServiceProvider.GetRequiredService<ISalesOrderProvider>().CreateDirectAsync(new SalesOrderCreateRequest(
                     fixture.CustomerId, fixture.AddressId, null, null, null, lines), CancellationToken.None));
-            Assert.IsTrue(quoteError.Errors.ContainsKey("lines"));
-            Assert.IsTrue(orderError.Errors.ContainsKey("lines"));
+            StringAssert.Contains(quoteError.Message, "too large");
+            StringAssert.Contains(orderError.Message, "too large");
         }
         Assert.AreEqual(0, await CountAsync(connectionString,
             "SELECT COUNT(1) FROM [dbo].[Quote] WHERE [CustomerId] = @Id", fixture.CustomerId));

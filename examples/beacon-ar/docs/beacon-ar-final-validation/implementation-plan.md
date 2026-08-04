@@ -2,6 +2,8 @@
 
 > **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
 
+> **Historical Provider note (superseded 2026-08-04):** The Provider-base and validation/mapping assertions below describe the surface audited at that time. Current MasterData Providers use explicit command-oriented `IProvider` contracts; intrinsic rules belong to entities/requests, repositories materialize canonical views, and the fail-closed edit guard no longer exists. See [current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 ## Release objective
 
 Perform a release audit of the merged Beacon AR example from the user-request baseline (`8a018ca`) through the current merged Web API head (`aaa5081`), including the supporting guidance. Earlier foundation history may be consulted for provenance, but it is not the user-request audit baseline. The audit is evidence-led: it must distinguish a verified pass, a verified defect with the smallest safe correction, and a not-run check with its exact external limitation.

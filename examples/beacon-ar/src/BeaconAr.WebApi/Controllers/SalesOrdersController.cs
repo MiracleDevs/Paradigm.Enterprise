@@ -36,16 +36,9 @@ public sealed class SalesOrdersController : ControllerBase
 
     [HttpGet(Name = "searchSalesOrders")]
     public async Task<ActionResult<PageResult<SalesOrderView>>> Search(
-        [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "status")] SalesOrderStatus? status = null,
-        [FromQuery(Name = "customerId")] int? customerId = null,
-        [FromQuery(Name = "sourceQuoteId")] int? sourceQuoteId = null,
-        [FromQuery(Name = "pageNumber")] int pageNumber = 1,
-        [FromQuery(Name = "pageSize")] int pageSize = 10,
-        [FromQuery(Name = "sortField")] string? sortField = null,
-        [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Desc,
+        [FromQuery] SalesOrderSearchRequest request,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchAsync(new SalesOrderSearchRequest(search, status, customerId, sourceQuoteId, pageNumber, pageSize, sortField, sortDirection), cancellationToken));
+        Ok(await _provider.SearchAsync(request, cancellationToken));
 
     [HttpGet("{id:int}", Name = "getSalesOrder")]
     public async Task<ActionResult<SalesOrderDto>> Get(int id, CancellationToken cancellationToken)

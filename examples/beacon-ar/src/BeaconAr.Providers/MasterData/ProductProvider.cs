@@ -2,29 +2,33 @@ using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Entities;
-using BeaconAr.Interfaces.MasterData.Entities;
-using Paradigm.Enterprise.Domain.Dtos;
-using Paradigm.Enterprise.Providers;
+using Paradigm.Enterprise.Domain.Uow;
 using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
-public sealed class ProductProvider
-    : EditProviderBase<IProduct, Product, ProductView, IProductRepository, IProductViewRepository, int>, IProductProvider
+public sealed class ProductProvider : IProductProvider
 {
     #region Fields
 
     private readonly MasterDataMutationCoordinator _mutations;
+    private readonly IProductRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductViewRepository _views;
 
     #endregion
 
     #region Constructors
 
     public ProductProvider(
-        IServiceProvider serviceProvider,
+        IProductRepository repository,
+        IProductViewRepository views,
+        IUnitOfWork unitOfWork,
         MasterDataMutationCoordinator mutations)
-        : base(serviceProvider)
     {
+        _repository = repository;
+        _views = views;
+        _unitOfWork = unitOfWork;
         _mutations = mutations;
     }
 
@@ -35,11 +39,11 @@ public sealed class ProductProvider
     public Task<PageResult<ProductView>> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
     {
         request.Validate("id", "sku", "name");
-        return ViewRepository.SearchAsync(request, cancellationToken);
+        return _views.SearchAsync(request, cancellationToken);
     }
 
     public async Task<ProductView> GetByIdAsync(int id, CancellationToken cancellationToken) =>
-        await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
+        await _views.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
 
     public async Task<ProductView> CreateAsync(ProductCreateRequest request, CancellationToken cancellationToken)
     {
@@ -47,15 +51,15 @@ public sealed class ProductProvider
         Product product = Product.Create(request, _mutations.UserId, now);
         int id = await _mutations.ExecuteAsync(async () =>
         {
-            if (await Repository.SkuExistsAsync(product.Sku, null, cancellationToken))
+            if (await _repository.SkuExistsAsync(product.Sku, null, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("SKU");
 
-            await Repository.AddAsync(product);
+            await _repository.AddAsync(product);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             _mutations.AddAudit("product", product.Id, "created", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return product.Id;
         }, "referenced_record");
         return await GetByIdAsync(id, cancellationToken);
@@ -67,17 +71,17 @@ public sealed class ProductProvider
         await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            Product product = await Repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
+            Product product = await _repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
             MasterDataMutationCoordinator.EnsureVersion(product.RowVersion, expectedVersion);
-            if (await Repository.SkuExistsAsync(request.Sku?.Trim() ?? string.Empty, id, cancellationToken))
+            if (await _repository.SkuExistsAsync(request.Sku?.Trim() ?? string.Empty, id, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("SKU");
 
             bool wasActive = product.IsActive;
             product.Replace(request, _mutations.UserId, now);
-            await Repository.UpdateAsync(product);
+            await _repository.UpdateAsync(product);
             _mutations.AddAudit("product", product.Id, MasterDataMutationCoordinator.GetUpdateAction(wasActive, product.IsActive), "{\"changedFields\":[\"masterData\"]}", now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return product.Id;
         }, "referenced_record");
         return await GetByIdAsync(id, cancellationToken);
@@ -91,34 +95,6 @@ public sealed class ProductProvider
 
     #endregion
 
-    #region Overrides
-
-    public override Task<PaginatedResultDto<ProductView>> SearchAsync<TParameters>(TParameters parameters)
-    {
-        if (parameters is not MasterDataViewSearchParameters search)
-            throw new ArgumentException($"{nameof(ProductProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
-        search.Validate("id", "sku", "name");
-        return base.SearchAsync(parameters);
-    }
-
-    public override Task<ProductView> AddAsync(ProductView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<ProductView>> AddAsync(List<ProductView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<ProductView> UpdateAsync(ProductView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<ProductView>> UpdateAsync(List<ProductView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<ProductView> SaveAsync(ProductView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<ProductView>> SaveAsync(IEnumerable<ProductView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task DeleteAsync(int id) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task DeleteAsync(IEnumerable<int> ids) => throw OfficialMasterDataMutationGuard.Create();
-
-    #endregion
-
     #region Private Methods
 
     private async Task ExecuteDeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -126,15 +102,15 @@ public sealed class ProductProvider
         await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            Product product = await Repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
+            Product product = await _repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("product");
             MasterDataMutationCoordinator.EnsureVersion(product.RowVersion, expectedVersion);
-            if (await Repository.HasReferencesAsync(id, cancellationToken))
+            if (await _repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_record", "The product is referenced and cannot be deleted; deactivate it instead.");
 
-            await Repository.DeleteAsync(product);
+            await _repository.DeleteAsync(product);
             _mutations.AddAudit("product", id, "deleted", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_record");
     }

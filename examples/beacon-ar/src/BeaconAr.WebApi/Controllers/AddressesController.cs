@@ -34,20 +34,9 @@ public sealed class AddressesController : ControllerBase
 
     [HttpGet(Name = "searchAddresses")]
     public async Task<ActionResult<PageResult<CustomerAddressView>>> Search(
-        [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "pageNumber")] int pageNumber = 1,
-        [FromQuery(Name = "pageSize")] int pageSize = 10,
-        [FromQuery(Name = "sortField")] string? sortField = null,
-        [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
-        [FromQuery(Name = "customerId")] int? customerId = null,
-        [FromQuery(Name = "type")] string? type = null,
-        [FromQuery(Name = "usage")] AddressUsage? usage = null,
+        [FromQuery] AddressSearchRequest request,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchAsync(new AddressSearchRequest
-        {
-            Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
-            SortDirection = sortDirection, CustomerId = customerId, Type = type, Usage = usage,
-        }, cancellationToken));
+        Ok(await _provider.SearchAsync(request, cancellationToken));
 
     [HttpGet("{id:int}", Name = "getAddress")]
     public async Task<ActionResult<CustomerAddressView>> Get(int id, CancellationToken cancellationToken)

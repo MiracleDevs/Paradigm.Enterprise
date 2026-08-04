@@ -4,7 +4,7 @@ using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Providers.MasterData;
 
-public interface ICarrierProvider : IEditProvider<CarrierView, int>
+public interface ICarrierProvider : IProvider
 {
     Task<PageResult<CarrierView>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken);
 

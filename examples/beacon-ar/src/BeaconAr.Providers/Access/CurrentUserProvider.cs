@@ -34,7 +34,7 @@ public sealed class CurrentUserProvider : ICurrentUserProvider
 
     public async Task<CurrentUserDto> ResolveAsync(AuthenticatedIdentity identity, CancellationToken cancellationToken)
     {
-        Validate(identity);
+        identity.Validate();
         ApplicationUser? user = await _users.FindAsync(identity.Issuer, identity.Subject, cancellationToken);
         if (user is null)
             user = await _users.GetOrCreateAsync(identity, _timeProvider.GetUtcNow(), cancellationToken);
@@ -46,21 +46,6 @@ public sealed class CurrentUserProvider : ICurrentUserProvider
             await _unitOfWork.CommitChangesAsync();
 
         return new CurrentUserDto(user.Id, user.DisplayName, user.Email, identity.Policies);
-    }
-
-    #endregion
-
-    #region Private Methods
-
-    private static void Validate(AuthenticatedIdentity identity)
-    {
-        if (string.IsNullOrWhiteSpace(identity.Issuer) || identity.Issuer.Length > 400 ||
-            string.IsNullOrWhiteSpace(identity.Subject) || identity.Subject.Length > 200 ||
-            string.IsNullOrWhiteSpace(identity.DisplayName) || identity.DisplayName.Length > 200 ||
-            identity.Email?.Length > 320)
-        {
-            throw new AccessException("forbidden", "The authenticated identity is incomplete.");
-        }
     }
 
     #endregion

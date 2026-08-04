@@ -1,10 +1,12 @@
 # Beacon AR Web API implementation decisions
 
+> **Historical Provider note (superseded 2026-08-04):** This report records the Provider surface that existed when the Web API task closed. MasterData no longer inherits `EditProviderBase` or exposes `IEditProvider`; the fail-closed guard was removed in favor of explicit command-oriented `IProvider` contracts. See [current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 ## Secure controller base exception
 
 The installed Paradigm `ApiControllerBase`, `ReadApiControllerBase`, and `EditApiControllerBase` types inherit `[AllowAnonymous]`. ASP.NET Core treats that metadata as authoritative; adding `[Authorize]` or a fallback policy to a derived controller does not restore bearer authorization. The generic mutation actions also accept whole generated views and do not express Beacon AR's distinct create/update payloads, ETags, idempotency, audit, and lifecycle rules.
 
-For this protected public API, the business controllers therefore remain direct `ControllerBase` types with explicit read/write policies. This is a deliberate security exception, not a replacement framework abstraction. The Providers do use the official `EditProviderBase`, and their generic `SaveAsync`/`DeleteAsync` paths remain fail-closed so callers cannot bypass the application-specific mutation workflows.
+For this protected public API, the business controllers therefore remain direct `ControllerBase` types with explicit read/write policies. This is a deliberate security exception, not a replacement framework abstraction. At this historical stage, the Providers used the official `EditProviderBase`, and their generic `SaveAsync`/`DeleteAsync` paths remained fail-closed so callers could not bypass the application-specific mutation workflows.
 
 ## Generated views and transport compatibility
 
