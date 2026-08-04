@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization.Metadata;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.MasterData.Entities;
 
 namespace BeaconAr.WebApi.Serialization;
 

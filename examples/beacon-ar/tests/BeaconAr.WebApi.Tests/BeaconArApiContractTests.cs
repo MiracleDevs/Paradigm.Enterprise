@@ -7,11 +7,11 @@ using System.Text;
 using System.Text.Json;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.MasterData.Contracts;
-using BeaconAr.Domain.Reporting.Contracts;
+using BeaconAr.Domain.Operations.Contracts;
 using BeaconAr.Domain.Sales;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Providers.Access;
-using BeaconAr.Providers.Reporting;
+using BeaconAr.Providers.Operations;
 using BeaconAr.WebApi;
 using BeaconAr.WebApi.Controllers;
 using BeaconAr.WebApi.Http;
@@ -30,7 +30,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using CustomerAddressView = BeaconAr.Domain.Receivables.Entities.CustomerAddressView;
+using CustomerAddressView = BeaconAr.Domain.MasterData.Entities.CustomerAddressView;
 
 namespace BeaconAr.WebApi.Tests;
 

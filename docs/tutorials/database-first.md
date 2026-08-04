@@ -31,6 +31,8 @@ flowchart LR
 
 Prefer the official EF Core Power Tools CLI from a repository-local tool manifest and pin its exact approved version. Inspect that installed CLI's help and use its current `efcpt-config.json` schema; do not rename or translate keys from the Visual Studio extension's older `efpt.config.json` format. Review the context name, namespaces, entity/context output paths, explicit table/view/routine selection, nullable mappings, database naming, and T4 template root. Set object-list refresh deliberately so regeneration cannot silently broaden or shrink the owned model. Keep credentials and connection names out of the file.
 
+For multiple bounded contexts, use one checked-in EFPT configuration per context. Require every selected database object and generated CLR type to have exactly one owner, and validate that the configurations are disjoint and together cover the intended persistence inventory. Keep cross-context foreign keys in the database; model them as scalar IDs unless an explicit read contract owns a projection across the boundary. Register SQL Server contexts that participate in one workflow with the same scoped connection provider and identical connection-string name, and use an explicit Unit of Work transaction for atomic multi-context saves.
+
 Start T4 customization from the official `Paradigm.Web.ApiTemplate` files. Record the source remote, exact revision, and original hashes beside the templates. When installed EFPT or Paradigm APIs have advanced, document and apply only reusable compatibility adaptations; never embed application entity-name lists or public-view whitelists in T4. Preserve the early ownership marker and compiled `GeneratedCodeAttribute`, then regenerate twice, build, and review the complete diff. Put application relationship corrections and domain behavior in supported partial/configuration seams.
 
 Add the named connection string expected by the host through user secrets for local development:
@@ -50,9 +52,18 @@ Build the database project and publish its DACPAC to a disposable database befor
 
 ```powershell
 dotnet tool restore
-dotnet tool run efcpt -- $env:ConnectionStrings__ApplicationDatabase mssql `
-  --input ./efcpt-config.json `
-  --output .
+$configs = @(
+  './efcpt-access-config.json',
+  './efcpt-masterdata-config.json',
+  './efcpt-operations-config.json',
+  './efcpt-sales-config.json'
+)
+
+foreach ($config in $configs) {
+  dotnet tool run efcpt -- $env:ConnectionStrings__ApplicationDatabase mssql `
+    --input $config `
+    --output .
+}
 ```
 
 The Visual Studio extension is optional convenience only. If a team uses it, maintain its extension-specific configuration independently and do not describe it as the deterministic build/regeneration path.
@@ -69,8 +80,8 @@ Do not place application behavior inside T4 output. Do not add database credenti
 
 ## Regenerate safely
 
-Before every regeneration, commit or shelve unrelated work so the generated diff is visible. Treat only the configured entity and context output directories as replaceable. Prefer EFPT's exact auto-generated marker and explicit object list as the cleanup boundary; do not write a broad recursive cleanup or copy/move postprocessor. Regenerate, build immediately, then inspect interface-generator output and mapper dependencies. If a manual change disappeared, move the behavior to a partial file or change the owning template rather than reapplying it by hand.
+Before every regeneration, commit or shelve unrelated work so the generated diff is visible. When generated and handwritten partial files share a directory, treat only an exact generated-filename manifest as replaceable: back up and restore that complete manifest across all contexts, and never recursively clear the directory. Validate each ownership marker and the disjoint object inventory, regenerate all configs twice, build after generation, and require byte-stable output. Then inspect interface-generator output and mapper dependencies. If a manual change disappeared, move the behavior to a partial file or change the owning template rather than reapplying it by hand.
 
-Repositories retrieve editable entities and read views. They do not map entities into API DTOs. Providers own mapping, validation orchestration, transactions, commits, and external side effects.
+Repositories retrieve editable entities and read views. They do not map entities into API DTOs or contain handwritten SQL query/command strings. Use EF for simple bounded CRUD/read work and typed stored procedures for locking, pagination/reporting, complex multi-entity work, or performance-sensitive paths. Providers own mapping, validation orchestration, transactions, commits, and external side effects.
 
 Continue with [Build a vertical slice](../sample-application.md).

@@ -1,5 +1,5 @@
-using BeaconAr.Domain.Reporting.Contracts;
-using BeaconAr.Providers.Reporting;
+using BeaconAr.Domain.Operations.Contracts;
+using BeaconAr.Providers.Operations;
 using BeaconAr.WebApi.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

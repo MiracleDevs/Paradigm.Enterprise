@@ -1,5 +1,7 @@
 # Beacon AR framework CRUD migration plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Purpose
 
 Migrate the straightforward Beacon AR master-data CRUD paths to the official Paradigm.Enterprise provider and repository bases. Keep the quote and sales-order workflows custom where their transaction, audit, status, snapshot, idempotency, and concurrency behavior makes a generic CRUD lifecycle unsafe.

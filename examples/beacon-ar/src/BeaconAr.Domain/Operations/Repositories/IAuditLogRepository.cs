@@ -1,4 +1,4 @@
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.Operations.Entities;
 using Paradigm.Enterprise.Domain.Repositories;
 
 namespace BeaconAr.Domain.Operations.Repositories;

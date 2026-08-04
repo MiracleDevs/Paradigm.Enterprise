@@ -1,8 +1,8 @@
 using System.Text;
 using BeaconAr.Domain.Access.Contracts;
-using BeaconAr.Domain.Reporting.Contracts;
+using BeaconAr.Domain.Operations.Contracts;
 using BeaconAr.Providers.Access;
-using BeaconAr.Providers.Reporting;
+using BeaconAr.Providers.Operations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
