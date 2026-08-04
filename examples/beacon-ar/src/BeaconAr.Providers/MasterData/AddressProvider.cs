@@ -2,15 +2,12 @@ using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Entities;
-using BeaconAr.Interfaces.MasterData.Entities;
-using Paradigm.Enterprise.Domain.Dtos;
-using Paradigm.Enterprise.Providers;
+using Paradigm.Enterprise.Domain.Uow;
 using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
-public sealed class AddressProvider
-    : EditProviderBase<ICustomerAddress, CustomerAddress, CustomerAddressView, IAddressRepository, IAddressViewRepository, int>, IAddressProvider
+public sealed class AddressProvider : IAddressProvider
 {
     #region Fields
 
@@ -19,18 +16,25 @@ public sealed class AddressProvider
 
     private readonly ICustomerRepository _customers;
     private readonly MasterDataMutationCoordinator _mutations;
+    private readonly IAddressRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressViewRepository _views;
 
     #endregion
 
     #region Constructors
 
     public AddressProvider(
-        IServiceProvider serviceProvider,
+        IAddressRepository repository,
+        IAddressViewRepository views,
         ICustomerRepository customers,
+        IUnitOfWork unitOfWork,
         MasterDataMutationCoordinator mutations)
-        : base(serviceProvider)
     {
+        _repository = repository;
+        _views = views;
         _customers = customers;
+        _unitOfWork = unitOfWork;
         _mutations = mutations;
     }
 
@@ -41,13 +45,13 @@ public sealed class AddressProvider
     public Task<PageResult<CustomerAddressView>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken)
     {
         request.Validate("id", "name");
-        return ViewRepository.SearchAsync(request, cancellationToken);
+        return _views.SearchAsync(request, cancellationToken);
     }
 
     public async Task<CustomerAddressView> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
+        return await _views.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
     }
 
     public async Task<CustomerAddressView> CreateAsync(AddressCreateRequest request, CancellationToken cancellationToken)
@@ -55,20 +59,20 @@ public sealed class AddressProvider
         int id = await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            await Repository.LockCustomersAsync(new[] { request.CustomerId }, cancellationToken);
+            await _repository.LockCustomersAsync(new[] { request.CustomerId }, cancellationToken);
             int typeId = await EnsureCustomerAndTypeAsync(request.CustomerId, request.Type?.Trim().ToLowerInvariant() ?? string.Empty, cancellationToken);
-            IReadOnlyList<CustomerAddress> defaults = await Repository.GetDefaultsForUpdateAsync(new[] { request.CustomerId }, cancellationToken);
+            IReadOnlyList<CustomerAddress> defaults = await _repository.GetDefaultsForUpdateAsync(new[] { request.CustomerId }, cancellationToken);
             List<(CustomerAddress Address, bool Billing, bool Shipping)> cleared = ClearRequestedDefaults(
                 defaults, 0, request.DefaultBilling, request.DefaultShipping, now: now);
 
             CustomerAddress address = CustomerAddress.Create(request, typeId, _mutations.UserId, now);
-            await Repository.AddAsync(address);
+            await _repository.AddAsync(address);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             AuditClearedDefaults(cleared, now);
             _mutations.AddAudit("address", address.Id, "created", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return address.Id;
         }, "referenced_address");
         return await GetByIdAsync(id, cancellationToken);
@@ -80,29 +84,29 @@ public sealed class AddressProvider
         await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            CustomerAddress address = await Repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
+            CustomerAddress address = await _repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
             MasterDataMutationCoordinator.EnsureVersion(address.RowVersion, expectedVersion);
             int oldCustomerId = address.CustomerId;
-            if (oldCustomerId != request.CustomerId && await Repository.HasReferencesAsync(id, cancellationToken))
+            if (oldCustomerId != request.CustomerId && await _repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_address", "A referenced address cannot be moved to another customer.");
 
-            await Repository.LockCustomersAsync(new[] { oldCustomerId, request.CustomerId }, cancellationToken);
+            await _repository.LockCustomersAsync(new[] { oldCustomerId, request.CustomerId }, cancellationToken);
             int typeId = await EnsureCustomerAndTypeAsync(request.CustomerId, request.Type?.Trim().ToLowerInvariant() ?? string.Empty, cancellationToken);
-            IReadOnlyList<CustomerAddress> defaults = await Repository.GetDefaultsForUpdateAsync(
+            IReadOnlyList<CustomerAddress> defaults = await _repository.GetDefaultsForUpdateAsync(
                 new[] { oldCustomerId, request.CustomerId }, cancellationToken);
             List<(CustomerAddress Address, bool Billing, bool Shipping)> cleared = ClearRequestedDefaults(
                 defaults, id, request.DefaultBilling, request.DefaultShipping, request.CustomerId, now);
             if (cleared.Count > 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await UnitOfWork.CommitChangesAsync();
+                await _unitOfWork.CommitChangesAsync();
             }
             address.Replace(request, typeId, _mutations.UserId, now);
-            await Repository.UpdateAsync(address);
+            await _repository.UpdateAsync(address);
             AuditClearedDefaults(cleared, now);
             _mutations.AddAudit("address", address.Id, "updated", "{\"changedFields\":[\"masterData\",\"defaults\"]}", now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return address.Id;
         }, "referenced_address");
         return await GetByIdAsync(id, cancellationToken);
@@ -116,41 +120,13 @@ public sealed class AddressProvider
 
     #endregion
 
-    #region Overrides
-
-    public override Task<PaginatedResultDto<CustomerAddressView>> SearchAsync<TParameters>(TParameters parameters)
-    {
-        if (parameters is not MasterDataViewSearchParameters search)
-            throw new ArgumentException($"{nameof(AddressProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
-        search.Validate("id", "name");
-        return base.SearchAsync(parameters);
-    }
-
-    public override Task<CustomerAddressView> AddAsync(CustomerAddressView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<CustomerAddressView>> AddAsync(List<CustomerAddressView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<CustomerAddressView> UpdateAsync(CustomerAddressView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<CustomerAddressView>> UpdateAsync(List<CustomerAddressView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<CustomerAddressView> SaveAsync(CustomerAddressView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<CustomerAddressView>> SaveAsync(IEnumerable<CustomerAddressView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task DeleteAsync(int id) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task DeleteAsync(IEnumerable<int> ids) => throw OfficialMasterDataMutationGuard.Create();
-
-    #endregion
-
     #region Private Methods
 
     private async Task<int> EnsureCustomerAndTypeAsync(int customerId, string type, CancellationToken cancellationToken)
     {
         if (!await _customers.ExistsAsync(customerId, cancellationToken))
             throw new MasterDataException("not_found", "The customer was not found.");
-        int? typeId = await Repository.GetActiveTypeIdAsync(type, cancellationToken);
+        int? typeId = await _repository.GetActiveTypeIdAsync(type, cancellationToken);
         if (!typeId.HasValue)
             throw new MasterDataValidationException(new Dictionary<string, IReadOnlyList<string>>
             {
@@ -199,15 +175,15 @@ public sealed class AddressProvider
         await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            CustomerAddress address = await Repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
+            CustomerAddress address = await _repository.GetForUpdateAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("address");
             MasterDataMutationCoordinator.EnsureVersion(address.RowVersion, expectedVersion);
-            if (await Repository.HasReferencesAsync(id, cancellationToken))
+            if (await _repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_address", "The address is referenced and cannot be deleted.");
 
-            await Repository.DeleteAsync(address);
+            await _repository.DeleteAsync(address);
             _mutations.AddAudit("address", id, "deleted", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_address");
     }

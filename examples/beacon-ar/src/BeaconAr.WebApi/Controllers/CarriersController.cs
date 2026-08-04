@@ -34,18 +34,9 @@ public sealed class CarriersController : ControllerBase
 
     [HttpGet(Name = "searchCarriers")]
     public async Task<ActionResult<PageResult<CarrierView>>> Search(
-        [FromQuery(Name = "search")] string? search,
-        [FromQuery(Name = "pageNumber")] int pageNumber = 1,
-        [FromQuery(Name = "pageSize")] int pageSize = 10,
-        [FromQuery(Name = "sortField")] string? sortField = null,
-        [FromQuery(Name = "sortDirection")] SortDirection sortDirection = SortDirection.Asc,
-        [FromQuery(Name = "active")] bool? active = null,
+        [FromQuery] CarrierSearchRequest request,
         CancellationToken cancellationToken = default) =>
-        Ok(await _provider.SearchAsync(new CarrierSearchRequest
-        {
-            Search = search, PageNumber = pageNumber, PageSize = pageSize, SortField = sortField,
-            SortDirection = sortDirection, Active = active,
-        }, cancellationToken));
+        Ok(await _provider.SearchAsync(request, cancellationToken));
 
     [HttpGet("{id:int}", Name = "getCarrier")]
     public async Task<ActionResult<CarrierView>> Get(int id, CancellationToken cancellationToken)

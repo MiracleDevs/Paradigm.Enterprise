@@ -2,27 +2,30 @@ using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Entities;
-using BeaconAr.Interfaces.MasterData.Entities;
-using Paradigm.Enterprise.Domain.Dtos;
-using Paradigm.Enterprise.Providers;
+using Paradigm.Enterprise.Domain.Uow;
 using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
-public sealed class CarrierProvider
-    : EditProviderBase<ICarrier, Carrier, CarrierView, ICarrierRepository, ICarrierViewRepository, int>, ICarrierProvider
+public sealed class CarrierProvider : ICarrierProvider
 {
     #region Fields
 
     private readonly MasterDataMutationCoordinator _mutations;
+    private readonly ICarrierRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICarrierViewRepository _views;
 
     #endregion
 
     #region Constructors
 
-    public CarrierProvider(IServiceProvider serviceProvider, MasterDataMutationCoordinator mutations)
-        : base(serviceProvider)
+    public CarrierProvider(ICarrierRepository repository, ICarrierViewRepository views, IUnitOfWork unitOfWork,
+        MasterDataMutationCoordinator mutations)
     {
+        _repository = repository;
+        _views = views;
+        _unitOfWork = unitOfWork;
         _mutations = mutations;
     }
 
@@ -33,13 +36,13 @@ public sealed class CarrierProvider
     public Task<PageResult<CarrierView>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken)
     {
         request.Validate("id", "name");
-        return ViewRepository.SearchAsync(request, cancellationToken);
+        return _views.SearchAsync(request, cancellationToken);
     }
 
     public async Task<CarrierView> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return await ViewRepository.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("carrier");
+        return await _views.GetByIdAsync(id, cancellationToken) ?? throw MasterDataMutationCoordinator.NotFound("carrier");
     }
 
     public async Task<CarrierView> CreateAsync(CarrierCreateRequest request, CancellationToken cancellationToken)
@@ -48,15 +51,15 @@ public sealed class CarrierProvider
         {
             DateTimeOffset now = _mutations.UtcNow;
             Carrier carrier = Carrier.Create(request, _mutations.UserId, now);
-            if (await Repository.CodeExistsAsync(carrier.Code, null, cancellationToken))
+            if (await _repository.CodeExistsAsync(carrier.Code, null, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("code");
 
-            await Repository.AddAsync(carrier);
+            await _repository.AddAsync(carrier);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             _mutations.AddAudit("carrier", carrier.Id, "created", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return carrier.Id;
         }, "referenced_record");
         return await GetByIdAsync(id, cancellationToken);
@@ -69,20 +72,20 @@ public sealed class CarrierProvider
         await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            Carrier carrier = await Repository.GetForUpdateAsync(id, cancellationToken) ??
+            Carrier carrier = await _repository.GetForUpdateAsync(id, cancellationToken) ??
                               throw MasterDataMutationCoordinator.NotFound("carrier");
             MasterDataMutationCoordinator.EnsureVersion(carrier.RowVersion, expectedVersion);
-            if (await Repository.CodeExistsAsync(request.Code?.Trim() ?? string.Empty, id, cancellationToken))
+            if (await _repository.CodeExistsAsync(request.Code?.Trim() ?? string.Empty, id, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("code");
 
             bool wasActive = carrier.IsActive;
             carrier.Replace(request, _mutations.UserId, now);
-            await Repository.UpdateAsync(carrier);
+            await _repository.UpdateAsync(carrier);
             _mutations.AddAudit("carrier", carrier.Id,
                 MasterDataMutationCoordinator.GetUpdateAction(wasActive, carrier.IsActive),
                 "{\"changedFields\":[\"masterData\"]}", now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return carrier.Id;
         }, "referenced_record");
         return await GetByIdAsync(id, cancellationToken);
@@ -96,34 +99,6 @@ public sealed class CarrierProvider
 
     #endregion
 
-    #region Overrides
-
-    public override Task<PaginatedResultDto<CarrierView>> SearchAsync<TParameters>(TParameters parameters)
-    {
-        if (parameters is not MasterDataViewSearchParameters search)
-            throw new ArgumentException($"{nameof(CarrierProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
-        search.Validate("id", "name");
-        return base.SearchAsync(parameters);
-    }
-
-    public override Task<CarrierView> AddAsync(CarrierView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<CarrierView>> AddAsync(List<CarrierView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<CarrierView> UpdateAsync(CarrierView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<CarrierView>> UpdateAsync(List<CarrierView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<CarrierView> SaveAsync(CarrierView view) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task<IEnumerable<CarrierView>> SaveAsync(IEnumerable<CarrierView> views) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task DeleteAsync(int id) => throw OfficialMasterDataMutationGuard.Create();
-
-    public override Task DeleteAsync(IEnumerable<int> ids) => throw OfficialMasterDataMutationGuard.Create();
-
-    #endregion
-
     #region Private Methods
 
     private async Task ExecuteDeleteAsync(int id, string expectedVersion, CancellationToken cancellationToken)
@@ -131,16 +106,16 @@ public sealed class CarrierProvider
         await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            Carrier carrier = await Repository.GetForUpdateAsync(id, cancellationToken) ??
+            Carrier carrier = await _repository.GetForUpdateAsync(id, cancellationToken) ??
                               throw MasterDataMutationCoordinator.NotFound("carrier");
             MasterDataMutationCoordinator.EnsureVersion(carrier.RowVersion, expectedVersion);
-            if (await Repository.HasReferencesAsync(id, cancellationToken))
+            if (await _repository.HasReferencesAsync(id, cancellationToken))
                 throw new MasterDataException("referenced_record", "The carrier is referenced and cannot be deleted; deactivate it instead.");
 
-            await Repository.DeleteAsync(carrier);
+            await _repository.DeleteAsync(carrier);
             _mutations.AddAudit("carrier", id, "deleted", recordedAt: now);
             cancellationToken.ThrowIfCancellationRequested();
-            await UnitOfWork.CommitChangesAsync();
+            await _unitOfWork.CommitChangesAsync();
             return id;
         }, "referenced_record");
     }

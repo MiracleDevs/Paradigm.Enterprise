@@ -4,7 +4,7 @@ using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Providers.MasterData;
 
-public interface IAddressProvider : IEditProvider<CustomerAddressView, int>
+public interface IAddressProvider : IProvider
 {
     Task<PageResult<CustomerAddressView>> SearchAsync(AddressSearchRequest request, CancellationToken cancellationToken);
 

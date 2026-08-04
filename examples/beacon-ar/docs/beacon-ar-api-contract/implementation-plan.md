@@ -1,5 +1,7 @@
 # Beacon AR API contract implementation plan
 
+> **Historical Provider/API note (superseded 2026-08-04):** This plan preserves evidence and decisions from an earlier implementation stage. Current ownership is: repositories materialize canonical views; entities own intrinsic invariants; request objects own query and proposed-input rules; Providers invoke those rules and own only collaborator-dependent orchestration and transactions; MasterData exposes explicit request-based `IProvider` contracts rather than `IEditProvider`, `EditProviderBase`, or a fail-closed mutation guard; and controllers bind one `[FromQuery]` request and own HTTP concerns. See [the current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 > **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
 
 ## Objective
