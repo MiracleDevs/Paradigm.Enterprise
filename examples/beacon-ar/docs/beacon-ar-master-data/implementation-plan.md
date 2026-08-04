@@ -1,5 +1,7 @@
 # Beacon AR master-data implementation plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Objective
 
 Implement the release-one Product, Customer, Customer Address, and Carrier application capabilities through `BeaconAr.Domain`, `BeaconAr.Data`, and `BeaconAr.Providers`. Deliver database-backed CRUD, deterministic server-side search/filter/sort/paging, domain validation, audit and optimistic-concurrency semantics, case-insensitive uniqueness, atomic address-default changes, and reference-protected deletion with service and database tests.

@@ -1,7 +1,10 @@
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Validation;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.Access.Entities;
+using BeaconAr.Domain.MasterData.Entities;
+using BeaconAr.Domain.Operations.Entities;
+using BeaconAr.Domain.Sales.Entities;
 
 namespace BeaconAr.Domain.Tests;
 

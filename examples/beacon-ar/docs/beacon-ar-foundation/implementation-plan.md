@@ -1,5 +1,7 @@
 # Beacon AR foundation implementation plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Objective
 
 Create `examples/beacon-ar/` as a self-contained .NET 10 Beacon AR backend example based on the reviewed Paradigm Web API template. Establish a modular-monolith solution, SQL Server database-first source of truth, Aspire-managed local topology, foundational domain contracts, and deterministic verification. The foundation must make every release-one persistence and integrity requirement possible without prematurely implementing master-data use cases, quote/order workflows, dashboard queries, or the public REST contract.

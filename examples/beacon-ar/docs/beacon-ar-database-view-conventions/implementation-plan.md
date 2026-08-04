@@ -1,5 +1,7 @@
 # Beacon AR database view conventions implementation plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Objective and boundaries
 
 Keep Beacon AR on SQL Server and make its database/read-model boundary unambiguous:

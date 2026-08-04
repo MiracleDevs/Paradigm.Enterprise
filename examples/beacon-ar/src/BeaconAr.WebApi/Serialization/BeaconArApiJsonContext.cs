@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 using BeaconAr.Domain.Access.Contracts;
 using BeaconAr.Domain.MasterData.Contracts;
-using BeaconAr.Domain.Reporting.Contracts;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.Operations.Contracts;
+using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.WebApi.Endpoints;
 using Microsoft.AspNetCore.Mvc;

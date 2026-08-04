@@ -1,4 +1,11 @@
-using BeaconAr.Data.Receivables.Context;
+using BeaconAr.Data.Access.Repositories;
+using BeaconAr.Data.MasterData.Repositories;
+using BeaconAr.Data.Operations.Repositories;
+using BeaconAr.Data.Sales.Repositories;
+using BeaconAr.Data.Access.Context;
+using BeaconAr.Data.MasterData.Context;
+using BeaconAr.Data.Operations.Context;
+using BeaconAr.Data.Sales.Context;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,23 +35,32 @@ public sealed class GeneratedViewLiveTests
             connection, transaction, key, userId, keyHash, requestHash);
 
         await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
-        var options = new DbContextOptionsBuilder<ReceivablesDbContext>().UseSqlServer(connection).Options;
-        await using var context = new ReceivablesDbContext(services, options);
-        await context.Database.UseTransactionAsync(transaction);
+        await using var access = new AccessDbContext(services,
+            new DbContextOptionsBuilder<AccessDbContext>().UseSqlServer(connection).Options);
+        await using var masterData = new MasterDataDbContext(services,
+            new DbContextOptionsBuilder<MasterDataDbContext>().UseSqlServer(connection).Options);
+        await using var operations = new OperationsDbContext(services,
+            new DbContextOptionsBuilder<OperationsDbContext>().UseSqlServer(connection).Options);
+        await using var sales = new SalesDbContext(services,
+            new DbContextOptionsBuilder<SalesDbContext>().UseSqlServer(connection).Options);
+        await access.Database.UseTransactionAsync(transaction);
+        await masterData.Database.UseTransactionAsync(transaction);
+        await operations.Database.UseTransactionAsync(transaction);
+        await sales.Database.UseTransactionAsync(transaction);
 
-        var user = await context.ApplicationUserViews.AsNoTracking().SingleAsync(item => item.Id == userId);
-        var product = await context.ProductViews.AsNoTracking().SingleAsync(item => item.Id == productId);
-        var customer = await context.CustomerViews.AsNoTracking().SingleAsync(item => item.Id == customerId);
-        var address = await context.CustomerAddressViews.AsNoTracking().SingleAsync(item => item.Id == addressId);
-        var carrier = await context.CarrierViews.AsNoTracking().SingleAsync(item => item.Id == carrierId);
-        var quote = await context.QuoteViews.AsNoTracking().SingleAsync(item => item.Id == quoteId);
-        var quoteLine = await context.QuoteLineViews.AsNoTracking().SingleAsync(item => item.Id == quoteLineId);
-        var order = await context.SalesOrderViews.AsNoTracking().SingleAsync(item => item.Id == orderId);
-        var orderLine = await context.SalesOrderLineViews.AsNoTracking().SingleAsync(item => item.Id == orderLineId);
-        var auditLog = await context.AuditLogViews.AsNoTracking().SingleAsync(item => item.Id == auditLogId);
-        var idempotencyRequest = await context.IdempotencyRequestViews.AsNoTracking()
+        var user = await access.ApplicationUserViews.AsNoTracking().SingleAsync(item => item.Id == userId);
+        var product = await masterData.ProductViews.AsNoTracking().SingleAsync(item => item.Id == productId);
+        var customer = await masterData.CustomerViews.AsNoTracking().SingleAsync(item => item.Id == customerId);
+        var address = await masterData.CustomerAddressViews.AsNoTracking().SingleAsync(item => item.Id == addressId);
+        var carrier = await masterData.CarrierViews.AsNoTracking().SingleAsync(item => item.Id == carrierId);
+        var quote = await sales.QuoteViews.AsNoTracking().SingleAsync(item => item.Id == quoteId);
+        var quoteLine = await sales.QuoteLineViews.AsNoTracking().SingleAsync(item => item.Id == quoteLineId);
+        var order = await sales.SalesOrderViews.AsNoTracking().SingleAsync(item => item.Id == orderId);
+        var orderLine = await sales.SalesOrderLineViews.AsNoTracking().SingleAsync(item => item.Id == orderLineId);
+        var auditLog = await operations.AuditLogViews.AsNoTracking().SingleAsync(item => item.Id == auditLogId);
+        var idempotencyRequest = await operations.IdempotencyRequestViews.AsNoTracking()
             .SingleAsync(item => item.Id == idempotencyRequestId);
-        var idempotencyState = await context.IdempotencyStateViews.AsNoTracking().SingleAsync(item => item.Id == 1);
+        var idempotencyState = await operations.IdempotencyStateViews.AsNoTracking().SingleAsync(item => item.Id == 1);
 
         Assert.AreEqual($"EFPT User {key}", user.DisplayName);
         Assert.AreEqual(user.DisplayName, product.CreatedByUserDisplayName);
@@ -67,10 +83,10 @@ public sealed class GeneratedViewLiveTests
         Assert.IsNull(idempotencyRequest.ModifiedByUserDisplayName);
         CollectionAssert.AreEqual(keyHash, idempotencyRequest.KeyHash);
         CollectionAssert.AreEqual(requestHash, idempotencyRequest.RequestHash);
-        Assert.AreEqual(1, await context.AuditLogs.AsNoTracking().CountAsync(item => item.Id == auditLogId));
-        Assert.AreEqual(1, await context.AuditLogViews.AsNoTracking().CountAsync(item => item.Id == auditLogId));
-        Assert.AreEqual(1, await context.IdempotencyRequests.AsNoTracking().CountAsync(item => item.Id == idempotencyRequestId));
-        Assert.AreEqual(1, await context.IdempotencyRequestViews.AsNoTracking().CountAsync(item => item.Id == idempotencyRequestId));
+        Assert.AreEqual(1, await operations.AuditLogs.AsNoTracking().CountAsync(item => item.Id == auditLogId));
+        Assert.AreEqual(1, await operations.AuditLogViews.AsNoTracking().CountAsync(item => item.Id == auditLogId));
+        Assert.AreEqual(1, await operations.IdempotencyRequests.AsNoTracking().CountAsync(item => item.Id == idempotencyRequestId));
+        Assert.AreEqual(1, await operations.IdempotencyRequestViews.AsNoTracking().CountAsync(item => item.Id == idempotencyRequestId));
 
         await transaction.RollbackAsync();
     }

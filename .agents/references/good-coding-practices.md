@@ -7,6 +7,8 @@ Apply these rules to handwritten application and framework code. Treat generated
 - Keep one top-level semantic type per file. A class, record, struct, interface, enum, or delegate gets its own file named after that type. Nested helper types may remain with their owner when they have no independent meaning.
 - Organize files by business meaning, capability, or bounded context. Split a folder when it becomes a mixed catalog or is difficult to scan; do not create broad `Common`, `Helpers`, or `Utils` collections without one coherent responsibility.
 - Prefer domain-bounded EF contexts such as `AccountingDbContext`, `InventoryDbContext`, and a deliberately small `SharedDbContext`. Do not create an application-wide context merely for convenience. A shared context must own genuinely shared data, not become a cross-context shortcut.
+- Give each generated persistence type exactly one bounded-context owner and one generation configuration. Keep cross-context foreign keys as database constraints and scalar IDs unless an explicit read contract requires more; do not duplicate generated entities merely to obtain navigations.
+- Generated and handwritten partial files may be co-located for discoverability. In that layout, generation tools must replace only an exact manifest of generated files and preserve partials byte-for-byte; a mixed directory is never a safe recursive cleanup boundary.
 
 ## Class member layout
 

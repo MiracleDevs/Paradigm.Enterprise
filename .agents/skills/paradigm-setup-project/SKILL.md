@@ -53,7 +53,9 @@ Run `dotnet tool run paradigm api search <term> --project <solution>` only when 
 - For Aspire SQL Server projects, use its governed container-bootstrap assets so SQLCMD, SqlPackage, and DACPAC publication stay inside Docker rather than becoming workstation prerequisites.
 - Keep credentials in user secrets or environment configuration.
 - Review EF Core Power Tools selection, context/namespace/output settings, key types, nullability, views, and routines.
+- For multiple bounded contexts, keep one explicit EFPT config per context. Every selected database object and generated CLR type belongs to exactly one config/context; validate that selections are disjoint and complete. Keep cross-context foreign keys in the database and expose scalar IDs unless an explicit read contract owns the relationship.
 - Treat EF/T4 and analyzer output as generated. Require both a source ownership marker within the first 2,048 characters and `System.CodeDom.Compiler.GeneratedCodeAttribute` on generated types when assembly validation is part of acceptance. Put behavior in partial entity/context files or change the owning template.
+- When generated and handwritten partial files share a directory, cleanup, backup, recovery, and determinism checks must operate on an exact generated-file manifest. Never clear the whole directory.
 - Build immediately after regeneration and review the full generated diff.
 
 ## Finish

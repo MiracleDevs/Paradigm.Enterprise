@@ -2,8 +2,8 @@ using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.MasterData.Validation;
-using BeaconAr.Domain.Receivables.Entities;
-using BeaconAr.Interfaces.Receivables.Entities;
+using BeaconAr.Domain.MasterData.Entities;
+using BeaconAr.Interfaces.MasterData.Entities;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Providers;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
@@ -100,13 +100,8 @@ public sealed class AddressProvider
                 cancellationToken.ThrowIfCancellationRequested();
                 await UnitOfWork.CommitChangesAsync();
             }
-            if (oldCustomerId != value.CustomerId)
-                await Repository.ReparentAsync(address, value, typeId, _mutations.UserId, now, cancellationToken);
-            else
-            {
-                address.Replace(value, typeId, _mutations.UserId, now);
-                await Repository.UpdateAsync(address);
-            }
+            address.Replace(value, typeId, _mutations.UserId, now);
+            await Repository.UpdateAsync(address);
             AuditClearedDefaults(cleared, now);
             _mutations.AddAudit("address", address.Id, "updated", "{\"changedFields\":[\"masterData\",\"defaults\"]}", now);
             cancellationToken.ThrowIfCancellationRequested();
