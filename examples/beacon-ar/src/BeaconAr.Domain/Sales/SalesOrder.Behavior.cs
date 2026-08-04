@@ -2,11 +2,18 @@ using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
 using BeaconAr.Domain.Sales.Validation;
+using Paradigm.Enterprise.Domain.Entities;
 
 namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class SalesOrder
 {
+    #region Properties
+
+    public DomainTracker<SalesOrderLine> SalesOrderLinesDomainTracker { get; } = new();
+
+    #endregion
+
     #region Public Methods
 
     public static SalesOrder CreateDirectDraft(
@@ -156,9 +163,31 @@ public partial class SalesOrder
         Touch(actorId, now);
     }
 
+    public void AddSalesOrderLines(SalesOrderLine? entity)
+    {
+        if (entity is null)
+            return;
+        SalesOrderLines.Add(entity);
+        SalesOrderLinesDomainTracker.Add(entity);
+    }
+
+    public void RemoveSalesOrderLines(SalesOrderLine? entity)
+    {
+        if (entity is null)
+            return;
+        SalesOrderLines.Remove(entity);
+        SalesOrderLinesDomainTracker.Remove(entity);
+    }
+
     #endregion
 
     #region Private Methods
+
+    partial void ValidateEntity()
+    {
+        foreach (SalesOrderLine line in SalesOrderLines)
+            line.Validate();
+    }
 
     private void ApplySnapshots(CustomerSalesReference customer, AddressSalesReference address)
     {

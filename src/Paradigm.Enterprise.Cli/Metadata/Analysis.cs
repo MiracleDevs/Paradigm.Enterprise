@@ -84,6 +84,8 @@ internal static class Analysis
     internal static IEnumerable<string> GetIdentifierCandidates(InspectedType type, IReadOnlyList<InspectedType> all) => IdentifierCandidates(type, all);
     private static IEnumerable<string> IdentifierCandidates(InspectedType type, IReadOnlyList<InspectedType> all)
     {
+        var hasGenericEntityContract = type.Interfaces.Any(contract =>
+            SimpleName(DefinitionName(contract)) == "IEntity" && GenericArguments(contract).Count == 1);
         foreach (var contract in type.Interfaces.Append(type.BaseType ?? ""))
         {
             var definition = DefinitionName(contract);
@@ -91,7 +93,10 @@ internal static class Analysis
             var args = GenericArguments(contract);
             if (simpleDefinition == "IEntity")
             {
-                yield return args.Count == 1 ? args[0] : "System.Int32";
+                if (args.Count == 1)
+                    yield return args[0];
+                else if (!hasGenericEntityContract)
+                    yield return "System.Int32";
                 continue;
             }
 

@@ -35,7 +35,7 @@ Expose schema-bound read views that supply the Beacon AR API/domain entity shape
 | --- | --- |
 | `examples/beacon-ar/src/database/Views/` | Add the nine schema-bound entity views, organized consistently with existing database object folders/conventions. |
 | `examples/beacon-ar/src/database/BeaconAr.Database.sqlproj` | Explicitly surface object folders/categories and relevant scripts without duplicate `Build` inclusions under `Microsoft.Build.Sql`. |
-| `examples/beacon-ar/src/database/...` consumers | Replace any references to `QuotePricing`/`SalesOrderPricing` with their consolidated parent projections. |
+| `examples/beacon-ar/src/database/...` consumers | Keep canonical `QuotePricingView`/`SalesOrderPricingView` helpers behind their consolidated parent projections. |
 | `examples/beacon-ar/src/...` domain/repository/provider/API code | Align read mappings, contracts, and queries with the new views where current projections depend on pricing views. |
 | `examples/beacon-ar/tests/...` | Add/adjust projection and database integration coverage. |
 | `examples/beacon-ar/docs/...` | Document the view contract, projection boundaries, and pricing consolidation. |
@@ -60,7 +60,7 @@ All views should use `WITH SCHEMABINDING`, two-part object names, explicit colum
 ## Implementation sequence
 
 1. Inventory the generated/entity interfaces and current table definitions to establish exact required columns, nullability, aliases, and identifier conventions for each view.
-2. Inspect existing database view, function, table, and naming conventions; identify current `QuotePricing` and `SalesOrderPricing` definitions and all consumers.
+2. Inspect existing database view, function, table, and naming conventions; identify the canonical `QuotePricingView` and `SalesOrderPricingView` definitions and all consumers.
 3. Add the nine schema-bound views with explicit dependencies. Design totals so consumers read them through `QuoteView` and `SalesOrderView`, preserving existing business-calculation semantics and null/rounding behavior while retaining internal helpers if needed for schema-safe aggregation.
 4. Update repository/read-model mappings and dependent SQL so they select the consolidated quote/order projections instead of standalone pricing views.
 5. Update `BeaconAr.Database.sqlproj` using explicit item/folder metadata compatible with SDK-style Microsoft.Build.Sql. Verify that SQL source files are compiled once by default and that the project UI still clearly presents tables, views, functions, routines, types, sequences, and relevant pre/post-deployment or seed scripts.
@@ -74,7 +74,7 @@ All views should use `WITH SCHEMABINDING`, two-part object names, explicit colum
 - Assert each view exposes the required entity-interface columns with expected aliases and nullability-compatible values.
 - Seed representative records to validate joined names/codes/status descriptions.
 - For quote and sales-order views, test zero-line, one-line, and multi-line cases; verify subtotal, discount-total, and grand-total calculations, including null and rounding behavior.
-- Assert no consumer treats `QuotePricing` or `SalesOrderPricing` as an API DTO after the consolidation; schema-bound helper dependencies may remain internal.
+- Assert no consumer treats `QuotePricingView` or `SalesOrderPricingView` as an API DTO after the consolidation; schema-bound helper dependencies may remain internal.
 - Run the repository's strict database validation command.
 - Build `examples/beacon-ar/src/database/BeaconAr.Database.sqlproj` (including DACPAC/schema-binding validation).
 - Build `examples/beacon-ar/BeaconAr.slnx` and run the affected test suite.

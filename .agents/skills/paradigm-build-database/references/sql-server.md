@@ -39,7 +39,7 @@ Exclude pre-pre-deployment, included post-deployment, and maintenance scripts fr
 
 - Use explicit `[dbo]` unless another owned schema is intentional.
 - Use singular PascalCase object names and one semantic object per file.
-- Define views with `SCHEMABINDING` unless a reviewed cross-database or dynamic dependency prevents it.
+- Define views with `SCHEMABINDING` unless a reviewed cross-database or dynamic dependency prevents it. End every view object/file name in `View`; entity projections use `{Entity}View`, while helpers may use another descriptive stem such as `QuotePricingView`.
 - Use `PK_Table`, `FK_Table_ReferencedTable`, `UQ_Table_Columns`, `IX_Table_Columns`, and `DF_Table_Column`. Append the local column when several relationships target the same table.
 - Give transactional/entity tables `INT IDENTITY(1,1)` identifiers by default. Give closed system/status catalogs ordinary non-identity `INT` identifiers whose values are assigned in source-controlled seed data; preserve a reviewed distributed/assigned identifier boundary.
 - Do not add cascade deletion by habit. Use it only for an owned child/junction whose aggregate deletion semantics require it.

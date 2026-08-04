@@ -22,6 +22,10 @@ public sealed class GeneratedViewLiveTests
 
         (int userId, int productId, int customerId, int addressId, int carrierId, int quoteId, int quoteLineId,
             int orderId, int orderLineId) = await InsertFixtureAsync(connection, transaction, key);
+        byte[] keyHash = Enumerable.Range(1, 32).Select(static value => (byte)value).ToArray();
+        byte[] requestHash = Enumerable.Range(33, 32).Select(static value => (byte)value).ToArray();
+        (long auditLogId, long idempotencyRequestId) = await InsertOperationsFixtureAsync(
+            connection, transaction, key, userId, keyHash, requestHash);
 
         await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
         var options = new DbContextOptionsBuilder<ReceivablesDbContext>().UseSqlServer(connection).Options;
@@ -37,6 +41,10 @@ public sealed class GeneratedViewLiveTests
         var quoteLine = await context.QuoteLineViews.AsNoTracking().SingleAsync(item => item.Id == quoteLineId);
         var order = await context.SalesOrderViews.AsNoTracking().SingleAsync(item => item.Id == orderId);
         var orderLine = await context.SalesOrderLineViews.AsNoTracking().SingleAsync(item => item.Id == orderLineId);
+        var auditLog = await context.AuditLogViews.AsNoTracking().SingleAsync(item => item.Id == auditLogId);
+        var idempotencyRequest = await context.IdempotencyRequestViews.AsNoTracking()
+            .SingleAsync(item => item.Id == idempotencyRequestId);
+        var idempotencyState = await context.IdempotencyStateViews.AsNoTracking().SingleAsync(item => item.Id == 1);
 
         Assert.AreEqual($"EFPT User {key}", user.DisplayName);
         Assert.AreEqual(user.DisplayName, product.CreatedByUserDisplayName);
@@ -50,6 +58,19 @@ public sealed class GeneratedViewLiveTests
         Assert.AreEqual(customer.Name, order.CustomerName);
         Assert.AreEqual(carrier.Name, order.CarrierName);
         Assert.AreEqual(product.Name, orderLine.ProductName);
+        Assert.AreEqual(user.DisplayName, auditLog.UserDisplayName);
+        Assert.AreEqual("{\"fixture\":true}", auditLog.MetadataJson);
+        Assert.AreEqual(user.DisplayName, idempotencyRequest.UserDisplayName);
+        Assert.AreEqual("in_progress", idempotencyRequest.StateCode);
+        Assert.AreEqual(idempotencyState.DisplayName, idempotencyRequest.StateDisplayName);
+        Assert.IsNull(idempotencyRequest.CreatedByUserDisplayName);
+        Assert.IsNull(idempotencyRequest.ModifiedByUserDisplayName);
+        CollectionAssert.AreEqual(keyHash, idempotencyRequest.KeyHash);
+        CollectionAssert.AreEqual(requestHash, idempotencyRequest.RequestHash);
+        Assert.AreEqual(1, await context.AuditLogs.AsNoTracking().CountAsync(item => item.Id == auditLogId));
+        Assert.AreEqual(1, await context.AuditLogViews.AsNoTracking().CountAsync(item => item.Id == auditLogId));
+        Assert.AreEqual(1, await context.IdempotencyRequests.AsNoTracking().CountAsync(item => item.Id == idempotencyRequestId));
+        Assert.AreEqual(1, await context.IdempotencyRequestViews.AsNoTracking().CountAsync(item => item.Id == idempotencyRequestId));
 
         await transaction.RollbackAsync();
     }
@@ -57,6 +78,42 @@ public sealed class GeneratedViewLiveTests
     #endregion
 
     #region Private Methods
+
+    private static async Task<(long AuditLogId, long IdempotencyRequestId)> InsertOperationsFixtureAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        string key,
+        int userId,
+        byte[] keyHash,
+        byte[] requestHash)
+    {
+        const string sql = """
+            DECLARE @AuditLogId BIGINT;
+            DECLARE @IdempotencyRequestId BIGINT;
+
+            INSERT INTO [dbo].[AuditLog]
+                ([ResourceType], [ResourceId], [Action], [UserId], [RecordedAt], [CorrelationId], [MetadataJson])
+            VALUES
+                (N'GeneratedViewFixture', @Key, N'Created', @UserId, SYSDATETIMEOFFSET(), N'efpt-' + @Key, N'{"fixture":true}');
+            SET @AuditLogId = SCOPE_IDENTITY();
+
+            INSERT INTO [dbo].[IdempotencyRequest]
+                ([UserId], [Operation], [KeyHash], [RequestHash], [StateId], [CreationDate], [ExpirationDate])
+            VALUES
+                (@UserId, N'generated-view-' + @Key, @KeyHash, @RequestHash, 1, SYSDATETIMEOFFSET(), DATEADD(MINUTE, 5, SYSDATETIMEOFFSET()));
+            SET @IdempotencyRequestId = SCOPE_IDENTITY();
+
+            SELECT @AuditLogId, @IdempotencyRequestId;
+            """;
+        await using var command = new SqlCommand(sql, connection, transaction);
+        command.Parameters.AddWithValue("@Key", key);
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.Add("@KeyHash", System.Data.SqlDbType.Binary, 32).Value = keyHash;
+        command.Parameters.Add("@RequestHash", System.Data.SqlDbType.Binary, 32).Value = requestHash;
+        await using SqlDataReader reader = await command.ExecuteReaderAsync();
+        Assert.IsTrue(await reader.ReadAsync());
+        return (reader.GetInt64(0), reader.GetInt64(1));
+    }
 
     private static async Task<(int UserId, int ProductId, int CustomerId, int AddressId, int CarrierId,
         int QuoteId, int QuoteLineId, int OrderId, int OrderLineId)> InsertFixtureAsync(

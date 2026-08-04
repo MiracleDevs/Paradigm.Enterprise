@@ -8,8 +8,13 @@ IF OBJECT_ID(N'[dbo].[CustomerAddressView]', N'V') IS NULL THROW 51000, 'Custome
 IF OBJECT_ID(N'[dbo].[CarrierView]', N'V') IS NULL THROW 51000, 'CarrierView is missing.', 1;
 IF OBJECT_ID(N'[dbo].[QuoteView]', N'V') IS NULL THROW 51000, 'QuoteView is missing.', 1;
 IF OBJECT_ID(N'[dbo].[QuoteLineView]', N'V') IS NULL THROW 51000, 'QuoteLineView is missing.', 1;
+IF OBJECT_ID(N'[dbo].[QuotePricingView]', N'V') IS NULL THROW 51000, 'QuotePricingView is missing.', 1;
 IF OBJECT_ID(N'[dbo].[SalesOrderView]', N'V') IS NULL THROW 51000, 'SalesOrderView is missing.', 1;
 IF OBJECT_ID(N'[dbo].[SalesOrderLineView]', N'V') IS NULL THROW 51000, 'SalesOrderLineView is missing.', 1;
+IF OBJECT_ID(N'[dbo].[SalesOrderPricingView]', N'V') IS NULL THROW 51000, 'SalesOrderPricingView is missing.', 1;
+IF OBJECT_ID(N'[dbo].[AuditLogView]', N'V') IS NULL THROW 51000, 'AuditLogView is missing.', 1;
+IF OBJECT_ID(N'[dbo].[IdempotencyRequestView]', N'V') IS NULL THROW 51000, 'IdempotencyRequestView is missing.', 1;
+IF OBJECT_ID(N'[dbo].[IdempotencyStateView]', N'V') IS NULL THROW 51000, 'IdempotencyStateView is missing.', 1;
 IF EXISTS
 (
     SELECT 1
@@ -23,15 +28,20 @@ IF EXISTS
             (N'CarrierView'),
             (N'QuoteView'),
             (N'QuoteLineView'),
+            (N'QuotePricingView'),
             (N'SalesOrderView'),
-            (N'SalesOrderLineView')
+            (N'SalesOrderLineView'),
+            (N'SalesOrderPricingView'),
+            (N'AuditLogView'),
+            (N'IdempotencyRequestView'),
+            (N'IdempotencyStateView')
     ) AS [ExpectedView] ([Name])
     INNER JOIN [sys].[views] AS [View] ON [View].[name] = [ExpectedView].[Name]
     INNER JOIN [sys].[schemas] AS [Schema] ON [Schema].[schema_id] = [View].[schema_id]
     WHERE [Schema].[name] = N'dbo'
       AND OBJECTPROPERTY([View].[object_id], N'IsSchemaBound') <> 1
 )
-THROW 51000, 'An entity view is not schema-bound.', 1;
+THROW 51000, 'A database view is not schema-bound.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[ApplicationUserView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'ApplicationUserView duplicates base rows.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[ProductView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'ProductView duplicates base rows.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[CustomerView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'CustomerView duplicates base rows.', 1;
@@ -39,8 +49,16 @@ IF EXISTS (SELECT [Id] FROM [dbo].[CustomerAddressView] GROUP BY [Id] HAVING COU
 IF EXISTS (SELECT [Id] FROM [dbo].[CarrierView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'CarrierView duplicates base rows.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[QuoteView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'QuoteView duplicates base rows.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[QuoteLineView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'QuoteLineView duplicates base rows.', 1;
+IF EXISTS (SELECT [QuoteId] FROM [dbo].[QuotePricingView] GROUP BY [QuoteId] HAVING COUNT_BIG(*) > 1) THROW 51000, 'QuotePricingView duplicates quote rows.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[SalesOrderView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'SalesOrderView duplicates base rows.', 1;
 IF EXISTS (SELECT [Id] FROM [dbo].[SalesOrderLineView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'SalesOrderLineView duplicates base rows.', 1;
+IF EXISTS (SELECT [SalesOrderId] FROM [dbo].[SalesOrderPricingView] GROUP BY [SalesOrderId] HAVING COUNT_BIG(*) > 1) THROW 51000, 'SalesOrderPricingView duplicates sales-order rows.', 1;
+IF EXISTS (SELECT [Id] FROM [dbo].[AuditLogView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'AuditLogView duplicates base rows.', 1;
+IF EXISTS (SELECT [Id] FROM [dbo].[IdempotencyRequestView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'IdempotencyRequestView duplicates base rows.', 1;
+IF EXISTS (SELECT [Id] FROM [dbo].[IdempotencyStateView] GROUP BY [Id] HAVING COUNT_BIG(*) > 1) THROW 51000, 'IdempotencyStateView duplicates base rows.', 1;
+IF (SELECT COUNT_BIG(*) FROM [dbo].[AuditLog]) <> (SELECT COUNT_BIG(*) FROM [dbo].[AuditLogView]) THROW 51000, 'AuditLogView base-row count mismatch.', 1;
+IF (SELECT COUNT_BIG(*) FROM [dbo].[IdempotencyRequest]) <> (SELECT COUNT_BIG(*) FROM [dbo].[IdempotencyRequestView]) THROW 51000, 'IdempotencyRequestView base-row count mismatch.', 1;
+IF (SELECT COUNT_BIG(*) FROM [dbo].[IdempotencyState]) <> (SELECT COUNT_BIG(*) FROM [dbo].[IdempotencyStateView]) THROW 51000, 'IdempotencyStateView base-row count mismatch.', 1;
 IF (SELECT COUNT(*) FROM [dbo].[AddressType]) <> 3 THROW 51000, 'AddressType seed mismatch.', 1;
 IF (SELECT COUNT(*) FROM [dbo].[IdempotencyState]) <> 3 THROW 51000, 'IdempotencyState seed mismatch.', 1;
 IF (SELECT COUNT(*) FROM [dbo].[QuoteStatus]) <> 5 THROW 51000, 'QuoteStatus seed mismatch.', 1;

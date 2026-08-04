@@ -31,6 +31,8 @@ flowchart LR
 
 Prefer the official EF Core Power Tools CLI from a repository-local tool manifest and pin its exact approved version. Inspect that installed CLI's help and use its current `efcpt-config.json` schema; do not rename or translate keys from the Visual Studio extension's older `efpt.config.json` format. Review the context name, namespaces, entity/context output paths, explicit table/view/routine selection, nullable mappings, database naming, and T4 template root. Set object-list refresh deliberately so regeneration cannot silently broaden or shrink the owned model. Keep credentials and connection names out of the file.
 
+Start T4 customization from the official `Paradigm.Web.ApiTemplate` files. Record the source remote, exact revision, and original hashes beside the templates. When installed EFPT or Paradigm APIs have advanced, document and apply only reusable compatibility adaptations; never embed application entity-name lists or public-view whitelists in T4. Preserve the early ownership marker and compiled `GeneratedCodeAttribute`, then regenerate twice, build, and review the complete diff. Put application relationship corrections and domain behavior in supported partial/configuration seams.
+
 Add the named connection string expected by the host through user secrets for local development:
 
 ```powershell

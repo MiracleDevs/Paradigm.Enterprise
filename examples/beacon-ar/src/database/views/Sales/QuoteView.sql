@@ -55,7 +55,7 @@ AS
     INNER JOIN [dbo].[CustomerAddress] AS [ShippingAddress] ON [ShippingAddress].[Id] = [Quote].[ShippingAddressId]
     INNER JOIN [dbo].[AddressType] AS [AddressType] ON [AddressType].[Id] = [ShippingAddress].[AddressTypeId]
     INNER JOIN [dbo].[QuoteStatus] AS [Status] ON [Status].[Id] = [Quote].[StatusId]
-    INNER JOIN [dbo].[QuotePricing] AS [Pricing] ON [Pricing].[QuoteId] = [Quote].[Id]
+    INNER JOIN [dbo].[QuotePricingView] AS [Pricing] ON [Pricing].[QuoteId] = [Quote].[Id]
     LEFT JOIN [dbo].[SalesOrder] AS [SalesOrder] ON [SalesOrder].[SourceQuoteId] = [Quote].[Id]
     LEFT JOIN [dbo].[ApplicationUser] AS [CreatedByUser] ON [CreatedByUser].[Id] = [Quote].[CreatedByUserId]
     LEFT JOIN [dbo].[ApplicationUser] AS [ModifiedByUser] ON [ModifiedByUser].[Id] = [Quote].[ModifiedByUserId]

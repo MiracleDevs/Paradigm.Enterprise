@@ -19,7 +19,7 @@ public sealed class GeneratedPersistenceTests
                 type.Namespace == "BeaconAr.Domain.Receivables.Entities")
             .ToArray();
 
-        Assert.HasCount(37, generatedDomainTypes);
+        Assert.HasCount(43, generatedDomainTypes);
         foreach (Type generatedType in generatedDomainTypes.Append(typeof(ReceivablesDbContext)))
         {
             GeneratedCodeAttribute? attribute = generatedType.GetCustomAttribute<GeneratedCodeAttribute>();

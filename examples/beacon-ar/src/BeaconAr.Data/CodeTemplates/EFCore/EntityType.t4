@@ -23,26 +23,37 @@
     var services = (IServiceProvider)Host;
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
-    var publicEntityViewNames = new HashSet<string>
-    {
-        "ApplicationUserView",
-        "CarrierView",
-        "CustomerView",
-        "CustomerAddressView",
-        "ProductView",
-        "QuoteView",
-        "QuoteLineView",
-        "SalesOrderView",
-        "SalesOrderLineView"
-    };
     var isView = EntityType.GetViewName() != null;
-    var isPublicEntityView = isView && publicEntityViewNames.Contains(EntityType.Name);
-    var entityName = isPublicEntityView ? EntityType.Name.Substring(0, EntityType.Name.Length - "View".Length) : null;
+    var hasViewSuffix = EntityType.Name.EndsWith("View", StringComparison.Ordinal);
+    var entityName = isView && hasViewSuffix ? EntityType.Name.Substring(0, EntityType.Name.Length - "View".Length) : null;
+    var relatedEntity = entityName == null ? null : EntityType.Model.FindEntityType(entityName);
     var pairedView = !isView ? EntityType.Model.FindEntityType(EntityType.Name + "View") : null;
-    var isPairedEntity = pairedView != null && publicEntityViewNames.Contains(pairedView.Name);
-    var hasIntegerId = EntityType.FindProperty("Id")?.ClrType == typeof(int);
+    var idProperty = EntityType.FindProperty("Id");
+    var idClrType = idProperty?.ClrType;
+    var idTypeName = idClrType == null ? null : code.Reference(idClrType);
+    var isEntityView = isView && relatedEntity?.FindProperty("Id")?.ClrType == idClrType && idClrType != null;
+    var isPairedEntity = !isView && pairedView?.FindProperty("Id")?.ClrType == idClrType && idClrType != null;
     var auditColumns = new[] { "CreationDate", "ModificationDate", "CreatedByUserId", "ModifiedByUserId" };
-    var isAuditable = !isView && hasIntegerId && auditColumns.All(name => EntityType.FindProperty(name) != null);
+    var createdByUserIdProperty = EntityType.FindProperty("CreatedByUserId");
+    var modifiedByUserIdProperty = EntityType.FindProperty("ModifiedByUserId");
+    var createdByUserIdClrType = createdByUserIdProperty == null
+        ? null
+        : Nullable.GetUnderlyingType(createdByUserIdProperty.ClrType) ?? createdByUserIdProperty.ClrType;
+    var modifiedByUserIdClrType = modifiedByUserIdProperty == null
+        ? null
+        : Nullable.GetUnderlyingType(modifiedByUserIdProperty.ClrType) ?? modifiedByUserIdProperty.ClrType;
+    if (createdByUserIdClrType != null
+        && modifiedByUserIdClrType != null
+        && createdByUserIdClrType != modifiedByUserIdClrType)
+    {
+        Error($"Entity '{EntityType.Name}' audit actor identifier types must match: CreatedByUserId is {code.Reference(createdByUserIdClrType)} and ModifiedByUserId is {code.Reference(modifiedByUserIdClrType)}.");
+        return "";
+    }
+    var auditActorIdClrType = createdByUserIdClrType == modifiedByUserIdClrType
+        ? createdByUserIdClrType
+        : null;
+    var auditActorIdTypeName = auditActorIdClrType == null ? null : code.Reference(auditActorIdClrType);
+    var isAuditable = !isView && idClrType != null && auditActorIdClrType == idClrType && auditColumns.All(name => EntityType.FindProperty(name) != null);
     var interfaceToEntityIgnoredProperties = EntityType.GetProperties()
         .Where(property => property.Name == "Id" ||
             auditColumns.Contains(property.Name) ||
@@ -51,29 +62,13 @@
             property.Name.EndsWith("Snapshot", StringComparison.Ordinal))
         .OrderBy(property => property.Name, StringComparer.Ordinal)
         .ToList();
-    var collectionNavigations = EntityType.GetNavigations().Where(n => n.IsCollection).ToList();
-
-    if (isPublicEntityView)
-    {
-        var relatedEntity = EntityType.Model.FindEntityType(entityName);
-        if (relatedEntity == null || relatedEntity.FindProperty("Id")?.ClrType != typeof(int))
-        {
-            throw new InvalidOperationException($"Public DTO view '{EntityType.Name}' must have a matching int-key entity '{entityName}'.");
-        }
-
-        if (EntityType.FindProperty("Id")?.ClrType != typeof(int))
-        {
-            throw new InvalidOperationException($"Public DTO view '{EntityType.Name}' must retain the matching entity Id column.");
-        }
-    }
-
     var usings = new List<string>
     {
         "System",
         "System.Collections.Generic"
     };
 
-    if (hasIntegerId && (!isView || isPublicEntityView))
+    if (idClrType != null)
     {
         usings.Add("Paradigm.Enterprise.Domain.Entities");
     }
@@ -85,9 +80,9 @@
         usings.Add("Paradigm.Enterprise.Domain.Mappers");
     }
 
-    if (isPairedEntity || isPublicEntityView)
+    if (isPairedEntity || isEntityView)
     {
-        usings.Add("BeaconAr.Interfaces.Receivables.Entities");
+        usings.Add(NamespaceHint.Replace(".Domain.", ".Interfaces."));
     }
 
     if (isAuditable)
@@ -132,20 +127,20 @@ namespace <#= NamespaceHint #>;
     var inheritance = "";
     if (isPairedEntity)
     {
-        inheritance = $" : EntityBase<int, I{EntityType.Name}, {EntityType.Name}, {EntityType.Name}View>, I{EntityType.Name}";
+        inheritance = $" : EntityBase<{idTypeName}, I{EntityType.Name}, {EntityType.Name}, {EntityType.Name}View>, I{EntityType.Name}";
     }
-    else if (isPublicEntityView)
+    else if (isEntityView)
     {
-        inheritance = $" : EntityBase<int>, I{entityName}";
+        inheritance = $" : EntityBase<{idTypeName}>, I{entityName}";
     }
-    else if (!isView && hasIntegerId)
+    else if (idClrType != null)
     {
-        inheritance = " : EntityBase<int>";
+        inheritance = $" : EntityBase<{idTypeName}>";
     }
 
     if (isAuditable)
     {
-        inheritance += ", IAuditableEntity<DateTimeOffset, int>";
+        inheritance += $", IAuditableEntity<DateTimeOffset, {auditActorIdTypeName}>";
     }
 #>
 [System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
@@ -154,7 +149,7 @@ public partial class <#= EntityType.Name #><#= inheritance #>
 <#
     var firstProperty = true;
     foreach (var property in EntityType.GetProperties()
-        .Where(p => !hasIntegerId || (!isPublicEntityView && isView) || p.Name != "Id")
+        .Where(p => idClrType == null || p.Name != "Id")
         .OrderBy(p => p.GetColumnOrder() ?? -1))
     {
         if (!firstProperty)
@@ -196,29 +191,11 @@ public partial class <#= EntityType.Name #><#= inheritance #>
     {
         WriteLine("");
         var targetType = navigation.TargetEntityType.Name;
-        var isCustomerAddressOwnership = navigation.ForeignKey.GetConstraintName() == "FK_CustomerAddress_Customer";
-        if (navigation.IsCollection || (isCustomerAddressOwnership && !navigation.IsOnDependent))
+        if (navigation.IsCollection)
         {
-            var navigationName = isCustomerAddressOwnership ? "CustomerAddresses" : navigation.Name;
-            var targetHasIntegerId = navigation.TargetEntityType.FindProperty("Id")?.ClrType == typeof(int);
-            var isAggregateCollection = targetHasIntegerId &&
-                ((EntityType.Name == "Quote" && navigationName == "QuoteLines") ||
-                 (EntityType.Name == "SalesOrder" && navigationName == "SalesOrderLines"));
-            if (isAggregateCollection)
-            {
-                var privateCollectionName = "_" + char.ToLowerInvariant(navigationName[0]) + navigationName.Substring(1);
 #>
-    private readonly List<<#= targetType #>> <#= privateCollectionName #> = [];
-    public virtual IList<<#= targetType #>> <#= navigationName #> => <#= privateCollectionName #>;
-    public DomainTracker<<#= targetType #>> <#= navigationName #>DomainTracker { get; } = new();
+    public virtual ICollection<<#= targetType #>> <#= navigation.Name #> { get; set; } = new List<<#= targetType #>>();
 <#
-            }
-            else
-            {
-#>
-    public virtual ICollection<<#= targetType #>> <#= navigationName #> { get; set; } = new List<<#= targetType #>>();
-<#
-            }
         }
         else
         {
@@ -245,18 +222,6 @@ public partial class <#= EntityType.Name #><#= inheritance #>
     public override void Validate()
     {
         ValidateEntity();
-<#
-        foreach (var navigation in collectionNavigations.Where(n =>
-            (EntityType.Name == "Quote" && n.Name == "QuoteLines") ||
-            (EntityType.Name == "SalesOrder" && n.Name == "SalesOrderLines")))
-        {
-            var navigationName = navigation.ForeignKey.GetConstraintName() == "FK_CustomerAddress_Customer" ? "CustomerAddresses" : navigation.Name;
-#>
-        foreach (var child in <#= navigationName #>)
-            child.Validate();
-<#
-        }
-#>
     }
 
     public override <#= EntityType.Name #> MapFrom(IServiceProvider serviceProvider, I<#= EntityType.Name #> model)
@@ -276,35 +241,6 @@ public partial class <#= EntityType.Name #><#= inheritance #>
         serviceProvider.GetRequiredService<<#= EntityType.Name #>Mapper>().MapTo(this, view);
         return view;
     }
-<#
-        foreach (var navigation in collectionNavigations.Where(n =>
-            (EntityType.Name == "Quote" && n.Name == "QuoteLines") ||
-            (EntityType.Name == "SalesOrder" && n.Name == "SalesOrderLines")))
-        {
-            var targetType = navigation.TargetEntityType.Name;
-            var navigationName = navigation.ForeignKey.GetConstraintName() == "FK_CustomerAddress_Customer" ? "CustomerAddresses" : navigation.Name;
-            var privateCollectionName = "_" + char.ToLowerInvariant(navigationName[0]) + navigationName.Substring(1);
-#>
-
-    public void Add<#= navigationName #>(<#= targetType #>? entity)
-    {
-        if (entity is null)
-            return;
-        <#= privateCollectionName #>.Add(entity);
-        <#= navigationName #>DomainTracker.Add(entity);
-    }
-
-    public void Remove<#= navigationName #>(<#= targetType #>? entity)
-    {
-        if (entity is null)
-            return;
-        <#= privateCollectionName #>.Remove(entity);
-        <#= navigationName #>DomainTracker.Remove(entity);
-    }
-<#
-        }
-#>
-
     partial void ValidateEntity();
 
     partial void BeforeMap(I<#= EntityType.Name #> model);
@@ -320,7 +256,7 @@ public partial class <#= EntityType.Name #><#= inheritance #>
 #>
 
 [System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
-public partial class <#= EntityType.Name #>Mapper : EntityMapperBase<int, I<#= EntityType.Name #>, <#= EntityType.Name #>, <#= EntityType.Name #>View>
+public partial class <#= EntityType.Name #>Mapper : EntityMapperBase<<#= idTypeName #>, I<#= EntityType.Name #>, <#= EntityType.Name #>, <#= EntityType.Name #>View>
 {
     protected override void RegisterCustomConfigurations()
     {

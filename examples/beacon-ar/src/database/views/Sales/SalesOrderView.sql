@@ -61,7 +61,7 @@ AS
     INNER JOIN [dbo].[AddressType] AS [AddressType] ON [AddressType].[Id] = [ShippingAddress].[AddressTypeId]
     INNER JOIN [dbo].[SalesOrderStatus] AS [Status] ON [Status].[Id] = [SalesOrder].[StatusId]
     LEFT JOIN [dbo].[Carrier] AS [Carrier] ON [Carrier].[Id] = [SalesOrder].[CarrierId]
-    INNER JOIN [dbo].[SalesOrderPricing] AS [Pricing] ON [Pricing].[SalesOrderId] = [SalesOrder].[Id]
+    INNER JOIN [dbo].[SalesOrderPricingView] AS [Pricing] ON [Pricing].[SalesOrderId] = [SalesOrder].[Id]
     LEFT JOIN [dbo].[ApplicationUser] AS [CreatedByUser] ON [CreatedByUser].[Id] = [SalesOrder].[CreatedByUserId]
     LEFT JOIN [dbo].[ApplicationUser] AS [ModifiedByUser] ON [ModifiedByUser].[Id] = [SalesOrder].[ModifiedByUserId]
     LEFT JOIN [dbo].[ApplicationUser] AS [DeletedByUser] ON [DeletedByUser].[Id] = [SalesOrder].[DeletedByUserId];

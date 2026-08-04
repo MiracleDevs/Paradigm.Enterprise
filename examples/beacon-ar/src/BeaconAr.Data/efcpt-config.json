@@ -21,6 +21,9 @@
   ],
   "views": [
     { "name": "[dbo].[ApplicationUserView]" },
+    { "name": "[dbo].[AuditLogView]" },
+    { "name": "[dbo].[IdempotencyRequestView]" },
+    { "name": "[dbo].[IdempotencyStateView]" },
     { "name": "[dbo].[CarrierView]" },
     { "name": "[dbo].[CustomerView]" },
     { "name": "[dbo].[CustomerAddressView]" },
@@ -29,8 +32,8 @@
     { "name": "[dbo].[QuoteLineView]" },
     { "name": "[dbo].[SalesOrderView]" },
     { "name": "[dbo].[SalesOrderLineView]" },
-    { "name": "[dbo].[QuotePricing]" },
-    { "name": "[dbo].[SalesOrderPricing]" }
+    { "name": "[dbo].[QuotePricingView]" },
+    { "name": "[dbo].[SalesOrderPricingView]" }
   ],
   "stored-procedures": [
     { "exclusionWildcard": "*" }

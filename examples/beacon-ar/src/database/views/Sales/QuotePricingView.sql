@@ -1,4 +1,4 @@
-CREATE VIEW [dbo].[QuotePricing]
+CREATE VIEW [dbo].[QuotePricingView]
 WITH SCHEMABINDING
 AS
     SELECT

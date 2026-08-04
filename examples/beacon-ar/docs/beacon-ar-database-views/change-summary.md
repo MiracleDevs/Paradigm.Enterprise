@@ -8,7 +8,7 @@
 - Kept every base-table column on its matching view so the planned EF Core Power Tools-generated entity/view interfaces can provide a compile-time-compatible mapping surface.
 - Expanded foreign keys with balanced read data: audit-user display names; customer account/name; address type and display address fields; status code/display name; source quote number; carrier code/name/service level; and parent/product names on line views.
 - Followed the actual Beacon AR schema. Quote and sales-order projections expose only `Subtotal`, `DiscountTotal`, and `GrandTotal`; no tax, freight, quote-carrier, line-status, currency, or terms fields were invented.
-- Retained `QuotePricing` and `SalesOrderPricing` as schema-bound aggregation helpers. They are implementation dependencies of `QuoteView` and `SalesOrderView`, not consumer-facing DTO views.
+- Retained the canonically renamed `QuotePricingView` and `SalesOrderPricingView` as schema-bound aggregation helpers. They are implementation dependencies of `QuoteView` and `SalesOrderView`, not consumer-facing DTO views.
 - Updated `SearchQuote` and `SearchSalesOrder` to consume `QuoteView` and `SalesOrderView` directly instead of joining the helper pricing views themselves.
 - Updated the database smoke script to require every entity view, verify schema binding, and reject duplicate rows by base identifier.
 - Extended the live sales workflow test to query all nine views and validate quote/order totals after a complete quote-to-order workflow.
