@@ -30,6 +30,7 @@ Apply these rules to handwritten SQL Server and PostgreSQL database source. Pres
 
 ## Routines and data scripts
 
+- Keep complex, paginated, locking, multi-entity, and performance-sensitive repository SQL as database-project routines with typed application wrappers. Production repositories call those wrappers and must remain clean under `PE3107`; they do not duplicate the routine as a raw SQL string.
 - Give stored routines deterministic result-set order. Paginated searches return pagination metadata before result data and use a stable final sort.
 - Make pre/post-deployment and DbPublisher scripts rerunnable.
 - Use idempotent upsert/merge behavior for roles, permissions, statuses, and other required reference data.
