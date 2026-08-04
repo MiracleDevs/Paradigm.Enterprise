@@ -42,7 +42,8 @@ Repository writes stage changes. The Provider/Unit of Work owns commit timing.
 
 ## Select EF or a stored procedure
 
-- Prefer a stored procedure for pagination, complex or dynamic filtering, multi-join/reporting queries, and multi-step database operations.
+- Production repositories must not contain handwritten SQL query or command text. Do not use raw `FromSql*`, `ExecuteSql*`, `SqlQuery*`, `DbCommand.CommandText`, or equivalent string-built database commands there.
+- Prefer a typed stored-procedure boundary for pagination, locking and range locking, complex or dynamic filtering, multi-join/reporting queries, performance-sensitive paths, and multi-step database operations. Keep the SQL object in the database project and its typed parameter/result plumbing in Data.
 - Use EF/LINQ only for simple, bounded queries whose translation, cardinality, and ordering are predictable.
 - Keep in-memory LINQ outside this selection rule; the concern is database query translation and execution.
 

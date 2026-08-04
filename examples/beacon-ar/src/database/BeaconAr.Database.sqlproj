@@ -49,8 +49,9 @@
     <Folder Include="views\MasterData\" />
     <Folder Include="views\Operations\" />
     <Folder Include="views\Sales\" />
+    <Folder Include="routines\Access\" />
     <Folder Include="routines\MasterData\" />
-    <Folder Include="routines\Reporting\" />
+    <Folder Include="routines\Operations\" />
     <Folder Include="routines\Sales\" />
     <Folder Include="sequences\Sales\" />
     <Folder Include="scripts\predeployment\" />

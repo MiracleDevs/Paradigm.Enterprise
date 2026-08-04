@@ -1,5 +1,7 @@
 # Beacon AR API contract implementation plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Objective
 
 Complete the release-one Beacon AR HTTP boundary on branch `task/beacon-ar-api-contract`. Expose the existing master-data, sales, conversion, and reporting Providers through an authenticated `/api/v1` REST API; make authentication, authorization, concurrency, idempotency, errors, serialization, and generated-client behavior part of one versioned OpenAPI contract; and finish the example's runbook, README, and CI acceptance path.

@@ -1,5 +1,7 @@
 # Beacon AR EF Core Power Tools — Implementation Plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Goal
 
 Replace Beacon AR's hand-invoked `dotnet ef dbcontext scaffold` workflow with a repository-local, version-pinned EF Core Power Tools CLI (`efcpt`) reverse-engineering configuration and the existing customized T4 templates. Generate the SQL Server `Receivables` persistence model deterministically: entities and API-read views live in `BeaconAr.Domain/Receivables/Entities`, the context lives in `BeaconAr.Data/Receivables/Context`, and matching entity/view pairs share a generated `I{Entity}` interface.

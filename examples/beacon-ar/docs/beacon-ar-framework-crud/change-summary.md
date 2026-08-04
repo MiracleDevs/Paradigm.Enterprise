@@ -1,5 +1,7 @@
 # Beacon AR framework CRUD change summary
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Master-data repositories
 
 - Product, Customer, Address (`CustomerAddress`), and Carrier edit repository contracts now inherit `IEditRepository<TEntity, int>`.

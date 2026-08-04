@@ -2,7 +2,8 @@ using System.Security.Cryptography;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.MasterData.Entities;
+using BeaconAr.Domain.Operations.Entities;
 using Paradigm.Enterprise.Domain.Uow;
 using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
 

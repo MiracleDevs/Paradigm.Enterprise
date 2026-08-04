@@ -1,0 +1,7 @@
+CREATE PROCEDURE [dbo].[HasCarrierReferences]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT CONVERT(BIT, CASE WHEN EXISTS (SELECT 1 FROM [dbo].[SalesOrder] WHERE [CarrierId] = @Id) THEN 1 ELSE 0 END);
+END;

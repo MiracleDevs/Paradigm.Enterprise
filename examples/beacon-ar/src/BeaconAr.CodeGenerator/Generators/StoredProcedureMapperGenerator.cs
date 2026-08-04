@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using BeaconAr.CodeGenerator.Extensions;
-using BeaconAr.Data.Receivables.Context;
+using BeaconAr.Data.Access.Context;
 
 using System.Reflection;
 using System.Text;
@@ -50,16 +50,21 @@ internal class StoredProcedureMapperGenerator
         if (string.IsNullOrWhiteSpace(outputPath))
             throw new ArgumentNullException(nameof(outputPath));
 
-        using var output = new AtomicOutputDirectory(outputPath);
-        var storedProcedureTypes = typeof(ReceivablesDbContext).Assembly.GetTypes()
+        var storedProcedureTypes = typeof(AccessDbContext).Assembly.GetTypes()
             .Where(IsStoredProcedureClass)
             .OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal)
             .ToArray();
-        var dataReaderMappers = GenerateDataReaderMappers(storedProcedureTypes, output.Path);
-        var sqlParameterMappers = GenerateSqlParameterMappers(storedProcedureTypes, output.Path);
-
-        GenerateMappersRegisterer(output.Path, dataReaderMappers, sqlParameterMappers);
-        output.Commit();
+        foreach (IGrouping<string, Type> capabilityGroup in storedProcedureTypes
+                     .GroupBy(GetCapability, StringComparer.Ordinal)
+                     .OrderBy(static group => group.Key, StringComparer.Ordinal))
+        {
+            using var output = new AtomicOutputDirectory(Path.Combine(outputPath, capabilityGroup.Key, "Mappers"));
+            Type[] capabilityTypes = capabilityGroup.OrderBy(static type => type.FullName ?? type.Name, StringComparer.Ordinal).ToArray();
+            var dataReaderMappers = GenerateDataReaderMappers(capabilityTypes, output.Path, capabilityGroup.Key);
+            var sqlParameterMappers = GenerateSqlParameterMappers(capabilityTypes, output.Path, capabilityGroup.Key);
+            GenerateMappersRegisterer(output.Path, capabilityGroup.Key, dataReaderMappers, sqlParameterMappers);
+            output.Commit();
+        }
         _logger.LogInformation("Finished DataReader mappers generation.");
     }
 
@@ -77,12 +82,22 @@ internal class StoredProcedureMapperGenerator
     private bool IsStoredProcedureClass(Type type) => type.IsClass && !type.IsAbstract && type.BaseType is not null &&
         type.BaseType.Name.Contains("StoredProcedureBase");
 
+    private static string GetCapability(Type type)
+    {
+        const string prefix = "BeaconAr.Data.";
+        const string suffix = ".StoredProcedures";
+        string typeNamespace = type.Namespace ?? throw new InvalidOperationException($"Stored procedure type '{type.Name}' has no namespace.");
+        if (!typeNamespace.StartsWith(prefix, StringComparison.Ordinal) || !typeNamespace.EndsWith(suffix, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Stored procedure type '{type.FullName}' is not capability-owned.");
+        return typeNamespace.Substring(prefix.Length, typeNamespace.Length - prefix.Length - suffix.Length);
+    }
+
     /// <summary>
     /// Generates the data reader mappers.
     /// </summary>
     /// <param name="storedProcedureTypes">The stored procedure types.</param>
     /// <param name="outputPath">The output path.</param>
-    private List<string> GenerateDataReaderMappers(IEnumerable<Type> storedProcedureTypes, string outputPath)
+    private List<string> GenerateDataReaderMappers(IEnumerable<Type> storedProcedureTypes, string outputPath, string capability)
     {
         _logger.LogInformation("Starting DataReader mappers generation.");
 
@@ -133,7 +148,7 @@ using {targetType.Namespace};
 using Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 using System.Data;
 
-namespace BeaconAr.Data.Mappers.DataReaders;
+namespace BeaconAr.Data.{capability}.Mappers.DataReaders;
 
 internal partial class {mapperClassName} : DataReaderMapperBase
 {{
@@ -215,7 +230,7 @@ internal partial class {mapperClassName} : DataReaderMapperBase
     /// </summary>
     /// <param name="storedProcedureTypes">The stored procedure types.</param>
     /// <param name="outputPath">The output path.</param>
-    private List<string> GenerateSqlParameterMappers(IEnumerable<Type> storedProcedureTypes, string outputPath)
+    private List<string> GenerateSqlParameterMappers(IEnumerable<Type> storedProcedureTypes, string outputPath, string capability)
     {
         _logger.LogInformation("Starting SqlParameter mappers generation.");
 
@@ -258,7 +273,7 @@ internal partial class {mapperClassName} : DataReaderMapperBase
 using Paradigm.Enterprise.Data.SqlServer.StoredProcedures.Mappers;
 using {targetType.Namespace};
 
-namespace BeaconAr.Data.Mappers.SqlParameters;
+namespace BeaconAr.Data.{capability}.Mappers.SqlParameters;
 
 internal partial class {mapperClassName} : SqlParameterMapperBase
 {{
@@ -378,7 +393,7 @@ internal partial class {mapperClassName} : SqlParameterMapperBase
     /// </summary>
     /// <param name="outputPath">The output path.</param>
     /// <param name="generatedTypes">The generated types.</param>
-    private void GenerateMappersRegisterer(string outputPath, List<string> dataReaderMappers, List<string> sqlParameterMappers)
+    private void GenerateMappersRegisterer(string outputPath, string capability, List<string> dataReaderMappers, List<string> sqlParameterMappers)
     {
         var registerDataReaderMappers = new StringBuilder();
         var registerSqlParameterMappers = new StringBuilder();
@@ -399,9 +414,9 @@ internal partial class {mapperClassName} : SqlParameterMapperBase
 using Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 using Paradigm.Enterprise.Data.StoredProcedures.Mappers;
 
-namespace BeaconAr.Data.Mappers;
+namespace BeaconAr.Data.{capability}.Mappers;
 
-public static class StoreProcedureMappersRegisterer
+public static class {capability}StoredProcedureMappersRegisterer
 {{
     public static void RegisterMappers()
     {{
@@ -420,8 +435,8 @@ public static class StoreProcedureMappersRegisterer
     }}
 }}";
 
-        File.WriteAllText(Path.Combine(outputPath, "StoreProcedureMappersRegisterer.cs"), sourceCode);
-        _logger.LogInformation($"Generated StoreProcedureMappersRegisterer class with {dataReaderMappers.Count} DataReaderMappers and {sqlParameterMappers.Count} SqlParameterMappers.");
+        File.WriteAllText(Path.Combine(outputPath, $"{capability}StoredProcedureMappersRegisterer.cs"), sourceCode);
+        _logger.LogInformation($"Generated {capability}StoredProcedureMappersRegisterer class with {dataReaderMappers.Count} DataReaderMappers and {sqlParameterMappers.Count} SqlParameterMappers.");
     }
 
     #endregion

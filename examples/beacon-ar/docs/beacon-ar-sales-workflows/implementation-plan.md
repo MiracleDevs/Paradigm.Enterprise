@@ -1,5 +1,7 @@
 # Beacon AR sales-workflows implementation plan
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Objective
 
 Implement the complete release-one Quote, accepted-quote conversion, direct Sales Order, fulfillment, and Dashboard application capabilities through `BeaconAr.Domain`, `BeaconAr.Data`, `BeaconAr.Providers`, and the SQL Server database project. Deliver authoritative snapshots and pricing, bounded server-side searches, draft replacement and tombstoning, both lifecycle state machines with append-only histories, optimistic concurrency, transactional audit, exactly-once quote conversion, and one internally consistent database-side dashboard aggregate.

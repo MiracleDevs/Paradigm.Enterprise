@@ -1,17 +1,30 @@
+using BeaconAr.Data.Access.Repositories;
+using BeaconAr.Data.MasterData.Repositories;
+using BeaconAr.Data.Operations.Repositories;
+using BeaconAr.Data.Sales.Repositories;
 using BeaconAr.Data.MasterData;
 using BeaconAr.Data.Operations;
-using BeaconAr.Data.Receivables.Context;
+using BeaconAr.Data.Access.Context;
+using BeaconAr.Data.MasterData.Context;
+using BeaconAr.Data.Operations.Context;
+using BeaconAr.Data.Sales.Context;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.Access.Entities;
+using BeaconAr.Domain.MasterData.Entities;
+using BeaconAr.Domain.Operations.Entities;
+using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Providers.MasterData;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Data.SqlServer.Context;
+using Paradigm.Enterprise.Data.SqlServer.Extensions;
 using Paradigm.Enterprise.Data.Uow;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Extensions;
@@ -125,6 +138,34 @@ public sealed class MasterDataLiveTests
     #endregion
 
     #region Public Methods
+
+    [TestMethod]
+    public void ContextsShareOneScopedConnectionAndPersistenceSessionClearsEveryTracker()
+    {
+        const string connectionString = "Server=localhost;Database=BeaconArConnectionIdentity;Integrated Security=true;TrustServerCertificate=true";
+        using ServiceProvider services = CreateServices(connectionString, 1, "context-boundary-test");
+        using IServiceScope scope = services.CreateScope();
+        AccessDbContext access = scope.ServiceProvider.GetRequiredService<AccessDbContext>();
+        MasterDataDbContext masterData = scope.ServiceProvider.GetRequiredService<MasterDataDbContext>();
+        OperationsDbContext operations = scope.ServiceProvider.GetRequiredService<OperationsDbContext>();
+        SalesDbContext sales = scope.ServiceProvider.GetRequiredService<SalesDbContext>();
+
+        object connection = access.Database.GetDbConnection();
+        Assert.AreSame(connection, masterData.Database.GetDbConnection());
+        Assert.AreSame(connection, operations.Database.GetDbConnection());
+        Assert.AreSame(connection, sales.Database.GetDbConnection());
+
+        access.Add(new ApplicationUser());
+        masterData.Add(new Product());
+        operations.Add(new AuditLog());
+        sales.Add(new Quote());
+        scope.ServiceProvider.GetRequiredService<IPersistenceSession>().DiscardTrackedChanges();
+
+        Assert.AreEqual(0, access.ChangeTracker.Entries().Count());
+        Assert.AreEqual(0, masterData.ChangeTracker.Entries().Count());
+        Assert.AreEqual(0, operations.ChangeTracker.Entries().Count());
+        Assert.AreEqual(0, sales.ChangeTracker.Entries().Count());
+    }
 
     [TestMethod]
     public async Task ProvidersPersistSearchVersionDefaultsUniquenessAndAudit()
@@ -580,6 +621,16 @@ public sealed class MasterDataLiveTests
         SkuRaceGate? skuRaceGate = null, CancellationTokenSource? cancellationAfterFirstSave = null)
     {
         var services = new ServiceCollection();
+        var configuration = new ConfigurationManager
+        {
+            ["ConnectionStrings:DatabaseConnection"] = connectionString
+        };
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddScoped<SqlServerDbContextConnectionProvider>();
+        services.RegisterContext<AccessDbContext>("DatabaseConnection");
+        services.RegisterContext<MasterDataDbContext>("DatabaseConnection");
+        services.RegisterContext<OperationsDbContext>("DatabaseConnection");
+        services.RegisterContext<SalesDbContext>("DatabaseConnection");
         services.RegisterLoggedUserService();
         if (cancellationAfterFirstSave is null)
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -589,7 +640,6 @@ public sealed class MasterDataLiveTests
             services.AddScoped<IUnitOfWork>(provider => new CancelAfterFirstSaveUnitOfWork(
                 provider.GetRequiredService<UnitOfWork>(), cancellationAfterFirstSave));
         }
-        services.AddDbContext<ReceivablesDbContext>((_, options) => options.UseSqlServer(connectionString));
         services.AddScoped<ProductRepository>();
         if (skuRaceGate is null)
             services.AddScoped<IProductRepository>(provider => provider.GetRequiredService<ProductRepository>());

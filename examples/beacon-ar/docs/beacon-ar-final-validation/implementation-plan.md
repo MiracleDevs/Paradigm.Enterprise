@@ -1,5 +1,7 @@
 # Beacon AR final cross-cutting validation plan (Task 5)
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Release objective
 
 Perform a release audit of the merged Beacon AR example from the user-request baseline (`8a018ca`) through the current merged Web API head (`aaa5081`), including the supporting guidance. Earlier foundation history may be consulted for provenance, but it is not the user-request audit baseline. The audit is evidence-led: it must distinguish a verified pass, a verified defect with the smallest safe correction, and a not-run check with its exact external limitation.

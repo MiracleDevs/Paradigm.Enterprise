@@ -1,5 +1,7 @@
 # Beacon AR database view conventions change summary
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Outcome
 
 Task 2 implements the database-view naming, Operations projection, generation provenance, deterministic policy, and validation requirements while retaining SQL Server. Every database view now ends in `View`; the generated persistence model follows those names; Operations projections remain internal and are not exposed through the API.

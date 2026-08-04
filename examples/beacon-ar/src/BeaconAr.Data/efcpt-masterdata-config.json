@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
+  "tables": [{ "name": "[dbo].[AddressType]" }, { "name": "[dbo].[Carrier]" }, { "name": "[dbo].[Customer]" }, { "name": "[dbo].[CustomerAddress]" }, { "name": "[dbo].[Product]" }],
+  "views": [{ "name": "[dbo].[CarrierView]" }, { "name": "[dbo].[CustomerView]" }, { "name": "[dbo].[CustomerAddressView]" }, { "name": "[dbo].[ProductView]" }],
+  "stored-procedures": [{ "exclusionWildcard": "*" }], "functions": [{ "exclusionWildcard": "*" }],
+  "code-generation": { "enable-on-configuring": false, "type": "all", "use-database-names": true, "use-data-annotations": false, "use-nullable-reference-types": true, "use-inflector": true, "use-legacy-inflector": false, "use-many-to-many-entity": false, "use-t4": true, "remove-defaultsql-from-bool-properties": false, "soft-delete-obsolete-files": false, "use-alternate-stored-procedure-resultset-discovery": false, "use-stored-procedure-resultset-fallback": true, "t4-template-path": ".", "refresh-object-lists": false, "generate-mermaid-diagram": false },
+  "names": { "root-namespace": "", "dbcontext-name": "MasterDataDbContext", "dbcontext-namespace": "BeaconAr.Data.MasterData.Context", "model-namespace": "BeaconAr.Domain.MasterData.Entities" },
+  "file-layout": { "output-path": "../BeaconAr.Domain/MasterData/Entities", "output-dbcontext-path": "MasterData/Context", "split-dbcontext-preview": false, "use-schema-folders-preview": false, "use-schema-namespaces-preview": false },
+  "type-mappings": { "use-DateOnly-TimeOnly": true, "use-HierarchyId": false, "use-spatial": false, "use-NodaTime": false }, "replacements": { "preserve-casing-with-regex": true }
+}

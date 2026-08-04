@@ -1,5 +1,7 @@
 # Beacon AR EF Core Power Tools — Change Summary
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 > Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
 
 > Superseding ownership note: EFPT/T4 now emits metadata-derived generic entity/context identifiers and ordinary persistence navigations only. Domain partials own aggregate trackers and behavior; `ReceivablesDbContext.Relationships.cs` owns the `Customer`/`CustomerAddress` correction through the context partial hook. References below to generated aggregate trackers or a T4-owned relationship correction describe the earlier implementation and are not current guidance.

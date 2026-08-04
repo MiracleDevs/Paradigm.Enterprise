@@ -1,5 +1,5 @@
 using BeaconAr.Domain.MasterData.Contracts;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.MasterData.Entities;
 using Paradigm.Enterprise.Providers;
 
 namespace BeaconAr.Providers.MasterData;

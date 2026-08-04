@@ -1,5 +1,7 @@
 # Task 2 validation hash contract
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 `validation-hashes.sha256` is a secret-free snapshot of the bounded persistence-regeneration contract, relative to `examples/beacon-ar`.
 
 The 78 entries comprise:

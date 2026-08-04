@@ -1,23 +1,31 @@
+using BeaconAr.Data.Access.Repositories;
+using BeaconAr.Data.MasterData.Repositories;
+using BeaconAr.Data.Operations.Repositories;
+using BeaconAr.Data.Sales.Repositories;
 using BeaconAr.Data.MasterData;
 using BeaconAr.Data.Operations;
-using BeaconAr.Data.Receivables.Context;
-using BeaconAr.Data.Reporting;
+using BeaconAr.Data.Access.Context;
+using BeaconAr.Data.MasterData.Context;
+using BeaconAr.Data.Operations.Context;
+using BeaconAr.Data.Sales.Context;
 using BeaconAr.Data.Sales;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
-using BeaconAr.Domain.Reporting.Contracts;
-using BeaconAr.Domain.Reporting.Repositories;
+using BeaconAr.Domain.Operations.Contracts;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
-using BeaconAr.Providers.Reporting;
+using BeaconAr.Providers.Operations;
 using BeaconAr.Providers.Sales;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Data.SqlServer.Context;
+using Paradigm.Enterprise.Data.SqlServer.Extensions;
 using Paradigm.Enterprise.Data.Uow;
 using Paradigm.Enterprise.Domain.Extensions;
 using Paradigm.Enterprise.Domain.Uow;
@@ -698,6 +706,16 @@ public sealed class SalesWorkflowLiveTests
         ReferenceReadGate? referenceGate = null)
     {
         ServiceCollection services = new();
+        var configuration = new ConfigurationManager
+        {
+            ["ConnectionStrings:DatabaseConnection"] = connectionString
+        };
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddScoped<SqlServerDbContextConnectionProvider>();
+        services.RegisterContext<AccessDbContext>("DatabaseConnection");
+        services.RegisterContext<MasterDataDbContext>("DatabaseConnection");
+        services.RegisterContext<OperationsDbContext>("DatabaseConnection");
+        services.RegisterContext<SalesDbContext>("DatabaseConnection");
         services.RegisterLoggedUserService();
         if (cancellationAfterFirstSave is null)
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -707,7 +725,6 @@ public sealed class SalesWorkflowLiveTests
             services.AddScoped<IUnitOfWork>(provider => new CancelAfterFirstSaveUnitOfWork(
                 provider.GetRequiredService<UnitOfWork>(), cancellationAfterFirstSave));
         }
-        services.AddDbContext<ReceivablesDbContext>((_, options) => options.UseSqlServer(connectionString));
         services.AddScoped<IQuoteRepository, QuoteRepository>();
         services.AddScoped<IQuoteViewRepository, QuoteViewRepository>();
         services.AddScoped<ISalesOrderRepository, SalesOrderRepository>();

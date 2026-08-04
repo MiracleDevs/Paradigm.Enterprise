@@ -1,5 +1,5 @@
 using BeaconAr.Domain.MasterData.Contracts;
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Providers.MasterData;
 using BeaconAr.WebApi.Http;
 using BeaconAr.WebApi.Security;

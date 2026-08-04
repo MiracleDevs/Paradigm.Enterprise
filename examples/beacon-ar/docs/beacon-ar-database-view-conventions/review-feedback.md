@@ -1,5 +1,7 @@
 # Beacon AR database view conventions review feedback
 
+> **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
+
 ## Findings
 
 ### Medium — the claimed reusable T4 identifier adaptation is still application-specific and incomplete

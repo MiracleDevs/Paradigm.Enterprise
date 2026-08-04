@@ -1,4 +1,4 @@
-using BeaconAr.Domain.Receivables.Entities;
+using BeaconAr.Domain.MasterData.Entities;
 using Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
 
 namespace BeaconAr.Data.MasterData.StoredProcedures;
