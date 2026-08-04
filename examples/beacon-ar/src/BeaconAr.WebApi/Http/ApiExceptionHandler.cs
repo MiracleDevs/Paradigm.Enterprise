@@ -2,8 +2,10 @@ using System.Diagnostics;
 using BeaconAr.Domain.Access.Application;
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.Sales.Application;
+using BeaconAr.Domain.Operations;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Paradigm.Enterprise.Domain.Exceptions;
 
 namespace BeaconAr.WebApi.Http;
 
@@ -68,6 +70,8 @@ public sealed partial class ApiExceptionHandler : IExceptionHandler
         {
             MasterDataValidationException value => (400, value.Code, value.SafeMessage, "The request could not be processed.", value.Errors),
             SalesValidationException value => (400, value.Code, value.SafeMessage, "The request could not be processed.", value.Errors),
+            VersionTokenException => (400, "invalid_version", "Bad request", "The version must be a canonical SQL Server rowversion token.", null),
+            DomainException value => (400, "validation_failed", "Bad request", value.Message.Trim(), null),
             ApiBoundaryException value => (value.Status, value.Code, Title(value.Status), value.SafeMessage, null),
             AccessException value => (403, value.Code, "Forbidden", value.SafeMessage, null),
             MasterDataException value => (Status(value.Code), value.Code, Title(Status(value.Code)), value.SafeMessage, null),

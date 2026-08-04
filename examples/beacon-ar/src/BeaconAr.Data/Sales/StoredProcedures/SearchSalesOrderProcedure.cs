@@ -1,8 +1,9 @@
 using Paradigm.Enterprise.Data.SqlServer.StoredProcedures;
+using BeaconAr.Domain.Sales.Entities;
 
 namespace BeaconAr.Data.Sales.StoredProcedures;
 
-internal sealed class SearchSalesOrderProcedure : ResultStoredProcedureBase<SalesOrderSearchParameters, int, List<SalesOrderSearchRow>>
+internal sealed class SearchSalesOrderProcedure : ResultStoredProcedureBase<SalesOrderSearchParameters, int, List<SalesOrderView>>
 {
     #region Properties
 

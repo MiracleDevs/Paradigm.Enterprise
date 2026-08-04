@@ -17,6 +17,7 @@ using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Operations.Contracts;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
+using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Domain.Sales.Repositories;
 using BeaconAr.Providers.Operations;
 using BeaconAr.Providers.Sales;
@@ -30,8 +31,8 @@ using Paradigm.Enterprise.Data.Uow;
 using Paradigm.Enterprise.Domain.Extensions;
 using Paradigm.Enterprise.Domain.Uow;
 using System.Data;
-using OrderState = BeaconAr.Domain.Sales.SalesOrderStatus;
-using QuoteState = BeaconAr.Domain.Sales.QuoteStatus;
+using OrderState = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
+using QuoteState = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
 
 namespace BeaconAr.Database.IntegrationTests;
 
@@ -332,7 +333,7 @@ public sealed class SalesWorkflowLiveTests
         QuoteDto quote = await quotes.CreateAsync(new QuoteCreateRequest(
             fixture.CustomerId, fixture.AddressId, new DateOnly(2026, 8, 1), new DateOnly(2026, 8, 2), null,
             [new SalesLineRequest(fixture.ProductId, 1, 10m, 0)]), CancellationToken.None);
-        PageResult<QuoteSummaryDto> page = await quotes.SearchAsync(new QuoteSearchRequest(
+        PageResult<QuoteView> page = await quotes.SearchAsync(new QuoteSearchRequest(
             Search: quote.QuoteNumber, PageNumber: 1, PageSize: 10, SortField: "quoteNumber"), CancellationToken.None);
         Assert.AreEqual(1, page.ItemsCount);
         Assert.AreEqual(quote.Id, page.Items.Single().Id);
@@ -345,7 +346,7 @@ public sealed class SalesWorkflowLiveTests
         SalesOrderDto order = await orders.CreateDirectAsync(new SalesOrderCreateRequest(
             fixture.CustomerId, fixture.AddressId, null, fixture.CarrierId, null,
             [new SalesLineRequest(fixture.ProductId, 1, 10m, 0)]), CancellationToken.None);
-        PageResult<SalesOrderSummaryDto> orderPage = await orders.SearchAsync(new SalesOrderSearchRequest(
+        PageResult<SalesOrderView> orderPage = await orders.SearchAsync(new SalesOrderSearchRequest(
             Search: order.OrderNumber, SortField: "orderNumber"), CancellationToken.None);
         Assert.AreEqual(order.Id, orderPage.Items.Single().Id);
         DashboardSummaryDto summary = await dashboard.GetSummaryAsync(CancellationToken.None);

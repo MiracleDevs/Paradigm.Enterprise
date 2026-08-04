@@ -52,7 +52,10 @@ public sealed class GeneratedMapperTests
         Product entity = new()
         {
             Id = 17,
+            Sku = "SKU",
             Name = "Original name",
+            Category = "Category",
+            UnitPrice = 1m,
             CreatedByUserId = 11,
             CreationDate = creationDate,
             ModifiedByUserId = 12,
@@ -62,7 +65,10 @@ public sealed class GeneratedMapperTests
         ProductView incoming = new()
         {
             Id = 99,
+            Sku = "SKU-2",
             Name = "Updated name",
+            Category = "Category",
+            UnitPrice = 2m,
             CreatedByUserId = 91,
             CreationDate = creationDate.AddYears(1),
             ModifiedByUserId = 92,
@@ -106,9 +112,21 @@ public sealed class GeneratedMapperTests
         };
         QuoteView incoming = new()
         {
+            QuoteNumber = "Q-00000001",
             CustomerId = 20,
+            ShippingAddressId = 10,
+            QuoteDate = new DateOnly(2025, 1, 1),
+            ValidUntil = new DateOnly(2025, 2, 1),
+            StatusId = 1,
+            CustomerAccountNumberSnapshot = "ACCOUNT",
             CustomerNameSnapshot = "Injected customer",
+            CustomerEmailSnapshot = "customer@example.test",
+            ShippingLabelSnapshot = "Dock",
+            ShippingLine1Snapshot = "Street",
             ShippingCitySnapshot = "Injected city",
+            ShippingPostalCodeSnapshot = "1000",
+            ShippingCountrySnapshot = "AR",
+            ShippingAddressTypeCodeSnapshot = "shipping",
             DeletionDate = deletionDate.AddYears(1),
             DeletedByUserId = 99,
             RowVersion = [4, 4, 4],

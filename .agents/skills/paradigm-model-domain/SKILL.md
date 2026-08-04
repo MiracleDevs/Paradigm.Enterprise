@@ -35,11 +35,13 @@ dotnet tool run paradigm api show EntityBase --project <solution>
 - Make `MapFrom` atomic for tracked entities: prevalidate failure-prone input before mutation, and reload/detach a tracked entity after a failed partial map rather than continuing with dirty state.
 - Keep shared entity interfaces getter-only.
 - Keep public setters on request/view models or a documented generated persistence exception only.
-- Put a rule decidable from the entity's state in entity behavior and `Validate`.
+- Put every rule decidable from an entity or view's complete proposed state in that type's co-located partial behavior and `Validate`; normalize and prevalidate before mutation. Do not create broad static validation owners for rules that belong to individual objects.
+- Keep query-shape and transport-only rules, such as paging and sort allow-lists, on the request type.
 - Put checks needing repositories, identity, or remote services in a Provider.
 - Keep aggregate children reachable and mutated through the aggregate root.
 - Do not resolve repositories or services inside an entity, mapping method, or validation method.
 - Keep write commands separate from read views when callers must not set every persisted field. Treat row-version/concurrency values as explicit protocol state and reject stale writes.
+- When database catalogs are shared across applications and an Interfaces project exists, place their explicitly numbered enums there with stable serialized codes. Test the complete enum member set against the complete seed ID/code set in both directions.
 
 Use `DomainValidator` to collect meaningful failures. Validate after mapping and before staging persistence.
 

@@ -1,12 +1,11 @@
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
-using BeaconAr.Domain.MasterData.Validation;
 using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Interfaces.MasterData.Entities;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Providers;
-using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
+using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
@@ -33,7 +32,7 @@ public sealed class CustomerProvider
 
     public Task<PageResult<CustomerView>> SearchAsync(CustomerSearchRequest request, CancellationToken cancellationToken)
     {
-        MasterDataRequestValidator.ValidateSearch(request, "id", "name");
+        request.Validate("id", "name");
         return ViewRepository.SearchAsync(request, cancellationToken);
     }
 
@@ -45,14 +44,13 @@ public sealed class CustomerProvider
 
     public async Task<CustomerView> CreateAsync(CustomerCreateRequest request, CancellationToken cancellationToken)
     {
-        CustomerCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            if (await Repository.AccountNumberExistsAsync(value.AccountNumber!, null, cancellationToken))
+            Customer customer = Customer.Create(request, _mutations.UserId, now);
+            if (await Repository.AccountNumberExistsAsync(customer.AccountNumber, null, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("account number");
 
-            Customer customer = Customer.Create(value, _mutations.UserId, now);
             await Repository.AddAsync(customer);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
@@ -67,7 +65,6 @@ public sealed class CustomerProvider
     public async Task<CustomerView> UpdateAsync(int id, CustomerUpdateRequest request, string expectedVersion,
         CancellationToken cancellationToken)
     {
-        CustomerUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
         await _mutations.ExecuteAsync(async () =>
         {
@@ -75,11 +72,11 @@ public sealed class CustomerProvider
             Customer customer = await Repository.GetForUpdateAsync(id, cancellationToken) ??
                                 throw MasterDataMutationCoordinator.NotFound("customer");
             MasterDataMutationCoordinator.EnsureVersion(customer.RowVersion, expectedVersion);
-            if (await Repository.AccountNumberExistsAsync(value.AccountNumber!, id, cancellationToken))
+            if (await Repository.AccountNumberExistsAsync(request.AccountNumber?.Trim() ?? string.Empty, id, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("account number");
 
             bool wasActive = customer.IsActive;
-            customer.Replace(value, _mutations.UserId, now);
+            customer.Replace(request, _mutations.UserId, now);
             await Repository.UpdateAsync(customer);
             _mutations.AddAudit("customer", customer.Id,
                 MasterDataMutationCoordinator.GetUpdateAction(wasActive, customer.IsActive),
@@ -105,7 +102,7 @@ public sealed class CustomerProvider
     {
         if (parameters is not MasterDataViewSearchParameters search)
             throw new ArgumentException($"{nameof(CustomerProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
-        MasterDataRequestValidator.ValidateSearch(search, "id", "name");
+        search.Validate("id", "name");
         return base.SearchAsync(parameters);
     }
 

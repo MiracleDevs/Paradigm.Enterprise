@@ -1,12 +1,11 @@
 using BeaconAr.Domain.MasterData.Application;
 using BeaconAr.Domain.MasterData.Contracts;
 using BeaconAr.Domain.MasterData.Repositories;
-using BeaconAr.Domain.MasterData.Validation;
 using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Interfaces.MasterData.Entities;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Providers;
-using VersionTokenCodec = BeaconAr.Domain.MasterData.Application.VersionTokenCodec;
+using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 
 namespace BeaconAr.Providers.MasterData;
 
@@ -33,7 +32,7 @@ public sealed class CarrierProvider
 
     public Task<PageResult<CarrierView>> SearchAsync(CarrierSearchRequest request, CancellationToken cancellationToken)
     {
-        MasterDataRequestValidator.ValidateSearch(request, "id", "name");
+        request.Validate("id", "name");
         return ViewRepository.SearchAsync(request, cancellationToken);
     }
 
@@ -45,14 +44,13 @@ public sealed class CarrierProvider
 
     public async Task<CarrierView> CreateAsync(CarrierCreateRequest request, CancellationToken cancellationToken)
     {
-        CarrierCreateRequest value = MasterDataRequestValidator.Normalize(request);
         int id = await _mutations.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _mutations.UtcNow;
-            if (await Repository.CodeExistsAsync(value.Code!, null, cancellationToken))
+            Carrier carrier = Carrier.Create(request, _mutations.UserId, now);
+            if (await Repository.CodeExistsAsync(carrier.Code, null, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("code");
 
-            Carrier carrier = Carrier.Create(value, _mutations.UserId, now);
             await Repository.AddAsync(carrier);
             cancellationToken.ThrowIfCancellationRequested();
             await UnitOfWork.CommitChangesAsync();
@@ -67,7 +65,6 @@ public sealed class CarrierProvider
     public async Task<CarrierView> UpdateAsync(int id, CarrierUpdateRequest request, string expectedVersion,
         CancellationToken cancellationToken)
     {
-        CarrierUpdateRequest value = MasterDataRequestValidator.Normalize(request);
         VersionTokenCodec.Decode(expectedVersion);
         await _mutations.ExecuteAsync(async () =>
         {
@@ -75,11 +72,11 @@ public sealed class CarrierProvider
             Carrier carrier = await Repository.GetForUpdateAsync(id, cancellationToken) ??
                               throw MasterDataMutationCoordinator.NotFound("carrier");
             MasterDataMutationCoordinator.EnsureVersion(carrier.RowVersion, expectedVersion);
-            if (await Repository.CodeExistsAsync(value.Code!, id, cancellationToken))
+            if (await Repository.CodeExistsAsync(request.Code?.Trim() ?? string.Empty, id, cancellationToken))
                 throw MasterDataMutationCoordinator.Duplicate("code");
 
             bool wasActive = carrier.IsActive;
-            carrier.Replace(value, _mutations.UserId, now);
+            carrier.Replace(request, _mutations.UserId, now);
             await Repository.UpdateAsync(carrier);
             _mutations.AddAudit("carrier", carrier.Id,
                 MasterDataMutationCoordinator.GetUpdateAction(wasActive, carrier.IsActive),
@@ -105,7 +102,7 @@ public sealed class CarrierProvider
     {
         if (parameters is not MasterDataViewSearchParameters search)
             throw new ArgumentException($"{nameof(CarrierProvider)} requires {nameof(MasterDataViewSearchParameters)}.", nameof(parameters));
-        MasterDataRequestValidator.ValidateSearch(search, "id", "name");
+        search.Validate("id", "name");
         return base.SearchAsync(parameters);
     }
 

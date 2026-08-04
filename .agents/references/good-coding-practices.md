@@ -49,6 +49,12 @@ Place an override in `Overrides` regardless of its declared accessibility. Place
 - Prefer immutable values and state: `const` for compile-time constants, `readonly` fields, getter-only or `init` properties, immutable records/value objects, and read-only collection exposure. Introduce mutation only behind behavior that owns an invariant or because a documented binder, serializer, ORM, or generated-code boundary requires it.
 - Keep mutable request/view models at the transport boundary. Do not let their mutability leak into entities or long-lived services.
 
+## Validation ownership
+
+- Put every rule decidable from one entity or view's proposed state on that type, normally in its co-located handwritten partial and `Validate`/behavior methods. Normalize and validate the complete proposed state before mutating an existing instance. Do not replace object ownership with broad static `*DomainValidation` or `*RequestValidator` utility classes.
+- Put query-shape and transport-only validation, such as paging bounds, supported sort fields, and mutually exclusive filters, on the request type that owns those values.
+- Put checks requiring repositories, authenticated identity, authorization, remote services, or cross-aggregate coordination in the Provider. Passing already-loaded reference facts into entity behavior does not make the entity infrastructure-aware.
+
 ## Browser and API security
 
 - For browser authentication, prefer a backend-for-frontend or server session with an encrypted, `Secure`, `HttpOnly` cookie over tokens in `localStorage`. Choose the narrowest workable `SameSite` value and a constrained `Path`/`Domain`; use short lifetimes, rotation, revocation, and server-side validation appropriate to the threat model.

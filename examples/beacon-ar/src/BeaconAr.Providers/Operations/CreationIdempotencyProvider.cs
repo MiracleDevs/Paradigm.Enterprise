@@ -4,6 +4,7 @@ using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Repositories;
 using BeaconAr.Domain.Operations.Entities;
 using Paradigm.Enterprise.Domain.Uow;
+using IdempotencyState = BeaconAr.Interfaces.Operations.Enums.IdempotencyState;
 
 namespace BeaconAr.Providers.Operations;
 
@@ -105,7 +106,7 @@ public sealed class CreationIdempotencyProvider : ICreationIdempotencyProvider
     {
         if (!CryptographicOperations.FixedTimeEquals(existing.RequestHash, descriptor.RequestHash))
             throw new MasterDataException("idempotency_key_reused", "The idempotency key was already used with a different request.");
-        if (existing.StateId != (int)Domain.Operations.IdempotencyState.Completed || existing.ResourceType != resourceType ||
+        if (existing.StateId != (int)IdempotencyState.Completed || existing.ResourceType != resourceType ||
             !int.TryParse(existing.ResourceId, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int resourceId))
         {
             throw new MasterDataException("idempotency_in_progress", "An idempotent request with this key is still in progress.");

@@ -12,12 +12,11 @@ using BeaconAr.Domain.Operations.Contracts;
 using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
-using BeaconAr.Domain.Sales.Validation;
 using BeaconAr.Providers.Operations;
 using BeaconAr.Providers.Sales;
 using Paradigm.Enterprise.Domain.Uow;
-using OrderState = BeaconAr.Domain.Sales.SalesOrderStatus;
-using QuoteState = BeaconAr.Domain.Sales.QuoteStatus;
+using OrderState = BeaconAr.Interfaces.Sales.Enums.SalesOrderStatus;
+using QuoteState = BeaconAr.Interfaces.Sales.Enums.QuoteStatus;
 
 namespace BeaconAr.Providers.Tests;
 
@@ -66,10 +65,10 @@ public sealed class SalesProviderTests
         public Task<QuoteDto?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
             Task.FromResult(repository.Current is null ? null : Map(repository.Current));
 
-        public Task<PageResult<QuoteSummaryDto>> SearchAsync(QuoteSearchRequest request, CancellationToken cancellationToken)
+        public Task<PageResult<QuoteView>> SearchAsync(QuoteSearchRequest request, CancellationToken cancellationToken)
         {
             SearchCalls++;
-            return Task.FromResult(new PageResult<QuoteSummaryDto>([], request.PageNumber, request.PageSize, 0, 0));
+            return Task.FromResult(new PageResult<QuoteView>([], request.PageNumber, request.PageSize, 0, 0));
         }
 
         public void Dispose() { }
@@ -87,7 +86,7 @@ public sealed class SalesProviderTests
                 quote.ShippingPostalCodeSnapshot, quote.ShippingCountrySnapshot, quote.ShippingAddressTypeCodeSnapshot,
                 lines, lines.Sum(line => line.LineSubtotal), lines.Sum(line => line.DiscountAmount),
                 lines.Sum(line => line.LineTotal), null, quote.CreatedByUserId, quote.CreationDate,
-                quote.ModifiedByUserId, quote.ModificationDate, SalesRequestValidator.EncodeVersion(quote.RowVersion));
+                quote.ModifiedByUserId, quote.ModificationDate, VersionTokenCodec.Encode(quote.RowVersion));
         }
     }
 
@@ -231,7 +230,7 @@ public sealed class SalesProviderTests
         SalesException error = await Assert.ThrowsAsync<SalesException>(() => provider.UpdateAsync(42,
             new QuoteUpdateRequest(1, 10, new DateOnly(2026, 8, 1), new DateOnly(2026, 8, 2), null,
                 [new SalesLineRequest(1, 1, 10m, 0)]),
-            SalesRequestValidator.EncodeVersion(new byte[8]), CancellationToken.None));
+            VersionTokenCodec.Encode(new byte[8]), CancellationToken.None));
 
         Assert.AreEqual("concurrency_conflict", error.Code);
         Assert.AreEqual(0, unitOfWork.SaveCalls);
@@ -249,7 +248,7 @@ public sealed class SalesProviderTests
         QuoteProvider provider = CreateQuoteProvider(quotes, new FakeReferences(), audits, unitOfWork);
 
         QuoteDto result = await provider.TransitionAsync(42, new(QuoteState.Sent),
-            SalesRequestValidator.EncodeVersion(Version), CancellationToken.None);
+            VersionTokenCodec.Encode(Version), CancellationToken.None);
 
         Assert.AreEqual(QuoteState.Sent, result.Status);
         Assert.HasCount(1, quotes.Histories);
