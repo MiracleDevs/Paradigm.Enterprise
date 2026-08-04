@@ -9,10 +9,8 @@ using BeaconAr.Domain.MasterData.Entities;
 using BeaconAr.Domain.Operations.Entities;
 using BeaconAr.Domain.Sales.Entities;
 using BeaconAr.Providers.MasterData;
-using Microsoft.Extensions.DependencyInjection;
 using Paradigm.Enterprise.Domain.Dtos;
 using Paradigm.Enterprise.Domain.Uow;
-using Paradigm.Enterprise.Providers;
 using VersionTokenCodec = BeaconAr.Domain.Operations.VersionTokenCodec;
 using Paradigm.Enterprise.Domain.Exceptions;
 
@@ -407,60 +405,6 @@ public sealed class ProductProviderTests
     }
 
     [TestMethod]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "The test intentionally exercises the official provider interface.")]
-    public async Task OfficialSearchReturnsGeneratedViewsThroughTypedContract()
-    {
-        var repository = new FakeProductRepository { Current = CreateProduct() };
-        var views = new FakeProductViewRepository(repository);
-        IEditProvider<ProductView, int> provider = CreateProvider(
-            repository, views, new FakeAuditLogRepository(), new FakeUnitOfWork());
-
-        PaginatedResultDto<ProductView> result = await provider.SearchAsync(new MasterDataViewSearchParameters
-        {
-            Search = "SKU",
-            PageNumber = 1,
-            PageSize = 10,
-            SortBy = "sku",
-            SortDirection = "asc",
-        });
-
-        Assert.AreEqual(1, result.PageInfo.ItemsCount);
-        Assert.AreEqual("SKU", result.Results.Single().Sku);
-        Assert.AreEqual(1, views.SearchCalls);
-
-        await Assert.ThrowsAsync<MasterDataValidationException>(() => provider.SearchAsync(
-            new MasterDataViewSearchParameters { PageSize = 101 }));
-        Assert.AreEqual(1, views.SearchCalls);
-    }
-
-    [TestMethod]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "The test intentionally exercises every official provider-interface overload.")]
-    public async Task OfficialMutationSurfaceRejectsEveryUnsafeOverloadWithoutSaving()
-    {
-        var repository = new FakeProductRepository { Current = CreateProduct() };
-        var views = new FakeProductViewRepository(repository);
-        var unitOfWork = new FakeUnitOfWork();
-        var audits = new FakeAuditLogRepository();
-        IEditProvider<ProductView, int> provider = CreateProvider(repository, views, audits, unitOfWork);
-        ProductView view = (await views.GetByIdAsync(1))!;
-
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.AddAsync(view));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.AddAsync([view]));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.UpdateAsync(view));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.UpdateAsync([view]));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.SaveAsync(view));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.SaveAsync([view]));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DeleteAsync(1));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DeleteAsync([1]));
-
-        Assert.AreEqual(0, unitOfWork.SaveCalls);
-        Assert.AreEqual(0, unitOfWork.Transaction.CommitCalls);
-        Assert.AreEqual(0, unitOfWork.Transaction.RollbackCalls);
-        Assert.HasCount(0, audits.Entries);
-        Assert.IsFalse(repository.Deleted);
-    }
-
-    [TestMethod]
     public async Task LegacyIdentifierReadPropagatesCancellationToken()
     {
         var repository = new FakeProductRepository { Current = CreateProduct() };
@@ -481,14 +425,9 @@ public sealed class ProductProviderTests
     private static ProductProvider CreateProvider(FakeProductRepository repository, FakeProductViewRepository views,
         FakeAuditLogRepository audits, FakeUnitOfWork unitOfWork, FakePersistenceSession? persistenceSession = null)
     {
-        ServiceProvider services = new ServiceCollection()
-            .AddSingleton<IProductRepository>(repository)
-            .AddSingleton<IProductViewRepository>(views)
-            .AddSingleton<IUnitOfWork>(unitOfWork)
-            .BuildServiceProvider();
         var coordinator = new MasterDataMutationCoordinator(audits, unitOfWork, new FakeOperationContext(),
             new FakeTimeProvider(), new FakeClassifier(), persistenceSession ?? new FakePersistenceSession());
-        return new ProductProvider(services, coordinator);
+        return new ProductProvider(repository, views, unitOfWork, coordinator);
     }
 
     private static Product CreateProduct() => new()

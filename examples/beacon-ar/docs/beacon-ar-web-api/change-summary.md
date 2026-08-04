@@ -1,9 +1,11 @@
 # Beacon AR Web API change summary
 
+> **Historical Provider note (superseded 2026-08-04):** This summary accurately records the Web API task at its completion, not the current MasterData Provider surface. The later [Provider/API conventions decision](../beacon-ar-provider-api-conventions/decisions.md) removed `EditProviderBase`, `IEditProvider`, compatibility mutation methods, and `OfficialMasterDataMutationGuard` in favor of explicit command-oriented contracts.
+
 ## Delivered
 
 - Kept all 35 business operations on secure, explicitly authorized `ControllerBase` controllers while moving the four master-data response bodies and page items to generated `ProductView`, `CustomerView`, `CustomerAddressView`, and `CarrierView` contracts.
-- Kept purpose-built create/update/delete request models, strong ETags, conditional writes, idempotency, audit behavior, and safe lifecycle coordination. The master-data Providers inherit the official `EditProviderBase` and now expose generated-view API methods; legacy DTO methods delegate to those methods so existing application callers remain compatible. Mapping remains in Providers, never repositories.
+- Kept purpose-built create/update/delete request models, strong ETags, conditional writes, idempotency, audit behavior, and safe lifecycle coordination. At that historical stage, the master-data Providers inherited the official `EditProviderBase` and exposed generated-view API methods; legacy DTO methods delegated to those methods so existing application callers remained compatible. Mapping was then performed in Providers rather than repositories.
 - Added a deliberately anonymous `GET /` response containing only `name` and assembly product `version`, plus a status-only anonymous `HEAD /` endpoint.
 - Replaced the built-in ASP.NET OpenAPI pipeline with `Swashbuckle.AspNetCore` 10.2.3, preserving operation IDs, security, Problem Details, request/response examples, validation constraints, ETag and idempotency headers, and the existing custom Swagger styling. Swagger JSON and UI are available anonymously only in Development.
 - Added `scripts/generate-openapi.ps1`, which builds a Release host, generates and validates the checked `artifacts/openapi/beacon-ar-v1.json`, and stops its isolated process. Consecutive generation produced identical SHA-256 hashes.

@@ -1,5 +1,7 @@
 # Beacon AR final validation change summary
 
+> **Historical Provider note (superseded 2026-08-04):** Provider validation/mapping statements in this audit describe the implementation then reviewed. See [current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md) for entity/request-owned validation, canonical repository views, and explicit MasterData Provider contracts.
+
 > **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
 
 > Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.

@@ -2,6 +2,8 @@
 
 > **Historical persistence note (superseded 2026-08-03):** This document records an earlier implementation stage. Current persistence ownership is defined by docs/beacon-ar-context-boundaries: four disjoint Access, MasterData, Operations, and Sales contexts/configurations; there are no Receivables or Reporting application roots.
 
+> **Historical implementation note (superseded 2026-08-04):** This report accurately records the temporary generic Provider surface introduced by this task. The later [Provider/API conventions decision](../beacon-ar-provider-api-conventions/decisions.md) removed MasterData `IEditProvider`/`EditProviderBase` and the fail-closed guard because the generic view-mutation protocol could not express Beacon's safe command contract.
+
 ## Master-data repositories
 
 - Product, Customer, Address (`CustomerAddress`), and Carrier edit repository contracts now inherit `IEditRepository<TEntity, int>`.

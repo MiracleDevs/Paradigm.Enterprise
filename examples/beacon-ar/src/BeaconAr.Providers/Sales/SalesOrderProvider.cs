@@ -53,6 +53,7 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
     public async Task<SalesOrderDto> CreateDirectAsync(SalesOrderCreateRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        request.ValidateReferences();
         int id = await _workflow.ExecuteAsync(async () =>
         {
             DateTimeOffset now = _workflow.UtcNow;
@@ -80,6 +81,7 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        request.ValidateReferences();
         _ = VersionTokenCodec.Decode(expectedVersion);
         await _workflow.ExecuteAsync(async () =>
         {
@@ -156,12 +158,6 @@ public sealed class SalesOrderProvider : ISalesOrderProvider
         int? carrierId,
         CancellationToken cancellationToken)
     {
-        if (customerId <= 0)
-            throw SalesWorkflowCoordinator.InvalidReference("customerId", "Customer ID must be positive.");
-        if (addressId <= 0)
-            throw SalesWorkflowCoordinator.InvalidReference("shippingAddressId", "Shipping address ID must be positive.");
-        if (carrierId is <= 0)
-            throw SalesWorkflowCoordinator.InvalidReference("carrierId", "Carrier ID must be positive.");
         CustomerSalesReference customer = await _references.GetCustomerAsync(customerId, cancellationToken)
             ?? throw SalesWorkflowCoordinator.InvalidReference("customerId", "The selected customer was not found.");
         AddressSalesReference address = await _references.GetAddressAsync(addressId, cancellationToken)

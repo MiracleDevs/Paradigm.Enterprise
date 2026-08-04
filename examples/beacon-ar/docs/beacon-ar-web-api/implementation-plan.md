@@ -1,5 +1,7 @@
 # Beacon AR Web API implementation plan (Task 4)
 
+> **Historical Provider/API note (superseded 2026-08-04):** This plan preserves evidence and decisions from an earlier implementation stage. Current ownership is: repositories materialize canonical views; entities own intrinsic invariants; request objects own query and proposed-input rules; Providers invoke those rules and own only collaborator-dependent orchestration and transactions; MasterData exposes explicit request-based `IProvider` contracts rather than `IEditProvider`, `EditProviderBase`, or a fail-closed mutation guard; and controllers bind one `[FromQuery]` request and own HTTP concerns. See [the current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 ## Outcome
 
 Keep the release-one Beacon AR HTTP contract secured and stable while integrating the Task 3 generated `*View` provider/repository migration. The project will use `ControllerBase`-based, policy-protected controllers for all business operations; it will not expose the installed Paradigm generic controller routes for the protected master-data surface. Add a deliberately anonymous API root returning the project name and version, replace the current built-in OpenAPI/transformer path with Swashbuckle for the requested interactive documentation, and move Azure authentication configuration to the current Microsoft Identity Web bearer-API pattern.

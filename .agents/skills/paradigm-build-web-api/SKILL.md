@@ -21,6 +21,7 @@ Own routing, binding, transport validation, authorization metadata, cancellation
 
 Expose only required actions. `ExposeEndpoint` plus `AddEndpointExposureControl` limits route exposure but is not authentication or authorization.
 Prefer purpose-built request/command types for writes. Do not bind persistence entities or broad read views when doing so permits overposting; map only allowed fields at the boundary or in the Provider.
+When a search or filter action has several related query values, bind one purpose-built `[FromQuery]` request object and pass it intact to the Provider. Keep ASP.NET Core attributes on the action parameter rather than in Domain, keep paging/filter/sort rules on the request, and regression-test the flat public query names, defaults, OpenAPI document, and generated client.
 
 ## Complete host integration
 

@@ -1,4 +1,5 @@
 using BeaconAr.Domain.Access.Contracts;
+using BeaconAr.Domain.Access.Application;
 using BeaconAr.Domain.Access.Entities;
 using BeaconAr.Domain.Operations;
 using BeaconAr.Domain.Operations.Entities;
@@ -29,6 +30,18 @@ public sealed class AccessAndOperationsBehaviorTests
         Assert.Throws<DomainException>(() => user.Synchronize(invalid, DateTimeOffset.UnixEpoch.AddMinutes(1)));
         Assert.AreEqual("Display Name", user.DisplayName);
         Assert.AreEqual("user@example.com", user.Email);
+    }
+
+    [TestMethod]
+    public void AuthenticatedIdentityOwnsCompletenessValidation()
+    {
+        var valid = new AuthenticatedIdentity("issuer", "subject", "Display Name", "user@example.com", []);
+        valid.Validate();
+
+        AccessException error = Assert.Throws<AccessException>(() =>
+            (valid with { Subject = " " }).Validate());
+        Assert.AreEqual("forbidden", error.Code);
+        Assert.AreEqual("The authenticated identity is incomplete.", error.SafeMessage);
     }
 
     [TestMethod]

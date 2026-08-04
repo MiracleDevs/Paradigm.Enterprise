@@ -94,19 +94,32 @@ public sealed class SalesProviderTests
     {
         public IReadOnlyCollection<int>? RequestedProductIds { get; private set; }
         public bool ProductActive { get; set; } = true;
+        public int ReadCalls { get; private set; }
 
-        public Task<CustomerSalesReference?> GetCustomerAsync(int id, CancellationToken cancellationToken) =>
-            Task.FromResult<CustomerSalesReference?>(new(id, "ACCOUNT", "Customer", "customer@example.test", null, true));
-        public Task<AddressSalesReference?> GetAddressAsync(int id, CancellationToken cancellationToken) =>
-            Task.FromResult<AddressSalesReference?>(new(id, 1, "shipping", "Dock", "Street", null, "City", null, "1000", "AR"));
+        public Task<CustomerSalesReference?> GetCustomerAsync(int id, CancellationToken cancellationToken)
+        {
+            ReadCalls++;
+            return Task.FromResult<CustomerSalesReference?>(new(id, "ACCOUNT", "Customer", "customer@example.test", null, true));
+        }
+
+        public Task<AddressSalesReference?> GetAddressAsync(int id, CancellationToken cancellationToken)
+        {
+            ReadCalls++;
+            return Task.FromResult<AddressSalesReference?>(new(id, 1, "shipping", "Dock", "Street", null, "City", null, "1000", "AR"));
+        }
+
         public Task<IReadOnlyDictionary<int, ProductSalesReference>> GetProductsAsync(IReadOnlyCollection<int> ids, CancellationToken cancellationToken)
         {
+            ReadCalls++;
             RequestedProductIds = ids;
             return Task.FromResult<IReadOnlyDictionary<int, ProductSalesReference>>(
                 ids.ToDictionary(id => id, id => new ProductSalesReference(id, $"SKU-{id}", $"Product {id}", ProductActive)));
         }
-        public Task<CarrierSalesReference?> GetCarrierAsync(int id, CancellationToken cancellationToken) =>
-            Task.FromResult<CarrierSalesReference?>(new(id, "Carrier", true));
+        public Task<CarrierSalesReference?> GetCarrierAsync(int id, CancellationToken cancellationToken)
+        {
+            ReadCalls++;
+            return Task.FromResult<CarrierSalesReference?>(new(id, "Carrier", true));
+        }
         public void Dispose() { }
     }
 
@@ -282,6 +295,21 @@ public sealed class SalesProviderTests
         await Assert.ThrowsAsync<SalesValidationException>(() => provider.SearchAsync(
             new QuoteSearchRequest(PageSize: 101), CancellationToken.None));
         Assert.AreEqual(0, views.SearchCalls);
+    }
+
+    [TestMethod]
+    public async Task InvalidQuoteReferenceInputFailsBeforeCollaboratorCalls()
+    {
+        var references = new FakeReferences();
+        QuoteProvider provider = CreateQuoteProvider(new FakeQuoteRepository(), references,
+            new FakeAuditRepository(), new FakeUnitOfWork());
+        QuoteCreateRequest request = Request() with { CustomerId = 0 };
+
+        SalesValidationException error = await Assert.ThrowsAsync<SalesValidationException>(() =>
+            provider.CreateAsync(request, CancellationToken.None));
+
+        Assert.IsTrue(error.Errors.ContainsKey("customerId"));
+        Assert.AreEqual(0, references.ReadCalls);
     }
 
     [TestMethod]

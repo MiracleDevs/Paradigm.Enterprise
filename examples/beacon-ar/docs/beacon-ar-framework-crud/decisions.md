@@ -1,5 +1,7 @@
 # Beacon AR framework CRUD implementation decisions
 
+> **Historical decision note (superseded 2026-08-04):** The temporary fail-closed generic edit decision below is preserved as task evidence. It was resolved by [Provider/API conventions](../beacon-ar-provider-api-conventions/decisions.md): MasterData now exposes only its explicit command-oriented `IProvider` surface.
+
 ## Address naming
 
 The existing application names the capability `Address` while the persistence entity and generated view are `CustomerAddress` and `CustomerAddressView`. This task retained the established provider, repository, controller, and route names to avoid Task 4 API changes, while using `CustomerAddress`/`CustomerAddressView` in all official typed generic contracts.

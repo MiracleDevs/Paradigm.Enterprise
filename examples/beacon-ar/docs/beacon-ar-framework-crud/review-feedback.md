@@ -1,6 +1,8 @@
 # Beacon AR framework CRUD review feedback
 
 > Historical record: commands and solution references below describe validation before the migration to root `BeaconAr.slnx`. Use `BeaconAr.slnx` for current work.
+>
+> **Provider note (superseded 2026-08-04):** Findings and resolutions below are evidence for the then-current generic Provider surface. The final current decision is documented in [Provider/API conventions](../beacon-ar-provider-api-conventions/decisions.md).
 
 ## Review result
 

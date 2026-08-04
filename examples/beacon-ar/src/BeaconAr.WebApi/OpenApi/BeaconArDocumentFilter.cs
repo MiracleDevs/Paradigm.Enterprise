@@ -24,6 +24,17 @@ public sealed class BeaconArDocumentFilter : IDocumentFilter
         ["500"] = "An unexpected server error occurred.",
     };
 
+    private static readonly Dictionary<string, string[]> SearchParameterOrder =
+        new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["searchProducts"] = ["search", "pageNumber", "pageSize", "sortField", "sortDirection", "active"],
+            ["searchCustomers"] = ["search", "pageNumber", "pageSize", "sortField", "sortDirection", "active"],
+            ["searchCarriers"] = ["search", "pageNumber", "pageSize", "sortField", "sortDirection", "active"],
+            ["searchAddresses"] = ["search", "pageNumber", "pageSize", "sortField", "sortDirection", "customerId", "type", "usage"],
+            ["searchQuotes"] = ["search", "status", "customerId", "pageNumber", "pageSize", "sortField", "sortDirection"],
+            ["searchSalesOrders"] = ["search", "status", "customerId", "sourceQuoteId", "pageNumber", "pageSize", "sortField", "sortDirection"],
+        };
+
     private static readonly HashSet<string> BadRequestOperations = new(StringComparer.Ordinal)
     {
         "searchProducts", "getProduct", "createProduct", "updateProduct", "deleteProduct",
@@ -157,6 +168,7 @@ public sealed class BeaconArDocumentFilter : IDocumentFilter
         operation.Security.Add(new OpenApiSecurityRequirement { [reference] = [] });
         operation.Responses ??= new OpenApiResponses();
         string operationId = operation.OperationId ?? string.Empty;
+        NormalizeQueryParameters(operation, operationId);
 
         bool requiresIfMatch = false;
         foreach (IOpenApiParameter parameter in operation.Parameters ?? [])
@@ -232,10 +244,12 @@ public sealed class BeaconArDocumentFilter : IDocumentFilter
                 break;
             case "pageNumber":
                 SetIntegerBounds(schema, 1, null);
+                schema.Default = JsonValue.Create(1);
                 parameter.Description = "One-based page number. Defaults to 1.";
                 break;
             case "pageSize":
                 SetIntegerBounds(schema, 1, 100);
+                schema.Default = JsonValue.Create(10);
                 parameter.Description = "Number of results per page. Maximum 100.";
                 break;
             case "id" or "customerId" or "sourceQuoteId":
@@ -245,6 +259,27 @@ public sealed class BeaconArDocumentFilter : IDocumentFilter
                 schema.MaxLength = 32;
                 break;
         }
+    }
+
+    private static void NormalizeQueryParameters(OpenApiOperation operation, string operationId)
+    {
+        if (!SearchParameterOrder.TryGetValue(operationId, out string[]? order) || operation.Parameters is null)
+            return;
+
+        foreach (IOpenApiParameter parameter in operation.Parameters)
+        {
+            if (parameter is OpenApiParameter { In: ParameterLocation.Query } mutable &&
+                !string.IsNullOrEmpty(mutable.Name))
+            {
+                mutable.Name = char.ToLowerInvariant(mutable.Name[0]) + mutable.Name[1..];
+            }
+        }
+
+        Dictionary<string, int> positions = order.Select((name, index) => (name, index))
+            .ToDictionary(item => item.name, item => item.index, StringComparer.Ordinal);
+        operation.Parameters = operation.Parameters
+            .OrderBy(parameter => positions.TryGetValue(parameter.Name ?? string.Empty, out int index) ? index : int.MaxValue)
+            .ToList();
     }
 
     private static void AddSuccessMetadata(OpenApiOperation operation)

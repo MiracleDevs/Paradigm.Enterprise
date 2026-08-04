@@ -1,5 +1,7 @@
 # Beacon AR domain ownership — decisions
 
+> **Historical Provider/API note (superseded 2026-08-04):** This report preserves evidence and decisions from an earlier implementation stage. Current ownership is: repositories materialize canonical views; entities own intrinsic invariants; request objects own query and proposed-input rules; Providers invoke those rules and own only collaborator-dependent orchestration and transactions; MasterData exposes explicit request-based `IProvider` contracts rather than `IEditProvider`, `EditProviderBase`, or a fail-closed mutation guard; and controllers bind one `[FromQuery]` request and own HTTP concerns. See [the current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 ## Generated files stay generated; behavior stays beside them
 
 The generated EF/T4 entity and view files remain replaceable output. Behavior is implemented only in a handwritten partial in the same capability folder and namespace as the generated type. The `.Behavior.cs` suffix is retained because the defect was separation/namespace drift, not the suffix. Regeneration must replace an exact generated manifest and preserve every co-located partial.

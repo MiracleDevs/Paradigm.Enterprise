@@ -1,5 +1,7 @@
 # Beacon AR Database Views — Decisions
 
+> **Historical Provider/API note (superseded 2026-08-04):** This report preserves evidence and decisions from an earlier implementation stage. Current ownership is: repositories materialize canonical views; entities own intrinsic invariants; request objects own query and proposed-input rules; Providers invoke those rules and own only collaborator-dependent orchestration and transactions; MasterData exposes explicit request-based `IProvider` contracts rather than `IEditProvider`, `EditProviderBase`, or a fail-closed mutation guard; and controllers bind one `[FromQuery]` request and own HTTP concerns. See [the current Provider/API decisions](../beacon-ar-provider-api-conventions/decisions.md).
+
 ## Scope of API-facing views
 
 We treated master-data entities and the quote/sales-order transactional aggregate and line tables as consumer-facing: `ApplicationUser`, `Product`, `Customer`, `CustomerAddress`, `Carrier`, `Quote`, `QuoteLine`, `SalesOrder`, and `SalesOrderLine`. This is the smallest set that supports the example's API workflows while giving every major entity or transaction table a one-row-per-entity `{Entity}View` contract.
