@@ -14,7 +14,8 @@ internal sealed record EvaluatedProject(
     IReadOnlyList<string> InterceptorNamespaces,
     NullableContextOptions NullableContextOptions,
     OutputKind OutputKind,
-    bool AllowUnsafe)
+    bool AllowUnsafe,
+    bool IsTestProject)
 {
     #region Public Methods
 
@@ -45,7 +46,7 @@ internal sealed record EvaluatedProject(
                     "-nologo",
                     "-target:ResolveReferences",
                     "-getItem:Compile,ReferencePath,Analyzer",
-                    "-getProperty:DefineConstants,LangVersion,Nullable,OutputType,AllowUnsafeBlocks,InterceptorsNamespaces,InterceptorsPreviewNamespaces",
+                    "-getProperty:DefineConstants,LangVersion,Nullable,OutputType,AllowUnsafeBlocks,InterceptorsNamespaces,InterceptorsPreviewNamespaces,IsTestProject",
                     "-property:Configuration=Release",
                     $"-property:TargetFramework={targetFramework}"
                 }
@@ -92,7 +93,9 @@ internal sealed record EvaluatedProject(
             : OutputKind.DynamicallyLinkedLibrary;
         var allowUnsafe = bool.TryParse(
             properties.GetProperty("AllowUnsafeBlocks").GetString(), out var unsafeValue) && unsafeValue;
-        return new(files, references, analyzers, language, constants, interceptorNamespaces, nullable, outputKind, allowUnsafe);
+        var isTestProject = bool.TryParse(
+            properties.GetProperty("IsTestProject").GetString(), out var testValue) && testValue;
+        return new(files, references, analyzers, language, constants, interceptorNamespaces, nullable, outputKind, allowUnsafe, isTestProject);
     }
 
     #endregion

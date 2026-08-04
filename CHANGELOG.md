@@ -10,6 +10,7 @@ Version `1.1.0`
 - Added `PEDB112` database validation for the universal `View` suffix across SQL Server and PostgreSQL view objects, with deterministic strict-mode coverage and official-template provenance guidance.
 - Consolidated diagnostics, semantic C# checks, and JSON/mapper/OpenAPI generation behind one installable `Paradigm.Enterprise.Cli` tool; analyzer and generator projects are internal package components rather than separate tools.
 - Added built-in `PE3103`/`PE3104` semantic checks plus deterministic `PE3105` one-type-per-file and `PE3106` member-region, order, and spacing checks with generated-code exclusions.
+- Added compiled `PE3107` enforcement that rejects handwritten SQL, post-declaration SQL assignments, and raw database commands in partial or source-generated production `IRepository` implementations while allowing EF/LINQ, typed SQL Server/PostgreSQL routine wrappers, and explicit test projects.
 - Reorganized the single CLI by capability, protected its `Packages` source folder from NuGet ignore rules, and added complete user and maintainer documentation for commands, options, architecture, packaging, and verification.
 - Added `build/quality.sh` as a repeatable local Bash entry point for the complete PR quality workflow.
 - Removed unreleased CLI/framework lockstep, check-pack versions, executable configuration, minimum-version branches, and legacy API-shape guidance while retaining ordinary NuGet release metadata and installed-package inspection.

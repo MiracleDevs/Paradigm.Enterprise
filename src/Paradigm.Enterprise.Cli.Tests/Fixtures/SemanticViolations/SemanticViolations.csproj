@@ -9,7 +9,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
     <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data.SqlServer\Paradigm.Enterprise.Data.SqlServer.csproj" />
+    <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data.PostgreSql\Paradigm.Enterprise.Data.PostgreSql.csproj" />
     <ProjectReference Include="..\..\..\Paradigm.Enterprise.Domain\Paradigm.Enterprise.Domain.csproj" />
+    <ProjectReference Include="..\RepositorySqlSourceGenerator\RepositorySqlSourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Excluded.cs" />

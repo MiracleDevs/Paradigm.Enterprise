@@ -102,6 +102,8 @@ public class PackedCliIntegrationTests
         using var checks = JsonDocument.Parse(checkResult.Output);
         Assert.AreEqual("checks run", checks.RootElement.GetProperty("command").GetString());
         Assert.AreEqual("csharp", checks.RootElement.GetProperty("checks").GetProperty("executed")[0].GetString());
+        Assert.IsTrue(checks.RootElement.GetProperty("diagnostics").EnumerateArray().Any(diagnostic =>
+            diagnostic.GetProperty("code").GetString() == "PE3107"));
         var generationAssembly = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli.Tests", "Fixtures", "GoodPractices", "bin", new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name, "net10.0", "GoodPractices.dll");
         var generationOutput = Path.Combine(temporary, "generated");
         using var generation = AssertJson(await Run("generate", "json", "--project-name", "GoodPractices", "--assembly", generationAssembly, "--output", generationOutput, "--format", "json"), "generate json");
