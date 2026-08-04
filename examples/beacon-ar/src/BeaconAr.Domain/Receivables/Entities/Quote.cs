@@ -76,9 +76,7 @@ public partial class Quote : EntityBase<int, IQuote, Quote, QuoteView>, IQuote, 
 
     public virtual ApplicationUser? ModifiedByUser { get; set; }
 
-    private readonly List<QuoteLine> _quoteLines = [];
-    public virtual IList<QuoteLine> QuoteLines => _quoteLines;
-    public DomainTracker<QuoteLine> QuoteLinesDomainTracker { get; } = new();
+    public virtual ICollection<QuoteLine> QuoteLines { get; set; } = new List<QuoteLine>();
 
     public virtual ICollection<QuoteStatusHistory> QuoteStatusHistories { get; set; } = new List<QuoteStatusHistory>();
 
@@ -89,8 +87,6 @@ public partial class Quote : EntityBase<int, IQuote, Quote, QuoteView>, IQuote, 
     public override void Validate()
     {
         ValidateEntity();
-        foreach (var child in QuoteLines)
-            child.Validate();
     }
 
     public override Quote MapFrom(IServiceProvider serviceProvider, IQuote model)
@@ -109,22 +105,6 @@ public partial class Quote : EntityBase<int, IQuote, Quote, QuoteView>, IQuote, 
         var view = serviceProvider.GetRequiredService<QuoteView>();
         serviceProvider.GetRequiredService<QuoteMapper>().MapTo(this, view);
         return view;
-    }
-
-    public void AddQuoteLines(QuoteLine? entity)
-    {
-        if (entity is null)
-            return;
-        _quoteLines.Add(entity);
-        QuoteLinesDomainTracker.Add(entity);
-    }
-
-    public void RemoveQuoteLines(QuoteLine? entity)
-    {
-        if (entity is null)
-            return;
-        _quoteLines.Remove(entity);
-        QuoteLinesDomainTracker.Remove(entity);
     }
 
     partial void ValidateEntity();

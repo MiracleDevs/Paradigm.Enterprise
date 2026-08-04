@@ -25,6 +25,28 @@
     var providerCode = services.GetRequiredService<IProviderConfigurationCodeGenerator>();
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
+    var auditedEntityTypes = Model.GetEntityTypes()
+        .Where(entityType => entityType.GetViewName() == null
+            && entityType.FindProperty("CreationDate") != null
+            && entityType.FindProperty("ModificationDate") != null
+            && entityType.FindProperty("CreatedByUserId") != null
+            && entityType.FindProperty("ModifiedByUserId") != null)
+        .ToList();
+    var auditActorIdClrTypes = auditedEntityTypes
+        .SelectMany(entityType => new[]
+        {
+            entityType.FindProperty("CreatedByUserId").ClrType,
+            entityType.FindProperty("ModifiedByUserId").ClrType
+        })
+        .Select(type => Nullable.GetUnderlyingType(type) ?? type)
+        .Distinct()
+        .ToList();
+    if (auditActorIdClrTypes.Count != 1)
+    {
+        Error($"The context requires one audit actor identifier type, but audited entity metadata resolved {auditActorIdClrTypes.Count}: {string.Join(", ", auditActorIdClrTypes.Select(type => code.Reference(type)))}.");
+        return "";
+    }
+    var auditActorIdTypeName = code.Reference(auditActorIdClrTypes[0]);
 
     var usings = new List<string>
     {
@@ -49,7 +71,7 @@ namespace <#= NamespaceHint #>;
     }
 #>
 [System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
-public partial class <#= Options.ContextName #> : DbContextBase<int>
+public partial class <#= Options.ContextName #> : DbContextBase<<#= auditActorIdTypeName #>>
 {
 <#
     if (!Options.SuppressOnConfiguring)
@@ -209,15 +231,8 @@ public partial class <#= Options.ContextName #> : DbContextBase<int>
 
         foreach (var foreignKey in entityType.GetForeignKeys())
         {
-            // SQL Server reverse engineering treats the filtered default-address indexes as globally
-            // unique. The database FK is one-to-many; normalize it without changing either index.
-            var isCustomerAddressOwnership = foreignKey.GetConstraintName() == "FK_CustomerAddress_Customer";
             var foreignKeyFluentApiCalls = foreignKey.GetFluentApiCalls(annotationCodeGenerator)
                 ?.FilterChain(c => !(Options.UseDataAnnotations && c.IsHandledByDataAnnotations));
-            if (isCustomerAddressOwnership)
-            {
-                foreignKeyFluentApiCalls = foreignKeyFluentApiCalls?.FilterChain(c => c.Method != "HasForeignKey");
-            }
             if (foreignKeyFluentApiCalls == null)
             {
                 continue;
@@ -230,20 +245,8 @@ public partial class <#= Options.ContextName #> : DbContextBase<int>
                 WriteLine("");
             }
 #>
-<#
-            if (isCustomerAddressOwnership)
-            {
-#>
-            entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).WithMany(p => p.CustomerAddresses)
-                .HasForeignKey(d => d.CustomerId)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 4) #>;
-<#
-            }
-            else
-            {
-#>
             entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(<#= foreignKey.PrincipalToDependent != null ? $"p => p.{foreignKey.PrincipalToDependent.Name}" : "" #>)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 4) #>;
 <#
-            }
             anyEntityTypeConfiguration = true;
         }
 

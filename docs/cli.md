@@ -184,7 +184,7 @@ Keep the matcher file in the repository and register it once per job that invoke
 
 ## Database project validation
 
-`database validate` is read-only. It validates SDK-style SQL Server projects and PostgreSQL DbPublisher configuration, including layout, deployment registration, secrets, constraint/audit conventions, system-catalog identifiers and seed/enum pairing, status history, BACPAC policy, solution membership, pre-pre-deployment ordering, idempotency signals, and unsafe automatic publish settings. For an adjacent Aspire SQL Server bootstrap, `PEDB111` also requires a Dockerfile-backed finite resource that builds the DACPAC, owns SQLCMD 18 plus pinned SqlPackage, and gates API startup with `WaitForCompletion`; host-process bootstrap and workstation SQL-tool prerequisites are reported. Exact seed-to-enum value parity remains a semantic review because SQL seed expressions are not always statically reducible. Use `--strict` for a new project; omit it when auditing legacy source so canonical migration findings remain warnings.
+`database validate` is read-only. It validates SDK-style SQL Server projects and PostgreSQL DbPublisher configuration, including layout, deployment registration, secrets, constraint/audit conventions, system-catalog identifiers and seed/enum pairing, status history, BACPAC policy, solution membership, pre-pre-deployment ordering, idempotency signals, and unsafe automatic publish settings. `PEDB112` requires every SQL Server/PostgreSQL view object to end in `View`; for PostgreSQL this includes ordinary `CREATE [OR REPLACE] [TEMP|TEMPORARY] [RECURSIVE] VIEW` objects and `CREATE MATERIALIZED VIEW` objects. It is a policy warning in legacy audit mode and an error under `--strict`. Helpers may use a descriptive stem such as `QuotePricingView`; this rule does not decide whether an internal table needs a view. For an adjacent Aspire SQL Server bootstrap, `PEDB111` also requires a Dockerfile-backed finite resource that builds the DACPAC, owns SQLCMD 18 plus pinned SqlPackage, and gates API startup with `WaitForCompletion`; host-process bootstrap and workstation SQL-tool prerequisites are reported. Exact seed-to-enum value parity remains a semantic review because SQL seed expressions are not always statically reducible. Use `--strict` for a new project; omit it when auditing legacy source so canonical migration findings remain warnings.
 
 ```powershell
 dotnet tool run paradigm database validate --project src/database/Product.Database.sqlproj --solution src/Product.slnx --strict
@@ -207,7 +207,7 @@ dotnet tool run paradigm database validate --project src/database/Product.Databa
 | `PE7004` to `PE7008` | Suppression expiry, incomplete audit, vulnerability, deprecation, or update policy |
 | `PE8001` | Explicit source generation failed |
 | `PE8101` | Solution scaffolding failed |
-| `PEDB001` to `PEDB110` | Database project, deployment, catalog, or status-history rule |
+| `PEDB001` to `PEDB112` | Database project, deployment, catalog, status-history, or view-naming rule |
 
 Exit code `0` means success or warnings. Exit code `1` means a completed command reported an error diagnostic or was canceled. Exit code `2` means invalid arguments or project selection. Exit code `3` means project assets, build output, or metadata resolution failed.
 

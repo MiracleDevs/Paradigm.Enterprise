@@ -1,4 +1,4 @@
-CREATE VIEW [dbo].[SalesOrderPricing]
+CREATE VIEW [dbo].[SalesOrderPricingView]
 WITH SCHEMABINDING
 AS
     SELECT

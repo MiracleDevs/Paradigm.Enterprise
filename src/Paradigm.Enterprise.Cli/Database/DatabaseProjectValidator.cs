@@ -340,7 +340,11 @@ internal sealed class DatabaseProjectValidator
 
     private void ValidateObjectFiles(bool sqlServer)
     {
-        var pattern = new Regex("\\bCREATE\\s+(?:OR\\s+(?:ALTER|REPLACE)\\s+)?(?:TABLE|VIEW|TYPE|FUNCTION|PROCEDURE|PROC)\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?((?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*)(?:\\.(?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*))?)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var objectNamePattern = "(?<name>(?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*)(?:\\.(?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*))?)";
+        var createPattern = sqlServer
+            ? $"\\bCREATE\\s+(?:OR\\s+(?:ALTER|REPLACE)\\s+)?(?<kind>TABLE|VIEW|TYPE|FUNCTION|PROCEDURE|PROC)\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?{objectNamePattern}"
+            : $"\\bCREATE\\s+(?:(?:OR\\s+REPLACE\\s+)?(?:TEMP(?:ORARY)?\\s+)?(?:RECURSIVE\\s+)?(?<kind>VIEW)|(?:OR\\s+REPLACE\\s+)?(?:TEMP(?:ORARY)?\\s+)?(?<kind>TABLE|TYPE|FUNCTION|PROCEDURE|PROC)|(?<kind>MATERIALIZED\\s+VIEW))\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?{objectNamePattern}";
+        var pattern = new Regex(createPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         foreach (var folder in new[] { "tables", "views", "functions", "routines", "types" })
         {
             var directory = Path.Combine(root, folder);
@@ -348,10 +352,12 @@ internal sealed class DatabaseProjectValidator
                 continue;
             foreach (var path in Directory.EnumerateFiles(directory, "*.sql", SearchOption.AllDirectories).Order(StringComparer.OrdinalIgnoreCase))
             {
-                var objects = pattern.Matches(Read(path)).Select(match => match.Groups[1].Value).ToArray();
+                var objects = pattern.Matches(Read(path))
+                    .Select(match => (Kind: match.Groups["kind"].Value, QualifiedName: match.Groups["name"].Value))
+                    .ToArray();
                 if (objects.Length > 1)
                     Policy("PEDB100", path, "Keep one semantic database object per file.");
-                foreach (var qualifiedName in objects)
+                foreach (var (kind, qualifiedName) in objects)
                 {
                     var parts = qualifiedName.Split('.');
                     if (sqlServer && parts.Length < 2)
@@ -359,6 +365,8 @@ internal sealed class DatabaseProjectValidator
                     var objectName = parts[^1].Trim('[', ']', '"');
                     if (!objectName.Equals(Path.GetFileNameWithoutExtension(path), StringComparison.OrdinalIgnoreCase))
                         Policy("PEDB100", path, $"File name must match object {objectName}.");
+                    if (kind.EndsWith("VIEW", StringComparison.OrdinalIgnoreCase) && !objectName.EndsWith("View", StringComparison.Ordinal))
+                        Policy("PEDB112", path, $"View {objectName} must end with the suffix View.");
                 }
             }
         }

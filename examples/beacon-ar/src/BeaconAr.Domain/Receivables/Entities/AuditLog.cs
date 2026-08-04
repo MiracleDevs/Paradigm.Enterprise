@@ -2,14 +2,17 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using BeaconAr.Interfaces.Receivables.Entities;
+using Mapster;
+using Microsoft.Extensions.DependencyInjection;
+using Paradigm.Enterprise.Domain.Entities;
+using Paradigm.Enterprise.Domain.Mappers;
 
 namespace BeaconAr.Domain.Receivables.Entities;
 
 [System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
-public partial class AuditLog
+public partial class AuditLog : EntityBase<long, IAuditLog, AuditLog, AuditLogView>, IAuditLog
 {
-    public long Id { get; set; }
-
     public string ResourceType { get; set; } = null!;
 
     public string ResourceId { get; set; } = null!;
@@ -29,4 +32,46 @@ public partial class AuditLog
     public string? MetadataJson { get; set; }
 
     public virtual ApplicationUser User { get; set; } = null!;
+
+    public override void Validate()
+    {
+        ValidateEntity();
+    }
+
+    public override AuditLog MapFrom(IServiceProvider serviceProvider, IAuditLog model)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(model);
+        BeforeMap(model);
+        serviceProvider.GetRequiredService<AuditLogMapper>().MapFromInterface(this, model);
+        AfterMap(model);
+        return this;
+    }
+
+    public override AuditLogView MapTo(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        var view = serviceProvider.GetRequiredService<AuditLogView>();
+        serviceProvider.GetRequiredService<AuditLogMapper>().MapTo(this, view);
+        return view;
+    }
+
+    partial void ValidateEntity();
+
+    partial void BeforeMap(IAuditLog model);
+
+    partial void AfterMap(IAuditLog model);
+}
+
+[System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
+public partial class AuditLogMapper : EntityMapperBase<long, IAuditLog, AuditLog, AuditLogView>
+{
+    protected override void RegisterCustomConfigurations()
+    {
+        if (HasCustomConfigurationRegistered())
+            return;
+
+        TypeAdapterConfig<IAuditLog, AuditLog>.NewConfig()
+            .Ignore(entity => entity.Id!);
+    }
 }

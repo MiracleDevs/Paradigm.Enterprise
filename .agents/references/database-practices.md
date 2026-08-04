@@ -8,7 +8,7 @@ Apply these rules to handwritten SQL Server and PostgreSQL database source. Pres
 - Organize tables, views, functions, routines, types, and deployment data by business capability. Keep maintenance scripts separate from deployable model source.
 - Keep the database project under `src/database` and include it in the application solution while retaining direct CLI build/publish support.
 - Treat the database project as schema source. Treat generated EF/entities as replaceable output and put behavior in partial handwritten files.
-- Give every consumer-facing major entity or transactional table a schema-bound `{Entity}View`. Preserve the base mapping surface, retain foreign-key IDs, and add commonly used descriptive fields through bounded joins while preserving one row per entity. Helper and reporting views need not use the entity-view name; internal, status, history, audit, and idempotency tables need a concrete consumer before receiving a view.
+- Give every consumer-facing major entity or transactional table a schema-bound `{Entity}View`. Preserve the base mapping surface, retain foreign-key IDs, and add commonly used descriptive fields through bounded joins while preserving one row per entity. Every view object and file ends in `View`, including PostgreSQL materialized views; helper and reporting views may use another descriptive stem, such as `QuotePricingView`. Internal, status, history, audit, and idempotency tables need a concrete consumer before receiving a view.
 
 ## Names and relationships
 

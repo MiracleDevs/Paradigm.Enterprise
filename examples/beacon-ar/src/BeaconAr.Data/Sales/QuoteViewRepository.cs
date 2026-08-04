@@ -47,7 +47,7 @@ public sealed class QuoteViewRepository : RepositoryBase<ReceivablesDbContext, i
         {
             var header = await (
                 from quote in EntityContext.Quotes.AsNoTracking()
-                join pricing in EntityContext.QuotePricings on quote.Id equals pricing.QuoteId
+                join pricing in EntityContext.QuotePricingViews on quote.Id equals pricing.QuoteId
                 where quote.Id == id && quote.DeletionDate == null
                 select new
                 {

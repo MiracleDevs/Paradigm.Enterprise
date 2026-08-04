@@ -31,6 +31,7 @@ $expectedEntityFiles = @(
     'ApplicationUser.cs',
     'ApplicationUserView.cs',
     'AuditLog.cs',
+    'AuditLogView.cs',
     'Carrier.cs',
     'CarrierView.cs',
     'Customer.cs',
@@ -38,20 +39,22 @@ $expectedEntityFiles = @(
     'CustomerAddressView.cs',
     'CustomerView.cs',
     'IdempotencyRequest.cs',
+    'IdempotencyRequestView.cs',
     'IdempotencyState.cs',
+    'IdempotencyStateView.cs',
     'Product.cs',
     'ProductView.cs',
     'Quote.cs',
     'QuoteLine.cs',
     'QuoteLineView.cs',
-    'QuotePricing.cs',
+    'QuotePricingView.cs',
     'QuoteStatus.cs',
     'QuoteStatusHistory.cs',
     'QuoteView.cs',
     'SalesOrder.cs',
     'SalesOrderLine.cs',
     'SalesOrderLineView.cs',
-    'SalesOrderPricing.cs',
+    'SalesOrderPricingView.cs',
     'SalesOrderStatus.cs',
     'SalesOrderStatusHistory.cs',
     'SalesOrderView.cs'
@@ -145,8 +148,8 @@ function New-GeneratedBackup {
     New-Item -ItemType Directory -Path (Join-Path $backupDirectory 'Entities') -Force | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $backupDirectory 'Context') -Force | Out-Null
 
-    foreach ($fileName in $expectedEntityFiles) {
-        Copy-Item -LiteralPath (Join-Path $SourceEntityDirectory $fileName) -Destination (Join-Path $backupDirectory 'Entities')
+    foreach ($sourceFile in Get-ChildItem -LiteralPath $SourceEntityDirectory -File) {
+        Copy-Item -LiteralPath $sourceFile.FullName -Destination (Join-Path $backupDirectory 'Entities')
     }
 
     foreach ($fileName in $expectedContextFiles) {
@@ -180,12 +183,26 @@ function Restore-GeneratedBackup {
         }
     }
 
-    foreach ($fileName in $expectedEntityFiles) {
-        Copy-Item -LiteralPath (Join-Path $BackupDirectory "Entities/$fileName") -Destination $TargetEntityDirectory
+    foreach ($sourceFile in Get-ChildItem -LiteralPath (Join-Path $BackupDirectory 'Entities') -File) {
+        Copy-Item -LiteralPath $sourceFile.FullName -Destination $TargetEntityDirectory
     }
 
     foreach ($fileName in $expectedContextFiles) {
         Copy-Item -LiteralPath (Join-Path $BackupDirectory "Context/$fileName") -Destination $TargetContextDirectory
+    }
+}
+
+function Clear-GeneratedBoundary {
+    foreach ($ownedDirectory in @($script:entityDirectory, $script:contextDirectory)) {
+        $ownedRoot = [System.IO.Path]::GetFullPath($ownedDirectory).TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+        foreach ($file in Get-ChildItem -LiteralPath $ownedDirectory -File) {
+            $resolvedFile = [System.IO.Path]::GetFullPath($file.FullName)
+            if (-not $resolvedFile.StartsWith($ownedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Refusing to clear generated output outside the owned boundary: $resolvedFile"
+            }
+
+            Remove-Item -LiteralPath $resolvedFile -Force
+        }
     }
 }
 
@@ -391,6 +408,7 @@ try {
 
     $backupDirectory = New-GeneratedBackup
     try {
+        Clear-GeneratedBoundary
         $generationOutput = & dotnet tool run efcpt -- $ConnectionString mssql `
             --input $config `
             --output $dataDirectory `

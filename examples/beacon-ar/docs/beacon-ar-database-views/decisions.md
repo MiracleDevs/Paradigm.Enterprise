@@ -14,7 +14,7 @@ Reconsider this decision when an API, report, export, or support workflow needs 
 
 ## Pricing helpers
 
-`QuotePricing` and `SalesOrderPricing` remain schema-bound helper views. They centralize aggregate calculation and feed `QuoteView` and `SalesOrderView`, while the entity-named views remain the DTO boundary. Helper or reporting views do not need the `{Entity}View` convention because they are not one-row-per-entity API contracts.
+`QuotePricingView` and `SalesOrderPricingView` remain schema-bound helper views. The convention task supersedes their original names. They centralize aggregate calculation and feed `QuoteView` and `SalesOrderView`, while the entity-named views remain the DTO boundary. Helper or reporting views need not use an entity name, but every view still ends in `View`.
 
 Reconsider this decision if a pricing shape becomes an independently supported API/read-model contract or no longer represents a reusable aggregate helper.
 

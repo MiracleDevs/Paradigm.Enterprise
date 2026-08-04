@@ -101,7 +101,7 @@ dotnet tool run paradigm database validate --project src/database/BeaconAr.Datab
 
 ### Database views and joins
 
-Review every `src/database/views/**/*.sql` alongside its generated entity/view and consumer repository. For `ApplicationUserView`, `ProductView`, `CustomerView`, `CustomerAddressView`, `CarrierView`, `QuoteView`, `QuoteLineView`, `SalesOrderView`, `SalesOrderLineView`, `QuotePricing`, and `SalesOrderPricing`, verify:
+Review every `src/database/views/**/*.sql` alongside its generated entity/view and consumer repository. For `ApplicationUserView`, `ProductView`, `CustomerView`, `CustomerAddressView`, `CarrierView`, `QuoteView`, `QuoteLineView`, `SalesOrderView`, `SalesOrderLineView`, `QuotePricingView`, and `SalesOrderPricingView`, verify:
 
 - schema binding, fully qualified references, column names/types/nullability, keys/rowversion, and EFPT selection;
 - one-row-per-root/view cardinality and no multiplicative joins;

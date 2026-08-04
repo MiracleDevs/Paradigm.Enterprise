@@ -291,7 +291,7 @@ Every master-data FK from transactional history uses `NO ACTION`, so normal phys
 - `NO ACTION` FKs and indexes on `(QuoteId, CreationDate, Id)`.
 - The initial Draft row and every accepted transition are inserted atomically with the current `Quote.StatusId`. No generic update/delete repository is generated.
 
-#### `QuotePricing` view
+#### `QuotePricingView` view
 
 - Schema-bound grouped projection by `QuoteId` returning subtotal, discount total, and grand total as sums of persisted line values, with zero-safe values for repository composition.
 - This is the authoritative aggregate-pricing read shape; callers cannot write it.
@@ -323,9 +323,9 @@ Every master-data FK from transactional history uses `NO ACTION`, so normal phys
 - `Id`, `SalesOrderId`, `StatusId`, `CreatedByUserId`, and `CreationDate`; append-only and non-cascading.
 - Initial Draft and every accepted transition are written atomically with current status.
 
-#### `SalesOrderPricing` view
+#### `SalesOrderPricingView` view
 
-- Schema-bound grouped authoritative totals using rounded line amounts, parallel to `QuotePricing`.
+- Schema-bound grouped authoritative totals using rounded line amounts, parallel to `QuotePricingView`.
 
 ### Integrity ownership not expressible as a row constraint
 
