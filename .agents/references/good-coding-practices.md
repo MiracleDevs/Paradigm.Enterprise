@@ -55,6 +55,11 @@ Place an override in `Overrides` regardless of its declared accessibility. Place
 - Put query-shape and transport-only validation, such as paging bounds, supported sort fields, and mutually exclusive filters, on the request type that owns those values.
 - Put checks requiring repositories, authenticated identity, authorization, remote services, or cross-aggregate coordination in the Provider. Passing already-loaded reference facts into entity behavior does not make the entity infrastructure-aware.
 
+## Repository SQL ownership
+
+- Production repository implementations do not own handwritten SQL statements or raw database-command plumbing. Use EF/LINQ for simple bounded CRUD and queries; use a typed stored-procedure wrapper with its SQL object in the database project for complex, paginated, locking, multi-entity, or performance-sensitive work.
+- Run `paradigm checks run` and treat `PE3107` as an error. It semantically covers `IRepository` implementations and allows typed SQL Server/PostgreSQL routine wrappers. A resolved `Query*`/`Execute*` connection extension with a string/`FormattableString` command parameter remains prohibited when its argument is a runtime value; do not replace semantic API classification with filename, folder, parameter-name, foldability, or SQL-keyword scans.
+
 ## Browser and API security
 
 - For browser authentication, prefer a backend-for-frontend or server session with an encrypted, `Secure`, `HttpOnly` cookie over tokens in `localStorage`. Choose the narrowest workable `SameSite` value and a constrained `Path`/`Domain`; use short lifetimes, rotation, revocation, and server-side validation appropriate to the threat model.

@@ -20,7 +20,7 @@ internal sealed class ChecksRunCommandHandler(IProjectResolutionService projects
         diagnostics.AddRange(SuppressionPolicy.Expired(configured.Configuration.Suppressions, configured.Configuration.Path));
         var packages = new List<PackageInfo>();
         var executed = false;
-        if (!diagnostics.Any(diagnostic => diagnostic.Severity == "error"))
+        if (!diagnostics.Any(diagnostic => diagnostic.Severity == "error" && diagnostic.Code != "PE7004"))
             foreach (var project in selection.Projects)
             {
                 cancellationToken.ThrowIfCancellationRequested();

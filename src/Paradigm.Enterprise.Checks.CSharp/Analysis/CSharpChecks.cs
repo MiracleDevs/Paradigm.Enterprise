@@ -50,6 +50,8 @@ internal static class CSharpChecks
                 (compilationErrors.Length > 10 ? $" | ... {compilationErrors.Length - 10} more error(s)" : ""));
 
         var diagnostics = new List<CSharpCheckDiagnostic>();
+        if (!evaluated.IsTestProject)
+            diagnostics.AddRange(RepositorySqlPolicy.Analyze(compilation, compilation.SyntaxTrees));
         foreach (var tree in trees)
         {
             var model = compilation.GetSemanticModel(tree, ignoreAccessibility: true);
