@@ -8,17 +8,17 @@ The canonical solution is `BeaconAr.slnx` at the example root. It organizes the 
 
 ## Database read projections
 
-Every consumer-facing entity or transactional table has a schema-bound `{Entity}View` projection. These views expose the entity's complete mapping surface and expand foreign keys with commonly needed names, codes, and display values while preserving one row per base entity. `SearchQuote` and `SearchSalesOrder` now query these projections directly, establishing the database DTO contract.
+Every database view ends in `View`. Consumer-facing entity or transactional tables use schema-bound `{Entity}View` projections that expose the entity's complete mapping surface and expand foreign keys with commonly needed names, codes, and display values while preserving one row per base entity. `SearchQuote` and `SearchSalesOrder` query these projections directly, establishing the database DTO contract.
 
 EF Core Power Tools generates matching entity/view types and `ReceivablesDbContext`. The Domain analyzer derives a getter-only `I{Entity}` scalar contract from each mapped table entity, and both the entity and its `{Entity}View` implement that interface. Repositories retrieve entities or view shapes; Providers own entity-to-view mapping and validation orchestration. Detail-repository adoption of the generated views and Provider-owned mapping remain Task 3; current detail repositories still use their existing entity/pricing projections.
 
-`QuoteView` and `SalesOrderView` are the public pricing projections and expose the schema's `Subtotal`, `DiscountTotal`, and `GrandTotal` values. Their schema-bound pricing helpers are database implementation details rather than standalone API DTOs. Status catalogs, audit history, idempotency storage, and other internal tables do not receive API views unless a concrete consumer requires one.
+`QuoteView` and `SalesOrderView` are the public pricing projections and expose the schema's `Subtotal`, `DiscountTotal`, and `GrandTotal` values. Their schema-bound `QuotePricingView` and `SalesOrderPricingView` helpers are database implementation details rather than standalone API DTOs. `AuditLogView`, `IdempotencyRequestView`, and `IdempotencyStateView` provide the explicitly required Operations projections, but remain internal: no controller, serializer context, OpenAPI component, or generated client exposes them or their raw hash/metadata fields.
 
 The SQL Server project is `src/database/BeaconAr.Database.sqlproj` and is included in root `BeaconAr.slnx` under `02.Modules`. Its Microsoft.Build.Sql item groups explicitly include tables, views, functions, routines, types, sequences, and deployment/support scripts so the full schema is visible when the solution is opened in Visual Studio.
 
 ## Database-first regeneration
 
-The deterministic regeneration path is the repository-local EF Core Power Tools CLI, pinned as `ErikEJ.EFCorePowerTools.Cli` 10.1.1386 in `.config/dotnet-tools.json`. The checked-in `src/BeaconAr.Data/efcpt-config.json` explicitly selects all 17 persistence tables, the nine public `{Entity}View` projections, and only the two internal pricing helper views. It contains no connection string. Custom EF Core 10 T4 templates under `src/BeaconAr.Data/CodeTemplates/EFCore` own the Paradigm bases, mapping hooks, collection trackers, auditing contracts, context constructor, and the `CustomerAddress` one-to-many correction.
+The deterministic regeneration path is the repository-local EF Core Power Tools CLI, pinned as `ErikEJ.EFCorePowerTools.Cli` 10.1.1386 in `.config/dotnet-tools.json`. The checked-in `src/BeaconAr.Data/efcpt-config.json` explicitly selects all 17 persistence tables and all 14 views. It contains no connection string. The EF Core 10 T4 templates under `src/BeaconAr.Data/CodeTemplates/EFCore` are derived from the official `Paradigm.Web.ApiTemplate` revision recorded in `PROVENANCE.md`; their local delta is limited to reusable current-generic API and generated-ownership adaptations. Application relationship corrections and domain collection behavior live in partial files, not type-name lists inside T4. Task 3 owns the later split into Access, MasterData, Operations, and Sales contexts/folders.
 
 Build and publish `src/database/BeaconAr.Database.sqlproj` to a disposable SQL Server database before regenerating. Live-database generation is required because DACPAC reverse engineering can omit view/computed-column metadata. Supply that disposable connection only through the process environment, then run:
 
@@ -27,7 +27,7 @@ $env:ConnectionStrings__DatabaseConnection = '<disposable SQL Server connection>
 ./build/regenerate-persistence.ps1
 ```
 
-The script restores the local tool, verifies the pin/config/templates, builds before generation, runs `dotnet tool run efcpt`, validates all generated ownership markers, and builds afterward. It never deletes output itself. EFPT owns only `src/BeaconAr.Domain/Receivables/Entities` and `src/BeaconAr.Data/Receivables/Context`; do not hand-edit those files. Keep behavior in partials outside those directories and review the complete generated diff after every run. The Visual Studio extension is optional convenience, not the source of truth.
+The script restores the local tool, verifies the pin/config/templates, builds before generation, backs up and clears only the two verified generated boundaries, runs `dotnet tool run efcpt`, validates the exact output set and ownership metadata, builds afterward, and restores the backup on failure. EFPT owns only `src/BeaconAr.Domain/Receivables/Entities` and `src/BeaconAr.Data/Receivables/Context`; do not hand-edit those files. Keep behavior in partials outside those directories and review the complete generated diff after every run. The Visual Studio extension is optional convenience, not the source of truth.
 
 ## Prerequisites and local start
 

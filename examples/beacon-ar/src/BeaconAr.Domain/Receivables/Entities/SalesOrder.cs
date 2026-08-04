@@ -80,9 +80,7 @@ public partial class SalesOrder : EntityBase<int, ISalesOrder, SalesOrder, Sales
 
     public virtual ApplicationUser? ModifiedByUser { get; set; }
 
-    private readonly List<SalesOrderLine> _salesOrderLines = [];
-    public virtual IList<SalesOrderLine> SalesOrderLines => _salesOrderLines;
-    public DomainTracker<SalesOrderLine> SalesOrderLinesDomainTracker { get; } = new();
+    public virtual ICollection<SalesOrderLine> SalesOrderLines { get; set; } = new List<SalesOrderLine>();
 
     public virtual ICollection<SalesOrderStatusHistory> SalesOrderStatusHistories { get; set; } = new List<SalesOrderStatusHistory>();
 
@@ -93,8 +91,6 @@ public partial class SalesOrder : EntityBase<int, ISalesOrder, SalesOrder, Sales
     public override void Validate()
     {
         ValidateEntity();
-        foreach (var child in SalesOrderLines)
-            child.Validate();
     }
 
     public override SalesOrder MapFrom(IServiceProvider serviceProvider, ISalesOrder model)
@@ -113,22 +109,6 @@ public partial class SalesOrder : EntityBase<int, ISalesOrder, SalesOrder, Sales
         var view = serviceProvider.GetRequiredService<SalesOrderView>();
         serviceProvider.GetRequiredService<SalesOrderMapper>().MapTo(this, view);
         return view;
-    }
-
-    public void AddSalesOrderLines(SalesOrderLine? entity)
-    {
-        if (entity is null)
-            return;
-        _salesOrderLines.Add(entity);
-        SalesOrderLinesDomainTracker.Add(entity);
-    }
-
-    public void RemoveSalesOrderLines(SalesOrderLine? entity)
-    {
-        if (entity is null)
-            return;
-        _salesOrderLines.Remove(entity);
-        SalesOrderLinesDomainTracker.Remove(entity);
     }
 
     partial void ValidateEntity();

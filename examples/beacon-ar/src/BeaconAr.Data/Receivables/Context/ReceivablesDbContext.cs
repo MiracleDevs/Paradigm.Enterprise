@@ -24,6 +24,8 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<AuditLogView> AuditLogViews { get; set; }
+
     public virtual DbSet<Carrier> Carriers { get; set; }
 
     public virtual DbSet<CarrierView> CarrierViews { get; set; }
@@ -38,7 +40,11 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
     public virtual DbSet<IdempotencyRequest> IdempotencyRequests { get; set; }
 
+    public virtual DbSet<IdempotencyRequestView> IdempotencyRequestViews { get; set; }
+
     public virtual DbSet<IdempotencyState> IdempotencyStates { get; set; }
+
+    public virtual DbSet<IdempotencyStateView> IdempotencyStateViews { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
 
@@ -50,7 +56,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
     public virtual DbSet<QuoteLineView> QuoteLineViews { get; set; }
 
-    public virtual DbSet<QuotePricing> QuotePricings { get; set; }
+    public virtual DbSet<QuotePricingView> QuotePricingViews { get; set; }
 
     public virtual DbSet<QuoteStatus> QuoteStatuses { get; set; }
 
@@ -64,7 +70,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
     public virtual DbSet<SalesOrderLineView> SalesOrderLineViews { get; set; }
 
-    public virtual DbSet<SalesOrderPricing> SalesOrderPricings { get; set; }
+    public virtual DbSet<SalesOrderPricingView> SalesOrderPricingViews { get; set; }
 
     public virtual DbSet<SalesOrderStatus> SalesOrderStatuses { get; set; }
 
@@ -75,6 +81,8 @@ public partial class ReceivablesDbContext : DbContextBase<int>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.UseCollation("Latin1_General_100_CI_AS_SC");
+
         modelBuilder.Entity<AddressType>(entity =>
         {
             entity.ToTable("AddressType");
@@ -150,6 +158,22 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .HasConstraintName("FK_AuditLog_ApplicationUser");
         });
 
+        modelBuilder.Entity<AuditLogView>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("AuditLogView");
+
+            entity.Property(e => e.Action).HasMaxLength(100);
+            entity.Property(e => e.CorrelationId).HasMaxLength(128);
+            entity.Property(e => e.MetadataJson).HasMaxLength(4000);
+            entity.Property(e => e.NewStatusCode).HasMaxLength(32);
+            entity.Property(e => e.PreviousStatusCode).HasMaxLength(32);
+            entity.Property(e => e.ResourceId).HasMaxLength(50);
+            entity.Property(e => e.ResourceType).HasMaxLength(100);
+            entity.Property(e => e.UserDisplayName).HasMaxLength(200);
+        });
+
         modelBuilder.Entity<Carrier>(entity =>
         {
             entity.ToTable("Carrier");
@@ -160,9 +184,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
             entity.HasIndex(e => e.Code, "UQ_Carrier_Code").IsUnique();
 
-            entity.Property(e => e.Code)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.Code).HasMaxLength(32);
             entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_Carrier_IsActive");
             entity.Property(e => e.Name).HasMaxLength(120);
             entity.Property(e => e.RowVersion)
@@ -182,9 +204,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .HasNoKey()
                 .ToView("CarrierView");
 
-            entity.Property(e => e.Code)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.Code).HasMaxLength(32);
             entity.Property(e => e.CreatedByUserDisplayName).HasMaxLength(200);
             entity.Property(e => e.ModifiedByUserDisplayName).HasMaxLength(200);
             entity.Property(e => e.Name).HasMaxLength(120);
@@ -205,9 +225,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
             entity.HasIndex(e => e.AccountNumber, "UQ_Customer_AccountNumber").IsUnique();
 
-            entity.Property(e => e.AccountNumber)
-                .HasMaxLength(50)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.AccountNumber).HasMaxLength(50);
             entity.Property(e => e.CreditLimit).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.Email).HasMaxLength(320);
             entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_Customer_IsActive");
@@ -258,8 +276,8 @@ public partial class ReceivablesDbContext : DbContextBase<int>
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.CustomerAddressCreatedByUsers).HasForeignKey(d => d.CreatedByUserId);
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.CustomerAddresses)
-                .HasForeignKey(d => d.CustomerId)
+            entity.HasOne(d => d.Customer).WithOne(p => p.CustomerAddress)
+                .HasForeignKey<CustomerAddress>(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CustomerAddress_Customer");
 
@@ -279,9 +297,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .HasMaxLength(2)
                 .IsFixedLength();
             entity.Property(e => e.CreatedByUserDisplayName).HasMaxLength(200);
-            entity.Property(e => e.CustomerAccountNumber)
-                .HasMaxLength(50)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.CustomerAccountNumber).HasMaxLength(50);
             entity.Property(e => e.CustomerName).HasMaxLength(120);
             entity.Property(e => e.Label).HasMaxLength(120);
             entity.Property(e => e.Line1).HasMaxLength(200);
@@ -300,9 +316,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .HasNoKey()
                 .ToView("CustomerView");
 
-            entity.Property(e => e.AccountNumber)
-                .HasMaxLength(50)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.AccountNumber).HasMaxLength(50);
             entity.Property(e => e.CreatedByUserDisplayName).HasMaxLength(200);
             entity.Property(e => e.CreditLimit).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.Email).HasMaxLength(320);
@@ -347,6 +361,28 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .HasConstraintName("FK_IdempotencyRequest_ApplicationUser");
         });
 
+        modelBuilder.Entity<IdempotencyRequestView>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("IdempotencyRequestView");
+
+            entity.Property(e => e.CreatedByUserDisplayName).HasMaxLength(200);
+            entity.Property(e => e.KeyHash)
+                .HasMaxLength(32)
+                .IsFixedLength();
+            entity.Property(e => e.ModifiedByUserDisplayName).HasMaxLength(200);
+            entity.Property(e => e.Operation).HasMaxLength(150);
+            entity.Property(e => e.RequestHash)
+                .HasMaxLength(32)
+                .IsFixedLength();
+            entity.Property(e => e.ResourceId).HasMaxLength(50);
+            entity.Property(e => e.ResourceType).HasMaxLength(100);
+            entity.Property(e => e.StateCode).HasMaxLength(32);
+            entity.Property(e => e.StateDisplayName).HasMaxLength(100);
+            entity.Property(e => e.UserDisplayName).HasMaxLength(200);
+        });
+
         modelBuilder.Entity<IdempotencyState>(entity =>
         {
             entity.ToTable("IdempotencyState");
@@ -357,6 +393,16 @@ public partial class ReceivablesDbContext : DbContextBase<int>
             entity.Property(e => e.Code).HasMaxLength(32);
             entity.Property(e => e.DisplayName).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_IdempotencyState_IsActive");
+        });
+
+        modelBuilder.Entity<IdempotencyStateView>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("IdempotencyStateView");
+
+            entity.Property(e => e.Code).HasMaxLength(32);
+            entity.Property(e => e.DisplayName).HasMaxLength(100);
         });
 
         modelBuilder.Entity<Product>(entity =>
@@ -375,9 +421,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
             entity.Property(e => e.RowVersion)
                 .IsRowVersion()
                 .IsConcurrencyToken();
-            entity.Property(e => e.Sku)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.Sku).HasMaxLength(32);
             entity.Property(e => e.ThumbnailUrl).HasMaxLength(2048);
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(19, 4)");
 
@@ -399,9 +443,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
             entity.Property(e => e.RowVersion)
                 .IsRowVersion()
                 .IsConcurrencyToken();
-            entity.Property(e => e.Sku)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.Sku).HasMaxLength(32);
             entity.Property(e => e.ThumbnailUrl).HasMaxLength(2048);
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(19, 4)");
         });
@@ -506,19 +548,17 @@ public partial class ReceivablesDbContext : DbContextBase<int>
             entity.Property(e => e.LineTotal).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(120);
             entity.Property(e => e.ProductNameSnapshot).HasMaxLength(120);
-            entity.Property(e => e.ProductSku)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.ProductSku).HasMaxLength(32);
             entity.Property(e => e.QuoteNumber).HasMaxLength(20);
             entity.Property(e => e.SkuSnapshot).HasMaxLength(32);
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(19, 4)");
         });
 
-        modelBuilder.Entity<QuotePricing>(entity =>
+        modelBuilder.Entity<QuotePricingView>(entity =>
         {
             entity
                 .HasNoKey()
-                .ToView("QuotePricing");
+                .ToView("QuotePricingView");
 
             entity.Property(e => e.DiscountTotal).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(19, 2)");
@@ -566,9 +606,7 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .ToView("QuoteView");
 
             entity.Property(e => e.CreatedByUserDisplayName).HasMaxLength(200);
-            entity.Property(e => e.CustomerAccountNumber)
-                .HasMaxLength(50)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.CustomerAccountNumber).HasMaxLength(50);
             entity.Property(e => e.CustomerAccountNumberSnapshot).HasMaxLength(50);
             entity.Property(e => e.CustomerEmailSnapshot).HasMaxLength(320);
             entity.Property(e => e.CustomerName).HasMaxLength(120);
@@ -724,18 +762,16 @@ public partial class ReceivablesDbContext : DbContextBase<int>
             entity.Property(e => e.OrderNumber).HasMaxLength(20);
             entity.Property(e => e.ProductName).HasMaxLength(120);
             entity.Property(e => e.ProductNameSnapshot).HasMaxLength(120);
-            entity.Property(e => e.ProductSku)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.ProductSku).HasMaxLength(32);
             entity.Property(e => e.SkuSnapshot).HasMaxLength(32);
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(19, 4)");
         });
 
-        modelBuilder.Entity<SalesOrderPricing>(entity =>
+        modelBuilder.Entity<SalesOrderPricingView>(entity =>
         {
             entity
                 .HasNoKey()
-                .ToView("SalesOrderPricing");
+                .ToView("SalesOrderPricingView");
 
             entity.Property(e => e.DiscountTotal).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.GrandTotal).HasColumnType("decimal(19, 2)");
@@ -782,15 +818,11 @@ public partial class ReceivablesDbContext : DbContextBase<int>
                 .HasNoKey()
                 .ToView("SalesOrderView");
 
-            entity.Property(e => e.CarrierCode)
-                .HasMaxLength(32)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.CarrierCode).HasMaxLength(32);
             entity.Property(e => e.CarrierName).HasMaxLength(120);
             entity.Property(e => e.CarrierServiceLevel).HasMaxLength(120);
             entity.Property(e => e.CreatedByUserDisplayName).HasMaxLength(200);
-            entity.Property(e => e.CustomerAccountNumber)
-                .HasMaxLength(50)
-                .UseCollation("Latin1_General_100_CI_AS_SC");
+            entity.Property(e => e.CustomerAccountNumber).HasMaxLength(50);
             entity.Property(e => e.CustomerAccountNumberSnapshot).HasMaxLength(50);
             entity.Property(e => e.CustomerEmailSnapshot).HasMaxLength(320);
             entity.Property(e => e.CustomerName).HasMaxLength(120);

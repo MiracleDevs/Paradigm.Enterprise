@@ -47,6 +47,7 @@
     <Folder Include="tables\Sales\" />
     <Folder Include="views\Access\" />
     <Folder Include="views\MasterData\" />
+    <Folder Include="views\Operations\" />
     <Folder Include="views\Sales\" />
     <Folder Include="routines\MasterData\" />
     <Folder Include="routines\Reporting\" />

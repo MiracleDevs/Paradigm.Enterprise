@@ -5,6 +5,12 @@ namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class Customer
 {
+    #region Properties
+
+    public ICollection<CustomerAddress> CustomerAddresses { get; set; } = new List<CustomerAddress>();
+
+    #endregion
+
     #region Public Methods
 
     public static Customer Create(CustomerCreateRequest request, int userId, DateTimeOffset now)

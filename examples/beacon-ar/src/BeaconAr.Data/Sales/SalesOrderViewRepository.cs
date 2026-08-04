@@ -84,7 +84,7 @@ public sealed class SalesOrderViewRepository : RepositoryBase<ReceivablesDbConte
         {
             var header = await (
                 from order in EntityContext.SalesOrders.AsNoTracking()
-                join pricing in EntityContext.SalesOrderPricings on order.Id equals pricing.SalesOrderId
+                join pricing in EntityContext.SalesOrderPricingViews on order.Id equals pricing.SalesOrderId
                 join carrier in EntityContext.Carriers on order.CarrierId equals carrier.Id into carriers
                 from carrier in carriers.DefaultIfEmpty()
                 where order.Id == id && (includeDeleted || order.DeletionDate == null)

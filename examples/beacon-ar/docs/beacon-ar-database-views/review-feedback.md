@@ -14,7 +14,7 @@
 ## Verified
 
 - The nine requested entity views are present, use the required `{Entity}View` names, are schema-bound, explicitly list their projections, preserve all columns from their respective base tables, and add bounded one-to-one/lookup joins. The quote-to-order join is protected from row multiplication by `UQ_SalesOrder_SourceQuoteId`.
-- `QuotePricing` and `SalesOrderPricing` remain sensible internal, schema-bound aggregation helpers. `QuoteView` and `SalesOrderView` expose their totals, and the modified search procedures retain their stable count-first/result-second contract and deterministic final `Id` ordering.
+- `QuotePricingView` and `SalesOrderPricingView` remain sensible internal, schema-bound aggregation helpers. These canonical names supersede the original pre-convention names. `QuoteView` and `SalesOrderView` expose their totals, and the modified search procedures retain their stable count-first/result-second contract and deterministic final `Id` ordering.
 - `BeaconAr.Database.sqlproj` is correctly named, under `src/database`, included by `src/BeaconAr.sln`, explicitly includes the database model categories once, and retains the pre-pre, pre-deployment, post-deployment, seed, verification, and maintenance item roles without duplicate `Build` items.
 - The added smoke checks cover existence, schema binding, and duplicate base rows for all nine views. The committed task documentation records the projection and pricing decisions.
 

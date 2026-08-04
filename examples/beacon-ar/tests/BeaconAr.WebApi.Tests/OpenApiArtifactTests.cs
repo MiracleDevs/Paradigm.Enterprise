@@ -91,6 +91,7 @@ public sealed class OpenApiArtifactTests
         VerifyHeaders(operations);
         VerifyProblemDetails(root);
         VerifySchemas(root);
+        VerifyOperationsPersistenceIsNotExposed(artifact);
     }
 
     #endregion
@@ -108,6 +109,21 @@ public sealed class OpenApiArtifactTests
         Assert.AreEqual(ExpectedSha256, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant());
         using JsonDocument document = JsonDocument.Parse(bytes);
         Assert.AreEqual(JsonValueKind.Object, document.RootElement.ValueKind);
+    }
+
+    private static void VerifyOperationsPersistenceIsNotExposed(string openApiPath)
+    {
+        string root = Directory.GetParent(Directory.GetParent(Directory.GetParent(openApiPath)!.FullName)!.FullName)!.FullName;
+        string clientPath = Path.Combine(root, "tests", "BeaconAr.ClientContract", "generated", "beacon-ar-v1.ts");
+        Assert.IsTrue(File.Exists(clientPath), clientPath);
+        string combinedContract = File.ReadAllText(openApiPath) + Environment.NewLine + File.ReadAllText(clientPath);
+        string[] forbidden =
+        [
+            "AuditLogView", "IdempotencyRequestView", "IdempotencyStateView",
+            "keyHash", "requestHash", "metadataJson",
+        ];
+        foreach (string name in forbidden)
+            Assert.IsFalse(combinedContract.Contains(name, StringComparison.Ordinal), name);
     }
 
     private static string FindArtifact()

@@ -6,9 +6,9 @@ using System.Collections.Generic;
 namespace BeaconAr.Domain.Receivables.Entities;
 
 [System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
-public partial class QuotePricing
+public partial class SalesOrderPricingView
 {
-    public int QuoteId { get; set; }
+    public int SalesOrderId { get; set; }
 
     public decimal? Subtotal { get; set; }
 

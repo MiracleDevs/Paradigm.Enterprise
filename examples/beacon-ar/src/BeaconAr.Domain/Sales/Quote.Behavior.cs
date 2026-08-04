@@ -2,11 +2,18 @@ using BeaconAr.Domain.Sales.Application;
 using BeaconAr.Domain.Sales.Contracts;
 using BeaconAr.Domain.Sales.Repositories;
 using BeaconAr.Domain.Sales.Validation;
+using Paradigm.Enterprise.Domain.Entities;
 
 namespace BeaconAr.Domain.Receivables.Entities;
 
 public partial class Quote
 {
+    #region Properties
+
+    public DomainTracker<QuoteLine> QuoteLinesDomainTracker { get; } = new();
+
+    #endregion
+
     #region Public Methods
 
     public static Quote CreateDraft(
@@ -96,6 +103,22 @@ public partial class Quote
         Touch(actorId, now);
     }
 
+    public void AddQuoteLines(QuoteLine? entity)
+    {
+        if (entity is null)
+            return;
+        QuoteLines.Add(entity);
+        QuoteLinesDomainTracker.Add(entity);
+    }
+
+    public void RemoveQuoteLines(QuoteLine? entity)
+    {
+        if (entity is null)
+            return;
+        QuoteLines.Remove(entity);
+        QuoteLinesDomainTracker.Remove(entity);
+    }
+
     public void ValidateForConversion()
     {
         if (DeletionDate.HasValue || StatusId != (int)Sales.QuoteStatus.Accepted)
@@ -106,6 +129,12 @@ public partial class Quote
     #endregion
 
     #region Private Methods
+
+    partial void ValidateEntity()
+    {
+        foreach (QuoteLine line in QuoteLines)
+            line.Validate();
+    }
 
     private void ApplySnapshots(CustomerSalesReference customer, AddressSalesReference address)
     {

@@ -40,7 +40,7 @@ public partial class Customer : EntityBase<int, ICustomer, Customer, CustomerVie
 
     public virtual ApplicationUser? CreatedByUser { get; set; }
 
-    public virtual ICollection<CustomerAddress> CustomerAddresses { get; set; } = new List<CustomerAddress>();
+    public virtual CustomerAddress? CustomerAddress { get; set; }
 
     public virtual ApplicationUser? ModifiedByUser { get; set; }
 
