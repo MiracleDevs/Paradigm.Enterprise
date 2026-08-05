@@ -96,6 +96,8 @@ bash build/test.sh
 
 This runs the fast developer suite. Use `bash build/quality.sh` for the complete suite, including packed CLI integration tests.
 
+Packable projects inherit the shared repository README through `src/Directory.Build.targets`. A package that needs focused instructions can set `PackageReadmeSource` to its own Markdown file, as the CLI does. The quality workflow runs `build/verify-packages.ps1` to verify every produced `.nupkg` declares and contains a non-empty README.
+
 ## Documentation
 
 - Update documentation for any changed functionality

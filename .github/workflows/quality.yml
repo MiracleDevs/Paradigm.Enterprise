@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+      - name: Register Paradigm problem matcher
+        run: echo "::add-matcher::${{ github.workspace }}/.github/problem-matchers/paradigm.json"
       - name: Restore
         run: |
           dotnet tool restore
@@ -27,6 +29,7 @@ jobs:
       - name: Pack current release and build example
         run: |
           dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
+          pwsh build/verify-packages.ps1 -ArtifactsDirectory artifacts
           dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
           dotnet build example/ExampleApp.sln --configuration Release --no-restore
           dotnet test example/ExampleApp.sln --configuration Release --no-build

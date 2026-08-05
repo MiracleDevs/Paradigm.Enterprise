@@ -7,6 +7,7 @@ errors = []
 canonical = root / ".agents" / "skills"
 redirects = root / "skills"
 good_practices = root / ".agents" / "references" / "good-coding-practices.md"
+database_practices = root / ".agents" / "references" / "database-practices.md"
 good_practices_reference = "../../references/good-coding-practices.md"
 if not good_practices.exists():
     errors.append("missing canonical Paradigm Good Coding Practices reference")
@@ -28,6 +29,28 @@ else:
     for practice in required_practices:
         if practice not in good_practices_text:
             errors.append(f"Good Coding Practices is missing required guidance: {practice}")
+if not database_practices.exists():
+    errors.append("missing canonical Paradigm Database Practices reference")
+else:
+    database_practices_text = database_practices.read_text(encoding="utf-8")
+    required_database_practices = [
+        "auto-incrementing `Id`",
+        "stable, explicitly assigned identifiers",
+        "service-side .NET enum",
+        "<Entity>StatusHistory",
+        "scripts/prepredeployment/PrePreDeployment.sql",
+    ]
+    for practice in required_database_practices:
+        if practice not in database_practices_text:
+            errors.append(f"Database Practices is missing required guidance: {practice}")
+retired_skill_helpers = [
+    root / ".agents" / "skills" / "paradigm-setup-project" / "scripts" / "scaffold_from_template.py",
+    root / ".agents" / "skills" / "paradigm-build-database" / "scripts" / "validate_database_project.py",
+    root / ".github" / "scripts" / "test-skill-tools.py",
+]
+for helper in retired_skill_helpers:
+    if helper.exists():
+        errors.append(f"retired Python helper still exists; use Paradigm.Enterprise.Cli: {helper.relative_to(root)}")
 for skill in sorted(canonical.iterdir()):
     source = skill / "SKILL.md"
     ui = skill / "agents" / "openai.yaml"

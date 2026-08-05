@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 Version `1.1.0`
 
 - Added installable Agent Skills for guided application design, implementation, security, and review.
+- Added focused Aspire orchestration and SQL Server/PostgreSQL database-engineering skills, canonical database practices, native CLI solution scaffolding/database validation, Docker-aware local Aspire starter generation, system-catalog seed/enum parity, status-transition history, and SQL Server pre-pre-deployment guidance.
 - Consolidated diagnostics, semantic C# checks, and JSON/mapper/OpenAPI generation behind one installable `Paradigm.Enterprise.Cli` tool; analyzer and generator projects are internal package components rather than separate tools.
 - Added built-in `PE3103`/`PE3104` semantic checks plus deterministic `PE3105` one-type-per-file and `PE3106` member-region, order, and spacing checks with generated-code exclusions.
 - Reorganized the single CLI by capability, protected its `Packages` source folder from NuGet ignore rules, and added complete user and maintainer documentation for commands, options, architecture, packaging, and verification.
@@ -15,6 +16,7 @@ Version `1.1.0`
 - Strengthened every Paradigm skill and deterministic skill validation to reference the canonical practices.
 - Updated ExampleApp to .NET 10, current generic identifier APIs, behavior-owned entity transitions, and aligned Paradigm 1.1.0 packages.
 - Added PR and scheduled dependency workflows, Copilot review guidance, centralized release-version validation, expanded CLI/tool fixtures, and warning-as-error documentation validation.
+- Embedded a README in every distributable NuGet package and added archive-level package README validation to local and GitHub quality workflows.
 
 Version `1.0.33`
 

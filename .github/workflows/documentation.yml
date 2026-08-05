@@ -61,6 +61,7 @@ jobs:
       - name: Restore compatibility example
         run: |
           dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
+          pwsh build/verify-packages.ps1 -ArtifactsDirectory artifacts
           dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
 
       - name: Build compatibility example

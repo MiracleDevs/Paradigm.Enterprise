@@ -1,6 +1,6 @@
 # Paradigm CLI
 
-`Paradigm.Enterprise.Cli` is the only command-line tool for applications that consume Paradigm.Enterprise NuGet packages. The single `paradigm` entry point provides restored-package API discovery, application metadata validation, built-in semantic C# checks, dependency policy and auditing, and explicit source generation. Applications do not reference the tool at runtime, and there is no separate generator or checks executable to install.
+`Paradigm.Enterprise.Cli` is the only command-line tool for applications that consume Paradigm.Enterprise NuGet packages. The single `paradigm` entry point provides solution scaffolding, database-project validation, restored-package API discovery, application metadata validation, built-in semantic C# checks, dependency policy and auditing, and explicit source generation. Applications do not reference the tool at runtime, and there is no separate generator, database validator, scaffolder, or checks executable to install.
 
 Metadata commands inspect the consuming project's restored assets and assemblies without launching the application. `checks run` asks MSBuild and Roslyn for the real project compilation, which can execute build targets, analyzers, and source generators from restored dependencies. Run it only on projects and packages you trust. Generation is an explicit mutating boundary: JSON and mapper generation load the trusted application assembly supplied by the caller, and every generation mode writes source that must be reviewed.
 
@@ -45,6 +45,8 @@ paradigm packages audit [--project <path>] [--framework <tfm>] [--config <path>]
 paradigm generate json --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
 paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
 paradigm generate client --document <url> --output <directory> [--settings <json>] [--format text|json]
+paradigm scaffold solution --template-root <path> --name <name> --output <empty-directory> --paradigm-version <version> [--dry-run] [--format text|json]
+paradigm database validate --project <sqlproj-or-project.jsonc> [--solution <sln-or-slnx>] [--strict] [--format text|json]
 paradigm --version
 ```
 
@@ -52,7 +54,7 @@ paradigm --version
 
 ## Common options and path resolution
 
-`--project` accepts a directory, a `.csproj`, a `.sln`, or a `.slnx`. When omitted, resolution starts in the current directory. A directory containing more than one solution requires an explicit solution path. Commands that operate on a solution process every listed C# project.
+For application commands, `--project` accepts a directory, a `.csproj`, a `.sln`, or a `.slnx`. When omitted, resolution starts in the current directory. A directory containing more than one solution requires an explicit solution path. Commands that operate on a solution process every listed C# project. For `database validate`, `--project` instead names the required `.sqlproj` or DbPublisher `.json/.jsonc`, and optional `--solution` verifies application-solution membership.
 
 `--framework` selects a target framework from restored `project.assets.json`. When it is omitted for a multi-target project, the highest compatible `net*` target is selected. `doctor` intentionally checks the resolved project without accepting this option. `checks list` is project-independent and accepts neither `--project` nor `--framework`.
 
@@ -159,6 +161,35 @@ dotnet tool run paradigm generate client --document https://localhost:7001/opena
 
 Build assemblies before JSON or mapper generation. Generate clients only from a trusted OpenAPI endpoint. Review all generated diffs. A generation failure produces `PE8001` and exit code `1`.
 
+## Solution scaffolding
+
+`scaffold solution` adapts the reviewed Paradigm Web API template without modifying its source. It requires a local template root, a dot-separated C# solution name, an empty output directory, and the approved Paradigm package version. Use `--dry-run` first. The command preserves `.sln`/`.slnx`, regenerates template GUIDs, preserves binary assets, aligns Paradigm package references, and creates the root `start.sh` wrapper for repository-local Paradigm/Aspire tools and Docker-aware Aspire startup. It also creates `.github/problem-matchers/paradigm.json` and a baseline `.github/workflows/quality.yml` that restores, builds, tests, runs the Paradigm checks, and publishes `PE` warnings and errors as GitHub annotations.
+
+```powershell
+dotnet tool run paradigm scaffold solution --template-root C:\Repositories\github\Paradigm.Web.ApiTemplate --name Contoso.Product --output C:\Repositories\Contoso.Product --paradigm-version 1.1.0 --dry-run
+```
+
+The command writes only beneath the requested empty output and returns `PE8101` on a reviewed scaffolding failure. Review every generated file before committing it.
+
+### GitHub Actions diagnostics
+
+The CLI's text diagnostics use the stable form `PE7008 warning: message [location]` or `PE1002 error: message [location]`. GitHub's built-in .NET matcher expects compiler-shaped output, so a workflow that runs Paradigm commands must register the generated matcher before those commands:
+
+```yaml
+- name: Register Paradigm problem matcher
+  run: echo "::add-matcher::${{ github.workspace }}/.github/problem-matchers/paradigm.json"
+```
+
+Keep the matcher file in the repository and register it once per job that invokes the CLI. The generated quality workflow already does this. Existing repositories and custom pipelines can copy the matcher from a newly scaffolded solution or from the Paradigm.Enterprise repository. Non-GitHub automation can consume `--format json` instead.
+
+## Database project validation
+
+`database validate` is read-only. It validates SDK-style SQL Server projects and PostgreSQL DbPublisher configuration, including layout, deployment registration, secrets, constraint/audit conventions, system-catalog identifiers and seed/enum pairing, status history, BACPAC policy, solution membership, pre-pre-deployment ordering, idempotency signals, and unsafe automatic publish settings. Exact seed-to-enum value parity remains a semantic review because SQL seed expressions are not always statically reducible. Use `--strict` for a new project; omit it when auditing legacy source so canonical migration findings remain warnings.
+
+```powershell
+dotnet tool run paradigm database validate --project src/database/Product.Database.sqlproj --solution src/Product.slnx --strict
+```
+
 ## Diagnostics and exit codes
 
 | Code | Meaning |
@@ -175,6 +206,8 @@ Build assemblies before JSON or mapper generation. Generate clients only from a 
 | `PE6001` | No compatible curated guide exists |
 | `PE7004` to `PE7008` | Suppression expiry, incomplete audit, vulnerability, deprecation, or update policy |
 | `PE8001` | Explicit source generation failed |
+| `PE8101` | Solution scaffolding failed |
+| `PEDB001` to `PEDB110` | Database project, deployment, catalog, or status-history rule |
 
 Exit code `0` means success or warnings. Exit code `1` means a completed command reported an error diagnostic or was canceled. Exit code `2` means invalid arguments or project selection. Exit code `3` means project assets, build output, or metadata resolution failed.
 

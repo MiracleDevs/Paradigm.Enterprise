@@ -30,6 +30,8 @@ internal static class TestCliApplication
             new GenerateCommandHandler("generate json", Paradigm.Enterprise.CodeGenerator.CodeGenerationMode.Json),
             new GenerateCommandHandler("generate mappers", Paradigm.Enterprise.CodeGenerator.CodeGenerationMode.Mappers),
             new GenerateCommandHandler("generate client", Paradigm.Enterprise.CodeGenerator.CodeGenerationMode.Client),
+            new ScaffoldSolutionCommandHandler(new SolutionScaffolder()),
+            new DatabaseValidateCommandHandler(new DatabaseProjectValidator()),
             new PackagesCheckCommandHandler(projects, assets, configuration, new PackagePolicyService()),
             new PackagesAuditCommandHandler(projects, assets, configuration, new PackagePolicyService(), new DotNetPackageAuditor())
         };

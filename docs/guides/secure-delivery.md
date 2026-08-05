@@ -57,7 +57,7 @@ flowchart TB
   class OBSERVE,RESPOND,LEARN operationsNode
 ```
 
-Every stage in this diagram is team or platform guidance. The library does not supply repository policy, scanners, artifact promotion, deployment automation, telemetry storage, alerting, or recovery orchestration.
+Every stage in this diagram is team or platform guidance. The CLI scaffolder supplies a baseline quality workflow, but the runtime library does not impose repository policy, scanners, artifact promotion, deployment automation, telemetry storage, alerting, or recovery orchestration. Teams must review and extend the generated workflow for their delivery requirements.
 
 ## Start with the system boundary
 
