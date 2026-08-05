@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Paradigm.Enterprise.CodeGenerator.Configuration;
@@ -8,7 +8,7 @@ namespace Paradigm.Enterprise.CodeGenerator.Generators;
 
 internal class JsonContextGenerator
 {
-    #region Properties
+    #region Fields
 
     /// <summary>
     /// The configuration
@@ -19,6 +19,11 @@ internal class JsonContextGenerator
     /// The providers assembly path
     /// </summary>
     private readonly string? _providersAssemblyPath;
+
+    /// <summary>
+    /// The providers source output path.
+    /// </summary>
+    private readonly string? _providersOutputPath;
 
     /// <summary>
     /// The project name
@@ -37,7 +42,7 @@ internal class JsonContextGenerator
 
     #endregion
 
-    #region Constructor
+    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonContextGenerator" /> class.
@@ -49,6 +54,7 @@ internal class JsonContextGenerator
         _configuration = new JsonContextGeneratorConfiguration();
         configuration.Bind("jsonContextGenerator", _configuration);
         _providersAssemblyPath = configuration.GetValue<string>("ProvidersAssemblyPath");
+        _providersOutputPath = configuration.GetValue<string>("ProvidersOutputPath");
         _projectName = configuration.GetValue<string>("ProjectName");
         _logger = logger;
     }
@@ -68,12 +74,15 @@ internal class JsonContextGenerator
             if (string.IsNullOrWhiteSpace(_providersAssemblyPath))
                 throw new ArgumentNullException("ProvidersAssemblyPath");
 
+            if (string.IsNullOrWhiteSpace(_providersOutputPath))
+                throw new ArgumentNullException("ProvidersOutputPath");
+
             if (string.IsNullOrWhiteSpace(_projectName))
                 throw new ArgumentNullException("ProjectName");
 
             _logger.LogInformation("Starting JSON serializer contexts generation.");
 
-            var outputPath = Path.Combine(_providersAssemblyPath, "JsonSerializerContexts");
+            var outputPath = Path.Combine(_providersOutputPath, "JsonSerializerContexts");
 
             if (!Directory.Exists(outputPath))
             {
@@ -123,7 +132,7 @@ internal class JsonContextGenerator
 
                 List<string> usings = new() { "System.Text.Json.Serialization" };
                 if (inputOutputTypes.Any(x => x.Contains("PaginatedResultDto", StringComparison.OrdinalIgnoreCase)))
-                    usings.Add("{_projectName}.Domain.Core.Dtos");
+                    usings.Add($"{_projectName}.Domain.Core.Dtos");
 
                 var jsonSerializableAttributes = inputOutputTypes.Select(type => $"[JsonSerializable(typeof({type}))]").ToList();
                 var jsonContextClassName = $"{namespaceGroup.Key}JsonContext";
@@ -144,6 +153,7 @@ public partial class {jsonContextClassName} : JsonSerializerContext
         catch (Exception ex)
         {
             _logger.LogError(ex.Message);
+            throw;
         }
         finally
         {

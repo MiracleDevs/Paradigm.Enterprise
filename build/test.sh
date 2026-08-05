@@ -13,6 +13,6 @@ clear
 block "Run Tests"
 
 cd "$REPOSITORY_ROOT"
-dotnet test src/Paradigm.Enterprise.slnx
+dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 
 buildSuccessfully

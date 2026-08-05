@@ -4,24 +4,32 @@
 
 ## Context
 
-An application context derives from `DbContextBase<TId>` and receives both `IServiceProvider` and `DbContextOptions`. The context implements `ICommiteable`, so repositories can register it with the scoped Unit of Work.
+A domain-bounded context derives from `DbContextBase<TId>` and receives both `IServiceProvider` and `DbContextOptions`. Prefer contexts such as `CatalogDbContext` and `InventoryDbContext` over a general-purpose application context. The context implements `ICommiteable`, so repositories can register it with the scoped Unit of Work.
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Paradigm.Enterprise.Data.Context;
 
-public sealed class ApplicationDbContext
+public sealed class CatalogDbContext
     : DbContextBase<Guid>
 {
-    public ApplicationDbContext(
+    #region Properties
+
+    public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
+    public DbSet<CatalogItemView> CatalogItemViews => Set<CatalogItemView>();
+
+    #endregion
+
+    #region Constructors
+
+    public CatalogDbContext(
         IServiceProvider serviceProvider,
-        DbContextOptions<ApplicationDbContext> options)
+        DbContextOptions<CatalogDbContext> options)
         : base(serviceProvider, options)
     {
     }
 
-    public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
-    public DbSet<CatalogItemView> CatalogItemViews => Set<CatalogItemView>();
+    #endregion
 }
 ```
 
@@ -29,7 +37,7 @@ During `SaveChangesAsync`, the context finds entities implementing `IAuditableEn
 
 ## Read repositories
 
-`ReadRepositoryBase<TEntity, TContext, TId>` supplies `GetAllAsync`, `GetByIdAsync`, and `GetByIdsAsync`. Search calls `GetSearchPaginatedFunction`, which throws unless a derived repository provides an implementation. A repository that exposes search must therefore override this function.
+`ReadRepositoryBase<TEntity, TContext, TId>` supplies `GetAllAsync`, `GetByIdAsync`, and `GetByIdsAsync`. Search calls `GetSearchPaginatedFunction`, which throws unless a derived repository provides an implementation. A repository that exposes search must therefore override this function. Prefer a SQL Server/PostgreSQL `ResultStoredProcedureBase` boundary for pagination, complex filtering, multi-join/reporting queries, or multi-step database work. Keep EF/LINQ for simple bounded, predictably translated queries, and never expose `IQueryable` through a repository contract or public member.
 
 ```csharp
 public interface ICatalogItemViewRepository
@@ -38,13 +46,17 @@ public interface ICatalogItemViewRepository
 }
 
 public sealed class CatalogItemViewRepository
-    : ReadRepositoryBase<CatalogItemView, ApplicationDbContext, Guid>,
+    : ReadRepositoryBase<CatalogItemView, CatalogDbContext, Guid>,
       ICatalogItemViewRepository
 {
+    #region Constructors
+
     public CatalogItemViewRepository(IServiceProvider serviceProvider)
         : base(serviceProvider)
     {
     }
+
+    #endregion
 }
 ```
 

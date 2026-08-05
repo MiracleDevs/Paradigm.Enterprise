@@ -1,0 +1,59 @@
+name: PR quality
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: |
+          dotnet tool restore
+          dotnet restore src/Paradigm.Enterprise.slnx
+      - name: Build and test source
+        run: |
+          dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore
+          dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --filter "TestCategory!=Integration"
+      - name: Pack current release and build example
+        run: |
+          dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output artifacts
+          dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
+          dotnet build example/ExampleApp.sln --configuration Release --no-restore
+          dotnet test example/ExampleApp.sln --configuration Release --no-build
+      - name: Install and test the packed Paradigm CLI
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content -Raw build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
+          dotnet tool install --tool-path .paradigm/tools --add-source artifacts --no-cache Paradigm.Enterprise.Cli --version $version
+          $env:PARADIGM_CLI_INTEGRATION_PACKAGE = (Resolve-Path "artifacts/Paradigm.Enterprise.Cli.$version.nupkg").Path
+          $env:PARADIGM_CLI_INTEGRATION_EXECUTABLE = (Resolve-Path ".paradigm/tools/paradigm").Path
+          dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"
+      - name: Deterministic quality checks
+        run: |
+          .paradigm/tools/paradigm packages check --project src/Paradigm.Enterprise.slnx
+          .paradigm/tools/paradigm packages audit --project src/Paradigm.Enterprise.slnx
+          .paradigm/tools/paradigm packages check --project example/ExampleApp.sln
+          .paradigm/tools/paradigm packages audit --project example/ExampleApp.sln
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
+          .paradigm/tools/paradigm validate --project example/ExampleApp.sln
+          .paradigm/tools/paradigm checks run --project example/ExampleApp.sln
+          pwsh build/verify-version.ps1
+      - name: Validate skills and plugin
+        run: |
+          python .github/scripts/validate-skills.py
+          python .github/scripts/validate-plugin.py
+      - name: Build documentation
+        run: dotnet docfx docs/docfx.json --warningsAsErrors

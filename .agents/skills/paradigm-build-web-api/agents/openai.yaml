@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Paradigm Web API"
+  short_description: "Implement secure thin Paradigm API controllers"
+  default_prompt: "Use $paradigm-build-web-api to expose this Paradigm.Enterprise API."

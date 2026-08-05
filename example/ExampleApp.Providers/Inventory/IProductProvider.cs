@@ -6,7 +6,7 @@ namespace ExampleApp.Providers.Inventory;
 /// <summary>
 /// Provider for product management operations
 /// </summary>
-public interface IProductProvider : IEditProvider<ProductView>
+public interface IProductProvider : IEditProvider<ProductView, int>
 {
     /// <summary>
     /// Get products by category

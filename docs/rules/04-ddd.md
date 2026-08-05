@@ -11,11 +11,13 @@ Rule
 
 Domain entities must encapsulate business behavior.
 
+Generated database-first persistence shapes may require public setters and parameterless construction. Treat them as a persistence exception: place behavior and invariants in non-generated partial classes or map them to handwritten domain models.
+
 Forbidden
 
-- Public setters for entity state
-- Entities implemented as pure data containers
-- Business logic implemented in Providers or Controllers
+- Handwritten entity state exposed without a persistence or serialization requirement
+- Generated shapes treated as the sole home of business behavior
+- Intrinsic domain rules implemented in Controllers
 
 ---
 
@@ -30,13 +32,13 @@ Entities must control their state through methods.
 
 Required
 
-- Private or protected setters
-- Private backing collections
+- Private or protected setters and backing collections in handwritten models
 - State changes performed through domain methods
+- Partial or handwritten behavior around database-generated mutable shapes
 
 Forbidden
 
-- Public mutable collections
+- Public mutable collections outside generated persistence requirements
 - Direct external modification of entity state
 
 ---

@@ -11,7 +11,7 @@ using Paradigm.Enterprise.Data.SqlServer.Context;
 using Paradigm.Enterprise.Data.SqlServer.Extensions;
 
 builder.Services.AddScoped<SqlServerDbContextConnectionProvider>();
-builder.Services.RegisterContext<ApplicationDbContext>("ApplicationDatabase");
+builder.Services.RegisterContext<CatalogDbContext>("CatalogDatabase");
 ```
 
 The corresponding configuration is resolved through `IConfiguration.GetConnectionString`.
@@ -31,6 +31,8 @@ For PostgreSQL, register `PostgreSqlDbConnectionProvider` and use the PostgreSQL
 ## Stored procedures
 
 Stored-procedure classes inherit the provider-specific `StoredProcedureBase<TParameters>` or a `ResultStoredProcedureBase` matching the number of result sets. Parameter and data-reader mappers translate between CLR types and database values.
+
+SQL Server multi-result tuples follow database result-set order. PostgreSQL multi-result procedures instead map an implementation-defined enumeration of distinct returned cursor names; tuple positions do not promise database return order. Use compatible result shapes or identify business meaning explicitly rather than assuming cursor position.
 
 The current standalone mapper generator emits SQL Server parameter mappers and registers them through `SqlParameterMapperFactory`; it does not generate PostgreSQL parameter mappers. PostgreSQL applications must implement `INpgsqlParameterMapper` and register it through `NpgsqlParameterMapperFactory`. The standalone generator also has a path-handling defect that prevents its stored-procedure mode from completing, so do not depend on it until that limitation is fixed. See [Code generation](code-generator.md) for the current status.
 

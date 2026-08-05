@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GenerateDocumentationFile)' == 'true'">
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Paradigm.Enterprise.Cli\Paradigm.Enterprise.Cli.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Checks.CSharp\Paradigm.Enterprise.Checks.CSharp.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Paradigm.Enterprise.Providers\Paradigm.Enterprise.Providers.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures\SemanticViolations\SemanticViolations.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
+    <ProjectReference Include="Fixtures\GoodPractices\GoodPractices.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
+    <ProjectReference Include="Fixtures\DotNetAuditFixture\DotNetAuditFixture.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Fixtures/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Fixtures\SemanticLinked\" />
+    <Folder Include="TestResults\" />
+  </ItemGroup>
+</Project>

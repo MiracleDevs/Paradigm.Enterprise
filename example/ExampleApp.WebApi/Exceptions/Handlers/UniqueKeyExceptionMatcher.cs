@@ -7,10 +7,13 @@ namespace ExampleApp.WebApi.Exceptions.Handlers
 {
     public partial class UniqueKeyExceptionMatcher : ExceptionMatcherBase
     {
-        [GeneratedRegex("Violation of (.*) constraint '(.*)'. Cannot insert duplicate key in object '(.*)'. The duplicate key value is \\((.*)\\).")]
-        private static partial Regex MyRegex();
+        #region Constants
 
         private const string DefaultMessageKey = "UniqueKeyDefaultMessage";
+
+        #endregion
+
+        #region Overrides
 
         public override bool Match(Exception ex)
         {
@@ -26,5 +29,14 @@ namespace ExampleApp.WebApi.Exceptions.Handlers
             var message = resourceManager.GetString(key) ?? resourceManager.GetString(DefaultMessageKey);
             return message is not null ? string.Format(message, table) : null;
         }
+
+        #endregion
+
+        #region Private Methods
+
+        [GeneratedRegex("Violation of (.*) constraint '(.*)'. Cannot insert duplicate key in object '(.*)'. The duplicate key value is \\((.*)\\).")]
+        private static partial Regex MyRegex();
+
+        #endregion
     }
 }

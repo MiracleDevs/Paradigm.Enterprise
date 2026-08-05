@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Paradigm Domain"
+  short_description: "Model Paradigm entities, views, and invariants"
+  default_prompt: "Use $paradigm-model-domain to model this Paradigm.Enterprise domain change."

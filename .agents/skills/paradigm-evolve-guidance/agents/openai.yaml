@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evolve Paradigm Guidance"
+  short_description: "Promote learned practices into governed checks"
+  default_prompt: "Use $paradigm-evolve-guidance to promote this observed Paradigm practice into deterministic guidance."

@@ -9,39 +9,67 @@ namespace ExampleApp.Domain.Inventory.Entities;
 /// <summary>
 /// Product entity implementation with validation logic
 /// </summary>
-public class Product : EntityBase<IProduct, Product, ProductView>, IProduct
+public class Product : EntityBase<int, IProduct, Product, ProductView>, IProduct
 {
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    #region Properties
 
-    public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedDate { get; private set; } = DateTime.UtcNow;
+
+    public DateTime ModifiedDate { get; private set; } = DateTime.UtcNow;
 
     [Required(ErrorMessage = "Product name is required")]
     [StringLength(100, ErrorMessage = "Product name cannot exceed 100 characters")]
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; private set; } = string.Empty;
 
     [Range(0.01, 10000, ErrorMessage = "Price must be greater than 0 and less than 10,000")]
-    public decimal Price { get; set; }
+    public decimal Price { get; private set; }
 
     [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
-    public string Description { get; set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
 
     [Required(ErrorMessage = "Category is required")]
-    public string Category { get; set; } = string.Empty;
+    public string Category { get; private set; } = string.Empty;
 
     [Range(0, 10000, ErrorMessage = "Stock quantity must be between 0 and 10,000")]
-    public int StockQuantity { get; set; }
+    public int StockQuantity { get; private set; }
 
-    public bool IsAvailable { get; set; }
+    public bool IsAvailable { get; private set; }
+
+    #endregion
+
+    #region Public Methods
+
+    public void UpdateDetails(string name, decimal price, string description, string category, int stockQuantity)
+    {
+        Name = name;
+        Price = price;
+        Description = description;
+        Category = category;
+        StockQuantity = stockQuantity;
+        ModifiedDate = DateTime.UtcNow;
+    }
+
+    public void Activate()
+    {
+        if (StockQuantity <= 0)
+            throw new DomainException("A product with no stock cannot be available");
+        IsAvailable = true;
+    }
+
+    public void Deactivate() => IsAvailable = false;
+
+    #endregion
+
+    #region Overrides
 
     public override Product? MapFrom(IServiceProvider serviceProvider, IProduct model)
     {
         this.Id = model.Id;
-        this.Name = model.Name;
-        this.Price = model.Price;
-        this.Description = model.Description;
-        this.Category = model.Category;
-        this.StockQuantity = model.StockQuantity;
-        this.IsAvailable = model.IsAvailable;
+        UpdateDetails(model.Name, model.Price, model.Description, model.Category, model.StockQuantity);
+        if (model.IsAvailable)
+            Activate();
+        else
+            Deactivate();
         return this;
     }
 
@@ -68,4 +96,6 @@ public class Product : EntityBase<IProduct, Product, ProductView>, IProduct
         validator.Assert(!this.IsAvailable || this.StockQuantity > 0, "A product with no stock cannot be available");
         validator.ThrowIfAny();
     }
+
+    #endregion
 }

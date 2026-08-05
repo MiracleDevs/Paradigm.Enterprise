@@ -16,8 +16,7 @@
             "Paradigm.Enterprise.Services.Cache/bin/Release/net10.0/Paradigm.Enterprise.Services.Cache.dll",
             "Paradigm.Enterprise.Services.Email/bin/Release/net10.0/Paradigm.Enterprise.Services.Email.dll",
             "Paradigm.Enterprise.Services.TableReader/bin/Release/net10.0/Paradigm.Enterprise.Services.TableReader.dll",
-            "Paradigm.Enterprise.WebApi/bin/Release/net10.0/Paradigm.Enterprise.WebApi.dll",
-            "Paradigm.Enterprise.CodeGenerator/bin/Release/net10.0/Paradigm.Enterprise.CodeGenerator.dll"
+            "Paradigm.Enterprise.WebApi/bin/Release/net10.0/Paradigm.Enterprise.WebApi.dll"
           ]
         }
       ],

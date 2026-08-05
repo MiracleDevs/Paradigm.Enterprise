@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Paradigm.Enterprise.Domain" Version="1.0.0" />
-    <PackageReference Include="Paradigm.Enterprise.Interfaces" Version="1.0.0" />
+    <PackageReference Include="Paradigm.Enterprise.Domain" Version="$(ParadigmEnterpriseVersion)" />
+    <PackageReference Include="Paradigm.Enterprise.Interfaces" Version="$(ParadigmEnterpriseVersion)" />
   </ItemGroup>
 
   <ItemGroup>

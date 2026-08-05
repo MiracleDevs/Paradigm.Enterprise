@@ -13,7 +13,7 @@ Rule
 
 Providers must implement `IProvider`.
 
-Providers must inherit from a `ProviderBase` type.
+Use an appropriate `ProviderBase` type when its Unit of Work or scoped resolution mechanics are needed. A focused provider may implement `IProvider` directly.
 
 Forbidden
 
@@ -81,16 +81,17 @@ Scope: Providers
 
 Rule
 
-Multi-repository operations must use UnitOfWork transactions.
+Multi-repository writes must commit through the Unit of Work. Use an explicit Unit of Work transaction only when participating contexts can share it and the operations must be atomic.
 
 Allowed
 
-- Creating transactions through UnitOfWork
+- Creating compatible transactions through UnitOfWork
 - Committing changes through UnitOfWork
 
 Forbidden
 
-- Manual transaction management
+- Claiming that sequential context commits are atomic without a compatible transaction
+- Claiming that a database transaction rolls back external side effects
 
 ---
 

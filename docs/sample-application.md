@@ -63,7 +63,7 @@ The shared interface ties the editable entity and read view to one identifier ty
 ```csharp
 public interface ICatalogItem : IEntity<Guid>
 {
-    string Name { get; set; }
+    string Name { get; }
 }
 
 public sealed class CatalogItemView : EntityBase<Guid>, ICatalogItem
@@ -79,15 +79,20 @@ public sealed class CatalogItem
     : EntityBase<Guid, ICatalogItem, CatalogItem, CatalogItemView>,
       ICatalogItem
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; private set; } = string.Empty;
 
     public override CatalogItem? MapFrom(
         IServiceProvider serviceProvider,
         ICatalogItem model)
     {
         Id = model.Id;
-        Name = model.Name.Trim();
+        Rename(model.Name);
         return this;
+    }
+
+    public void Rename(string name)
+    {
+        Name = name.Trim();
     }
 
     public override CatalogItemView MapTo(IServiceProvider serviceProvider)
@@ -122,7 +127,7 @@ public interface ICatalogItemViewRepository
 }
 
 public sealed class CatalogItemRepository
-    : EditRepositoryBase<CatalogItem, ApplicationDbContext, Guid>,
+    : EditRepositoryBase<CatalogItem, CatalogDbContext, Guid>,
       ICatalogItemRepository
 {
     public CatalogItemRepository(IServiceProvider serviceProvider)
@@ -132,7 +137,7 @@ public sealed class CatalogItemRepository
 }
 
 public sealed class CatalogItemViewRepository
-    : ReadRepositoryBase<CatalogItemView, ApplicationDbContext, Guid>,
+    : ReadRepositoryBase<CatalogItemView, CatalogDbContext, Guid>,
       ICatalogItemViewRepository
 {
     public CatalogItemViewRepository(IServiceProvider serviceProvider)
@@ -221,7 +226,7 @@ Register the connection provider and context before repositories are resolved. U
 
 ```csharp
 builder.Services.AddScoped<SqlServerDbContextConnectionProvider>();
-builder.Services.RegisterContext<ApplicationDbContext>("ApplicationDatabase");
+builder.Services.RegisterContext<CatalogDbContext>("CatalogDatabase");
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.RegisterLoggedUserService();
 

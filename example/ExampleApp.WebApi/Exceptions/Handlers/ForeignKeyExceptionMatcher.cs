@@ -7,10 +7,13 @@ namespace ExampleApp.WebApi.Exceptions.Handlers
 {
     public partial class ForeignKeyExceptionMatcher : ExceptionMatcherBase
     {
-        [GeneratedRegex("The (.*) statement conflicted with the (.*) constraint \"(.*)\". The conflict occurred in database \"(.*)\", table \"(.*)\"")]
-        private static partial Regex MyRegex();
+        #region Constants
 
         private const string DefaultMessageKey = "ForeignKeyDefaultMessage";
+
+        #endregion
+
+        #region Overrides
 
         public override bool Match(Exception ex)
         {
@@ -25,5 +28,14 @@ namespace ExampleApp.WebApi.Exceptions.Handlers
             var message = resourceManager.GetString(key) ?? resourceManager.GetString(DefaultMessageKey);
             return message ?? string.Empty;
         }
+
+        #endregion
+
+        #region Private Methods
+
+        [GeneratedRegex("The (.*) statement conflicted with the (.*) constraint \"(.*)\". The conflict occurred in database \"(.*)\", table \"(.*)\"")]
+        private static partial Regex MyRegex();
+
+        #endregion
     }
 }

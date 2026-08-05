@@ -94,6 +94,8 @@ To run tests:
 bash build/test.sh
 ```
 
+This runs the fast developer suite. Use `bash build/quality.sh` for the complete suite, including packed CLI integration tests.
+
 ## Documentation
 
 - Update documentation for any changed functionality

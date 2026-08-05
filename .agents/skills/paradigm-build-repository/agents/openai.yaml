@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Paradigm Repository"
+  short_description: "Implement Paradigm repository contracts and queries"
+  default_prompt: "Use $paradigm-build-repository to implement this Paradigm.Enterprise data access."

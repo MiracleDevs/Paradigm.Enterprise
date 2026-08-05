@@ -16,6 +16,14 @@ Use the library controller bases only for endpoints that are deliberately public
 
 Test unauthenticated and unauthorized requests for every exposed route. A successful authenticated request does not prove that a caller with the wrong permissions is rejected.
 
+## Browser authentication and token storage
+
+Prefer a backend-for-frontend or server session that keeps browser authentication in an encrypted `Secure`, `HttpOnly` cookie rather than exposing access or refresh tokens to `localStorage`. Configure the narrowest workable `SameSite`, `Path`, and `Domain`, and define short lifetime, rotation, revocation, and logout behavior. Cookie authentication requires antiforgery protection for state-changing requests; it reduces JavaScript token theft but does not remove XSS or CSRF risk.
+
+Use standards-based OIDC/OAuth flows, including Authorization Code with PKCE for public browser clients. Do not build custom cryptography, password storage, or token parsing. Machine clients and APIs without a browser session may correctly use bearer tokens; choose from the client and threat model rather than forcing cookies everywhere.
+
+Re-check current primary guidance when the security design changes: [ASP.NET Core SameSite](https://learn.microsoft.com/aspnet/core/security/samesite), [ASP.NET Core antiforgery](https://learn.microsoft.com/aspnet/core/security/anti-request-forgery), [OWASP browser storage](https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html), and [OAuth for browser-based applications](https://datatracker.ietf.org/doc/draft-ietf-oauth-browser-based-apps/).
+
 ## Endpoint exposure is not authorization
 
 `AddEndpointExposureControl` enables a filter that hides actions without `ExposeEndpoint`. It is useful for preventing inherited or accidental actions from becoming routable. It does not establish caller identity and does not evaluate permissions.

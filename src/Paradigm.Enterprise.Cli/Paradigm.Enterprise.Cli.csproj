@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Miracle Devs</Authors>
+    <Company>Miracle Devs</Company>
+    <Product>Paradigm Enterprise CLI</Product>
+    <Description>API discovery, diagnostics, semantic checks, dependency audits, and explicit source generation for Paradigm.Enterprise applications.</Description>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>paradigm</ToolCommandName>
+    <PackageId>Paradigm.Enterprise.Cli</PackageId>
+    <PackageProjectUrl>https://github.com/MiracleDevs/Paradigm.Enterprise</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise.git</RepositoryUrl>
+    <PackageTags>paradigm enterprise cli diagnostics checks generation agent</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Reflection.MetadataLoadContext" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Paradigm.Enterprise.Checks.CSharp\Paradigm.Enterprise.Checks.CSharp.csproj" />
+    <ProjectReference Include="..\Paradigm.Enterprise.CodeGenerator\Paradigm.Enterprise.CodeGenerator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

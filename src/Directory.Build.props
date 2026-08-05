@@ -1,6 +1,11 @@
 <Project>
+  <Import Project="../build/Paradigm.Version.props" />
   <PropertyGroup>
+    <Version Condition="'$(Version)' == ''">$(ParadigmEnterpriseVersion)</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
   </PropertyGroup>
 </Project>

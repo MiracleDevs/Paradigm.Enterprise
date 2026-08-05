@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSwag;
 using NSwag.CodeGeneration.OperationNameGenerators;
@@ -8,7 +8,7 @@ namespace Paradigm.Enterprise.CodeGenerator.Generators;
 
 internal class ProxiesGenerator
 {
-    #region Properties
+    #region Fields
 
     /// <summary>
     /// The configuration
@@ -22,7 +22,7 @@ internal class ProxiesGenerator
 
     #endregion
 
-    #region Constructor
+    #region Constructors
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProxiesGenerator" /> class.
@@ -42,7 +42,7 @@ internal class ProxiesGenerator
     /// <summary>
     /// Generates the code.
     /// </summary>
-    public async Task GenerateCodeAsync()
+    public async Task GenerateCodeAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -78,15 +78,16 @@ internal class ProxiesGenerator
 
             _logger.LogInformation($"Generating '{outputFile}' from '{swaggerUrl}'...");
 
-            var document = await OpenApiDocument.FromUrlAsync(swaggerUrl);
+            var document = await OpenApiDocument.FromUrlAsync(swaggerUrl, cancellationToken);
             var code = new TypeScriptClientGenerator(document, settings).GenerateFile();
-            await File.WriteAllTextAsync(outputFile, code);
+            await File.WriteAllTextAsync(outputFile, code, cancellationToken);
 
             _logger.LogInformation("Proxies generated.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex.Message);
+            throw;
         }
         finally
         {

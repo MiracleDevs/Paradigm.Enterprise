@@ -44,10 +44,7 @@ Hosts → Providers → Data → Domain → Interfaces
 
 Controllers must act only as API endpoints and orchestration entry points.
 
-Controllers must inherit from:
-
-
-ApiControllerBase<TProvider>
+Protected controllers must derive from ASP.NET Core `ControllerBase`, inject a Provider contract, and apply the host's authorization policy. Paradigm controller bases inherit `AllowAnonymous`; use them only for deliberately anonymous endpoints or with an independently enforced and tested authorization filter.
 
 
 **Allowed**
@@ -55,6 +52,8 @@ ApiControllerBase<TProvider>
 - Input validation.
 - Calling Providers.
 - Returning DTOs or Views.
+- Plain `ControllerBase` for protected endpoints.
+- Paradigm controller bases for intentionally anonymous or independently filtered endpoints.
 
 **Forbidden**
 
@@ -177,17 +176,18 @@ Data → Repository implementation
 
 **Rule**
 
-All services must be resolved through Dependency Injection.
+Stable application collaborators must be supplied through Dependency Injection. Framework base classes may use their documented scoped resolution helpers to coordinate repositories, providers, and Unit of Work lifetimes.
 
 **Allowed**
 
 - Constructor injection
 - Service registration in host startup
+- The scoped resolution mechanics explicitly supplied by Paradigm base classes
 
 **Forbidden**
 
 - Manual instantiation of services
-- Service locator patterns outside DI container
+- Ad hoc service locator patterns outside framework lifecycle mechanics
 
 ---
 
@@ -198,7 +198,7 @@ All services must be resolved through Dependency Injection.
 
 **Rule**
 
-The system must use multiple DbContexts grouped by feature.
+Use separate DbContexts when capability ownership, transaction boundaries, scale, or lifecycle justify them. A single context is acceptable for a cohesive application.
 
 **Allowed**
 
@@ -207,7 +207,7 @@ The system must use multiple DbContexts grouped by feature.
 
 **Forbidden**
 
-- Single monolithic DbContext containing all entities
+- A context that couples unrelated capabilities without an explicit reason
 
 ---
 

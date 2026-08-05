@@ -6,11 +6,17 @@ using Paradigm.Enterprise.Data.Repositories;
 
 namespace ExampleApp.Data.Inventory.Repositories;
 
-public class ProductViewRepository : ReadRepositoryBase<ProductView, ApplicationDbContext>, IProductViewRepository
+public class ProductViewRepository : ReadRepositoryBase<ProductView, InventoryDbContext, int>, IProductViewRepository
 {
+    #region Constructors
+
     public ProductViewRepository(IServiceProvider serviceProvider) : base(serviceProvider)
     {
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// Find products by category
@@ -31,4 +37,6 @@ public class ProductViewRepository : ReadRepositoryBase<ProductView, Application
             .Where(p => p.IsAvailable && p.StockQuantity > 0)
             .ToListAsync();
     }
+
+    #endregion
 }

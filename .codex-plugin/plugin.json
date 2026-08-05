@@ -1,0 +1,34 @@
+{
+  "name": "paradigm-enterprise",
+  "version": "1.1.0",
+  "description": "Guided architecture and implementation workflows for Paradigm.Enterprise applications.",
+  "author": {
+    "name": "Miracle Devs",
+    "url": "https://github.com/MiracleDevs"
+  },
+  "homepage": "https://miracledevs.github.io/Paradigm.Enterprise/",
+  "repository": "https://github.com/MiracleDevs/Paradigm.Enterprise",
+  "license": "MIT",
+  "keywords": [
+    "paradigm-enterprise",
+    "dotnet",
+    "architecture",
+    "agent-skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Paradigm Enterprise",
+    "shortDescription": "Build correct Paradigm.Enterprise applications.",
+    "longDescription": "Concise workflows for designing, implementing, securing, and reviewing Paradigm.Enterprise applications with canonical coding practices.",
+    "developerName": "Miracle Devs",
+    "category": "Developer Tools",
+    "capabilities": [],
+    "websiteURL": "https://miracledevs.github.io/Paradigm.Enterprise/",
+    "defaultPrompt": [
+      "Design a Paradigm application.",
+      "Build a Paradigm vertical slice.",
+      "Review this Paradigm change.",
+      "Promote a learned Paradigm practice into governed guidance."
+    ]
+  }
+}

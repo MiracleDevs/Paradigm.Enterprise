@@ -18,6 +18,8 @@ Read the [documentation site](https://miracledevs.github.io/Paradigm.Enterprise/
 - [Secure delivery](docs/guides/secure-delivery.md)
 - [Package reference](docs/reference/packages.md)
 - [API reference](https://miracledevs.github.io/Paradigm.Enterprise/reference/api.html)
+- [Agent Skills](docs/agent-skills.md)
+- [Paradigm CLI](docs/cli.md)
 
 To build and preview the site locally:
 
@@ -34,7 +36,7 @@ The site is served at `http://localhost:8080`. Pass a different port as the firs
 | Application stack | `Paradigm.Enterprise.Interfaces`, `Domain`, `Data`, `Providers`, `WebApi` |
 | Databases | `Paradigm.Enterprise.Data.SqlServer`, `Data.PostgreSql` |
 | Infrastructure | `Paradigm.Enterprise.Services.Cache`, `Email`, `BlobStorage`, `TableReader` |
-| Tooling | `Paradigm.Enterprise.CodeGenerator` |
+| Tooling | `Paradigm.Enterprise.Cli` |
 
 Install only the package required by the owning project:
 
@@ -44,21 +46,33 @@ dotnet add package Paradigm.Enterprise.WebApi
 
 Use a consistent package version across the application. The [package matrix](docs/reference/packages.md) lists responsibilities and target frameworks.
 
+Install the consumer CLI through a repository-local tool manifest:
+
+```powershell
+dotnet new tool-manifest
+dotnet tool install Paradigm.Enterprise.Cli
+dotnet tool run paradigm doctor --project src/Paradigm.Enterprise.slnx
+```
+
+After cloning a repository with an existing tool manifest, use `dotnet tool restore` rather than installing again. One `paradigm` tool provides `api search/show/guide`, metadata validation, built-in semantic C# checks, dependency audits, and explicit JSON/mapper/OpenAPI generation commands. It is designed for client repositories that consume the Paradigm libraries; it is not a runtime dependency. See [CLI documentation](docs/cli.md).
+
+AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills), the canonical [Good Coding Practices](.agents/references/good-coding-practices.md), and the CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
+
 ## Start a new API
 
-The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, host composition root, and code-generation tool. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
+The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, and host composition root. Use the installable `paradigm generate` commands for application source generation. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
 
-The repository's [example](example/README.md) targets a historical package line and is retained as a compatibility sample. It is not the canonical guide for current APIs.
+The repository's [example](example/README.md) targets the current package line and demonstrates the generic identifier and behavior-owned entity patterns used by the current APIs.
 
 ## Build and test
 
 ```powershell
 dotnet restore src/Paradigm.Enterprise.slnx
 dotnet build src/Paradigm.Enterprise.slnx
-dotnet test src/Paradigm.Enterprise.slnx
+dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 ```
 
-The test wrapper is also available as `bash build/test.sh`.
+The fast test wrapper is also available as `bash build/test.sh`. Run `bash build/quality.sh` for the complete suite, including integration tests against the packed and installed CLI.
 
 ## Contributing
 

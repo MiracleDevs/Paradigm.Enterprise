@@ -1,0 +1,4 @@
+interface:
+  display_name: "Set Up Paradigm Project"
+  short_description: "Set up a Paradigm.Enterprise solution and tooling"
+  default_prompt: "Use $paradigm-setup-project to prepare this solution for Paradigm.Enterprise development."

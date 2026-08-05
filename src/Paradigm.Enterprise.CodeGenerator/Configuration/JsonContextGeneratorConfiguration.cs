@@ -1,7 +1,9 @@
-﻿namespace Paradigm.Enterprise.CodeGenerator.Configuration;
+namespace Paradigm.Enterprise.CodeGenerator.Configuration;
 
-internal class JsonContextGeneratorConfiguration
+internal sealed class JsonContextGeneratorConfiguration
 {
+    #region Properties
+
     /// <summary>
     /// Gets or sets the ignored types.
     /// </summary>
@@ -9,4 +11,6 @@ internal class JsonContextGeneratorConfiguration
     /// The ignored types.
     /// </value>
     public string[]? IgnoredTypes { get; init; }
+
+    #endregion
 }

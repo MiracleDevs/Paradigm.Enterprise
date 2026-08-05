@@ -19,46 +19,35 @@ namespace Paradigm.Enterprise.Data.Repositories;
 /// <see cref="SearchAsync{TParameters}(TParameters)"/>.
 /// </remarks>
 /// <example>
-/// The following repository adds no-tracking reads and implements a simple paginated search:
+/// Keep simple bounded identifier/list queries in EF. Route application pagination through a focused
+/// stored-procedure caller owned by Data:
 /// <code>
 /// public sealed class OrderRepository
 ///     : ReadRepositoryBase&lt;Order, SalesDbContext, int&gt;
 /// {
-///     public OrderRepository(IServiceProvider services) : base(services) { }
+///     private readonly SearchOrdersProcedure search;
+///
+///     public OrderRepository(IServiceProvider services, SearchOrdersProcedure search)
+///         : base(services) =&gt; this.search = search;
 ///
 ///     protected override IQueryable&lt;Order&gt; AsQueryable() =&gt;
 ///         EntityContext.Orders.AsNoTracking();
 ///
 ///     protected override Func&lt;PaginationParametersBase,
 ///         Task&lt;(PaginationInfo, List&lt;Order&gt;)&gt;&gt;
-///         GetSearchPaginatedFunction(PaginationParametersBase parameters)
-///     {
-///         return async input =&gt;
-///         {
-///             var pageNumber = input.PageNumber ?? 1;
-///             var pageSize = input.PageSize ?? PaginationParametersBase.DefaultPageSize;
-///             var query = AsQueryable().OrderBy(order =&gt; order.Id);
-///             var count = await query.CountAsync();
-///             var rows = await query
-///                 .Skip((pageNumber - 1) * pageSize)
-///                 .Take(pageSize)
-///                 .ToListAsync();
-///
-///             return (new PaginationInfo
-///             {
-///                 ItemsCount = count,
-///                 PageNumber = pageNumber,
-///                 TotalPages = (int)Math.Ceiling(count / (double)pageSize)
-///             }, rows);
-///         };
-///     }
+///         GetSearchPaginatedFunction(PaginationParametersBase parameters) =&gt;
+///         async input =&gt; await search.ExecuteAsync(
+///             GetDbConnection(),
+///             (OrderSearchParameters)input,
+///             UnitOfWork);
 /// }
 ///
 /// var page = await repository.SearchAsync(
 ///     new OrderSearchParameters { PageNumber = 2, PageSize = 25 });
 /// </code>
-/// Validate page and sort inputs in the application-specific implementation when values originate
-/// from an untrusted request.
+/// Use the provider-specific <c>ResultStoredProcedureBase</c>, its registered generated mapper,
+/// deterministic result-set ordering, a bounded timeout, and the context-owned connection. Do not
+/// dispose that connection. Resolve all repositories before opening an explicit Unit of Work transaction.
 /// </example>
 public abstract class ReadRepositoryBase<TEntity, TContext, TId> : RepositoryBase<TContext, TId>, IReadRepository<TEntity, TId>
     where TEntity : EntityBase<TId>
