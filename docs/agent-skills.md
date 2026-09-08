@@ -4,7 +4,7 @@ Paradigm.Enterprise ships concise [Agent Skills](https://agentskills.io/) for ar
 
 The canonical skills are under `.agents/skills`. They work with agents that support the open format, including GitHub Copilot and Codex. The root `skills` directory contains tiny packaging redirects because the Codex plugin contract requires that path; do not duplicate guidance there.
 
-Database work has one discoverable entrypoint at `.agents/skills/database-skills/SKILL.md`. It identifies the target engine and maps the task to one engine profile under `engines` plus the required task specialization. The engine profiles use `DATABASE-ENGINE.md` as references and are loaded through that map, not discovered as independent skills.
+Database work has one discoverable entrypoint at `.agents/skills/database-skills/SKILL.md`. It identifies the target engine and maps the task to one engine profile under `engines` plus the required task specialization. The engine profiles use `database-engine.md` as references and are loaded through that map, not discovered as independent skills.
 
 ## GitHub Copilot
 

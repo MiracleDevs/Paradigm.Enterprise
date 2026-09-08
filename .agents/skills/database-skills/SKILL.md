@@ -30,12 +30,12 @@ not make engine-specific assumptions.
 | Engine | Engine profile | Shared SQL Server-oriented skills | Task-specific guidance |
 | --- | --- | --- | --- |
 | SQL Server | The SQL Server rules in `database-engineering` and its specializations | `database-engineering` | `sql-schema-design`, `sql-query-performance`, `sql-procedure-design` |
-| PostgreSQL | `engines/postgresql/DATABASE-ENGINE.md` | Use only principles that are engine-neutral after checking compatibility | Select the applicable specialization and adapt it to PostgreSQL; do not apply SQL Server syntax or behavior mechanically |
-| MySQL | `engines/mysql/DATABASE-ENGINE.md` | Use only principles that are engine-neutral after checking compatibility | Select the applicable specialization and adapt it to MySQL; do not apply SQL Server syntax or behavior mechanically |
+| PostgreSQL | `engines/postgresql/database-engine.md` | Use only principles that are engine-neutral after checking compatibility | Select the applicable specialization and adapt it to PostgreSQL; do not apply SQL Server syntax or behavior mechanically |
+| MySQL | `engines/mysql/database-engine.md` | Use only principles that are engine-neutral after checking compatibility | Select the applicable specialization and adapt it to MySQL; do not apply SQL Server syntax or behavior mechanically |
 
 The files under `engines` are engine reference profiles. They are not
 independent discovery entrypoints because they intentionally use
-`DATABASE-ENGINE.md` rather than `SKILL.md`.
+`database-engine.md` rather than `SKILL.md`.
 
 ## Task specialization
 
@@ -56,7 +56,7 @@ error-handling assumptions.
 ```text
 PostgreSQL table and query change
   -> shared database guidance
-  -> engines/postgresql/DATABASE-ENGINE.md
+  -> engines/postgresql/database-engine.md
   -> sql-schema-design and sql-query-performance
 ```
 
@@ -70,7 +70,7 @@ SQL Server stored procedure change
 ```text
 MySQL index review
   -> shared database guidance
-  -> engines/mysql/DATABASE-ENGINE.md
+  -> engines/mysql/database-engine.md
   -> sql-schema-design and/or sql-query-performance, adapted to MySQL
 ```
 
