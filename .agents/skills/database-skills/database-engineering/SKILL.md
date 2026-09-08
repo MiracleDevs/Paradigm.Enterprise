@@ -8,7 +8,7 @@ description: >-
 
 This skill is governed by:
 
-../governance/DATABASE-GOVERNANCE.md
+../governance/database-governance.md
 
 The agent MUST read and follow this document before applying the principles defined by this skill.
 
