@@ -7,6 +7,11 @@ description: Create, extend, validate, or review a Paradigm database project for
 
 Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) and [Paradigm Database Practices](../../references/database-practices.md) before changing database source or tooling.
 
+Use the database skill map at [Database skills](../database-skills/SKILL.md)
+before applying engine or task-specific guidance. Identify the target engine
+and version first, then load exactly one engine profile. Do not assume SQL
+Server because this skill also supports PostgreSQL projects.
+
 ## Establish the database boundary
 
 1. Inspect the engine, target platform, existing project/configuration, database ownership, application solution, deployment path, generated-model boundary, and current naming. Do not infer production access or destructive-change permission.
@@ -15,7 +20,7 @@ Read and apply [Paradigm Good Coding Practices](../../references/good-coding-pra
 4. Preserve established legacy names while maintaining an existing project. Apply canonical names to new projects and new objects unless compatibility requires otherwise.
 5. For consumer-facing major entity and transactional tables, add schema-bound `{Entity}View` projections that preserve the base mapping surface, retain IDs, add commonly used descriptive foreign-key fields, and remain one row per entity. Every view name/file ends in `View`, including PostgreSQL materialized views; helpers may use a non-entity descriptive stem such as `QuotePricingView`. Treat helper/reporting views and internal/status/history tables as concrete-consumer decisions rather than automatic DTOs.
 
-Read [SQL Server projects](references/sql-server.md) for `.sqlproj`/DACPAC/BACPAC work. Read [PostgreSQL DbPublisher](references/postgresql.md) for `project.jsonc` and ordered PostgreSQL scripts.
+Read [SQL Server projects](references/sql-server.md) for `.sqlproj`/DACPAC/BACPAC work. Read [PostgreSQL DbPublisher](references/postgresql.md) for `project.jsonc` and ordered PostgreSQL scripts. For engine principles, use the selected profile from the database skill map.
 
 When SDK SQL files are hidden in Visual Studio, use the verified explicit-item strategy in the SQL Server reference; do not mix it with the SDK SQL glob or duplicate model items.
 
