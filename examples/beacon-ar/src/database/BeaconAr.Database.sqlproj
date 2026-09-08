@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.Build.Sql/2.2.0">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <SqlServerVersion>Sql160</SqlServerVersion>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <DefaultCollation>Latin1_General_100_CI_AS_SC</DefaultCollation>
+    <EnableDefaultSqlItems>false</EnableDefaultSqlItems>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <ProjectGuid>{a09e027b-4428-49a6-9a92-c43cf35d9206}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup Label="Database Model">
+    <Build Include="tables\**\*.sql" />
+    <Build Include="views\**\*.sql" />
+    <Build Include="functions\**\*.sql" />
+    <Build Include="routines\**\*.sql" />
+    <Build Include="types\**\*.sql" />
+    <Build Include="sequences\**\*.sql" />
+  </ItemGroup>
+  <ItemGroup Label="Deployment Scripts">
+    <Build Remove="scripts\prepredeployment\**\*.sql" />
+    <Build Remove="scripts\postdeployment\**\*Data.sql" />
+    <Build Remove="scripts\verification\**\*.sql" />
+    <PreDeploy Include="scripts\predeployment\PreDeployment.sql" />
+    <PostDeploy Include="scripts\postdeployment\PostDeployment.sql" />
+    <None Include="scripts\prepredeployment\PrePreDeployment.sql" />
+    <None Include="scripts\postdeployment\**\*Data.sql" />
+    <None Include="scripts\verification\**\*.sql" />
+    <None Include="scripts\maintenance\**\*" />
+  </ItemGroup>
+  <ItemGroup Label="Project Documentation">
+    <None Include="bootstrap\**\*" />
+    <None Include="functions\**\*.md" />
+    <None Include="routines\**\*.md" />
+    <None Include="types\**\*.md" />
+  </ItemGroup>
+  <ItemGroup Label="Project Folders">
+    <Folder Include="tables\" />
+    <Folder Include="views\" />
+    <Folder Include="functions\" />
+    <Folder Include="routines\" />
+    <Folder Include="types\" />
+    <Folder Include="sequences\" />
+    <Folder Include="scripts\" />
+    <Folder Include="tables\Access\" />
+    <Folder Include="tables\MasterData\" />
+    <Folder Include="tables\Operations\" />
+    <Folder Include="tables\Sales\" />
+    <Folder Include="views\Access\" />
+    <Folder Include="views\MasterData\" />
+    <Folder Include="views\Operations\" />
+    <Folder Include="views\Sales\" />
+    <Folder Include="routines\Access\" />
+    <Folder Include="routines\MasterData\" />
+    <Folder Include="routines\Operations\" />
+    <Folder Include="routines\Sales\" />
+    <Folder Include="sequences\Sales\" />
+    <Folder Include="scripts\predeployment\" />
+    <Folder Include="scripts\postdeployment\" />
+    <Folder Include="scripts\prepredeployment\" />
+    <Folder Include="scripts\postdeployment\MasterData\" />
+    <Folder Include="scripts\postdeployment\Operations\" />
+    <Folder Include="scripts\postdeployment\Sales\" />
+    <Folder Include="scripts\verification\" />
+    <Folder Include="scripts\maintenance\" />
+    <Folder Include="bootstrap\" />
+  </ItemGroup>
+</Project>

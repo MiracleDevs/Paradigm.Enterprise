@@ -19,8 +19,7 @@ internal static class CSharpChecks
     public static IReadOnlyList<CSharpCheckDiagnostic> Analyze(CSharpCheckProject project)
     {
         var evaluated = EvaluatedProject.Load(project.Path, project.Framework);
-        var parseOptions = new CSharpParseOptions(evaluated.LanguageVersion,
-            preprocessorSymbols: evaluated.DefineConstants);
+        var parseOptions = evaluated.CreateParseOptions();
         var trees = evaluated.SourceFiles.Select(path =>
             CSharpSyntaxTree.ParseText(File.ReadAllText(path), parseOptions, path)).ToArray();
         var compilation = CSharpCompilation.Create(
@@ -51,6 +50,8 @@ internal static class CSharpChecks
                 (compilationErrors.Length > 10 ? $" | ... {compilationErrors.Length - 10} more error(s)" : ""));
 
         var diagnostics = new List<CSharpCheckDiagnostic>();
+        if (!evaluated.IsTestProject)
+            diagnostics.AddRange(RepositorySqlPolicy.Analyze(compilation, compilation.SyntaxTrees));
         foreach (var tree in trees)
         {
             var model = compilation.GetSemanticModel(tree, ignoreAccessibility: true);

@@ -1,0 +1,39 @@
+<Solution>
+  <Folder Name="/00.SolutionItems/">
+    <File Path=".config/dotnet-tools.json" />
+    <File Path=".env.example" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="aspire.config.json" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+  </Folder>
+  <Folder Name="/01.Shared/">
+    <Project Path="src/BeaconAr.ServiceDefaults/BeaconAr.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/02.Modules/">
+    <Project Path="src/BeaconAr.Interfaces/BeaconAr.Interfaces.csproj" />
+    <Project Path="src/BeaconAr.Domain/BeaconAr.Domain.csproj" />
+    <Project Path="src/BeaconAr.Data/BeaconAr.Data.csproj" />
+    <Project Path="src/BeaconAr.Providers/BeaconAr.Providers.csproj" />
+    <Project Path="src/database/BeaconAr.Database.sqlproj" />
+  </Folder>
+  <Folder Name="/03.Hosts/">
+    <Project Path="src/BeaconAr.WebApi/BeaconAr.WebApi.csproj" />
+    <Project Path="src/BeaconAr.AppHost/BeaconAr.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/04.Tools/">
+    <Project Path="src/BeaconAr.CodeGenerator/BeaconAr.CodeGenerator.csproj" />
+    <Project Path="src/BeaconAr.DatabaseBootstrap/BeaconAr.DatabaseBootstrap.csproj" />
+    <Project Path="src/BeaconAr.InterfaceGenerator/BeaconAr.InterfaceGenerator.csproj" />
+  </Folder>
+  <Folder Name="/05.Tests/">
+    <Project Path="tests/BeaconAr.Domain.Tests/BeaconAr.Domain.Tests.csproj" />
+    <Project Path="tests/BeaconAr.Architecture.Tests/BeaconAr.Architecture.Tests.csproj" />
+    <Project Path="tests/BeaconAr.Database.IntegrationTests/BeaconAr.Database.IntegrationTests.csproj" />
+    <Project Path="tests/BeaconAr.DatabaseBootstrap.Tests/BeaconAr.DatabaseBootstrap.Tests.csproj" />
+    <Project Path="tests/BeaconAr.Providers.Tests/BeaconAr.Providers.Tests.csproj" />
+    <Project Path="tests/BeaconAr.WebApi.Tests/BeaconAr.WebApi.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,295 @@
+<#@ template hostSpecific="true" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
+<#@ assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" #>
+<#@ parameter name="EntityType" type="Microsoft.EntityFrameworkCore.Metadata.IEntityType" #>
+<#@ parameter name="Options" type="Microsoft.EntityFrameworkCore.Scaffolding.ModelCodeGenerationOptions" #>
+<#@ parameter name="NamespaceHint" type="System.String" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.ComponentModel.DataAnnotations" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore.Design" #>
+<#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
+<#
+    // Template version: 1000 - please do NOT remove this line
+    if (EntityType.IsSimpleManyToManyJoinEntityType())
+    {
+        return "";
+    }
+
+    var services = (IServiceProvider)Host;
+    var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
+    var code = services.GetRequiredService<ICSharpHelper>();
+    var isView = EntityType.GetViewName() != null;
+    var hasViewSuffix = EntityType.Name.EndsWith("View", StringComparison.Ordinal);
+    var entityName = isView && hasViewSuffix ? EntityType.Name.Substring(0, EntityType.Name.Length - "View".Length) : null;
+    var relatedEntity = entityName == null ? null : EntityType.Model.FindEntityType(entityName);
+    var pairedView = !isView ? EntityType.Model.FindEntityType(EntityType.Name + "View") : null;
+    var idProperty = EntityType.FindProperty("Id");
+    var idClrType = idProperty?.ClrType;
+    var idTypeName = idClrType == null ? null : code.Reference(idClrType);
+    var isEntityView = isView && relatedEntity?.FindProperty("Id")?.ClrType == idClrType && idClrType != null;
+    var isPairedEntity = !isView && pairedView?.FindProperty("Id")?.ClrType == idClrType && idClrType != null;
+    var auditColumns = new[] { "CreationDate", "ModificationDate", "CreatedByUserId", "ModifiedByUserId" };
+    var createdByUserIdProperty = EntityType.FindProperty("CreatedByUserId");
+    var modifiedByUserIdProperty = EntityType.FindProperty("ModifiedByUserId");
+    var createdByUserIdClrType = createdByUserIdProperty == null
+        ? null
+        : Nullable.GetUnderlyingType(createdByUserIdProperty.ClrType) ?? createdByUserIdProperty.ClrType;
+    var modifiedByUserIdClrType = modifiedByUserIdProperty == null
+        ? null
+        : Nullable.GetUnderlyingType(modifiedByUserIdProperty.ClrType) ?? modifiedByUserIdProperty.ClrType;
+    if (createdByUserIdClrType != null
+        && modifiedByUserIdClrType != null
+        && createdByUserIdClrType != modifiedByUserIdClrType)
+    {
+        Error($"Entity '{EntityType.Name}' audit actor identifier types must match: CreatedByUserId is {code.Reference(createdByUserIdClrType)} and ModifiedByUserId is {code.Reference(modifiedByUserIdClrType)}.");
+        return "";
+    }
+    var auditActorIdClrType = createdByUserIdClrType == modifiedByUserIdClrType
+        ? createdByUserIdClrType
+        : null;
+    var auditActorIdTypeName = auditActorIdClrType == null ? null : code.Reference(auditActorIdClrType);
+    var isAuditable = !isView && idClrType != null && auditActorIdClrType == idClrType && auditColumns.All(name => EntityType.FindProperty(name) != null);
+    var interfaceToEntityIgnoredProperties = EntityType.GetProperties()
+        .Where(property => property.Name == "Id" ||
+            auditColumns.Contains(property.Name) ||
+            property.Name == "DeletionDate" ||
+            property.Name == "DeletedByUserId" ||
+            property.Name.EndsWith("Snapshot", StringComparison.Ordinal))
+        .OrderBy(property => property.Name, StringComparer.Ordinal)
+        .ToList();
+    var usings = new List<string>
+    {
+        "System",
+        "System.Collections.Generic"
+    };
+
+    if (idClrType != null)
+    {
+        usings.Add("Paradigm.Enterprise.Domain.Entities");
+    }
+
+    if (isPairedEntity)
+    {
+        usings.Add("Mapster");
+        usings.Add("Microsoft.Extensions.DependencyInjection");
+        usings.Add("Paradigm.Enterprise.Domain.Mappers");
+    }
+
+    if (isPairedEntity || isEntityView)
+    {
+        usings.Add(NamespaceHint.Replace(".Domain.", ".Interfaces."));
+    }
+
+    if (isAuditable)
+    {
+        usings.Add("Paradigm.Enterprise.Interfaces");
+    }
+
+    if (Options.UseDataAnnotations)
+    {
+        usings.Add("System.ComponentModel.DataAnnotations");
+        usings.Add("System.ComponentModel.DataAnnotations.Schema");
+        usings.Add("Microsoft.EntityFrameworkCore");
+    }
+
+    if (!string.IsNullOrEmpty(NamespaceHint))
+    {
+#>
+namespace <#= NamespaceHint #>;
+
+<#
+    }
+
+    if (!string.IsNullOrEmpty(EntityType.GetComment()))
+    {
+#>
+/// <summary>
+/// <#= code.XmlComment(EntityType.GetComment()) #>
+/// </summary>
+<#
+    }
+
+    if (Options.UseDataAnnotations)
+    {
+        foreach (var dataAnnotation in EntityType.GetDataAnnotations(annotationCodeGenerator))
+        {
+#>
+<#= code.Fragment(dataAnnotation) #>
+<#
+        }
+    }
+
+    var inheritance = "";
+    if (isPairedEntity)
+    {
+        inheritance = $" : EntityBase<{idTypeName}, I{EntityType.Name}, {EntityType.Name}, {EntityType.Name}View>, I{EntityType.Name}";
+    }
+    else if (isEntityView)
+    {
+        inheritance = $" : EntityBase<{idTypeName}>, I{entityName}";
+    }
+    else if (idClrType != null)
+    {
+        inheritance = $" : EntityBase<{idTypeName}>";
+    }
+
+    if (isAuditable)
+    {
+        inheritance += $", IAuditableEntity<DateTimeOffset, {auditActorIdTypeName}>";
+    }
+#>
+[System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
+public partial class <#= EntityType.Name #><#= inheritance #>
+{
+<#
+    var firstProperty = true;
+    foreach (var property in EntityType.GetProperties()
+        .Where(p => idClrType == null || p.Name != "Id")
+        .OrderBy(p => p.GetColumnOrder() ?? -1))
+    {
+        if (!firstProperty)
+        {
+            WriteLine("");
+        }
+
+        if (!string.IsNullOrEmpty(property.GetComment()))
+        {
+#>
+    /// <summary>
+    /// <#= code.XmlComment(property.GetComment(), indent: 1) #>
+    /// </summary>
+<#
+        }
+
+        if (Options.UseDataAnnotations)
+        {
+            var dataAnnotations = property.GetDataAnnotations(annotationCodeGenerator)
+                .Where(a => !(a.Type == typeof(RequiredAttribute) && Options.UseNullableReferenceTypes && !property.ClrType.IsValueType));
+            foreach (var dataAnnotation in dataAnnotations)
+            {
+#>
+    <#= code.Fragment(dataAnnotation) #>
+<#
+            }
+        }
+
+        usings.AddRange(code.GetRequiredUsings(property.ClrType));
+        var needsNullable = Options.UseNullableReferenceTypes && property.IsNullable && !property.ClrType.IsValueType;
+        var needsInitializer = Options.UseNullableReferenceTypes && !property.IsNullable && !property.ClrType.IsValueType;
+#>
+    public <#= code.Reference(property.ClrType) #><#= needsNullable ? "?" : "" #> <#= property.Name #> { get; set; }<#= needsInitializer ? " = null!;" : "" #>
+<#
+        firstProperty = false;
+    }
+
+    foreach (var navigation in EntityType.GetNavigations())
+    {
+        WriteLine("");
+        var targetType = navigation.TargetEntityType.Name;
+        if (navigation.IsCollection)
+        {
+#>
+    public virtual ICollection<<#= targetType #>> <#= navigation.Name #> { get; set; } = new List<<#= targetType #>>();
+<#
+        }
+        else
+        {
+            var needsNullable = Options.UseNullableReferenceTypes && !(navigation.ForeignKey.IsRequired && navigation.IsOnDependent);
+            var needsInitializer = Options.UseNullableReferenceTypes && navigation.ForeignKey.IsRequired && navigation.IsOnDependent;
+#>
+    public virtual <#= targetType #><#= needsNullable ? "?" : "" #> <#= navigation.Name #> { get; set; }<#= needsInitializer ? " = null!;" : "" #>
+<#
+        }
+    }
+
+    foreach (var skipNavigation in EntityType.GetSkipNavigations())
+    {
+        WriteLine("");
+#>
+    public virtual ICollection<<#= skipNavigation.TargetEntityType.Name #>> <#= skipNavigation.Name #> { get; set; } = new List<<#= skipNavigation.TargetEntityType.Name #>>();
+<#
+    }
+
+    if (isPairedEntity)
+    {
+#>
+
+    public override void Validate()
+    {
+        ValidateEntity();
+    }
+
+    public override <#= EntityType.Name #> MapFrom(IServiceProvider serviceProvider, I<#= EntityType.Name #> model)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(model);
+        BeforeMap(model);
+        serviceProvider.GetRequiredService<<#= EntityType.Name #>Mapper>().MapFromInterface(this, model);
+        AfterMap(model);
+        return this;
+    }
+
+    public override <#= EntityType.Name #>View MapTo(IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        var view = serviceProvider.GetRequiredService<<#= EntityType.Name #>View>();
+        serviceProvider.GetRequiredService<<#= EntityType.Name #>Mapper>().MapTo(this, view);
+        return view;
+    }
+    partial void ValidateEntity();
+
+    partial void BeforeMap(I<#= EntityType.Name #> model);
+
+    partial void AfterMap(I<#= EntityType.Name #> model);
+<#
+    }
+#>
+}
+<#
+    if (isPairedEntity)
+    {
+#>
+
+[System.CodeDom.Compiler.GeneratedCode("EFCorePowerTools", "10.1.1386")]
+public partial class <#= EntityType.Name #>Mapper : EntityMapperBase<<#= idTypeName #>, I<#= EntityType.Name #>, <#= EntityType.Name #>, <#= EntityType.Name #>View>
+{
+    protected override void RegisterCustomConfigurations()
+    {
+        if (HasCustomConfigurationRegistered())
+            return;
+
+        TypeAdapterConfig<I<#= EntityType.Name #>, <#= EntityType.Name #>>.NewConfig()
+<#
+        for (var propertyIndex = 0; propertyIndex < interfaceToEntityIgnoredProperties.Count; propertyIndex++)
+        {
+            var property = interfaceToEntityIgnoredProperties[propertyIndex];
+            var terminator = propertyIndex == interfaceToEntityIgnoredProperties.Count - 1 ? ";" : "";
+#>
+            .Ignore(entity => entity.<#= property.Name #>!)<#= terminator #>
+<#
+        }
+#>
+    }
+}
+<#
+    }
+
+    var previousOutput = GenerationEnvironment;
+    GenerationEnvironment = new StringBuilder();
+    WriteLine("// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>");
+    WriteLine("#nullable enable");
+    foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer()))
+    {
+#>
+using <#= ns #>;
+<#
+    }
+
+    WriteLine("");
+    GenerationEnvironment.Append(previousOutput);
+#>

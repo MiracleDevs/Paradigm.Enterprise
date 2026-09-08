@@ -27,9 +27,13 @@ flowchart LR
   style PROVIDER fill:#bfdbfe,stroke:#1d4ed8,stroke-width:1.5px,color:#0f172a
 ```
 
-## Prepare configuration
+## Prepare deterministic tooling and configuration
 
-Copy the sample EF Core Power Tools configuration to the application-specific filename expected by the extension. Review the context name, namespaces, output paths, selected schemas, and T4 template paths. Keep credentials out of this file.
+Prefer the official EF Core Power Tools CLI from a repository-local tool manifest and pin its exact approved version. Inspect that installed CLI's help and use its current `efcpt-config.json` schema; do not rename or translate keys from the Visual Studio extension's older `efpt.config.json` format. Review the context name, namespaces, entity/context output paths, explicit table/view/routine selection, nullable mappings, database naming, and T4 template root. Set object-list refresh deliberately so regeneration cannot silently broaden or shrink the owned model. Keep credentials and connection names out of the file.
+
+For multiple bounded contexts, use one checked-in EFPT configuration per context. Require every selected database object and generated CLR type to have exactly one owner, and validate that the configurations are disjoint and together cover the intended persistence inventory. Keep cross-context foreign keys in the database; model them as scalar IDs unless an explicit read contract owns a projection across the boundary. Register SQL Server contexts that participate in one workflow with the same scoped connection provider and identical connection-string name, and use an explicit Unit of Work transaction for atomic multi-context saves.
+
+Start T4 customization from the official `Paradigm.Web.ApiTemplate` files. Record the source remote, exact revision, and original hashes beside the templates. When installed EFPT or Paradigm APIs have advanced, document and apply only reusable compatibility adaptations; never embed application entity-name lists or public-view whitelists in T4. Preserve the early ownership marker and compiled `GeneratedCodeAttribute`, then regenerate twice, build, and review the complete diff. Put application relationship corrections and domain behavior in supported partial/configuration seams.
 
 Add the named connection string expected by the host through user secrets for local development:
 
@@ -44,9 +48,29 @@ The name passed to `RegisterContext<TContext>` must match the configuration key.
 
 ## Reverse engineer
 
-Open EF Core Power Tools from the Data project, select the connection, and choose only the tables, views, and routines owned by the module. Confirm that custom T4 templates are enabled before generating.
+Build the database project and publish its DACPAC to a disposable database before reverse engineering. A live database preserves view and computed-column metadata that DACPAC input may not expose completely. From the Data project/output root, run the pinned local command with the disposable connection supplied at execution time:
 
-After generation, review the diff before adding behavior. Verify primary-key types, nullability, table and view mappings, navigation properties, stored-procedure signatures, and context naming. Generation is not a substitute for reviewing the database contract.
+```powershell
+dotnet tool restore
+$configs = @(
+  './efcpt-access-config.json',
+  './efcpt-masterdata-config.json',
+  './efcpt-operations-config.json',
+  './efcpt-sales-config.json'
+)
+
+foreach ($config in $configs) {
+  dotnet tool run efcpt -- $env:ConnectionStrings__ApplicationDatabase mssql `
+    --input $config `
+    --output .
+}
+```
+
+The Visual Studio extension is optional convenience only. If a team uses it, maintain its extension-specific configuration independently and do not describe it as the deterministic build/regeneration path.
+
+After generation, review the complete diff before adding behavior. Verify primary-key types, nullability, table and keyless `ToView` mappings, navigation properties, stored-procedure signatures, context naming, output paths, and the exact auto-generated ownership marker. Build immediately. Generation is not a substitute for reviewing the database contract.
+
+Every consumer-facing major entity or transactional table should have a schema-bound `{Entity}View`. The view retains the entity's identifiers and scalar mapping surface, expands commonly used foreign keys with bounded descriptive joins, and remains one row per entity. A generated getter-only `I{Entity} : IEntity<TId>` contract should compile against both shapes. View-only joined fields remain on the view. Helper/reporting views and internal/status/history tables require a concrete consumer rather than an artificial entity interface.
 
 ## Add hand-written behavior
 
@@ -56,6 +80,8 @@ Do not place application behavior inside T4 output. Do not add database credenti
 
 ## Regenerate safely
 
-Before every regeneration, commit or shelve unrelated work so the generated diff is visible. Regenerate, build immediately, then inspect interface-generator output and mapper dependencies. If a manual change disappeared, move the behavior to a partial file or change the owning template rather than reapplying it by hand.
+Before every regeneration, commit or shelve unrelated work so the generated diff is visible. When generated and handwritten partial files share a directory, treat only an exact generated-filename manifest as replaceable: back up and restore that complete manifest across all contexts, and never recursively clear the directory. Validate each ownership marker and the disjoint object inventory, regenerate all configs twice, build after generation, and require byte-stable output. Then inspect interface-generator output and mapper dependencies. If a manual change disappeared, move the behavior to a partial file or change the owning template rather than reapplying it by hand.
+
+Repositories retrieve editable entities and read views. They do not map entities into API DTOs or contain handwritten SQL query/command strings. Use EF for simple bounded CRUD/read work and typed stored procedures for locking, pagination/reporting, complex multi-entity work, or performance-sensitive paths. Providers own mapping, validation orchestration, transactions, commits, and external side effects.
 
 Continue with [Build a vertical slice](../sample-application.md).

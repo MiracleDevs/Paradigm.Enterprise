@@ -11,11 +11,19 @@ internal sealed record EvaluatedProject(
     IReadOnlyList<string> AnalyzerPaths,
     LanguageVersion LanguageVersion,
     IReadOnlyList<string> DefineConstants,
+    IReadOnlyList<string> InterceptorNamespaces,
     NullableContextOptions NullableContextOptions,
     OutputKind OutputKind,
-    bool AllowUnsafe)
+    bool AllowUnsafe,
+    bool IsTestProject)
 {
     #region Public Methods
+
+    public CSharpParseOptions CreateParseOptions() => new CSharpParseOptions(LanguageVersion,
+            preprocessorSymbols: DefineConstants)
+        .WithFeatures(InterceptorNamespaces.Count == 0
+            ? []
+            : [new("InterceptorsNamespaces", string.Join(';', InterceptorNamespaces))]);
 
     public static EvaluatedProject Load(string project, string framework)
     {
@@ -38,7 +46,7 @@ internal sealed record EvaluatedProject(
                     "-nologo",
                     "-target:ResolveReferences",
                     "-getItem:Compile,ReferencePath,Analyzer",
-                    "-getProperty:DefineConstants,LangVersion,Nullable,OutputType,AllowUnsafeBlocks",
+                    "-getProperty:DefineConstants,LangVersion,Nullable,OutputType,AllowUnsafeBlocks,InterceptorsNamespaces,InterceptorsPreviewNamespaces,IsTestProject",
                     "-property:Configuration=Release",
                     $"-property:TargetFramework={targetFramework}"
                 }
@@ -69,6 +77,10 @@ internal sealed record EvaluatedProject(
             : LanguageVersion.Latest;
         var constants = properties.GetProperty("DefineConstants").GetString()?
             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+        var interceptorNamespaces = PropertyValues(properties, "InterceptorsNamespaces")
+            .Concat(PropertyValues(properties, "InterceptorsPreviewNamespaces"))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
         var nullable = properties.GetProperty("Nullable").GetString()?.ToLowerInvariant() switch
         {
             "enable" => NullableContextOptions.Enable,
@@ -81,7 +93,9 @@ internal sealed record EvaluatedProject(
             : OutputKind.DynamicallyLinkedLibrary;
         var allowUnsafe = bool.TryParse(
             properties.GetProperty("AllowUnsafeBlocks").GetString(), out var unsafeValue) && unsafeValue;
-        return new(files, references, analyzers, language, constants, nullable, outputKind, allowUnsafe);
+        var isTestProject = bool.TryParse(
+            properties.GetProperty("IsTestProject").GetString(), out var testValue) && testValue;
+        return new(files, references, analyzers, language, constants, interceptorNamespaces, nullable, outputKind, allowUnsafe, isTestProject);
     }
 
     #endregion
@@ -97,6 +111,10 @@ internal sealed record EvaluatedProject(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+    private static string[] PropertyValues(JsonElement properties, string name) =>
+        properties.GetProperty(name).GetString()?
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
 
     #endregion
 }

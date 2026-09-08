@@ -41,7 +41,13 @@ internal static partial class ProjectResolver
     private static IReadOnlyList<string> ReadSlnx(string path)
     {
         var root = Path.GetDirectoryName(path)!;
-        return XDocument.Load(path).Descendants("Project").Select(x => x.Attribute("Path")?.Value).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => Path.GetFullPath(Path.Combine(root, x!))).Order(StringComparer.OrdinalIgnoreCase).ToArray();
+        return XDocument.Load(path)
+            .Descendants("Project")
+            .Select(x => x.Attribute("Path")?.Value)
+            .Where(x => !string.IsNullOrWhiteSpace(x) && Path.GetExtension(x).Equals(".csproj", StringComparison.OrdinalIgnoreCase))
+            .Select(x => Path.GetFullPath(Path.Combine(root, x!)))
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static IReadOnlyList<string> ReadSln(string path)

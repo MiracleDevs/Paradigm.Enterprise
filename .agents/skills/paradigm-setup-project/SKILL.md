@@ -5,7 +5,7 @@ description: Set up or repair a Paradigm.Enterprise .NET solution, including the
 
 # Set up a Paradigm project
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before changing source, folders, dependencies, contexts, or host policy.
+Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) and [Paradigm Solution Layout](../../references/solution-layout.md) before changing source, solution folders, dependencies, contexts, or host policy.
 
 ## Establish the baseline
 
@@ -28,7 +28,7 @@ dotnet tool run paradigm scaffold solution `
 
 Review the dry-run inventory, then rerun without `--dry-run`. The CLI copies only template `src`, replaces template tokens and GUIDs, aligns Paradigm package references, preserves binary assets, never edits the source template, refuses a non-empty output directory, and creates the root `start.sh` Aspire wrapper. It also creates a baseline GitHub quality workflow and Paradigm problem matcher. Review those generated files and add any other repository policy deliberately after scaffolding.
 
-Preserve the template's `.sln` or `.slnx` format. After selecting the database engine, use `$paradigm-build-database` to create `src/database` and add its project to that solution; do not create a second database-only solution.
+Preserve the template's `.sln` or `.slnx` format and organize the canonical solution by the responsibilities in Paradigm Solution Layout. Solution-folder classification does not by itself require physical project moves. After selecting the database engine, use `$paradigm-build-database` to create `src/database` and add its project to that solution; do not create a second database-only solution.
 
 ## Install deterministic tooling
 
@@ -50,9 +50,12 @@ Run `dotnet tool run paradigm api search <term> --project <solution>` only when 
 
 - Use `$paradigm-build-database` to create or validate the SQL Server or PostgreSQL project and include it in the application solution under `src/database`.
 - Use `$paradigm-setup-aspire` to add AppHost, ServiceDefaults, root `.env`, database bootstrap ordering, and optional deployment publishing.
+- For Aspire SQL Server projects, use its governed container-bootstrap assets so SQLCMD, SqlPackage, and DACPAC publication stay inside Docker rather than becoming workstation prerequisites.
 - Keep credentials in user secrets or environment configuration.
 - Review EF Core Power Tools selection, context/namespace/output settings, key types, nullability, views, and routines.
-- Treat EF/T4 and analyzer output as generated. Put behavior in partial entity/context files or change the owning template.
+- For multiple bounded contexts, keep one explicit EFPT config per context. Every selected database object and generated CLR type belongs to exactly one config/context; validate that selections are disjoint and complete. Keep cross-context foreign keys in the database and expose scalar IDs unless an explicit read contract owns the relationship.
+- Treat EF/T4 and analyzer output as generated. Require both a source ownership marker within the first 2,048 characters and `System.CodeDom.Compiler.GeneratedCodeAttribute` on generated types when assembly validation is part of acceptance. Put behavior in partial entity/context files or change the owning template.
+- When generated and handwritten partial files share a directory, cleanup, backup, recovery, and determinism checks must operate on an exact generated-file manifest. Never clear the whole directory.
 - Build immediately after regeneration and review the full generated diff.
 
 ## Finish

@@ -72,6 +72,19 @@ public class AnalysisTests
         Assert.IsTrue(diagnostics.Any(x => x.Code == "PE3002"));
     }
 
+    [TestMethod]
+    public void Generic_entity_identifier_supersedes_the_inherited_non_generic_marker()
+    {
+        var entity = Type("Sample.AuditLog", "AuditLog",
+            ["Paradigm.Enterprise.Interfaces.IEntity", "Paradigm.Enterprise.Interfaces.IEntity<System.Int64>"],
+            "Paradigm.Enterprise.Domain.Entities.EntityBase<System.Int64>");
+        var view = Type("Sample.AuditLogView", "AuditLogView",
+            ["Paradigm.Enterprise.Interfaces.IEntity", "Paradigm.Enterprise.Interfaces.IEntity<System.Int64>"],
+            "Paradigm.Enterprise.Domain.Entities.EntityBase<System.Int64>");
+
+        Assert.IsFalse(Analysis.ValidateTypes([entity, view]).Any(diagnostic => diagnostic.Code == "PE3002"));
+    }
+
     #endregion
 
     #region Private Methods

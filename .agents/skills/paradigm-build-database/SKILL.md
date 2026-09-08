@@ -7,14 +7,22 @@ description: Create, extend, validate, or review a Paradigm database project for
 
 Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) and [Paradigm Database Practices](../../references/database-practices.md) before changing database source or tooling.
 
+Use the database skill map at [Database skills](../database-skills/SKILL.md)
+before applying engine or task-specific guidance. Identify the target engine
+and version first, then load exactly one engine profile. Do not assume SQL
+Server because this skill also supports PostgreSQL projects.
+
 ## Establish the database boundary
 
 1. Inspect the engine, target platform, existing project/configuration, database ownership, application solution, deployment path, generated-model boundary, and current naming. Do not infer production access or destructive-change permission.
 2. Put a new project under `src/database` and include it in the application `.sln` or `.slnx`. Keep direct CLI build/publish support.
 3. Use one object per file and group tables, views, functions, routines, types, and scripts by capability.
 4. Preserve established legacy names while maintaining an existing project. Apply canonical names to new projects and new objects unless compatibility requires otherwise.
+5. For consumer-facing major entity and transactional tables, add schema-bound `{Entity}View` projections that preserve the base mapping surface, retain IDs, add commonly used descriptive foreign-key fields, and remain one row per entity. Every view name/file ends in `View`, including PostgreSQL materialized views; helpers may use a non-entity descriptive stem such as `QuotePricingView`. Treat helper/reporting views and internal/status/history tables as concrete-consumer decisions rather than automatic DTOs.
 
-Read [SQL Server projects](references/sql-server.md) for `.sqlproj`/DACPAC/BACPAC work. Read [PostgreSQL DbPublisher](references/postgresql.md) for `project.jsonc` and ordered PostgreSQL scripts.
+Read [SQL Server projects](references/sql-server.md) for `.sqlproj`/DACPAC/BACPAC work. Read [PostgreSQL DbPublisher](references/postgresql.md) for `project.jsonc` and ordered PostgreSQL scripts. For engine principles, use the selected profile from the database skill map.
+
+When SDK SQL files are hidden in Visual Studio, use the verified explicit-item strategy in the SQL Server reference; do not mix it with the SDK SQL glob or duplicate model items.
 
 ## Make changes safely
 
@@ -41,7 +49,8 @@ Then build or compile the engine-specific project and inspect the complete outpu
 
 ## Finish
 
-- SQL Server: run `dotnet build <database.sqlproj>`, publish to a disposable database with SqlPackage, and compare the produced DACPAC when converting project formats.
+- SQL Server without Aspire: run `dotnet build <database.sqlproj>`, publish to a disposable database with a reviewed SqlPackage environment, and compare the produced DACPAC when converting project formats. With Aspire, build and publish through the repository-owned bootstrap image from `$paradigm-setup-aspire`; do not require SQLCMD or SqlPackage on the host.
 - PostgreSQL: generate the aggregate publish script, inspect its deterministic order, execute against a disposable database, and verify the installed DbPublisher reports failures reliably.
-- Regenerate EF/database-first output only after the database build succeeds. Build the application solution and review the generated diff.
+- Regenerate EF/database-first output only after the database build succeeds. Require a source ownership marker for replacement/source checks and `System.CodeDom.Compiler.GeneratedCodeAttribute` for generated types inspected through assembly metadata. Build the application solution and review the generated diff.
+- When a routine is consumed by a production repository, verify the repository uses its typed wrapper and passes `paradigm checks run` without `PE3107`; do not copy SQL text into repository source.
 - With Aspire, verify first-run creation, optional baseline import, subsequent DACPAC/DbPublisher updates, and restart idempotency before accepting the change.

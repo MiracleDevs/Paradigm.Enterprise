@@ -1,0 +1,11 @@
+<Project Sdk="MSTest.Sdk/4.3.3">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <ProjectReference Include="..\..\src\BeaconAr.Data\BeaconAr.Data.csproj" />
+    <ProjectReference Include="..\..\src\BeaconAr.Domain\BeaconAr.Domain.csproj" />
+    <ProjectReference Include="..\..\src\BeaconAr.Providers\BeaconAr.Providers.csproj" />
+  </ItemGroup>
+</Project>

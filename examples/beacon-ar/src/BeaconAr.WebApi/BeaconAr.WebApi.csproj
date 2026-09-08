@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="Microsoft.Identity.Web" />
+		<PackageReference Include="Microsoft.OpenApi" />
+		<PackageReference Include="Paradigm.Enterprise.WebApi" />
+		<PackageReference Include="Swashbuckle.AspNetCore" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BeaconAr.Data\BeaconAr.Data.csproj" />
+		<ProjectReference Include="..\BeaconAr.Domain\BeaconAr.Domain.csproj" />
+		<ProjectReference Include="..\BeaconAr.Providers\BeaconAr.Providers.csproj" />
+		<ProjectReference Include="..\BeaconAr.ServiceDefaults\BeaconAr.ServiceDefaults.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="wwwroot\swagger\" />
+	</ItemGroup>
+
+</Project>

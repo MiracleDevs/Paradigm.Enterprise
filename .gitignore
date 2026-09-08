@@ -60,6 +60,11 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
+!examples/beacon-ar/artifacts/
+examples/beacon-ar/artifacts/*
+!examples/beacon-ar/artifacts/openapi/
+examples/beacon-ar/artifacts/openapi/*
+!examples/beacon-ar/artifacts/openapi/beacon-ar-v1.json
 .paradigm/tools/
 
 # StyleCop

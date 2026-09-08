@@ -1,0 +1,36 @@
+using BeaconAr.Interfaces.Sales.Enums;
+
+namespace BeaconAr.Domain.Sales.Contracts;
+
+public sealed record SalesOrderDto(
+    int Id,
+    string OrderNumber,
+    int? SourceQuoteId,
+    int CustomerId,
+    int ShippingAddressId,
+    SalesOrderStatus Status,
+    DateOnly? RequestedShipDate,
+    int? CarrierId,
+    string? CarrierName,
+    string? TrackingNumber,
+    string CustomerAccountNumber,
+    string CustomerName,
+    string CustomerEmail,
+    string? CustomerPhone,
+    string ShippingLabel,
+    string ShippingLine1,
+    string? ShippingLine2,
+    string ShippingCity,
+    string? ShippingState,
+    string ShippingPostalCode,
+    string ShippingCountry,
+    string ShippingAddressTypeCode,
+    IReadOnlyList<SalesLineDto> Lines,
+    decimal Subtotal,
+    decimal DiscountTotal,
+    decimal GrandTotal,
+    int? CreatedByUserId,
+    DateTimeOffset CreationDate,
+    int? ModifiedByUserId,
+    DateTimeOffset? ModificationDate,
+    string Version);

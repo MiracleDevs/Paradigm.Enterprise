@@ -13,7 +13,9 @@ dotnet sln <solution> add src/database/Product.Database.sqlproj
 dotnet build src/database/Product.Database.sqlproj
 ```
 
-Choose the target platform from the deployed SQL Server or Azure SQL target. Do not copy preview SDK versions from older applications. SDK-style globbing includes ordinary `.sql` object files; keep the project file minimal.
+Choose the target platform from the deployed SQL Server or Azure SQL target. Do not copy preview SDK versions from older applications. SDK-style globbing includes ordinary `.sql` object files; keep the project file minimal unless Visual Studio fails to display the required SQL source.
+
+When SDK SQL files are hidden in Visual Studio, use one verified explicit-item strategy: disable the SDK SQL glob and explicitly include each model category (`tables`, `views`, `functions`, `routines`, `types`, and any supported sequence category). Preserve `PreDeploy`, `PostDeploy`, and non-model script roles, including pre-pre-deployment and maintenance artifacts; do not compile them as model objects. Inspect evaluated `Build` paths and verify every path is unique before accepting the project. Do not combine explicit model includes with the SDK catch-all glob.
 
 Use:
 
@@ -37,7 +39,7 @@ Exclude pre-pre-deployment, included post-deployment, and maintenance scripts fr
 
 - Use explicit `[dbo]` unless another owned schema is intentional.
 - Use singular PascalCase object names and one semantic object per file.
-- Define views with `SCHEMABINDING` unless a reviewed cross-database or dynamic dependency prevents it.
+- Define views with `SCHEMABINDING` unless a reviewed cross-database or dynamic dependency prevents it. End every view object/file name in `View`; entity projections use `{Entity}View`, while helpers may use another descriptive stem such as `QuotePricingView`.
 - Use `PK_Table`, `FK_Table_ReferencedTable`, `UQ_Table_Columns`, `IX_Table_Columns`, and `DF_Table_Column`. Append the local column when several relationships target the same table.
 - Give transactional/entity tables `INT IDENTITY(1,1)` identifiers by default. Give closed system/status catalogs ordinary non-identity `INT` identifiers whose values are assigned in source-controlled seed data; preserve a reviewed distributed/assigned identifier boundary.
 - Do not add cascade deletion by habit. Use it only for an owned child/junction whose aggregate deletion semantics require it.
@@ -50,14 +52,14 @@ For a stateful entity such as `SalesOrder`, add append-only `SalesOrderStatusHis
 
 ## Publish safely
 
-Commit SqlPackage to the repository-local tool manifest and restore it before AppHost starts; a running bootstrap must never install it. Build first, then use the complete target connection string:
+For Aspire solutions, pin SqlPackage and SQLCMD 18 in the repository-owned bootstrap Dockerfile, install them during image construction, and keep them out of the host tool manifest. Build the SQL project into the image first, then use the complete target connection string from the Aspire reference:
 
 ```powershell
-dotnet tool run sqlpackage /Action:Publish /SourceFile:<database.dacpac> /TargetConnectionString:<connection-string>
+/opt/sqlpackage/sqlpackage /Action:Publish /SourceFile:<database.dacpac> /TargetConnectionString:<connection-string>
 ```
 
 Keep destructive publish properties disabled by default. Generate and review a deployment report/script before approving possible data loss.
 
-Execute `scripts/prepredeployment/PrePreDeployment.sql` through an explicit, idempotent pre-publish bootstrap step after optional BACPAC import and a successful DACPAC build, but before SqlPackage creates its deployment plan. Use a SQLCMD-compatible batch executor that supports `GO`, reviewed includes/variables, bounded timeouts, cancellation, nonzero failure propagation, and secret-free logs; do not feed the whole file to a naive `SqlCommand`. Merely registering it as DACPAC `PreDeploy` does not move it before plan generation. Apply the same managed/external publication gate, require human review for destructive statements, make the step visible in Aspire ordering, and fail the bootstrap when it fails.
+Execute `scripts/prepredeployment/PrePreDeployment.sql` through an explicit, idempotent pre-publish bootstrap step after optional BACPAC import and verification of the image-built DACPAC, but before SqlPackage creates its deployment plan. Use image-owned SQLCMD 18 with `GO`, reviewed includes/variables, bounded timeouts, cancellation, nonzero failure propagation, and secret-free logs; do not feed the whole file to a naive `SqlCommand`. Merely registering it as DACPAC `PreDeploy` does not move it before plan generation. Apply the same managed/external publication gate, require human review for destructive statements, make the finite Dockerfile resource visible in Aspire ordering, and fail the bootstrap when it fails.
 
 An optional BACPAC is a developer baseline, not schema source. Store at most one under `bootstrap`, import it only when an Aspire-managed local database is empty, and always publish the current DACPAC afterward. Never regenerate it automatically or import it into an external database.

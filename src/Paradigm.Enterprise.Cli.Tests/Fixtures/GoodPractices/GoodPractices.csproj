@@ -6,5 +6,7 @@
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS0169</NoWarn>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);GoodPractices.Generated;GoodPractices.Generated</InterceptorsNamespaces>
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);GoodPractices.Preview</InterceptorsPreviewNamespaces>
   </PropertyGroup>
 </Project>

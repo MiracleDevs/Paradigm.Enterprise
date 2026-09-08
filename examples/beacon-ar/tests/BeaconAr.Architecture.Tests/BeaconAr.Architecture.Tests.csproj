@@ -1,0 +1,11 @@
+<Project Sdk="MSTest.Sdk/4.3.3">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BeaconAr.CodeGenerator\BeaconAr.CodeGenerator.csproj" />
+    <ProjectReference Include="..\..\src\BeaconAr.Data\BeaconAr.Data.csproj" />
+    <ProjectReference Include="..\..\src\BeaconAr.Providers\BeaconAr.Providers.csproj" />
+    <ProjectReference Include="..\..\src\BeaconAr.WebApi\BeaconAr.WebApi.csproj" />
+  </ItemGroup>
+</Project>

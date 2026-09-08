@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>$(NuGetPackageRoot)microsoft.codeanalysis.common\$(MicrosoftCodeAnalysisVersion)\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <ProjectReference Include="..\..\..\Paradigm.Enterprise.Checks.CSharp\Paradigm.Enterprise.Checks.CSharp.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "aspire.cli": {
+      "version": "13.4.6",
+      "commands": [
+        "aspire"
+      ],
+      "rollForward": false
+    },
+    "paradigm.enterprise.cli": {
+      "version": "1.1.0",
+      "commands": [
+        "paradigm"
+      ],
+      "rollForward": false
+    },
+    "erikej.efcorepowertools.cli": {
+      "version": "10.1.1386",
+      "commands": [
+        "efcpt"
+      ],
+      "rollForward": false
+    }
+  }
+}

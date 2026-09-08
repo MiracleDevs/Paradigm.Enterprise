@@ -221,6 +221,38 @@ public class CommandLineTests
     }
 
     [TestMethod]
+    public void Mixed_slnx_selects_CSharp_projects_without_database_projects()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"paradigm-mixed-slnx-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var applicationProject = Path.Combine(directory, "Sample.csproj");
+            var databaseProject = Path.Combine(directory, "Sample.Database.sqlproj");
+            File.WriteAllText(applicationProject, "<Project Sdk=\"Microsoft.NET.Sdk\" />");
+            File.WriteAllText(databaseProject, "<Project Sdk=\"Microsoft.Build.Sql/2.1.0\" />");
+            var solution = Path.Combine(directory, "Sample.slnx");
+            File.WriteAllText(solution, """
+                <Solution>
+                  <Folder Name="/02.Modules/">
+                    <Project Path="Sample.csproj" />
+                    <Project Path="Sample.Database.sqlproj" />
+                  </Folder>
+                </Solution>
+                """);
+
+            var selection = ProjectResolver.Resolve(solution);
+
+            Assert.AreEqual(solution, selection.DisplayPath);
+            CollectionAssert.AreEqual(new[] { applicationProject }, selection.Projects.ToArray());
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public void Command_reference_contains_every_current_usage_signature()
     {
         var documentation = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docs", "cli.md"));

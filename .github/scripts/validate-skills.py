@@ -8,7 +8,9 @@ canonical = root / ".agents" / "skills"
 redirects = root / "skills"
 good_practices = root / ".agents" / "references" / "good-coding-practices.md"
 database_practices = root / ".agents" / "references" / "database-practices.md"
+solution_layout = root / ".agents" / "references" / "solution-layout.md"
 good_practices_reference = "../../references/good-coding-practices.md"
+solution_layout_reference = "../../references/solution-layout.md"
 if not good_practices.exists():
     errors.append("missing canonical Paradigm Good Coding Practices reference")
 else:
@@ -43,6 +45,31 @@ else:
     for practice in required_database_practices:
         if practice not in database_practices_text:
             errors.append(f"Database Practices is missing required guidance: {practice}")
+if not solution_layout.exists():
+    errors.append("missing canonical Paradigm Solution Layout reference")
+else:
+    solution_layout_text = solution_layout.read_text(encoding="utf-8")
+    required_solution_layout = [
+        "00.SolutionItems",
+        "01.Shared",
+        "02.Modules",
+        "03.Hosts",
+        "04.Tools",
+        "05.Tests",
+        "database schema project is a module/data asset",
+        "Solution folders are navigation and ownership metadata",
+        "one canonical application solution",
+        "listed `.csproj` projects as managed assemblies",
+        "`.sqlproj` output or DACPAC",
+        "database validate",
+    ]
+    for requirement in required_solution_layout:
+        if requirement not in solution_layout_text:
+            errors.append(f"Solution Layout is missing required guidance: {requirement}")
+for skill_name in ["paradigm-setup-project", "paradigm-review-change", "paradigm-evolve-guidance"]:
+    skill_text = (canonical / skill_name / "SKILL.md").read_text(encoding="utf-8")
+    if solution_layout_reference not in skill_text:
+        errors.append(f"{skill_name}: does not reference Paradigm Solution Layout")
 retired_skill_helpers = [
     root / ".agents" / "skills" / "paradigm-setup-project" / "scripts" / "scaffold_from_template.py",
     root / ".agents" / "skills" / "paradigm-build-database" / "scripts" / "validate_database_project.py",
@@ -71,6 +98,28 @@ for skill in sorted(canonical.iterdir()):
     expected_redirect = f"../../.agents/skills/{skill.name}/SKILL.md"
     if expected_redirect not in redirect_text:
         errors.append(f"{skill.name}: packaging redirect does not target the canonical skill")
+aspire_assets = canonical / "paradigm-setup-aspire" / "assets" / "sql-server-bootstrap"
+dockerfile = aspire_assets / "Dockerfile"
+dockerignore = aspire_assets / "Dockerfile.dockerignore"
+if not dockerfile.exists() or not dockerignore.exists():
+    errors.append("paradigm-setup-aspire: missing governed SQL Server bootstrap container assets")
+else:
+    dockerfile_text = dockerfile.read_text(encoding="utf-8")
+    for required in [
+        "DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0.302-noble",
+        "DOTNET_RUNTIME_IMAGE=mcr.microsoft.com/dotnet/runtime:10.0.10-noble",
+        "SQLPACKAGE_VERSION=170.4.83",
+        "Microsoft.SqlPackage",
+        "mssql-tools18",
+        "dotnet build \"${DATABASE_PROJECT}\"",
+        "USER ${APP_UID}",
+    ]:
+        if required not in dockerfile_text:
+            errors.append(f"paradigm-setup-aspire: SQL Server bootstrap Dockerfile is missing {required}")
+    dockerignore_text = dockerignore.read_text(encoding="utf-8")
+    for required in [".git/", ".env", "**/artifacts/", "**/bin/", "**/obj/"]:
+        if required not in dockerignore_text:
+            errors.append(f"paradigm-setup-aspire: SQL Server bootstrap Dockerfile.dockerignore is missing {required}")
 if errors:
     print("\n".join(errors), file=sys.stderr)
     raise SystemExit(1)

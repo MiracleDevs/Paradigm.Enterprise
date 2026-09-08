@@ -7,6 +7,8 @@ Apply these rules to handwritten application and framework code. Treat generated
 - Keep one top-level semantic type per file. A class, record, struct, interface, enum, or delegate gets its own file named after that type. Nested helper types may remain with their owner when they have no independent meaning.
 - Organize files by business meaning, capability, or bounded context. Split a folder when it becomes a mixed catalog or is difficult to scan; do not create broad `Common`, `Helpers`, or `Utils` collections without one coherent responsibility.
 - Prefer domain-bounded EF contexts such as `AccountingDbContext`, `InventoryDbContext`, and a deliberately small `SharedDbContext`. Do not create an application-wide context merely for convenience. A shared context must own genuinely shared data, not become a cross-context shortcut.
+- Give each generated persistence type exactly one bounded-context owner and one generation configuration. Keep cross-context foreign keys as database constraints and scalar IDs unless an explicit read contract requires more; do not duplicate generated entities merely to obtain navigations.
+- Generated and handwritten partial files may be co-located for discoverability. In that layout, generation tools must replace only an exact manifest of generated files and preserve partials byte-for-byte; a mixed directory is never a safe recursive cleanup boundary.
 
 ## Class member layout
 
@@ -46,6 +48,17 @@ Place an override in `Overrides` regardless of its declared accessibility. Place
 - Prefer sealed implementation classes unless inheritance is an intentional supported extension point.
 - Prefer immutable values and state: `const` for compile-time constants, `readonly` fields, getter-only or `init` properties, immutable records/value objects, and read-only collection exposure. Introduce mutation only behind behavior that owns an invariant or because a documented binder, serializer, ORM, or generated-code boundary requires it.
 - Keep mutable request/view models at the transport boundary. Do not let their mutability leak into entities or long-lived services.
+
+## Validation ownership
+
+- Put every rule decidable from one entity or view's proposed state on that type, normally in its co-located handwritten partial and `Validate`/behavior methods. Normalize and validate the complete proposed state before mutating an existing instance. Do not replace object ownership with broad static `*DomainValidation` or `*RequestValidator` utility classes.
+- Put query-shape and transport-only validation, such as paging bounds, supported sort fields, and mutually exclusive filters, on the request type that owns those values.
+- Put checks requiring repositories, authenticated identity, authorization, remote services, or cross-aggregate coordination in the Provider. Passing already-loaded reference facts into entity behavior does not make the entity infrastructure-aware.
+
+## Repository SQL ownership
+
+- Production repository implementations do not own handwritten SQL statements or raw database-command plumbing. Use EF/LINQ for simple bounded CRUD and queries; use a typed stored-procedure wrapper with its SQL object in the database project for complex, paginated, locking, multi-entity, or performance-sensitive work.
+- Run `paradigm checks run` and treat `PE3107` as an error. It semantically covers `IRepository` implementations and allows typed SQL Server/PostgreSQL routine wrappers. A resolved `Query*`/`Execute*` connection extension with a string/`FormattableString` command parameter remains prohibited when its argument is a runtime value; do not replace semantic API classification with filename, folder, parameter-name, foldability, or SQL-keyword scans.
 
 ## Browser and API security
 

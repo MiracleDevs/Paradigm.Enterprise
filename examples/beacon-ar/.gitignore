@@ -1,0 +1,9 @@
+.env
+.aspire/
+artifacts/*
+!artifacts/openapi/
+artifacts/openapi/*
+!artifacts/openapi/beacon-ar-v1.json
+src/BeaconAr.Data/efcpt-readme.md
+**/bin/
+**/obj/

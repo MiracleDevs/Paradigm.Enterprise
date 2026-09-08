@@ -53,6 +53,6 @@ This is the fast developer loop. Run `bash build/quality.sh` for the complete re
 The checked-in example solution references the current source projects. Build and test it separately to validate the documented application patterns as well as the framework solution:
 
 ```powershell
-dotnet test example/ExampleApp.sln
-dotnet run --project src/Paradigm.Enterprise.Cli -- checks run --project example/ExampleApp.sln
+dotnet test examples/inventory-crud/InventoryCrud.sln
+dotnet run --project src/Paradigm.Enterprise.Cli -- checks run --project examples/inventory-crud/InventoryCrud.sln
 ```

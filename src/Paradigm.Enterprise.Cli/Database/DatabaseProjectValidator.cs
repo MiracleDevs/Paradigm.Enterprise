@@ -340,7 +340,11 @@ internal sealed class DatabaseProjectValidator
 
     private void ValidateObjectFiles(bool sqlServer)
     {
-        var pattern = new Regex("\\bCREATE\\s+(?:OR\\s+(?:ALTER|REPLACE)\\s+)?(?:TABLE|VIEW|TYPE|FUNCTION|PROCEDURE|PROC)\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?((?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*)(?:\\.(?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*))?)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var objectNamePattern = "(?<name>(?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*)(?:\\.(?:\\[[^]]+\\]|\"[^\"]+\"|[A-Za-z_][\\w$]*))?)";
+        var createPattern = sqlServer
+            ? $"\\bCREATE\\s+(?:OR\\s+(?:ALTER|REPLACE)\\s+)?(?<kind>TABLE|VIEW|TYPE|FUNCTION|PROCEDURE|PROC)\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?{objectNamePattern}"
+            : $"\\bCREATE\\s+(?:(?:OR\\s+REPLACE\\s+)?(?:TEMP(?:ORARY)?\\s+)?(?:RECURSIVE\\s+)?(?<kind>VIEW)|(?:OR\\s+REPLACE\\s+)?(?:TEMP(?:ORARY)?\\s+)?(?<kind>TABLE|TYPE|FUNCTION|PROCEDURE|PROC)|(?<kind>MATERIALIZED\\s+VIEW))\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?{objectNamePattern}";
+        var pattern = new Regex(createPattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         foreach (var folder in new[] { "tables", "views", "functions", "routines", "types" })
         {
             var directory = Path.Combine(root, folder);
@@ -348,10 +352,12 @@ internal sealed class DatabaseProjectValidator
                 continue;
             foreach (var path in Directory.EnumerateFiles(directory, "*.sql", SearchOption.AllDirectories).Order(StringComparer.OrdinalIgnoreCase))
             {
-                var objects = pattern.Matches(Read(path)).Select(match => match.Groups[1].Value).ToArray();
+                var objects = pattern.Matches(Read(path))
+                    .Select(match => (Kind: match.Groups["kind"].Value, QualifiedName: match.Groups["name"].Value))
+                    .ToArray();
                 if (objects.Length > 1)
                     Policy("PEDB100", path, "Keep one semantic database object per file.");
-                foreach (var qualifiedName in objects)
+                foreach (var (kind, qualifiedName) in objects)
                 {
                     var parts = qualifiedName.Split('.');
                     if (sqlServer && parts.Length < 2)
@@ -359,6 +365,8 @@ internal sealed class DatabaseProjectValidator
                     var objectName = parts[^1].Trim('[', ']', '"');
                     if (!objectName.Equals(Path.GetFileNameWithoutExtension(path), StringComparison.OrdinalIgnoreCase))
                         Policy("PEDB100", path, $"File name must match object {objectName}.");
+                    if (kind.EndsWith("VIEW", StringComparison.OrdinalIgnoreCase) && !objectName.EndsWith("View", StringComparison.Ordinal))
+                        Policy("PEDB112", path, $"View {objectName} must end with the suffix View.");
                 }
             }
         }
@@ -475,12 +483,69 @@ internal sealed class DatabaseProjectValidator
             if (Regex.IsMatch(text, "BlockOnPossibleDataLoss\\s*[=:]\\s*(?:False|false|0)", RegexOptions.CultureInvariant))
                 Add("PEDB108", "error", path, "Automatic database publication must not disable possible-data-loss blocking.");
             if (Regex.IsMatch(text, "tool\\s+install[^\\r\\n]*(?:--global|-g)[^\\r\\n]*sqlpackage", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-                Add("PEDB108", "error", path, "Do not install SqlPackage globally from a running bootstrap; use the repository-local tool manifest.");
+                Add("PEDB108", "error", path, "Do not install SqlPackage from a running bootstrap; install the pinned tool while building the bootstrap image.");
         }
 
         var prePre = Path.Combine(root, "scripts", "prepredeployment", "PrePreDeployment.sql");
         if (File.Exists(prePre) && !texts.Values.Any(text => text.Contains("PrePreDeployment.sql", StringComparison.OrdinalIgnoreCase)))
             Policy("PEDB105", prePre, "The finite database bootstrap must execute PrePreDeployment.sql before SqlPackage creates its deployment plan.");
+
+        var topologyRoot = Path.GetFileName(common).Equals("src", StringComparison.OrdinalIgnoreCase) && Directory.GetParent(common) is { } applicationRoot
+            ? applicationRoot.FullName
+            : common;
+        ValidateContainerizedAspireBootstrap(topologyRoot);
+    }
+
+    private void ValidateContainerizedAspireBootstrap(string common)
+    {
+        var bootstrapDirectory = Directory.EnumerateDirectories(common, "*", SearchOption.AllDirectories)
+            .Where(path => !PathParts(path).Any(part => part is "bin" or "obj" or ".git" or ".vs" or "node_modules" or "artifacts"))
+            .FirstOrDefault(path => Path.GetFileName(path).EndsWith(".DatabaseBootstrap", StringComparison.OrdinalIgnoreCase));
+        if (bootstrapDirectory is null)
+            return;
+
+        var appHostFiles = Directory.EnumerateFiles(common, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !PathParts(path).Any(part => part is "bin" or "obj" or ".git" or ".vs" or "node_modules" or "artifacts"))
+            .Where(path => PathParts(Path.GetDirectoryName(path)!).Any(part => part.Contains("apphost", StringComparison.OrdinalIgnoreCase)))
+            .Select(path => (Path: path, Text: Read(path)))
+            .ToArray();
+        if (appHostFiles.Length == 0)
+            return;
+        var appHostPath = appHostFiles.FirstOrDefault(candidate => Path.GetFileName(candidate.Path).Equals("Program.cs", StringComparison.OrdinalIgnoreCase)).Path
+            ?? appHostFiles[0].Path;
+        var appHostText = string.Join(Environment.NewLine, appHostFiles.Select(candidate => candidate.Text));
+
+        if (Regex.IsMatch(appHostText, "AddProject\\s*<[^>]*DatabaseBootstrap", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            Policy("PEDB111", appHostPath, "Aspire SQL Server bootstrap must be a Dockerfile resource, not a host-process project resource.");
+        if (!appHostText.Contains("AddDockerfile", StringComparison.Ordinal))
+            Policy("PEDB111", appHostPath, "Register the finite SQL Server bootstrap with AddDockerfile so database tools remain inside Docker.");
+        if (!appHostText.Contains("WaitForCompletion", StringComparison.Ordinal))
+            Policy("PEDB111", appHostPath, "Make API startup use WaitForCompletion for the finite database-bootstrap container.");
+
+        var dockerfile = Directory.EnumerateFiles(bootstrapDirectory, "Dockerfile", SearchOption.TopDirectoryOnly).SingleOrDefault();
+        if (dockerfile is null)
+        {
+            Policy("PEDB111", bootstrapDirectory, "Add a database-bootstrap Dockerfile that builds the DACPAC and owns SQLCMD 18 plus pinned SqlPackage.");
+            return;
+        }
+
+        var dockerfileText = Read(dockerfile);
+        if (!dockerfileText.Contains("mssql-tools18", StringComparison.OrdinalIgnoreCase) ||
+            !Regex.IsMatch(dockerfileText, "Version\\s+18|Version 18|\\^Version 18", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            Policy("PEDB111", dockerfile, "Install SQLCMD through mssql-tools18 and verify major version 18 while building the bootstrap image.");
+        if (!dockerfileText.Contains("Microsoft.SqlPackage", StringComparison.OrdinalIgnoreCase) ||
+            !Regex.IsMatch(dockerfileText, "(?:SQLPACKAGE_VERSION\\s*=|--version\\s+[^\\s]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            Policy("PEDB111", dockerfile, "Install a pinned Microsoft.SqlPackage version while building the bootstrap image.");
+        if (!Regex.IsMatch(dockerfileText, "dotnet\\s+build[^\\r\\n]*(?:\\.sqlproj|DATABASE_PROJECT)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            Policy("PEDB111", dockerfile, "Build the SQL project and verify its DACPAC during bootstrap image construction.");
+
+        foreach (var starter in Directory.EnumerateFiles(common, "start.sh", SearchOption.AllDirectories)
+                     .Where(path => !PathParts(path).Any(part => part is "bin" or "obj" or ".git" or ".vs" or "node_modules" or "artifacts")))
+        {
+            var starterText = Read(starter);
+            if (starterText.Contains("sqlcmd", StringComparison.OrdinalIgnoreCase) || starterText.Contains("sqlpackage", StringComparison.OrdinalIgnoreCase))
+                Policy("PEDB111", starter, "Do not require or inspect SQLCMD or SqlPackage on the developer host; the bootstrap image owns both tools.");
+        }
     }
 
     private bool SolutionContainsEnum(string enumName)
