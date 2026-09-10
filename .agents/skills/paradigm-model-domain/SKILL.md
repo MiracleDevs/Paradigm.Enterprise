@@ -5,7 +5,7 @@ description: Model Paradigm.Enterprise domain contracts, entities, views, value 
 
 # Model the Paradigm domain
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+Load `$paradigm-common-guidance` before creating or editing source.
 
 ## Choose the model
 

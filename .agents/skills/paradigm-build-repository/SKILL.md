@@ -5,7 +5,7 @@ description: Implement or review Paradigm.Enterprise repository contracts, read 
 
 # Build a Paradigm repository
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+Load `$paradigm-common-guidance` before creating or editing source.
 
 ## Select the contract
 

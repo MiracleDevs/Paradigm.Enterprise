@@ -56,7 +56,7 @@ dotnet tool run paradigm doctor --project src/Paradigm.Enterprise.slnx
 
 After cloning a repository with an existing tool manifest, use `dotnet tool restore` rather than installing again. One `paradigm` tool provides solution scaffolding, database-project validation, `api search/show/guide`, metadata validation, built-in semantic C# checks, dependency audits, and explicit JSON/mapper/OpenAPI generation commands. It is designed for client repositories that consume the Paradigm libraries; it is not a runtime dependency. See [CLI documentation](docs/cli.md).
 
-AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills), including Aspire and database-project setup, the canonical [Good Coding Practices](.agents/references/good-coding-practices.md), [Database Practices](.agents/references/database-practices.md), and the CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
+AI coding agents can use the concise workflows under [`.agents/skills`](.agents/skills), the shared [Paradigm Common Guidance](.agents/skills/paradigm-common-guidance/SKILL.md), and the CLI. See [Agent Skills](docs/agent-skills.md) for Copilot and Codex installation.
 
 ## Start a new API
 

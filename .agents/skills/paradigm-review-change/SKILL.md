@@ -5,7 +5,7 @@ description: Review a Paradigm.Enterprise change for framework API correctness, 
 
 # Review a Paradigm change
 
-Read and enforce [Paradigm Good Coding Practices](../../references/good-coding-practices.md) for handwritten code and documented generated-code exceptions. For new or reorganized solutions, also enforce [Paradigm Solution Layout](../../references/solution-layout.md).
+Load `$paradigm-common-guidance` and enforce its coding practices for handwritten code and documented generated-code exceptions. For new or reorganized solutions, also enforce its solution layout.
 
 ## Gather evidence
 
@@ -29,9 +29,9 @@ When the change contains a `.sqlproj` or DbPublisher config, run:
 dotnet tool run paradigm database validate --project <database-project> --solution <solution>
 ```
 
-Use `--strict` for a new project. Read [Paradigm Database Practices](../../references/database-practices.md) and use `$paradigm-build-database` for engine-specific review.
+Use `--strict` for a new project. Apply the database practices from `$paradigm-common-guidance` and use `$paradigm-build-database` for engine-specific review.
 
-When solution metadata changes, verify the canonical responsibility folders, unique membership, curated solution items, one solution source of truth, and the separate managed-application/database validation boundaries from Paradigm Solution Layout. Do not demand physical project moves solely to mirror solution folders.
+When solution metadata changes, verify the canonical responsibility folders, unique membership, curated solution items, one solution source of truth, and the separate managed-application/database validation boundaries from the solution layout in `$paradigm-common-guidance`. Do not demand physical project moves solely to mirror solution folders.
 
 Run the built-in C# checks against consuming application projects. Framework source and test internals may intentionally exercise patterns those checks reject. Apply the repository's review policy to warnings even when the CLI exits `0`.
 

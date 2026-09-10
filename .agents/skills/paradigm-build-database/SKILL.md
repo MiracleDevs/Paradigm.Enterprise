@@ -5,7 +5,7 @@ description: Create, extend, validate, or review a Paradigm database project for
 
 # Build a Paradigm database
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) and [Paradigm Database Practices](../../references/database-practices.md) before changing database source or tooling.
+Load `$paradigm-common-guidance` before changing database source or tooling.
 
 Use the database skill map at [Database skills](../database-skills/SKILL.md)
 before applying engine or task-specific guidance. Identify the target engine

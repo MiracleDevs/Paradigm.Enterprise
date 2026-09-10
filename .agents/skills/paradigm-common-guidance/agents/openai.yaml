@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paradigm Common Guidance"
+  short_description: "Shared Paradigm coding, database, and solution guidance"
+  default_prompt: "Load $paradigm-common-guidance before Paradigm implementation, design, review, or tooling work."
