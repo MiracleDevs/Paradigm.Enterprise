@@ -5,7 +5,6 @@ import sys
 root = Path(__file__).resolve().parents[2]
 errors = []
 canonical = root / ".agents" / "skills"
-redirects = root / "skills"
 common_guidance = canonical / "paradigm-common-guidance"
 good_practices = common_guidance / "references" / "good-coding-practices.md"
 common_guidance_reference = "$paradigm-common-guidance"
@@ -32,9 +31,8 @@ else:
 for skill in sorted(canonical.iterdir()):
     source = skill / "SKILL.md"
     ui = skill / "agents" / "openai.yaml"
-    redirect = redirects / skill.name / "SKILL.md"
-    if not source.exists() or not ui.exists() or not redirect.exists():
-        errors.append(f"{skill.name}: missing SKILL.md, agents/openai.yaml, or packaging redirect")
+    if not source.exists() or not ui.exists():
+        errors.append(f"{skill.name}: missing SKILL.md or agents/openai.yaml")
         continue
     text = source.read_text(encoding="utf-8")
     if not re.match(r"^---\nname: [a-z0-9-]+\ndescription: .+\n---\n", text):
@@ -45,10 +43,6 @@ for skill in sorted(canonical.iterdir()):
         errors.append(f"{skill.name}: folder and skill name differ")
     if skill.name.startswith("paradigm-") and skill.name != "paradigm-common-guidance" and common_guidance_reference not in text:
         errors.append(f"{skill.name}: does not reference paradigm-common-guidance")
-    redirect_text = redirect.read_text(encoding="utf-8")
-    expected_redirect = f"../../.agents/skills/{skill.name}/SKILL.md"
-    if expected_redirect not in redirect_text:
-        errors.append(f"{skill.name}: packaging redirect does not target the canonical skill")
 if errors:
     print("\n".join(errors), file=sys.stderr)
     raise SystemExit(1)

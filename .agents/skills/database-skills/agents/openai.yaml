@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paradigm Database Skills"
+  short_description: "Select shared, engine, and task database guidance"
+  default_prompt: "Use $database-skills to identify the database engine and load the applicable Paradigm guidance."

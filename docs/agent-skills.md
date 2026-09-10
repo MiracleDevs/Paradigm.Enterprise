@@ -2,7 +2,7 @@
 
 Paradigm.Enterprise ships concise [Agent Skills](https://agentskills.io/) for architecture, project setup, vertical slices, domain modeling, repositories, providers, Web API work, review, and governed promotion of learned practices. The skills load the shared [Paradigm Common Guidance](https://github.com/MiracleDevs/Paradigm.Enterprise/blob/main/.agents/skills/paradigm-common-guidance/SKILL.md), which centralizes coding, database, and solution-layout practices. The skills provide judgment and workflow; the CLI supplies exact API metadata and deterministic built-in rules for the packages restored by an application.
 
-The canonical skills are under `.agents/skills`. They work with agents that support the open format, including GitHub Copilot and Codex. The root `skills` directory contains tiny packaging redirects because the Codex plugin contract requires that path; do not duplicate guidance there.
+The canonical skills are under `.agents/skills`, which is also the path declared by the Codex plugin metadata. They work with agents that support the open format, including GitHub Copilot and Codex. Keep each skill's `agents/openai.yaml` metadata beside its `SKILL.md`; do not duplicate guidance in another directory.
 
 ## GitHub Copilot
 
