@@ -5,9 +5,9 @@ description: Promote an observed Paradigm.Enterprise engineering practice into g
 
 # Evolve Paradigm guidance
 
-Read and preserve [Paradigm Good Coding Practices](../../references/good-coding-practices.md) when changing guidance or tooling.
+Load `$paradigm-common-guidance` and preserve its guidance when changing guidance or tooling.
 
-When changing solution scaffolding, discovery, or validation guidance, also read and preserve [Paradigm Solution Layout](../../references/solution-layout.md). Keep its durable policy centralized and link to it from task-specific skills rather than copying the folder taxonomy.
+When changing solution scaffolding, discovery, or validation guidance, also preserve the solution-layout policy from `$paradigm-common-guidance`. Keep its durable policy centralized and link to the common skill from task-specific skills rather than copying the folder taxonomy.
 
 ## Establish evidence
 

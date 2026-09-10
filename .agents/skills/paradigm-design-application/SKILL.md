@@ -5,7 +5,7 @@ description: Design a Paradigm.Enterprise application, module, or major workflow
 
 # Design a Paradigm application
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) to the design and any resulting source.
+Load `$paradigm-common-guidance` and apply its guidance to the design and any resulting source.
 
 ## Start from decisions
 

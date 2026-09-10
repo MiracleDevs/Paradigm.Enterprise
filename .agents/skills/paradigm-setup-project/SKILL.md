@@ -5,7 +5,7 @@ description: Set up or repair a Paradigm.Enterprise .NET solution, including the
 
 # Set up a Paradigm project
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) and [Paradigm Solution Layout](../../references/solution-layout.md) before changing source, solution folders, dependencies, contexts, or host policy.
+Load `$paradigm-common-guidance` before changing source, solution folders, dependencies, contexts, or host policy.
 
 ## Establish the baseline
 
@@ -28,7 +28,7 @@ dotnet tool run paradigm scaffold solution `
 
 Review the dry-run inventory, then rerun without `--dry-run`. The CLI copies only template `src`, replaces template tokens and GUIDs, aligns Paradigm package references, preserves binary assets, never edits the source template, refuses a non-empty output directory, and creates the root `start.sh` Aspire wrapper. It also creates a baseline GitHub quality workflow and Paradigm problem matcher. Review those generated files and add any other repository policy deliberately after scaffolding.
 
-Preserve the template's `.sln` or `.slnx` format and organize the canonical solution by the responsibilities in Paradigm Solution Layout. Solution-folder classification does not by itself require physical project moves. After selecting the database engine, use `$paradigm-build-database` to create `src/database` and add its project to that solution; do not create a second database-only solution.
+Preserve the template's `.sln` or `.slnx` format and organize the canonical solution by the responsibilities in the solution layout from `$paradigm-common-guidance`. Solution-folder classification does not by itself require physical project moves. After selecting the database engine, use `$paradigm-build-database` to create `src/database` and add its project to that solution; do not create a second database-only solution.
 
 ## Install deterministic tooling
 

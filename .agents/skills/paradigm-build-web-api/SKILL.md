@@ -5,7 +5,7 @@ description: Implement or review Paradigm.Enterprise Web API controllers, routes
 
 # Build a Paradigm Web API
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source. Re-check current primary security guidance when authentication, browser token handling, or another security feature is in scope.
+Load `$paradigm-common-guidance` before creating or editing source. Re-check current primary security guidance when authentication, browser token handling, or another security feature is in scope.
 
 ## Choose security before a base
 

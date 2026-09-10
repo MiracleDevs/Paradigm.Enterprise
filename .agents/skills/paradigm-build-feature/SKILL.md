@@ -5,7 +5,7 @@ description: Implement an end-to-end Paradigm.Enterprise feature or CRUD vertica
 
 # Build a Paradigm feature
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+Load `$paradigm-common-guidance` before creating or editing source.
 
 ## Plan the slice
 

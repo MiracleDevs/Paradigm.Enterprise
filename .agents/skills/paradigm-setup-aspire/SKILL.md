@@ -5,7 +5,7 @@ description: Set up or review Aspire orchestration for a Paradigm.Enterprise sol
 
 # Set up Paradigm Aspire
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before changing source, dependencies, configuration, or host policy.
+Load `$paradigm-common-guidance` before changing source, dependencies, configuration, or host policy.
 
 ## Establish the topology
 

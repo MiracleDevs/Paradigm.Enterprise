@@ -6,8 +6,9 @@ root = Path(__file__).resolve().parents[2]
 errors = []
 canonical = root / ".agents" / "skills"
 redirects = root / "skills"
-good_practices = root / ".agents" / "references" / "good-coding-practices.md"
-good_practices_reference = "../../references/good-coding-practices.md"
+common_guidance = canonical / "paradigm-common-guidance"
+good_practices = common_guidance / "references" / "good-coding-practices.md"
+common_guidance_reference = "$paradigm-common-guidance"
 if not good_practices.exists():
     errors.append("missing canonical Paradigm Good Coding Practices reference")
 else:
@@ -42,8 +43,8 @@ for skill in sorted(canonical.iterdir()):
         errors.append(f"{skill.name}: SKILL.md exceeds 500 lines")
     if f"name: {skill.name}" not in text:
         errors.append(f"{skill.name}: folder and skill name differ")
-    if good_practices_reference not in text:
-        errors.append(f"{skill.name}: does not reference Paradigm Good Coding Practices")
+    if skill.name.startswith("paradigm-") and skill.name != "paradigm-common-guidance" and common_guidance_reference not in text:
+        errors.append(f"{skill.name}: does not reference paradigm-common-guidance")
     redirect_text = redirect.read_text(encoding="utf-8")
     expected_redirect = f"../../.agents/skills/{skill.name}/SKILL.md"
     if expected_redirect not in redirect_text:
