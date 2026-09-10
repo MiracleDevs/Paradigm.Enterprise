@@ -30,7 +30,7 @@ Paradigm.Enterprise.Cli/
   Program.cs
 ```
 
-Every handwritten C# file follows the canonical [Paradigm Good Coding Practices](https://github.com/MiracleDevs/Paradigm.Enterprise/blob/main/.agents/references/good-coding-practices.md). Keep one top-level semantic type per file, place it in the folder that owns its meaning, use the canonical member-region order, and leave exactly one empty line inside and between regions. `PE3105` and `PE3106` enforce these source-layout rules. Do not move package command source into a generic helper folder: `Packages` is product source and is deliberately exempted from the repository's broad NuGet packages ignore rule.
+Every handwritten C# file follows the coding practices in [Paradigm Common Guidance](https://github.com/MiracleDevs/Paradigm.Enterprise/blob/main/.agents/skills/paradigm-common-guidance/SKILL.md). Keep one top-level semantic type per file, place it in the folder that owns its meaning, use the canonical member-region order, and leave exactly one empty line inside and between regions. `PE3105` and `PE3106` enforce these source-layout rules. Do not move package command source into a generic helper folder: `Packages` is product source and is deliberately exempted from the repository's broad NuGet packages ignore rule.
 
 ## Runtime architecture
 

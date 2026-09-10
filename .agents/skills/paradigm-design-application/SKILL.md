@@ -5,7 +5,7 @@ description: Design a Paradigm.Enterprise application, module, or major workflow
 
 # Design a Paradigm application
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) to the design and any resulting source.
+Load `$paradigm-common-guidance` and apply its guidance to the design and any resulting source.
 
 ## Start from decisions
 
@@ -18,6 +18,7 @@ Capture:
 - external side effects and failure/retry behavior;
 - authentication, per-action authorization, audit, and data exposure;
 - deployment, observability, health, recovery, and compatibility needs.
+- database engine/project ownership, local orchestration mode, baseline policy, schema publication owner, and cloud deployment target.
 
 Do not turn uncertain requirements into framework conventions.
 
@@ -50,6 +51,8 @@ The Unit of Work stages and sequentially commits registered contexts; several co
 For reliable external work, decide explicitly between immediate best-effort delivery, idempotent retry, an application-owned outbox, or persisted orchestration/compensation. Paradigm supplies none of the latter patterns.
 
 Read [decision checklist](references/decision-checklist.md) when producing an architecture proposal or ADR.
+
+For a new application or deployment topology, use `$paradigm-setup-project`, `$paradigm-setup-aspire`, and `$paradigm-build-database` after the design decisions are recorded. Do not let local container choices silently become production architecture.
 
 ## Validate the design
 

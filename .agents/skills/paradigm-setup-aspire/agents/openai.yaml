@@ -1,0 +1,4 @@
+interface:
+  display_name: "Set Up Paradigm Aspire"
+  short_description: "Set up Aspire for Paradigm applications"
+  default_prompt: "Use $paradigm-setup-aspire to add or repair Aspire orchestration for this Paradigm solution."

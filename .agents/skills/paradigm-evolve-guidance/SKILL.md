@@ -5,7 +5,9 @@ description: Promote an observed Paradigm.Enterprise engineering practice into g
 
 # Evolve Paradigm guidance
 
-Read and preserve [Paradigm Good Coding Practices](../../references/good-coding-practices.md) when changing guidance or tooling.
+Load `$paradigm-common-guidance` and preserve its guidance when changing guidance or tooling.
+
+When changing solution scaffolding, discovery, or validation guidance, also preserve the solution-layout policy from `$paradigm-common-guidance`. Keep its durable policy centralized and link to the common skill from task-specific skills rather than copying the folder taxonomy.
 
 ## Establish evidence
 
@@ -20,11 +22,13 @@ Promote in this order:
 3. Add a reviewed standalone fixer/script only for repeatable transformations. Require `--dry-run`; never invoke it from validation or PR review.
 4. Add concise skill guidance only when judgment is unavoidable.
 
+Repository SQL ownership is the reference semantic-check case: resolved `IRepository` assignability and database APIs make it suitable for built-in `PE3107`, while choosing EF versus designing a stored procedure remains review judgment and has no automatic fixer.
+
 Never add implicit extension discovery, downloads, execution, or runtime-framework reflection to enforce application policy. Give each diagnostic stable severity, ownership, message, location, suppression requirements, and deterministic ordering.
 
 ## Govern the change
 
-- Add positive, negative, exception, suppression-expiry, and ordering fixtures.
+- Add positive, negative, exception, suppression-expiry, malformed-configuration, and ordering fixtures. For semantic sink rules, include runtime arguments so compile-time foldability cannot accidentally become an escape hatch. For source-generator-sensitive rules, use a real generator rather than only a checked-in generated file, and reuse an approved compiler/reference boundary rather than adding a fixture-only package dependency without approval. Lock multi-diagnostic semantic fixtures with an exact ordered tuple manifest so one missing and one extra result cannot preserve a passing count.
 - Document generated/persistence exceptions explicitly; require suppression code, symbol/location, reason, and expiry.
 - Update affected implementation/review skills without duplicating long reference material.
 - Update CLI/check documentation, configuration examples, and changelog.

@@ -5,7 +5,7 @@ description: Implement or review Paradigm.Enterprise repository contracts, read 
 
 # Build a Paradigm repository
 
-Read and apply [Paradigm Good Coding Practices](../../references/good-coding-practices.md) before creating or editing source.
+Load `$paradigm-common-guidance` before creating or editing source.
 
 ## Select the contract
 
@@ -42,9 +42,11 @@ Repository writes stage changes. The Provider/Unit of Work owns commit timing.
 
 ## Select EF or a stored procedure
 
-- Prefer a stored procedure for pagination, complex or dynamic filtering, multi-join/reporting queries, and multi-step database operations.
+- Production repositories must not contain handwritten SQL query or command text. Do not use raw `FromSql*`, `ExecuteSql*`, `SqlQuery*`, `DbCommand.CommandText`, equivalent `Query*`/`Execute*` connection extensions with string/`FormattableString` command parameters, or SQL-bearing repository field/property assignments there. A runtime command argument does not make the connection extension safe. This includes partial and source-generated production repository declarations.
+- Prefer a typed stored-procedure boundary for pagination, locking and range locking, complex or dynamic filtering, multi-join/reporting queries, performance-sensitive paths, and multi-step database operations. Keep the SQL object in the database project and its typed parameter/result plumbing in Data.
 - Use EF/LINQ only for simple, bounded queries whose translation, cardinality, and ordering are predictable.
 - Keep in-memory LINQ outside this selection rule; the concern is database query translation and execution.
+- Run `dotnet tool run paradigm checks run --project <solution>` and resolve every `PE3107`; an exception requires an exact, justified, expiring suppression and does not move SQL ownership into the repository.
 
 For aggregate child removal, query selection, and provider-specific stored-procedure mechanics, read [repository patterns](references/repository-patterns.md).
 

@@ -15,7 +15,7 @@
     "architecture",
     "agent-skills"
   ],
-  "skills": "./skills/",
+  "skills": "./.agents/skills/",
   "interface": {
     "displayName": "Paradigm Enterprise",
     "shortDescription": "Build correct Paradigm.Enterprise applications.",

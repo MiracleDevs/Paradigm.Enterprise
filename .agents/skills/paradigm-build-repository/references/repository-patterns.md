@@ -18,6 +18,13 @@ Use `StoredProcedureBase<TParameters>` for commands without rows and the matchin
 - SQL Server tuple positions follow result-set order. PostgreSQL multi-result tuple positions follow implementation-defined distinct cursor-name enumeration and do not promise database return order; avoid assigning different business meaning by tuple position unless the application identifies it explicitly.
 - Set a reviewed command timeout, preserve cancellation where the installed API supports it, and document provider-specific connection behavior.
 - Review generated routine signatures after schema changes; never hand-edit generated mappers.
+- When a routine result type changes, update its declared result type and rerun the repository's atomic
+  mapper generator. Remove obsolete result models, mappers, and registrations in the same change. Do not
+  add a parallel handwritten mapper or registry for a generator-owned boundary. Run generation twice and
+  compare the complete generated path/content set to prove determinism and checked-in output freshness.
+- Materialize a paged stored-procedure result in one database command. Do not page identifiers and hydrate
+  their view rows in a second query: concurrent changes can split count/order/filtering from the returned
+  projection or make an identifier disappear between reads.
 
 ## Context and Unit of Work
 
