@@ -35,7 +35,8 @@ for skill in sorted(canonical.iterdir()):
         errors.append(f"{skill.name}: missing SKILL.md or agents/openai.yaml")
         continue
     text = source.read_text(encoding="utf-8")
-    if not re.match(r"^---\nname: [a-z0-9-]+\ndescription: .+\n---\n", text):
+    frontmatter_pattern = r"^---\nname: [a-z0-9-]+\ndescription: (?:(?:[^\n]+\n)|(?:>-\n(?:  .*\n)+)|(?:\|\n(?:  .*\n)+))---\n"
+    if not re.match(frontmatter_pattern, text):
         errors.append(f"{skill.name}: invalid frontmatter")
     if len(text.splitlines()) > 500:
         errors.append(f"{skill.name}: SKILL.md exceeds 500 lines")
