@@ -1,6 +1,6 @@
 ---
 name: paradigm-setup-aspire
-description: Set up or review Aspire orchestration for a Paradigm.Enterprise solution, including AppHost, ServiceDefaults, root .env configuration, SQL Server or PostgreSQL resources, database bootstrap ordering, health and telemetry defaults, and Azure Bicep publishing. Use for new Paradigm solutions, replacing Docker starter scripts, adding Aspire to an existing API, or repairing an AppHost resource graph.
+description: Set up or review Aspire orchestration for a Paradigm.Enterprise solution, including the Paradigm Aspire hosting and service-defaults libraries, AppHost, root .env configuration, database bootstrap ordering, health and telemetry defaults, and Azure Bicep publishing. Use for new Paradigm solutions, replacing Docker starter scripts, adding Aspire to an existing API, or repairing an AppHost resource graph.
 ---
 
 # Set up Paradigm Aspire
@@ -20,6 +20,16 @@ dotnet tool run aspire agent init --non-interactive --skills aspire,aspire-init,
 
 Use the installed Aspire skills for CLI lifecycle and diagnostics. Use this skill for the Paradigm-specific topology and policy.
 
+## Use the Paradigm Aspire libraries
+
+Before composing an AppHost or hosted service, read [Paradigm Aspire libraries](references/paradigm-aspire-libraries.md). Prefer the released `Paradigm.Enterprise.Aspire.*` package that owns a standard recipe over duplicating that recipe in the application. Keep direct Aspire APIs for resources or topology that the libraries intentionally do not cover.
+
+- Use `Paradigm.Enterprise.Aspire.Hosting` to create the AppHost builder, compose managed or external databases, Redis, blob storage, Angular clients, and project-resource infrastructure references.
+- Use `Paradigm.Enterprise.Aspire.ServiceDefaults` in each hosted ASP.NET Core service for telemetry, service discovery, resilient HTTP clients, and liveness mapping. Add readiness checks that reflect that service's actual dependencies.
+- Use `Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer` or `.PostgreSql` when a managed database needs finite schema publication. These helpers compose the bootstrap resource; the application still owns its Dockerfile, database artifact, publication policy, and schema probe.
+
+Reference packages explicitly from the AppHost, service, or bootstrap project that calls their types. Treat their exact public API as versioned: inspect the installed package/source or use the Paradigm CLI API search before coding against a newer version.
+
 ## Configure local orchestration
 
 Read [AppHost patterns](references/apphost-patterns.md) before writing the AppHost or `.env` loader.
@@ -29,7 +39,7 @@ Read [AppHost patterns](references/apphost-patterns.md) before writing the AppHo
 - Use `Database__Provider`, `Database__Mode`, `Database__Name`, `Database__Password`, `Database__PublishOnStart`, and `ConnectionStrings__DatabaseConnection`.
 - Default new solutions to `SqlServer`, `Managed`, and schema publishing enabled. Require an explicit connection string for `External`; disable automatic publishing there unless the user deliberately enables it.
 - Give managed SQL Server or PostgreSQL resources persistent volumes. Reference their database resource from consumers so Aspire supplies `ConnectionStrings__{name}`.
-- Add ServiceDefaults to hosted services and map bounded liveness/readiness endpoints. Preserve standard trace context and keep health checks cheap and secret-free.
+- Add `AddParadigmServiceDefaults()` to hosted services and map `MapParadigmServiceDefaultsEndpoints()` after middleware configuration. Add bounded readiness checks that reflect actual dependencies. Preserve standard trace context and keep health checks cheap and secret-free.
 
 ## Preserve the starter workflow
 
@@ -48,8 +58,8 @@ Use the official [Aspire CLI installation guidance](https://aspire.dev/get-start
 
 Use `$paradigm-build-database` to create or review the database project and its bootstrap contract.
 
-- SQL Server: copy and adapt the governed files under `assets/sql-server-bootstrap`; have Aspire build that repository-owned image, wait for the database, import the optional BACPAC only when the managed database is empty, verify the image-owned DACPAC, run pre-pre-deployment with image-owned SQLCMD 18, generate the image-owned SqlPackage plan, publish, verify completion, and only then start the API. Do not require SQLCMD or SqlPackage on the developer host.
-- PostgreSQL: wait for the database; run the pinned DbPublisher version with `Paradigm_ORM_ConnectionString` explicitly mapped from the Aspire resource; verify the schema before releasing dependents.
+- SQL Server: use `AddSqlServerDatabaseBootstrap` with the managed database/server/password references returned by `AddParadigmSqlServerDatabase`, then have its repository-owned image import the optional BACPAC only when the managed database is empty, verify the image-owned DACPAC, run pre-pre-deployment with image-owned SQLCMD 18, generate the image-owned SqlPackage plan, publish, verify completion, and only then start the API. Do not require SQLCMD or SqlPackage on the developer host.
+- PostgreSQL: use `AddPostgreSqlDatabaseBootstrap` for the managed database/server references, run the pinned DbPublisher version with `Paradigm_ORM_ConnectionString` explicitly mapped from the Aspire resource, and verify the schema before releasing dependents.
 - Never import a baseline into an external database automatically. Install pinned database tools while building the bootstrap image, never from the running bootstrap resource.
 - Model SQL Server bootstrap as a finite Dockerfile resource and make the API use `WaitForCompletion`; do not hide schema work inside API startup. Treat this wait as local orchestration only and design deployment-target job/init ordering separately.
 
