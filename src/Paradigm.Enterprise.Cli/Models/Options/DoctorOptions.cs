@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Paradigm.Enterprise.Cli;
 
 internal sealed record DoctorOptions(string? Project, OutputFormat Format) : ICliCommandOptions

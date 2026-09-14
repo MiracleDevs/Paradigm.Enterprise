@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Paradigm.Enterprise.Cli;
 
 internal sealed record ParsedCommand(string Name, ICliCommandOptions Options)

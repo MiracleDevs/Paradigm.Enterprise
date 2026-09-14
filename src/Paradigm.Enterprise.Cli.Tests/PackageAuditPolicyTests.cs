@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Paradigm.Enterprise.Cli.Tests;
 
 [TestClass]

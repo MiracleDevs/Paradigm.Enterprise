@@ -24,7 +24,15 @@
     <Project Path="Paradigm.Enterprise.Cli/Paradigm.Enterprise.Cli.csproj" />
     <Project Path="Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj" />
   </Folder>
-  <Folder Name="/05.Tests/">
+  <Folder Name="/05.Aspire/">
+    <Project Path="Paradigm.Enterprise.Aspire.DatabaseBootstrap.PostgreSql/Paradigm.Enterprise.Aspire.DatabaseBootstrap.PostgreSql.csproj" />
+    <Project Path="Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer/Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer.csproj" />
+    <Project Path="Paradigm.Enterprise.Aspire.Hosting/Paradigm.Enterprise.Aspire.Hosting.csproj" />
+    <Project Path="Paradigm.Enterprise.Aspire.ServiceDefaults/Paradigm.Enterprise.Aspire.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/06.Tests/">
+    <Project Path="Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer.Tests/Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer.Tests.csproj" />
+    <Project Path="Paradigm.Enterprise.Aspire.Hosting.Tests/Paradigm.Enterprise.Aspire.Hosting.Tests.csproj" />
     <Project Path="Paradigm.Enterprise.Cli.Tests/Fixtures/DotNetAuditFixture/DotNetAuditFixture.csproj" />
     <Project Path="Paradigm.Enterprise.Cli.Tests/Fixtures/GoodPractices/GoodPractices.csproj" />
     <Project Path="Paradigm.Enterprise.Cli.Tests/Fixtures/SemanticViolations/SemanticViolations.csproj" />
