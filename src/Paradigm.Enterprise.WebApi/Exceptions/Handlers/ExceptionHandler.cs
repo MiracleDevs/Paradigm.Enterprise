@@ -74,6 +74,8 @@ public class ExceptionHandler : IExceptionHandler
                     var stringConstructor = exceptionType.GetConstructor([typeof(string)]);
                     if (stringConstructor is not null)
                         return (Exception)stringConstructor.Invoke([message]);
+
+                    return new Exception(message, e);
                 }
 
                 return e;
