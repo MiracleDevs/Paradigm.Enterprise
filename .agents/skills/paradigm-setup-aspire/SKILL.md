@@ -24,7 +24,7 @@ Use the installed Aspire skills for CLI lifecycle and diagnostics. Use this skil
 
 Before composing an AppHost or hosted service, read [Paradigm Aspire libraries](references/paradigm-aspire-libraries.md). Prefer the released `Paradigm.Enterprise.Aspire.*` package that owns a standard recipe over duplicating that recipe in the application. Keep direct Aspire APIs for resources or topology that the libraries intentionally do not cover.
 
-- Use `Paradigm.Enterprise.Aspire.Hosting` to create the AppHost builder, compose managed or external databases, Redis, blob storage, Angular clients, and project-resource infrastructure references.
+- Use `Paradigm.Enterprise.Aspire.Hosting` to create the AppHost builder, compose managed or external databases, Redis, blob storage, JavaScript clients, and project-resource infrastructure references.
 - Use `Paradigm.Enterprise.Aspire.ServiceDefaults` in each hosted ASP.NET Core service for telemetry, service discovery, resilient HTTP clients, and liveness mapping. Add readiness checks that reflect that service's actual dependencies.
 - Use `Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer` or `.PostgreSql` when a managed database needs finite schema publication. These helpers compose the bootstrap resource; the application still owns its Dockerfile, database artifact, publication policy, and schema probe.
 

@@ -1,9 +1,9 @@
 namespace Paradigm.Enterprise.Aspire.Hosting;
 
 /// <summary>
-/// Defines the AppHost composition settings for an existing Angular client.
+/// Defines the AppHost composition settings for an existing JavaScript client.
 /// </summary>
-public sealed class ParadigmAngularClientOptions
+public sealed class ParadigmJavaScriptClientOptions
 {
     #region Properties
 
@@ -33,7 +33,7 @@ public sealed class ParadigmAngularClientOptions
     public int? HostPort { get; init; }
 
     /// <summary>
-    /// Gets the port used by the Angular development server inside the client process.
+    /// Gets the port used by the client development server inside the client process.
     /// </summary>
     public int TargetPort { get; init; } = 4200;
 

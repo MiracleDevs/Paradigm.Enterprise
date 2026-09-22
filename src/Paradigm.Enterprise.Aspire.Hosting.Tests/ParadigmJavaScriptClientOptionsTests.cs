@@ -3,10 +3,10 @@ using NUnit.Framework;
 namespace Paradigm.Enterprise.Aspire.Hosting.Tests;
 
 /// <summary>
-/// Tests Angular client hosting defaults.
+/// Tests JavaScript client hosting defaults.
 /// </summary>
 [TestFixture]
-public sealed class ParadigmAngularClientOptionsTests
+public sealed class ParadigmJavaScriptClientOptionsTests
 {
     /// <summary>
     /// Verifies the default client composition behavior.
@@ -14,7 +14,7 @@ public sealed class ParadigmAngularClientOptionsTests
     [Test]
     public void Defaults_support_dynamic_host_ports_and_external_browser_access()
     {
-        var options = new ParadigmAngularClientOptions
+        var options = new ParadigmJavaScriptClientOptions
         {
             Name = "client",
             WorkingDirectory = "../../client"

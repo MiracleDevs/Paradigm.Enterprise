@@ -14,7 +14,7 @@ Use the following extension families with their option objects:
 | PostgreSQL | `AddParadigmPostgreSqlDatabase(ParadigmPostgreSqlDatabaseOptions)` | Attach its reference with `WithParadigmInfrastructure`. |
 | Redis | `AddParadigmRedis(ParadigmRedisOptions)` | Attach with `WithParadigmInfrastructure`. |
 | Azurite blobs | `AddParadigmBlobStorage(ParadigmBlobStorageOptions)` | Attach with `WithParadigmInfrastructure`. |
-| Angular dev client | `AddParadigmAngularClient(ParadigmAngularClientOptions, apis)` | References supplied API projects and can wait for them; expose its endpoint only when browser access is intended. |
+| JavaScript dev client | `AddParadigmJavaScriptClient(ParadigmJavaScriptClientOptions, apis)` | References supplied API projects and can wait for them; supports frameworks such as Angular and React, and exposes its endpoint only when browser access is intended. |
 
 For database, Redis, and blob options, choose `Managed` only for locally owned infrastructure. Use `External` for a supplied connection string; it creates a connection-string resource and must not create a container, persistent volume, or automatic database import. Keep the connection name deliberate: it becomes the consumer's `ConnectionStrings__<name>` key. The database option defaults are `DatabaseConnection`, while Redis and blob defaults are `RedisCacheConnection` and `BlobStorageConnection`.
 

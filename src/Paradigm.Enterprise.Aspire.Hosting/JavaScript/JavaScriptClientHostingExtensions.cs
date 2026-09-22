@@ -5,22 +5,22 @@ using Aspire.Hosting.JavaScript;
 namespace Paradigm.Enterprise.Aspire.Hosting;
 
 /// <summary>
-/// Provides AppHost composition helpers for existing Angular clients.
+/// Provides AppHost composition helpers for existing JavaScript clients.
 /// </summary>
-public static class AngularClientHostingExtensions
+public static class JavaScriptClientHostingExtensions
 {
     #region Public Methods
 
     /// <summary>
-    /// Adds an Angular JavaScript application and references its required APIs.
+    /// Adds a JavaScript application and references its required APIs.
     /// </summary>
     /// <param name="builder">The distributed application builder.</param>
-    /// <param name="options">The Angular client options.</param>
+    /// <param name="options">The JavaScript client options.</param>
     /// <param name="apis">The APIs that the client consumes.</param>
-    /// <returns>The configured Angular client resource.</returns>
-    public static IResourceBuilder<JavaScriptAppResource> AddParadigmAngularClient(
+    /// <returns>The configured JavaScript client resource.</returns>
+    public static IResourceBuilder<JavaScriptAppResource> AddParadigmJavaScriptClient(
         this IDistributedApplicationBuilder builder,
-        ParadigmAngularClientOptions options,
+        ParadigmJavaScriptClientOptions options,
         params IResourceBuilder<ProjectResource>[] apis)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -68,22 +68,22 @@ public static class AngularClientHostingExtensions
 
     #region Private Methods
 
-    private static void Validate(ParadigmAngularClientOptions options)
+    private static void Validate(ParadigmJavaScriptClientOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.Name))
-            throw new InvalidOperationException("An Angular client resource name is required.");
+            throw new InvalidOperationException("A JavaScript client resource name is required.");
         if (string.IsNullOrWhiteSpace(options.WorkingDirectory))
-            throw new InvalidOperationException("An Angular client working directory is required.");
+            throw new InvalidOperationException("A JavaScript client working directory is required.");
         if (string.IsNullOrWhiteSpace(options.RunScript))
-            throw new InvalidOperationException("An Angular client run script is required.");
+            throw new InvalidOperationException("A JavaScript client run script is required.");
         if (string.IsNullOrWhiteSpace(options.EndpointName))
-            throw new InvalidOperationException("An Angular client endpoint name is required.");
+            throw new InvalidOperationException("A JavaScript client endpoint name is required.");
         if (string.IsNullOrWhiteSpace(options.PortEnvironmentVariable))
-            throw new InvalidOperationException("An Angular client port environment variable is required.");
+            throw new InvalidOperationException("A JavaScript client port environment variable is required.");
         if (options.HostPort is <= 0 or > 65535)
-            throw new InvalidOperationException("An Angular client host port must be between 1 and 65535.");
+            throw new InvalidOperationException("A JavaScript client host port must be between 1 and 65535.");
         if (options.TargetPort is <= 0 or > 65535)
-            throw new InvalidOperationException("An Angular client target port must be between 1 and 65535.");
+            throw new InvalidOperationException("A JavaScript client target port must be between 1 and 65535.");
     }
 
     #endregion
