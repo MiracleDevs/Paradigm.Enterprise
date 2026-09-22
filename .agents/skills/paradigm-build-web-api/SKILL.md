@@ -39,7 +39,7 @@ When a search or filter action has several related query values, bind one purpos
 - Fail closed outside local/test environments when required identity and CORS configuration is absent.
   Regression-test each missing setting through actual host startup, plus the fully configured production
   path without depending on a live metadata endpoint.
-- Configure structured logging, standard trace propagation, useful metrics, and separate liveness/readiness health checks. Prefer framework and already-approved host integrations.
+- In an Aspire-hosted service, prefer `Paradigm.Enterprise.Aspire.ServiceDefaults`: call `AddParadigmServiceDefaults()` during builder configuration and `MapParadigmServiceDefaultsEndpoints()` after middleware configuration. It supplies OpenTelemetry logging/metrics/tracing, service discovery, standard resilient HTTP clients, and `/alive`; add dependency-aware readiness checks separately. In a non-Aspire host, configure the equivalent concerns explicitly. Do not add a duplicate OpenTelemetry, service-discovery, or standard-resilience registration around the package defaults.
 
 Framework reflection-based discovery is permitted. Avoid ad hoc reflection in runtime business code.
 

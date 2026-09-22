@@ -201,7 +201,7 @@ public class DomainTrackerTests
         var tracker = new DomainTracker<TestEntity>();
 
         // Act & Assert: any exception fails the test.
-                // Act & Assert
+        // Act & Assert
         try
         {
             tracker.Reset();

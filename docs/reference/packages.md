@@ -11,6 +11,10 @@ Choose packages by the layer or infrastructure capability that consumes them. Th
 | `Paradigm.Enterprise.Data.PostgreSql` | `net10.0` | PostgreSQL context registration and stored-procedure support |
 | `Paradigm.Enterprise.Providers` | `net10.0` | Application provider contracts and read/edit base workflows |
 | `Paradigm.Enterprise.WebApi` | `net10.0` | Controller bases, filters, middleware, and dependency discovery |
+| `Paradigm.Enterprise.Aspire.Hosting` | `net10.0` | Reusable .NET Aspire hosting recipes for Paradigm applications |
+| `Paradigm.Enterprise.Aspire.ServiceDefaults` | `net10.0` | Opinionated telemetry, service discovery, resilience, and health defaults for Paradigm services |
+| `Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer` | `net10.0` | AppHost registration for finite SQL Server database bootstrap containers |
+| `Paradigm.Enterprise.Aspire.DatabaseBootstrap.PostgreSql` | `net10.0` | AppHost registration for finite PostgreSQL database bootstrap containers |
 | `Paradigm.Enterprise.Services.Core` | `net9.0`, `net10.0` | Shared service marker contract |
 | `Paradigm.Enterprise.Services.Cache` | `net9.0`, `net10.0` | Redis cache wrapper and health check |
 | `Paradigm.Enterprise.Services.Email` | `net9.0`, `net10.0` | Azure Communication Services email wrapper |
