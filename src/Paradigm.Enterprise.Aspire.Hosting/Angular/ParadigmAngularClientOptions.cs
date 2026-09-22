@@ -43,6 +43,11 @@ public sealed class ParadigmAngularClientOptions
     public string PortEnvironmentVariable { get; init; } = "PORT";
 
     /// <summary>
+    /// Gets a value indicating whether the client endpoint uses HTTPS instead of HTTP.
+    /// </summary>
+    public bool UseHttps { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether the client endpoint is externally browsable.
     /// </summary>
     public bool ExposeExternalEndpoints { get; init; } = true;

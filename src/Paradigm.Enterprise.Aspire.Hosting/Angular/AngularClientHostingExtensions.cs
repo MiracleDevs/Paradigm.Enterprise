@@ -29,13 +29,26 @@ public static class AngularClientHostingExtensions
         Validate(options);
 
         var client = builder.AddJavaScriptApp(options.Name, options.WorkingDirectory)
-            .WithRunScript(options.RunScript)
-            .WithHttpEndpoint(
+            .WithRunScript(options.RunScript);
+
+        if (options.UseHttps)
+        {
+            client.WithHttpsEndpoint(
                 port: options.HostPort,
                 targetPort: options.TargetPort,
                 name: options.EndpointName,
                 env: options.PortEnvironmentVariable,
                 isProxied: false);
+        }
+        else
+        {
+            client.WithHttpEndpoint(
+                port: options.HostPort,
+                targetPort: options.TargetPort,
+                name: options.EndpointName,
+                env: options.PortEnvironmentVariable,
+                isProxied: false);
+        }
 
         foreach (var api in apis)
         {
