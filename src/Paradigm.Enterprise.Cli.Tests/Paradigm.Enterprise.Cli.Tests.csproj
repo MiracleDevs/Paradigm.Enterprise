@@ -29,6 +29,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\SemanticLinked\" />
-    <Folder Include="TestResults\" />
   </ItemGroup>
 </Project>

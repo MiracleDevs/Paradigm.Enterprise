@@ -49,7 +49,7 @@ Run `dotnet tool run paradigm api search <term> --project <solution>` only when 
 ## Configure database-first projects
 
 - Use `$paradigm-build-database` to create or validate the SQL Server or PostgreSQL project and include it in the application solution under `src/database`.
-- Use `$paradigm-setup-aspire` to add AppHost, ServiceDefaults, root `.env`, database bootstrap ordering, and optional deployment publishing.
+- Use `$paradigm-setup-aspire` to add AppHost, the explicit `Paradigm.Enterprise.Aspire.Hosting` and `.ServiceDefaults` project references, root `.env`, database bootstrap ordering, and optional deployment publishing. Prefer the Paradigm Aspire libraries' versioned recipes over copying their hosting or telemetry code into the application.
 - For Aspire SQL Server projects, use its governed container-bootstrap assets so SQLCMD, SqlPackage, and DACPAC publication stay inside Docker rather than becoming workstation prerequisites.
 - Keep credentials in user secrets or environment configuration.
 - Review EF Core Power Tools selection, context/namespace/output settings, key types, nullability, views, and routines.

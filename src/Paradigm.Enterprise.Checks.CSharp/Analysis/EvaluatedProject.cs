@@ -1,7 +1,7 @@
-using System.Diagnostics;
-using System.Text.Json;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace Paradigm.Enterprise.Checks.CSharp;
 

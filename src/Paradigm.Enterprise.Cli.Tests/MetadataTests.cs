@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace Paradigm.Enterprise.Cli.Tests;
 
 [TestClass]

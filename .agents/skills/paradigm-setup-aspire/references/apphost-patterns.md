@@ -40,7 +40,7 @@ src/
   database/
 ```
 
-Reference ServiceDefaults from each hosted .NET service. Add `AddServiceDefaults()` before building the app and map the standard endpoints after middleware configuration. Keep readiness dependency-aware and liveness process-only.
+Reference `Paradigm.Enterprise.Aspire.ServiceDefaults` from each hosted .NET service. Add `AddParadigmServiceDefaults()` before building the app and `MapParadigmServiceDefaultsEndpoints()` after middleware configuration. Keep readiness dependency-aware and liveness process-only.
 
 Keep `start.sh` at this root and make it a thin, noninteractive Aspire wrapper after prerequisite checks. Its `start` command runs Aspire in the foreground; `stop` uses the explicit AppHost project path so it cannot select another checkout's process. The script may install missing repository-local Paradigm and Aspire development tools before AppHost starts, but it must not install or inspect SQLCMD or SqlPackage. Install those database tools during the bootstrap image build, never from the running resource.
 
@@ -48,7 +48,7 @@ Use `/health` for readiness and `/alive` for liveness unless the existing soluti
 
 ## Managed databases
 
-Use `AddSqlServer(...).WithLifetime(ContainerLifetime.Persistent).WithDataVolume()` or the PostgreSQL equivalent, then `AddDatabase`. Pass the database resource to the API and bootstrap with `WithReference`; do not override the generated connection string from `.env`.
+Use `AddParadigmSqlServerDatabase` or `AddParadigmPostgreSqlDatabase` with managed options. These own the persistent container, data volume, connection-string resource, and consumer reference behavior. Attach the returned reference to projects with `WithParadigmInfrastructure`; do not override a managed connection string from `.env`. Use `External` mode only for an explicitly supplied connection string.
 
 Keep Aspire resource names lowercase. Name or explicitly map the database connection resource so consumers bind the canonical `ConnectionStrings:DatabaseConnection` key; do not assume the physical database name produces that alias. Verify the generated `ConnectionStrings__...` environment variable in `aspire describe`.
 
@@ -72,13 +72,13 @@ SqlPackage [imports a BACPAC into a new or empty database](https://learn.microso
 
 Pin SqlPackage in the repository-owned bootstrap Dockerfile, install it during image construction, and keep it out of the host tool manifest. Install and verify SQLCMD 18 in the same image. Never install either tool at container runtime. Avoid disabling data-loss blocking by default; require explicit approval for a reviewed exceptional publish profile.
 
-Add the bootstrap with `AddDockerfile`, pass the database through `WithReference`, and make the API use `WaitForCompletion`. Give the finite container a clear contract: image-owned DACPAC/baseline/script paths, connection string from the Aspire reference, bounded connection retries and command timeouts, cancellation, structured secret-free logs, and nonzero exit for image verification/import/publish/probe failure. Default local readiness to a two-minute overall deadline and each import/publish process to a fifteen-minute deadline; make non-secret timeout overrides explicit and never retry forever. Select a stable required table or schema object from the database project as the post-publish probe; do not use "connection succeeded" as proof that publication succeeded.
+Compose the bootstrap with `AddSqlServerDatabaseBootstrap`, passing the managed database/server/password references exposed by the SQL Server helper, and make the API use `WaitForCompletion`. Give the finite container a clear contract: image-owned DACPAC/baseline/script paths, connection string from the Aspire reference, bounded connection retries and command timeouts, cancellation, structured secret-free logs, and nonzero exit for image verification/import/publish/probe failure. Default local readiness to a two-minute overall deadline and each import/publish process to a fifteen-minute deadline; make non-secret timeout overrides explicit and never retry forever. Select a stable required table or schema object from the database project as the post-publish probe; do not use "connection succeeded" as proof that publication succeeded.
 
 Use the governed Dockerfile assets from this skill as the starting point. Pin the .NET SDK/runtime and SqlPackage versions, verify SQLCMD major version 18 during the image build, use a Dockerfile-specific ignore file, run the final image as a non-root user, and exclude `.env`, Git data, local artifacts, `bin`, and `obj` from the build context. Do not bind-mount the source checkout into the running bootstrap.
 
 Pre-pre-deployment is not DACPAC `PreDeploy`: compile and verify the DACPAC first, then finish pre-pre before SqlPackage generates its plan. Use a SQLCMD-compatible executor with `GO`, reviewed include/variable behavior, bounded timeouts, cancellation, nonzero failure propagation, and secret-free logs; a naive `SqlCommand` over the complete file is invalid. Run it only when schema publication is enabled, including the explicit external-mode opt-in, and never use it to bypass unreviewed data-loss protection.
 
-For PostgreSQL, map the Aspire database resource explicitly with `.WithReference(database).WithEnvironment("Paradigm_ORM_ConnectionString", database)`; `WithReference` alone only creates the conventional `ConnectionStrings__<resource-name>` variable. Pin the verified DbPublisher executable or container in repository-owned configuration. Because DbPublisher behavior varies by installed version, verify nonzero failure propagation and follow execution with a schema probe before marking the bootstrap complete.
+For PostgreSQL, compose the finite container with `AddPostgreSqlDatabaseBootstrap`, passing the managed database and server resources. It maps `Paradigm_ORM_ConnectionString` explicitly; `WithReference` alone only creates the conventional `ConnectionStrings__<resource-name>` variable. Pin the verified DbPublisher executable or container in repository-owned configuration. Because DbPublisher behavior varies by installed version, verify nonzero failure propagation and follow execution with a schema probe before marking the bootstrap complete.
 
 ## External databases
 
