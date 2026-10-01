@@ -97,7 +97,7 @@ public class CommandLineTests
         using var output = new StringWriter();
         var exitCode = await TestCliApplication.RunAsync(["--version"], output, TextWriter.Null);
         Assert.AreEqual(0, exitCode);
-        StringAssert.StartsWith(output.ToString(), "1.0.");
+        StringAssert.StartsWith(output.ToString(), "1.1.");
     }
 
     [TestMethod]
