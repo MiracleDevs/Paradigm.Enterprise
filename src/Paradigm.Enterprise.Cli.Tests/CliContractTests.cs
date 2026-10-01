@@ -43,7 +43,7 @@ public class CliContractTests
         var textExit = await TestCliApplication.RunAsync(["--version"], text, TextWriter.Null);
         var jsonExit = await TestCliApplication.RunAsync(["--version", "--format", "json"], json, TextWriter.Null);
         Assert.AreEqual(0, textExit);
-        Assert.AreEqual("1.0.33" + Environment.NewLine, text.ToString());
+        Assert.AreEqual("1.1.0" + Environment.NewLine, text.ToString());
         Assert.AreEqual(2, jsonExit);
         Assert.AreEqual("", json.ToString());
     }

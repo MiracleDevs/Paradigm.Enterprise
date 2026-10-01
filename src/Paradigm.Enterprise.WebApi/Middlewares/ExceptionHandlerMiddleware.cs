@@ -60,6 +60,7 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
     /// <param name="exception">The exception.</param>
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+        var originalException = exception;
         var handler = context.RequestServices.GetRequiredService<IExceptionHandler>();
         exception = handler.Handle(exception);
 
@@ -80,7 +81,7 @@ public class ExceptionHandlerMiddleware : MiddlewareBase
 
         context.RequestServices
             .GetRequiredService<ILogger<ExceptionHandlerMiddleware>>()
-            .LogError(exception, string.Empty);
+            .LogError(originalException, string.Empty);
     }
 
     /// <summary>
