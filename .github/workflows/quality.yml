@@ -31,13 +31,14 @@ jobs:
           dotnet build example/ExampleApp.sln --configuration Release --no-restore
           dotnet test example/ExampleApp.sln --configuration Release --no-build
       - name: Install and test the packed Paradigm CLI
+        timeout-minutes: 6
         shell: pwsh
         run: |
           $version = ([xml](Get-Content -Raw build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
           dotnet tool install --tool-path .paradigm/tools --add-source artifacts --no-cache Paradigm.Enterprise.Cli --version $version
           $env:PARADIGM_CLI_INTEGRATION_PACKAGE = (Resolve-Path "artifacts/Paradigm.Enterprise.Cli.$version.nupkg").Path
           $env:PARADIGM_CLI_INTEGRATION_EXECUTABLE = (Resolve-Path ".paradigm/tools/paradigm").Path
-          dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"
+          dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration" --logger "console;verbosity=normal"
       - name: Deterministic quality checks
         run: |
           .paradigm/tools/paradigm packages check --project src/Paradigm.Enterprise.slnx

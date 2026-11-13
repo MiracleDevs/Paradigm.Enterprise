@@ -78,7 +78,7 @@ fi
 
 export PARADIGM_CLI_INTEGRATION_PACKAGE="$ARTIFACTS_DIRECTORY/Paradigm.Enterprise.Cli.$VERSION.nupkg"
 export PARADIGM_CLI_INTEGRATION_EXECUTABLE="$PARADIGM"
-dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"
+dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration" --logger "console;verbosity=normal"
 
 step "Deterministic quality checks"
 "$PARADIGM" packages check --project src/Paradigm.Enterprise.slnx

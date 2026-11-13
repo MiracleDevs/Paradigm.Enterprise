@@ -150,17 +150,18 @@ public class PackedCliIntegrationTests
             foreach (var (name, value) in environment)
                 process.StartInfo.Environment[name] = value;
         process.Start();
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        var output = process.StandardOutput.ReadToEndAsync(timeout.Token);
+        var error = process.StandardError.ReadToEndAsync(timeout.Token);
         try
         {
-            await process.WaitForExitAsync(timeout.Token);
+            await Task.WhenAll(process.WaitForExitAsync(timeout.Token), output, error);
         }
         catch (OperationCanceledException)
         {
             if (!process.HasExited)
                 process.Kill(entireProcessTree: true);
+            Assert.Fail($"Timed out after 90 seconds running '{processName} {string.Join(' ', arguments)}'.{Environment.NewLine}stdout:{Environment.NewLine}{(output.IsCompletedSuccessfully ? output.Result : "<incomplete>")}{Environment.NewLine}stderr:{Environment.NewLine}{(error.IsCompletedSuccessfully ? error.Result : "<incomplete>")}");
             throw;
         }
 

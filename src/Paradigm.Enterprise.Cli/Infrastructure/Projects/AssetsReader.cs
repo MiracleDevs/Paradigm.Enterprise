@@ -1,6 +1,5 @@
-using System.Diagnostics;
+using Paradigm.Enterprise.Checks.CSharp;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -216,12 +215,12 @@ internal static partial class AssetsReader
     {
         try
         {
-            using var process = Process.Start(new ProcessStartInfo { FileName = "dotnet", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8, CreateNoWindow = true, ArgumentList = { "msbuild", project, "-nologo", "-getProperty:TargetPath", $"-property:TargetFramework={framework}", $"-property:Configuration={configuration}" } });
-            if (process is null)
-                return null;
-            var output = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit();
-            return process.ExitCode == 0 ? output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault() : null;
+            var output = MsBuildProcess.Run([project, "-getProperty:TargetPath", $"-property:TargetFramework={framework}", $"-property:Configuration={configuration}"]);
+            return output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+        }
+        catch (TimeoutException exception)
+        {
+            throw new AssetsException(exception.Message);
         }
         catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
         {

@@ -1,0 +1,21 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+developer_instructions = """
+Work in Paradigm.Enterprise, the reusable .NET framework and developer-tooling repository. Read .github/CONTRIBUTING.md and .agents/skills/paradigm-common-guidance/SKILL.md with applicable references before implementation or design. For reviews also read .github/copilot-instructions.md and .agents/skills/paradigm-review-change/SKILL.md. Use relevant rules under docs/rules and actual source, including documented framework/tooling and generated-code exceptions.
+
+The framework solution is src/Paradigm.Enterprise.slnx. Libraries, adapters, infrastructure services, CLI/checks/generator projects, Aspire packages, and tests are under src. The consuming example is example/ExampleApp.sln. Use README.md, docs/architecture.md, and the affected canonical documentation to locate ownership. Preserve the framework solution's existing layout; application-scaffolding guidance does not require reorganizing this repository.
+
+For explicitly requested multi-agent work, coordinate directly using .codex/agents/manager.toml. Select only the useful existing specialists: architect, dotnet_developer, dotnet_reviewer, and qa_analyst. Do not spawn another manager beneath the coordinator. Routine contained work stays with one editor. Respect configured concurrency and active runtime/tool limits.
+
+Preserve existing user changes and prefer a suitable current checkout. Leave changes uncommitted unless requested. Do not reset or switch the user's checkout, integrate commits, push, publish, or deploy outside the authorized scope. Use managed worktree tools when isolated worktrees are needed and authorized. Git isolation does not isolate ports, containers, volumes, or caches.
+
+Read supported target frameworks and dependencies from actual project files and src/Directory.Packages.props. Framework version metadata comes from build/Paradigm.Version.props. Do not import fixed versions or independently bump project versions. The local tool manifest provides DocFX; do not assume it installs the Paradigm CLI. For framework CLI verification use built source or a freshly packed and locally installed tool.
+
+Validate changed behavior with focused checks first. The fast suite is dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration". Use bash build/quality.sh for the complete workflow, including packed CLI integration and example validation. Report skipped tests and missing prerequisites explicitly; do not claim unexecuted checks passed.
+
+Architect and reviewer roles remain read-only: no edits, resource startup, or artifact-producing builds/tests. They request execution evidence through the coordinator. These are behavioral restrictions; custom agents inherit the parent's sandbox and approval policy.
+"""
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 5
