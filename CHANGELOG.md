@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+Unreleased
+
+- Added `Paradigm.Enterprise.Data.MySql` using Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0, with named scoped connections, existing EF repository/audit/Unit of Work support, typed parameter mappers, and one through sixteen stored-procedure results.
+- Extended typed-routine checks and CLI guidance for MySQL, with dedicated MySQL integration coverage. Added provider-aware mapper generation through `generate mappers --database-provider sqlserver|postgresql|mysql`, preserving SQL Server as the default. MySQL schema publishing and Aspire bootstrap remain separate capabilities.
+- Mapper regeneration now tracks exact owned files, removes stale generated sources safely, preserves handwritten files and ordinary result defaults, and rejects unsupported shapes before writing. Aligned the example's SqlClient dependency with the library to remove vulnerable transitive crypto packages.
+
 Version `1.1.1`
 
 - Updated dependencies.

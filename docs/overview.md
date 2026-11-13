@@ -14,7 +14,7 @@ This split is a library convention, not a claim that every endpoint needs a data
 
 ## Packages as building blocks
 
-The core dependency chain begins with `Interfaces`, continues through `Domain`, `Data`, and `Providers`, and ends at `WebApi`. SQL Server and PostgreSQL packages supply database-specific connection and stored-procedure support. Service packages for caching, email, blob storage, and tabular files can be adopted independently.
+The core dependency chain begins with `Interfaces`, continues through `Domain`, `Data`, and `Providers`, and ends at `WebApi`. SQL Server, PostgreSQL, and MySQL packages supply database-specific connection and stored-procedure support. Service packages for caching, email, blob storage, and tabular files can be adopted independently.
 
 Installing `Paradigm.Enterprise.WebApi` brings the main dependency chain transitively, but an application should still reference packages in the projects that use their types. See the [package matrix](reference/packages.md) for target frameworks and responsibilities.
 

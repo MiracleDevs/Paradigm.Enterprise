@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "suppressions": [
+    {
+      "code": "PE3105",
+      "location": "ResultStoredProcedureBase.cs",
+      "reason": "MDPE-12: explicit user request keeps all result arities together, matching SQL Server and PostgreSQL adapters.",
+      "expires": "2027-11-13"
+    }
+  ]
+}

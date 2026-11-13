@@ -1,58 +1,45 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Paradigm.Enterprise.CodeGenerator.Generators.SqlServer;
+using System.Collections;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 
 namespace Paradigm.Enterprise.CodeGenerator.Generators;
 
-internal class StoredProcedureMapperGenerator
+internal sealed class StoredProcedureMapperGenerator
 {
+    #region Nested Types
+
+    private sealed record RoutineContract(Type? Parameters, IReadOnlyList<Type> Results);
+
+    #endregion
+
+    #region Constants
+
+    private const string ReservedKeywords = "abstract as base bool break byte case catch char checked class const continue decimal default delegate do double else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal is lock long namespace new null object operator out override params private protected public readonly ref return sbyte sealed short sizeof stackalloc static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using virtual void volatile while";
+    private const string ManifestFileName = ".paradigm-mappers.json";
+
+    #endregion
+
     #region Fields
 
-    /// <summary>
-    /// The output path.
-    /// </summary>
-    /// <value>
-    /// The output path.
-    /// </value>
-    private string _outputPath;
-
-    /// <summary>
-    /// The data assembly path
-    /// </summary>
     private readonly string? _dataAssemblyPath;
-
-    /// <summary>
-    /// The data source output path.
-    /// </summary>
     private readonly string? _dataOutputPath;
-
-    /// <summary>
-    /// The project name
-    /// </summary>
     private readonly string? _projectName;
-
-    /// <summary>
-    /// The logger
-    /// </summary>
+    private readonly CodeGenerationDatabaseProvider _provider;
     private readonly ILogger _logger;
 
     #endregion
 
     #region Constructors
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="StoredProcedureMapperGenerator" /> class.
-    /// </summary>
-    /// <param name="configuration">The configuration.</param>
-    /// <param name="logger">The logger.</param>
     public StoredProcedureMapperGenerator(IConfiguration configuration, ILogger<StoredProcedureMapperGenerator> logger)
     {
-        _outputPath = string.Empty;
         _dataAssemblyPath = configuration.GetValue<string>("DataAssemblyPath");
         _dataOutputPath = configuration.GetValue<string>("DataOutputPath");
         _projectName = configuration.GetValue<string>("ProjectName");
+        _provider = configuration.GetValue("DatabaseProvider", CodeGenerationDatabaseProvider.SqlServer);
         _logger = logger;
     }
 
@@ -60,268 +47,352 @@ internal class StoredProcedureMapperGenerator
 
     #region Public Methods
 
-    /// <summary>
-    /// Generates the code.
-    /// </summary>
     public void GenerateCode()
     {
-        try
+        ArgumentException.ThrowIfNullOrWhiteSpace(_dataAssemblyPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(_dataOutputPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(_projectName);
+        if (!Enum.IsDefined(_provider))
+            throw new ArgumentOutOfRangeException(nameof(_provider), _provider, "Unknown database provider.");
+        if (!IsNamespace(_projectName))
+            throw new ArgumentException("ProjectName must be a valid C# namespace.");
+
+        var contracts = Assembly.LoadFrom(_dataAssemblyPath).GetTypes()
+            .Where(type => type.IsClass && !type.IsAbstract && !type.ContainsGenericParameters)
+            .OrderBy(type => type.FullName, StringComparer.Ordinal)
+            .Select(GetRoutineContract)
+            .OfType<RoutineContract>()
+            .ToArray();
+        var parameters = contracts.Select(contract => contract.Parameters)
+            .OfType<Type>().Where(type => type != typeof(object)).Distinct()
+            .OrderBy(type => type.FullName, StringComparer.Ordinal).ToArray();
+        var readers = new HashSet<Type>();
+        foreach (var result in contracts.SelectMany(contract => contract.Results))
         {
-            if (string.IsNullOrWhiteSpace(_dataAssemblyPath))
-                throw new ArgumentNullException("DataAssemblyPath");
-
-            if (string.IsNullOrWhiteSpace(_dataOutputPath))
-                throw new ArgumentNullException("DataOutputPath");
-
-            if (string.IsNullOrWhiteSpace(_projectName))
-                throw new ArgumentNullException("ProjectName");
-
-            _outputPath = Path.Combine(_dataOutputPath, "Mappers");
-
-            var storedProcedureTypes = Assembly.LoadFrom(_dataAssemblyPath).GetTypes().Where(IsStoredProcedureClass);
-            var dataReaderMappers = GenerateDataReaderMappers(storedProcedureTypes);
-            var sqlParameterMappers = GenerateSqlParameterMappers(storedProcedureTypes);
-
-            GenerateMappersRegisterer(dataReaderMappers, sqlParameterMappers);
+            if (typeof(IList).IsAssignableFrom(result))
+            {
+                if (!result.IsGenericType || result.GetGenericArguments().Length != 1 || result.IsAbstract || result.GetConstructor(Type.EmptyTypes) is null)
+                    throw new NotSupportedException($"Result collection '{result}' must be a constructible generic IList such as List<T>.");
+                readers.Add(result.GetGenericArguments()[0]);
+            }
+            else if (!result.IsPrimitive)
+                readers.Add(result);
         }
-        catch (Exception ex)
+
+        // Validate the complete output before touching files. Handwritten partials are never a cleanup boundary.
+        var sources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var parameter in parameters)
+            AddSource(sources, $"SqlParameters/{MapperName(parameter)}Mapper.cs",
+                ParameterMapperSourceGenerator.Generate(parameter, _projectName, _provider));
+        foreach (var reader in readers.OrderBy(type => type.FullName, StringComparer.Ordinal))
+            AddSource(sources, $"DataReaders/{MapperName(reader)}DataReaderMapper.cs", GenerateReader(reader));
+        AddSource(sources, "StoreProcedureMappersRegisterer.cs", GenerateRegistration(parameters, readers));
+
+        var output = Path.Combine(_dataOutputPath, "Mappers");
+        var previousFiles = ReadManifest(output);
+        var pathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+        var staleFiles = previousFiles.Except(sources.Keys, pathComparer).ToArray();
+        foreach (var source in sources)
         {
-            _logger.LogError(ex.Message);
-            throw;
+            var path = ValidatedOutputPath(output, source.Key);
+            if (File.Exists(path) && !File.ReadAllText(path).StartsWith("// <auto-generated/>", StringComparison.Ordinal))
+                throw new InvalidOperationException($"Refusing to overwrite handwritten mapper file '{path}'.");
         }
-        finally
+        foreach (var stale in staleFiles)
         {
-            _logger.LogInformation("Finished DataReader mappers generation.");
-            _logger.LogInformation("---------------------------------------------");
+            var path = ValidatedOutputPath(output, stale);
+            if (File.Exists(path) && !IsOwnedSource(File.ReadAllText(path)))
+                throw new InvalidOperationException($"Refusing to remove modified or handwritten mapper file '{path}'.");
         }
+        foreach (var source in sources.OrderBy(entry => entry.Key, StringComparer.Ordinal))
+            WriteAtomically(ValidatedOutputPath(output, source.Key), source.Value.ReplaceLineEndings("\r\n"));
+        foreach (var stale in staleFiles)
+            File.Delete(ValidatedOutputPath(output, stale));
+        WriteManifest(output, sources.Keys);
+        _logger.LogInformation("Generated {ParameterCount} {Provider} parameter mappers and {ReaderCount} reader mappers.", parameters.Length, _provider, readers.Count);
     }
 
     #endregion
 
     #region Private Methods
 
-    /// <summary>
-    /// Determines whether [is stored procedure class] [the specified type].
-    /// </summary>
-    /// <param name="type">The type.</param>
-    /// <returns>
-    ///   <c>true</c> if [is stored procedure class] [the specified type]; otherwise, <c>false</c>.
-    /// </returns>
-    private bool IsStoredProcedureClass(Type type) => type.IsClass && !type.IsAbstract && type.BaseType is not null &&
-        type.BaseType.Name.Contains("StoredProcedureBase");
-
-    /// <summary>
-    /// Generates the data reader mappers.
-    /// </summary>
-    /// <param name="storedProcedureTypes">The stored procedure types.</param>
-    /// <returns>The fully qualified result type names for which a data reader mapper was generated.</returns>
-    private List<string> GenerateDataReaderMappers(IEnumerable<Type> storedProcedureTypes)
+    internal static string TypeName(Type type)
     {
-        _logger.LogInformation("Starting DataReader mappers generation.");
+        if (type.IsNestedPrivate || type.IsNestedFamily || type.IsNestedFamANDAssem)
+            throw new NotSupportedException($"Type '{type}' is not accessible to generated mapper classes.");
+        if (type.IsNested && (type.IsGenericType || type.DeclaringType?.IsGenericType == true))
+            throw new NotSupportedException($"Nested generic type '{type}' requires an explicit mapper.");
+        if (type.IsArray)
+            return TypeName(type.GetElementType()!) + "[]";
+        if (type.IsGenericType)
+            return "global::" + QualifiedName(type.GetGenericTypeDefinition().FullName!.Split('`')[0]) +
+                "<" + string.Join(", ", type.GetGenericArguments().Select(TypeName)) + ">";
+        return "global::" + QualifiedName(type.FullName ?? throw new NotSupportedException($"Type '{type}' has no usable name."));
+    }
 
-        var mappersOutputPath = Path.Combine(_outputPath, "DataReaders");
+    internal static string GeneratedAttribute() =>
+        $"[global::System.CodeDom.Compiler.GeneratedCode(\"Paradigm.Enterprise.CodeGenerator\", \"{typeof(StoredProcedureMapperGenerator).Assembly.GetName().Version}\")]";
 
-        if (!Directory.Exists(mappersOutputPath))
+    private RoutineContract? GetRoutineContract(Type type)
+    {
+        for (var candidate = type.BaseType; candidate is not null; candidate = candidate.BaseType)
         {
-            var directory = Directory.CreateDirectory(mappersOutputPath);
-            _logger.LogInformation($"Created directory '{directory.FullName}'.");
+            if (candidate.Namespace != ProviderNamespace(_provider))
+                continue;
+            var name = candidate.Name.Split('`')[0];
+            if (name is not ("StoredProcedureBase" or "ResultStoredProcedureBase"))
+                continue;
+            var arguments = candidate.IsGenericType ? candidate.GetGenericArguments() : [];
+            return new(arguments.FirstOrDefault(), name == "ResultStoredProcedureBase" ? arguments.Skip(1).ToArray() : []);
+        }
+        return null;
+    }
+
+    private string GenerateReader(Type type)
+    {
+        var target = TypeName(type);
+        var scalar = ReaderExpression(type, "reader.GetName(0)");
+        string body;
+        if (scalar is not null)
+            body = $"        return ((object?)(reader.IsDBNull(0) ? default({target}) : {scalar}))!;";
+        else
+        {
+            if (!type.IsClass || type.IsAbstract || type.ContainsGenericParameters || type.GetConstructor(Type.EmptyTypes) is null)
+                throw new NotSupportedException($"Result '{type}' needs an explicit reader mapper or an accessible parameterless constructor.");
+            var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(property => property.GetIndexParameters().Length == 0 && property.SetMethod?.IsPublic == true)
+                .OrderBy(property => property.Name, StringComparer.Ordinal).ToArray();
+            if (properties.Length == 0)
+                throw new NotSupportedException($"Result '{type}' has no public writable properties. Provide a custom mapper.");
+            var constructorSetsRequiredMembers = type.GetConstructor(Type.EmptyTypes)!.GetCustomAttributesData()
+                .Any(attribute => attribute.AttributeType.FullName == "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute");
+            if (!constructorSetsRequiredMembers && type.GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Any(member => IsRequired(member) &&
+                    !properties.Any(property => property.Equals(member))))
+                throw new NotSupportedException($"Result '{type}' has required members not covered by its writable properties. Provide a custom mapper.");
+            var expressions = new Dictionary<PropertyInfo, string>();
+            foreach (var property in properties)
+            {
+                var field = $"nameof({target}.@{property.Name})";
+                expressions[property] = ReaderExpression(property.PropertyType, field) ??
+                    throw new NotSupportedException($"Result property '{type}.{property.Name}' requires an explicit reader mapper.");
+            }
+            var initialized = properties.Where(property => IsInitOnly(property) || (!constructorSetsRequiredMembers && IsRequired(property))).ToHashSet();
+            var assignments = new StringBuilder();
+            assignments.AppendLine("        LoadReaderFields(reader);");
+            if (initialized.Count == 0)
+                assignments.AppendLine($"        var instance = new {target}();");
+            else
+            {
+                assignments.AppendLine($"        var instance = new {target}");
+                assignments.AppendLine("        {");
+                foreach (var property in properties.Where(initialized.Contains))
+                    assignments.AppendLine($"            @{property.Name} = FieldIsValid(reader, nameof({target}.@{property.Name})) ? {expressions[property]} : default({TypeName(property.PropertyType)})!,");
+                assignments.AppendLine("        };");
+            }
+            foreach (var property in properties.Where(property => !initialized.Contains(property)))
+                assignments.AppendLine($"        if (FieldIsValid(reader, nameof({target}.@{property.Name}))) instance.@{property.Name} = {expressions[property]};");
+            assignments.Append("        return instance;");
+            body = assignments.ToString();
         }
 
-        var generatedTypes = new List<string>();
+        return $$"""
+            // <auto-generated/>
+            #nullable enable
+            using Paradigm.Enterprise.Data.StoredProcedures.Mappers;
+            using System.Data;
 
-        foreach (var storedProcedure in storedProcedureTypes)
-        {
-            var baseType = storedProcedure.BaseType;
-            if (baseType is not null && baseType.IsGenericType)
+            namespace {{_projectName}}.Data.Mappers.DataReaders;
+
+            {{GeneratedAttribute()}}
+            internal partial class {{MapperName(type)}}DataReaderMapper : DataReaderMapperBase
             {
-                var genericArguments = baseType.GetGenericArguments()?
-                    .Where(x => x.IsClass && !x.Name.EndsWith("parameters", StringComparison.OrdinalIgnoreCase)).ToArray();
-
-                if (genericArguments is null) continue;
-
-                foreach (var genericArgument in genericArguments)
+                public override object Map(IDataReader reader)
                 {
-                    var targetType = genericArgument;
-                    if (genericArgument.IsGenericType)
-                        if (genericArgument.GetGenericTypeDefinition() == typeof(Nullable<>))
-                            targetType = Nullable.GetUnderlyingType(genericArgument);
-                        else
-                            targetType = genericArgument.GetGenericArguments().First();
-
-                    if (string.IsNullOrWhiteSpace(targetType?.FullName) || generatedTypes.Contains(targetType.FullName))
-                        continue;
-
-                    var mapperClassName = $"{targetType.Name}DataReaderMapper";
-                    var propertyAssignments = new StringBuilder();
-
-                    foreach (var property in targetType.GetProperties())
-                        GenerateDataReaderMapperPropertyAssignments(propertyAssignments, property, targetType.Name);
-
-                    var sourceCode = $@"// <auto-generated/>
-using {_projectName}.Data.Core.StoredProcedures.Mappers;
-using {targetType.Namespace};
-using System.Data;
-
-namespace {_projectName}.Data.Mappers.DataReaders;
-
-internal partial class {mapperClassName} : DataReaderMapperBase
-{{
-    public override object Map(IDataReader reader)
-    {{
-        LoadReaderFields(reader);
-
-        var instance = new {targetType.Name}();
-{propertyAssignments}
-        return instance;
-    }}
-}}";
-
-                    var fileName = $"{mapperClassName}.cs";
-                    File.WriteAllText(Path.Combine(mappersOutputPath, fileName), sourceCode);
-                    generatedTypes.Add(targetType.FullName);
-                    _logger.LogInformation($"Generated '{fileName}'.");
+            {{body}}
                 }
             }
-        }
-
-        return generatedTypes;
+            """;
     }
 
-    /// <summary>
-    /// Generates the data reader mapper property assignments.
-    /// </summary>
-    /// <param name="propertyAssignments">The property assignments.</param>
-    /// <param name="property">The property.</param>
-    /// <param name="targetTypeName">Name of the target type.</param>
-    /// <exception cref="InvalidOperationException">Couldn't resolve property assignment for type {propertyType.Name}</exception>
-    private void GenerateDataReaderMapperPropertyAssignments(StringBuilder propertyAssignments, PropertyInfo property, string targetTypeName)
+    private string? ReaderExpression(Type type, string field)
     {
-        var propertyName = property.Name;
-        var propertyType = property.PropertyType;
-
-        if (propertyType.IsGenericType)
-            if (propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                propertyType = Nullable.GetUnderlyingType(propertyType);
-            else
-                return;
-
-        if (propertyType is null ||
-            propertyType.Name.EndsWith("view", StringComparison.OrdinalIgnoreCase) ||
-            propertyType.Name.EndsWith("dto", StringComparison.OrdinalIgnoreCase))
-            return;
-
-        var getValueMethod = propertyType switch
+        var value = Nullable.GetUnderlyingType(type) ?? type;
+        if (_provider == CodeGenerationDatabaseProvider.MySql && value == typeof(DateTimeOffset))
+            throw new NotSupportedException("MySQL DateTimeOffset results require an explicit offset/UTC reader mapping.");
+        if (value.IsEnum)
         {
-            Type t when t == typeof(int) => "GetInt32",
-            Type t when t == typeof(string) => "GetString",
-            Type t when t == typeof(DateTime) => "GetDateTime",
-            Type t when t == typeof(DateTimeOffset) => "GetDateTimeOffset",
-            Type t when t == typeof(bool) => "GetBoolean",
-            Type t when t == typeof(double) => "GetDouble",
-            Type t when t == typeof(float) => "GetFloat",
-            Type t when t == typeof(long) => "GetInt64",
-            Type t when t == typeof(short) => "GetInt16",
-            Type t when t == typeof(char) => "GetChar",
-            Type t when t == typeof(decimal) => "GetDecimal",
-            Type t when t == typeof(byte) => "GetByte",
-            Type t when t == typeof(byte[]) => "GetBytes",
-            _ => null
+            var underlying = ReaderExpression(Enum.GetUnderlyingType(value), field);
+            return underlying is null ? null : $"({TypeName(value)}){underlying}";
+        }
+        var method = value == typeof(string) ? "GetString" :
+            value == typeof(int) ? "GetInt32" : value == typeof(long) ? "GetInt64" :
+            value == typeof(short) ? "GetInt16" : value == typeof(byte) ? "GetByte" :
+            value == typeof(bool) ? "GetBoolean" : value == typeof(decimal) ? "GetDecimal" :
+            value == typeof(double) ? "GetDouble" : value == typeof(float) ? "GetFloat" :
+            value == typeof(char) ? "GetChar" : value == typeof(Guid) ? "GetGuid" :
+            value == typeof(DateTime) ? "GetDateTime" : value == typeof(DateTimeOffset) ? "GetDateTimeOffset" :
+            value == typeof(byte[]) ? "GetBytes" : null;
+        return method is null ? null : $"{method}(reader, {field})";
+    }
+
+    private string GenerateRegistration(IReadOnlyList<Type> parameters, IEnumerable<Type> readers)
+    {
+        var body = new StringBuilder();
+        foreach (var reader in readers.OrderBy(type => type.FullName, StringComparer.Ordinal))
+            body.AppendLine($"        global::Paradigm.Enterprise.Data.StoredProcedures.Mappers.DataReaderMapperFactory.RegisterMapper<{TypeName(reader)}>(() => new global::{_projectName}.Data.Mappers.DataReaders.{MapperName(reader)}DataReaderMapper());");
+        var factory = _provider switch
+        {
+            CodeGenerationDatabaseProvider.SqlServer => "SqlParameterMapperFactory",
+            CodeGenerationDatabaseProvider.PostgreSql => "NpgsqlParameterMapperFactory",
+            CodeGenerationDatabaseProvider.MySql => "MySqlParameterMapperFactory",
+            _ => throw new ArgumentOutOfRangeException(nameof(_provider))
         };
+        foreach (var parameter in parameters)
+            body.AppendLine($"        global::{ProviderNamespace(_provider)}.{factory}.RegisterMapper<{TypeName(parameter)}>(() => new global::{_projectName}.Data.Mappers.SqlParameters.{MapperName(parameter)}Mapper());");
+        return $$"""
+            // <auto-generated/>
+            #nullable enable
+            namespace {{_projectName}}.Data.Mappers;
 
-        if (getValueMethod is null)
-            throw new InvalidOperationException($"Couldn't resolve property assignment for type {propertyType.Name}");
-
-        var propertyAssignment = $"instance.{propertyName} = {getValueMethod}(reader, nameof({targetTypeName}.{propertyName}));";
-        propertyAssignments.AppendLine($"        if (FieldIsValid(reader, nameof({targetTypeName}.{propertyName}))) {propertyAssignment}");
-    }
-
-    /// <summary>
-    /// Generates the SQL parameter mappers.
-    /// </summary>
-    /// <param name="storedProcedureTypes">The stored procedure types.</param>
-    /// <returns>The fully qualified parameter type names for which a SQL parameter mapper was generated.</returns>
-    private List<string> GenerateSqlParameterMappers(IEnumerable<Type> storedProcedureTypes)
-    {
-        _logger.LogInformation("Starting SqlParameter mappers generation.");
-
-        var mappersOutputPath = Path.Combine(_outputPath, "SqlParameters");
-
-        if (!Directory.Exists(mappersOutputPath))
-        {
-            var directory = Directory.CreateDirectory(mappersOutputPath);
-            _logger.LogInformation($"Created directory '{directory.FullName}'.");
-        }
-
-        var generatedTypes = new List<string>();
-        var parameterMapperGenerator = new SqlServerParameterMapperGenerator(mappersOutputPath, _projectName, _logger); // TODO: remove hardcoded generator and use config
-
-        foreach (var storedProcedure in storedProcedureTypes)
-        {
-            var baseType = storedProcedure.BaseType;
-            if (baseType is not null && baseType.IsGenericType)
+            /// <summary>Registers this application's generated stored-procedure mappers.</summary>
+            {{GeneratedAttribute()}}
+            public static class StoreProcedureMappersRegisterer
             {
-                var genericArguments = baseType.GetGenericArguments()?
-                    .Where(x => x.IsClass && x.Name.EndsWith("parameters", StringComparison.OrdinalIgnoreCase)).ToArray();
-
-                if (genericArguments is null) continue;
-
-                parameterMapperGenerator.GenerateMapperCode(genericArguments, generatedTypes);
+                /// <summary>Registers factories for the generated parameter and reader mappers.</summary>
+                public static void RegisterMappers()
+                {
+            {{body.ToString().TrimEnd()}}
+                }
             }
-        }
-
-        return generatedTypes;
+            """;
     }
 
-    /// <summary>
-    /// Generates the mappers registerer.
-    /// </summary>
-    /// <param name="dataReaderMappers">The data reader mappers.</param>
-    /// <param name="sqlParameterMappers">The SQL parameter mappers.</param>
-    private void GenerateMappersRegisterer(List<string> dataReaderMappers, List<string> sqlParameterMappers)
+    private static void AddSource(IDictionary<string, string> sources, string path, string source)
     {
-        var registerDataReaderMappers = new StringBuilder();
-        var registerSqlParameterMappers = new StringBuilder();
+        if (!sources.TryAdd(path, source))
+            throw new InvalidOperationException($"Several types map to generated file '{path}'. Use distinct type names or custom mappers.");
+    }
 
-        foreach (var generatedType in dataReaderMappers)
+    private static string ProviderNamespace(CodeGenerationDatabaseProvider provider) =>
+        $"Paradigm.Enterprise.Data.{provider}.StoredProcedures";
+
+    private static string MapperName(Type type) => Nullable.GetUnderlyingType(type) is { } nullable
+        ? MapperName(nullable) + "Nullable"
+        : type.IsArray ? MapperName(type.GetElementType()!) + "Array" : type.Name.Split('`')[0];
+
+    private static bool IsNamespace(string value) => value.Split('.').All(part =>
+        part.Length > 0 && (char.IsLetter(part[0]) || part[0] == '_') &&
+        part.All(character => char.IsLetterOrDigit(character) || character == '_') &&
+        !ReservedKeywords.Split(' ').Contains(part, StringComparer.Ordinal));
+
+    private static bool IsRequired(MemberInfo member) => member.GetCustomAttributesData()
+        .Any(attribute => attribute.AttributeType.FullName == "System.Runtime.CompilerServices.RequiredMemberAttribute");
+
+    private static bool IsInitOnly(PropertyInfo property) => property.SetMethod!.ReturnParameter.GetRequiredCustomModifiers()
+        .Any(modifier => modifier.FullName == "System.Runtime.CompilerServices.IsExternalInit");
+
+    private static string QualifiedName(string name) => string.Join(".", name.Replace('+', '.').Split('.').Select(part =>
+    {
+        if (part.Length == 0 || !(char.IsLetter(part[0]) || part[0] == '_') || !part.All(character => char.IsLetterOrDigit(character) || character == '_'))
+            throw new NotSupportedException($"Type name '{name}' cannot be expressed as a supported C# identifier.");
+        return ReservedKeywords.Split(' ').Contains(part, StringComparer.Ordinal) ? "@" + part : part;
+    }));
+
+    private static IReadOnlyList<string> ReadManifest(string output)
+    {
+        var manifest = Path.Combine(output, ManifestFileName);
+        EnsureNoLinkedEntries(output, manifest);
+        if (!File.Exists(manifest))
+            return [];
+        try
         {
-            var className = generatedType.Substring(generatedType.LastIndexOf('.') + 1);
-            registerDataReaderMappers.AppendLine($"        DataReaderMapperFactory.RegisterMapper<{generatedType.Replace($"{_projectName}.", string.Empty)}>(() => new {className}DataReaderMapper());");
+            using var document = JsonDocument.Parse(File.ReadAllText(manifest));
+            var root = document.RootElement;
+            if (!root.TryGetProperty("schemaVersion", out var schema) || schema.ValueKind != JsonValueKind.String || schema.GetString() != "1.0" ||
+                !root.TryGetProperty("files", out var files) || files.ValueKind != JsonValueKind.Array)
+                throw new InvalidOperationException("The mapper manifest requires schemaVersion '1.0' and a files array.");
+            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in files.EnumerateArray())
+            {
+                if (entry.ValueKind != JsonValueKind.String || entry.GetString() is not { } path || !paths.Add(path))
+                    throw new InvalidOperationException("The mapper manifest contains an invalid or duplicate path.");
+                ValidatedOutputPath(output, path);
+            }
+            return paths.Order(StringComparer.Ordinal).ToArray();
         }
-
-        foreach (var generatedType in sqlParameterMappers)
+        catch (JsonException exception)
         {
-            var className = generatedType.Substring(generatedType.LastIndexOf('.') + 1);
-            registerSqlParameterMappers.AppendLine($"        SqlParameterMapperFactory.RegisterMapper<{generatedType.Replace($"{_projectName}.", string.Empty)}>(() => new {className}Mapper());");
+            throw new InvalidOperationException("The mapper manifest is not valid JSON.", exception);
         }
+    }
 
-        var sourceCode = $@"// <auto-generated/>
-using {_projectName}.Data.Core.StoredProcedures;
-using {_projectName}.Data.Mappers.DataReaders;
-using {_projectName}.Data.Mappers.SqlParameters;
+    private static string ValidatedOutputPath(string output, string relative)
+    {
+        if (string.IsNullOrWhiteSpace(relative) || Path.IsPathRooted(relative) || relative.Contains('\\') || relative.Contains(':') ||
+            !relative.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) || relative.Split('/').Any(part => part is "" or "." or ".."))
+            throw new InvalidOperationException($"Invalid mapper manifest path '{relative}'.");
+        var root = Path.GetFullPath(output);
+        var path = Path.GetFullPath(Path.Combine(root, relative));
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        if (!path.StartsWith(root + Path.DirectorySeparatorChar, comparison))
+            throw new InvalidOperationException($"Mapper path '{relative}' escapes the output directory.");
+        EnsureNoLinkedEntries(root, path);
+        return path;
+    }
 
-namespace {_projectName}.Data.Mappers;
+    private static void EnsureNoLinkedEntries(string output, string path)
+    {
+        var root = Path.GetFullPath(output);
+        var current = Path.GetFullPath(path);
+        while (true)
+        {
+            try
+            {
+                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                    throw new InvalidOperationException($"Linked mapper output path '{current}' is not supported.");
+            }
+            catch (FileNotFoundException) { }
+            catch (DirectoryNotFoundException) { }
+            if (current.Equals(root, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                break;
+            current = Path.GetDirectoryName(current) ?? throw new InvalidOperationException("Invalid mapper output path.");
+        }
+    }
 
-public static class StoreProcedureMappersRegisterer
-{{
-    public static void RegisterMappers()
-    {{
-        RegisterDataReaderMappers();
-        RegisterSqlParameterMappers();
-    }}
+    private static bool IsOwnedSource(string source) => source.StartsWith("// <auto-generated/>", StringComparison.Ordinal) &&
+        source.Contains("[global::System.CodeDom.Compiler.GeneratedCode(\"Paradigm.Enterprise.CodeGenerator\",", StringComparison.Ordinal);
 
-    private static void RegisterDataReaderMappers()
-    {{
-{registerDataReaderMappers}
-    }}
+    private static void WriteManifest(string output, IEnumerable<string> files)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("schemaVersion", "1.0");
+            writer.WriteStartArray("files");
+            foreach (var file in files.Order(StringComparer.Ordinal))
+                writer.WriteStringValue(file);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+        WriteAtomically(Path.Combine(output, ManifestFileName), Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\r\n"));
+    }
 
-    private static void RegisterSqlParameterMappers()
-    {{
-{registerSqlParameterMappers}
-    }}
-}}";
-
-        File.WriteAllText(Path.Combine(_outputPath, "StoreProcedureMappersRegisterer.cs"), sourceCode);
-        _logger.LogInformation($"Generated StoreProcedureMappersRegisterer class with {dataReaderMappers.Count} DataReaderMappers and {sqlParameterMappers.Count} SqlParameterMappers.");
+    private static void WriteAtomically(string path, string source)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var temporary = path + ".tmp." + Guid.NewGuid().ToString("N");
+        try
+        {
+            File.WriteAllText(temporary, source, new UTF8Encoding(false));
+            File.Move(temporary, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporary))
+                File.Delete(temporary);
+        }
     }
 
     #endregion

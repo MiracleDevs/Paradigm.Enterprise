@@ -1,4 +1,5 @@
 using Paradigm.Enterprise.CodeGenerator;
+using System.Reflection;
 
 namespace Paradigm.Enterprise.Cli;
 
@@ -22,10 +23,10 @@ internal sealed class GenerateCommandHandler(string route, CodeGenerationMode mo
     {
         try
         {
-            var result = await CodeGenerationService.GenerateAsync(new(_mode, options.ProjectName, options.AssemblyPath, options.OutputPath, options.Document, options.SettingsPath), cancellationToken);
+            var result = await CodeGenerationService.GenerateAsync(new(_mode, options.ProjectName, options.AssemblyPath, options.OutputPath, options.Document, options.SettingsPath, options.DatabaseProvider), cancellationToken);
             return ResponseFactory.Create(Route, [], [new("generated-source", result.Mode, result.OutputPath)], []);
         }
-        catch (Exception exception) when (exception is ArgumentException or IOException or InvalidOperationException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is ArgumentException or IOException or InvalidOperationException or UnauthorizedAccessException or NotSupportedException or ReflectionTypeLoadException)
         {
             return ResponseFactory.Create(Route, [], [], [new("PE8001", "error", exception.Message, options.OutputPath)]);
         }

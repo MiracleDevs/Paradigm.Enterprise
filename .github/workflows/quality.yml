@@ -9,6 +9,34 @@ permissions:
   contents: read
 
 jobs:
+  mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902
+        env:
+          MYSQL_ROOT_PASSWORD: mdpe12-ci-fixture
+          MYSQL_ROOT_HOST: '%'
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --silent"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Test Oracle MySQL adapter against InnoDB
+        env:
+          PARADIGM_MYSQL_TEST_CONNECTION_STRING: Server=127.0.0.1;Port=${{ job.services.mysql.ports['3306'] }};User ID=root;Password=mdpe12-ci-fixture;SslMode=Disabled;AllowPublicKeyRetrieval=True
+        run: >-
+          dotnet test src/Paradigm.Enterprise.Data.MySql.Tests/Paradigm.Enterprise.Data.MySql.Tests.csproj
+          --configuration Release --filter "TestCategory=Integration"
+          --logger "console;verbosity=normal"
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +50,7 @@ jobs:
           dotnet restore src/Paradigm.Enterprise.slnx
       - name: Build and test source
         run: |
-          dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore
+          dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore --property:CopyLocalLockFileAssemblies=true
           dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --filter "TestCategory!=Integration"
       - name: Pack current release and build example
         run: |
@@ -49,6 +77,7 @@ jobs:
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
+          .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Data.MySql/Paradigm.Enterprise.Data.MySql.csproj
           .paradigm/tools/paradigm validate --project example/ExampleApp.sln
           .paradigm/tools/paradigm checks run --project example/ExampleApp.sln
           pwsh build/verify-version.ps1

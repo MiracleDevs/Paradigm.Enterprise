@@ -95,6 +95,8 @@ Package routes are `packages check` and `packages audit`. Check reads restored a
 
 Generation routes are `generate json`, `generate mappers`, and `generate client`. JSON and mapper generation require `--project-name`, a built DLL through `--assembly`, and `--output`. Client generation requires a trusted OpenAPI URL through `--document` and an output directory. Every generation route accepts `--settings` for a reviewed settings replacement. Generation writes files and returns `PE8001` for a reviewed operational failure.
 
+`generate mappers` also accepts `--database-provider sqlserver|postgresql|mysql`, defaulting to SQL Server. Provider selection reaches the embedded generator through its typed request; it must not alter JSON/client generation. Verify generated C# by compiling and exercising the mappings, and test repeat runs, owned-file manifest cleanup, handwritten-file preservation, and the installed tool artifact.
+
 Project-aware routes accept `--project`; all except `doctor` may accept `--framework`. API routes alone accept `--package`, and search alone accepts `--limit`. Checks and package routes that apply policy accept `--config`. All operational routes accept `--format text|json`. The complete user-facing syntax is maintained in [the CLI command reference](../cli.md), and `CommandLineTests.Command_reference_contains_every_current_usage_signature` prevents a command signature from being added to runtime help without also appearing there.
 
 ## Project and trust boundaries

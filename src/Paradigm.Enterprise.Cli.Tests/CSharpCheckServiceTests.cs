@@ -9,6 +9,7 @@ public class CSharpCheckServiceTests
     #region Fields
 
     private static readonly Lazy<IReadOnlyList<CSharpCheckDiagnostic>> goodPracticesDiagnostics = new(() => CSharpCheckService.Analyze(new(FixtureProject("GoodPractices", "GoodPractices.csproj"), "net10.0")));
+    private static readonly Lazy<IReadOnlyList<CSharpCheckDiagnostic>> semanticDiagnostics = new(() => CSharpCheckService.Analyze(new(FixtureProject("SemanticViolations", "SemanticViolations.csproj"), "net10.0")));
 
     #endregion
 
@@ -41,10 +42,29 @@ public class CSharpCheckServiceTests
     [TestMethod]
     public void Existing_semantic_rules_remain_built_in()
     {
-        var project = FixtureProject("SemanticViolations", "SemanticViolations.csproj");
-        var diagnostics = CSharpCheckService.Analyze(new(project, "net10.0"));
+        var diagnostics = semanticDiagnostics.Value;
         Assert.IsTrue(diagnostics.Any(diagnostic => diagnostic.Code == "PE3103"));
         Assert.IsTrue(diagnostics.Any(diagnostic => diagnostic.Code == "PE3104"));
+    }
+
+    [TestMethod]
+    public void MySql_routine_boundary_is_recognized_without_exempting_mixed_ef_pagination()
+    {
+        var diagnostics = semanticDiagnostics.Value
+            .Where(diagnostic => diagnostic.Code == "PE3103" &&
+                                 diagnostic.Message.Contains("MySqlOrderRepository.", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.HasCount(3, diagnostics);
+        foreach (var method in new[] { "SearchMixedTypedProcedureAndEf", "SearchMixedCommandProcedureAndEf" })
+        {
+            var diagnostic = diagnostics.Single(item => item.Message.Contains($".{method} ", StringComparison.Ordinal));
+            StringAssert.Contains(diagnostic.Message, "Calling a stored procedure elsewhere");
+        }
+
+        var lookalike = diagnostics.Single(item => item.Message.Contains(".SearchLookalikeProcedureAndEf ", StringComparison.Ordinal));
+        StringAssert.Contains(lookalike.Message, "Use a stored-procedure repository boundary");
+        Assert.IsFalse(diagnostics.Any(item => item.Message.Contains(".SearchTypedProcedure ", StringComparison.Ordinal)));
     }
 
     #endregion

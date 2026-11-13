@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Paradigm.Enterprise.Data.MySql/Paradigm.Enterprise.Data.MySql.csproj" />
+    <ProjectReference Include="../../../Paradigm.Enterprise.Data.SqlServer/Paradigm.Enterprise.Data.SqlServer.csproj" />
+    <ProjectReference Include="../../../Paradigm.Enterprise.Data.PostgreSql/Paradigm.Enterprise.Data.PostgreSql.csproj" />
+  </ItemGroup>
+</Project>

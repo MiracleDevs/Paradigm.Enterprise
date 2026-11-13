@@ -56,6 +56,46 @@ public class CommandLineTests
         Assert.IsFalse(CommandLine.TryParse(["generate", "client", "--output", "generated"], out _, out _));
         Assert.IsTrue(CommandLine.TryParse(["generate", "mappers", "--project-name", "Sample", "--assembly", "Sample.Data.dll", "--output", "generated"], out var command, out _));
         Assert.IsInstanceOfType<GenerateOptions>(command!.Options);
+        Assert.AreEqual(Paradigm.Enterprise.CodeGenerator.CodeGenerationDatabaseProvider.SqlServer, ((GenerateOptions)command.Options).DatabaseProvider);
+    }
+
+    [TestMethod]
+    [DataRow("sqlserver", "SqlServer")]
+    [DataRow("postgresql", "PostgreSql")]
+    [DataRow("MySQL", "MySql")]
+    public void Mapper_generation_selects_a_supported_database_provider(string provider, string expected)
+    {
+        Assert.IsTrue(CommandLine.TryParse(
+            ["generate", "mappers", "--project-name", "Sample", "--assembly", "Sample.Data.dll", "--output", "generated", "--database-provider", provider],
+            out var command, out var error), error);
+
+        Assert.AreEqual(expected, ((GenerateOptions)command!.Options).DatabaseProvider.ToString());
+    }
+
+    [TestMethod]
+    [DataRow("unknown")]
+    [DataRow("0")]
+    [DataRow("sqlserver,postgresql")]
+    [DataRow("")]
+    public void Mapper_generation_rejects_unsupported_database_providers(string provider)
+    {
+        Assert.IsFalse(CommandLine.TryParse(
+            ["generate", "mappers", "--project-name", "Sample", "--assembly", "Sample.Data.dll", "--output", "generated", "--database-provider", provider],
+            out _, out var error));
+
+        StringAssert.Contains(error!, "--database-provider must be");
+    }
+
+    [TestMethod]
+    [DataRow("json")]
+    [DataRow("client")]
+    public void Database_provider_option_is_restricted_to_mapper_generation(string mode)
+    {
+        Assert.IsFalse(CommandLine.TryParse(
+            ["generate", mode, "--output", "generated", "--database-provider", "mysql"],
+            out _, out var error));
+
+        StringAssert.Contains(error!, $"not valid for 'generate {mode}'");
     }
 
     [TestMethod]

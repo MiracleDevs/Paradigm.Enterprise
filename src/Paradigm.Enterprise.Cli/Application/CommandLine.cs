@@ -1,3 +1,5 @@
+using Paradigm.Enterprise.CodeGenerator;
+
 namespace Paradigm.Enterprise.Cli;
 
 internal static class CommandLine
@@ -17,7 +19,7 @@ internal static class CommandLine
           paradigm checks list [--format text|json]
           paradigm checks run [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
           paradigm generate json --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
-          paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
+          paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--database-provider sqlserver|postgresql|mysql] [--settings <json>] [--format text|json]
           paradigm generate client --document <url> --output <directory> [--settings <json>] [--format text|json]
           paradigm packages check [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
           paradigm packages audit [--project <path>] [--framework <tfm>] [--config <path>] [--warnings-as-errors] [--format text|json]
@@ -93,6 +95,7 @@ internal static class CommandLine
         string? outputPath = null;
         string? document = null;
         string? settingsPath = null;
+        var databaseProvider = CodeGenerationDatabaseProvider.SqlServer;
         var limit = 20;
         var format = OutputFormat.Text;
         var warningsAsErrors = false;
@@ -150,6 +153,17 @@ internal static class CommandLine
                 case "--settings" when name.StartsWith("generate ", StringComparison.Ordinal):
                     settingsPath = value;
                     break;
+                case "--database-provider" when name == "generate mappers":
+                    databaseProvider = value.ToLowerInvariant() switch
+                    {
+                        "sqlserver" => CodeGenerationDatabaseProvider.SqlServer,
+                        "postgresql" => CodeGenerationDatabaseProvider.PostgreSql,
+                        "mysql" => CodeGenerationDatabaseProvider.MySql,
+                        _ => (CodeGenerationDatabaseProvider)(-1)
+                    };
+                    if (!Enum.IsDefined(databaseProvider))
+                        return Fail("--database-provider must be sqlserver, postgresql, or mysql.", out error);
+                    break;
                 default:
                     return Fail($"Option '{option}' is not valid for '{name}'.", out error);
             }
@@ -175,7 +189,7 @@ internal static class CommandLine
             "validate" => new ValidateOptions(project, framework, format),
             "checks list" => new ChecksListOptions(format),
             "checks run" => new ChecksRunOptions(project, framework, config, format),
-            "generate json" or "generate mappers" or "generate client" => new GenerateOptions(name["generate ".Length..], projectName, assemblyPath, outputPath!, document, settingsPath, format),
+            "generate json" or "generate mappers" or "generate client" => new GenerateOptions(name["generate ".Length..], projectName, assemblyPath, outputPath!, document, settingsPath, format, databaseProvider),
             "packages check" => new PackagesCheckOptions(project, framework, config, format),
             "packages audit" => new PackagesAuditOptions(project, framework, config, warningsAsErrors, format),
             _ => throw new InvalidOperationException($"No options model is registered for '{name}'.")

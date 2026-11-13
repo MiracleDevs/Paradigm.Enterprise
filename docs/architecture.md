@@ -48,7 +48,7 @@ The library supplies mechanics rather than a finished domain model. Meaningful l
 
 Repositories isolate Entity Framework operations. `ReadRepositoryBase` supplies common reads and delegates paginated search to a protected function. `EditRepositoryBase` supplies add, update, and delete behavior. `RepositoryBase` resolves its context and registers that context with the current Unit of Work.
 
-The SQL Server and PostgreSQL packages add connection providers and stored-procedure support. They do not change the layer boundaries.
+The SQL Server, PostgreSQL, and MySQL packages add connection providers and stored-procedure support. They do not change the layer boundaries.
 
 ## Services
 

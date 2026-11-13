@@ -34,7 +34,7 @@ The site is served at `http://localhost:8080`. Pass a different port as the firs
 | Area | Packages |
 | --- | --- |
 | Application stack | `Paradigm.Enterprise.Interfaces`, `Domain`, `Data`, `Providers`, `WebApi` |
-| Databases | `Paradigm.Enterprise.Data.SqlServer`, `Data.PostgreSql` |
+| Databases | `Paradigm.Enterprise.Data.SqlServer`, `Data.PostgreSql`, `Data.MySql` |
 | Infrastructure | `Paradigm.Enterprise.Services.Cache`, `Email`, `BlobStorage`, `TableReader` |
 | Tooling | `Paradigm.Enterprise.Cli` |
 

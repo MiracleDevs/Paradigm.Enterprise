@@ -50,6 +50,14 @@ dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 
 This is the fast developer loop. Run `bash build/quality.sh` for the complete repository suite, including integration tests that consume the prepared CLI package and installed executable.
 
+MySQL tests have their own explicit database run. Set `PARADIGM_MYSQL_TEST_CONNECTION_STRING` to a disposable MySQL 8.4/InnoDB server with permission to create and drop fixture databases, then run:
+
+```powershell
+dotnet test src/Paradigm.Enterprise.Data.MySql.Tests/Paradigm.Enterprise.Data.MySql.Tests.csproj --configuration Release --filter "TestCategory=Integration"
+```
+
+The integration fixture creates an isolated database and removes it afterward. Use synthetic data and a dedicated test server. The tests fail when selected without a connection string; they never fall back to application configuration. The PR workflow runs this command in a separate job against the pinned MySQL 8.4.13 image. The fast solution filter and packed CLI integration command do not execute these database tests; run the command above separately from `build/quality.sh` for full MySQL validation. See [Database providers](data-providers.md) for Oracle setup and mapping boundaries.
+
 When running all tests directly with `dotnet test` or Visual Studio Test Explorer, the packed CLI tests are reported as skipped (inconclusive) if neither `PARADIGM_CLI_INTEGRATION_PACKAGE` nor `PARADIGM_CLI_INTEGRATION_EXECUTABLE` is configured. The quality script and PR workflow supply these paths and execute the tests. Once either variable is configured, missing required paths, relative paths, and nonexistent files still fail the tests.
 
 The checked-in example solution references the current source projects. Build and test it separately to validate the documented application patterns as well as the framework solution:

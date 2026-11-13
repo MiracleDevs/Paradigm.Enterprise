@@ -18,7 +18,7 @@ Reflection-based serialization is probably disabled and a type is absent from re
 
 ## A generated stored procedure cannot map values
 
-Compare result-set order, nullability, and column types with the current database procedure. Confirm the corresponding data-reader and parameter mapper implementations are registered before execution. The standalone mapper generator currently has a path-handling defect and its parameter output is SQL Server-specific. Maintain SQL Server mappers through the application-local process; for PostgreSQL, implement and register `INpgsqlParameterMapper` through `NpgsqlParameterMapperFactory`.
+Compare result-set order, nullability, and column types with the current database procedure. Confirm the corresponding data-reader and parameter mapper implementations are registered before execution. Select the matching `--database-provider` when generating mappers; omission selects SQL Server. For handwritten PostgreSQL mappers, register `INpgsqlParameterMapper` through `NpgsqlParameterMapperFactory`; for MySQL, use `IMySqlParameterMapper` and `MySqlParameterMapperFactory`. MySQL primitive scalars must match the actual returned CLR type; string, decimal, date, Guid, and list-element results require registered reader mappers.
 
 ## A base-controller action is visible unexpectedly
 

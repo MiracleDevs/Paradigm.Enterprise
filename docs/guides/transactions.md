@@ -38,6 +38,8 @@ The transaction is created from the first registered commiteable and attaches th
 
 If a workflow crosses independent stores or external services, define the failure and retry model explicitly. A database rollback cannot undo an email, remote API call, or blob upload.
 
+For MySQL, use InnoDB tables and the same Oracle `MySqlConnection` for participating contexts and stored procedures. The shared Unit of Work attaches its `MySqlTransaction` to the command; procedure helpers leave that connection open while the transaction is active. Procedures must not independently commit or start a transaction inside an application-owned transaction. MySQL DDL can implicitly commit, so schema deployment is separate from runtime Unit of Work operations. Engine isolation and locking behavior can differ even when the framework transaction API is the same.
+
 Do not retry a write merely because a transient-failure policy is available. A retry is safe only when the operation is idempotent or duplicate execution is detected. Idempotency keys, durable inboxes, and deduplication are application patterns and are not supplied by the Unit of Work.
 
 When a committed database change must reliably trigger later work, an outbox can store that intent in the same database transaction for separate delivery. A saga can coordinate several independent participants through persisted state and compensation. Paradigm.Enterprise does not implement either pattern. Both require monitoring, duplicate handling, repair, and tests.

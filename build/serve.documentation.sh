@@ -42,7 +42,8 @@ dotnet build \
     src/Paradigm.Enterprise.slnx \
     --configuration Release \
     --no-restore \
-    --property:GenerateDocumentationFile=true
+    --property:GenerateDocumentationFile=true \
+    --property:CopyLocalLockFileAssemblies=true
 
 block "Serve Documentation at http://${DOCS_HOST}:${DOCS_PORT}"
 exec dotnet docfx \

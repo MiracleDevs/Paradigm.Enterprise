@@ -20,6 +20,7 @@
     <ProjectReference Include="Fixtures\SemanticViolations\SemanticViolations.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
     <ProjectReference Include="Fixtures\GoodPractices\GoodPractices.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
     <ProjectReference Include="Fixtures\DotNetAuditFixture\DotNetAuditFixture.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
+    <ProjectReference Include="Fixtures\GeneratorFixtures\GeneratorFixtures.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

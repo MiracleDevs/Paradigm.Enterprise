@@ -43,7 +43,7 @@ paradigm checks run [--project <path>] [--framework <tfm>] [--config <path>] [--
 paradigm packages check [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
 paradigm packages audit [--project <path>] [--framework <tfm>] [--config <path>] [--warnings-as-errors] [--format text|json]
 paradigm generate json --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
-paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
+paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--database-provider sqlserver|postgresql|mysql] [--settings <json>] [--format text|json]
 paradigm generate client --document <url> --output <directory> [--settings <json>] [--format text|json]
 paradigm --version
 ```

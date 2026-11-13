@@ -463,7 +463,8 @@ internal static class CSharpChecks
             var providerNamespace = definition.ContainingNamespace.ToDisplayString();
             return definition.Name is "StoredProcedureBase" or "ResultStoredProcedureBase" &&
                    providerNamespace is "Paradigm.Enterprise.Data.SqlServer.StoredProcedures" or
-                       "Paradigm.Enterprise.Data.PostgreSql.StoredProcedures";
+                       "Paradigm.Enterprise.Data.PostgreSql.StoredProcedures" or
+                       "Paradigm.Enterprise.Data.MySql.StoredProcedures";
         });
 
     private static IEnumerable<INamedTypeSymbol> Hierarchy(INamedTypeSymbol? type)

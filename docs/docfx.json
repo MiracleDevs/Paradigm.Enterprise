@@ -8,6 +8,7 @@
             "Paradigm.Enterprise.Interfaces/bin/Release/netstandard2.0/Paradigm.Enterprise.Interfaces.dll",
             "Paradigm.Enterprise.Domain/bin/Release/net10.0/Paradigm.Enterprise.Domain.dll",
             "Paradigm.Enterprise.Data/bin/Release/net10.0/Paradigm.Enterprise.Data.dll",
+            "Paradigm.Enterprise.Data.MySql/bin/Release/net10.0/Paradigm.Enterprise.Data.MySql.dll",
             "Paradigm.Enterprise.Data.SqlServer/bin/Release/net10.0/Paradigm.Enterprise.Data.SqlServer.dll",
             "Paradigm.Enterprise.Data.PostgreSql/bin/Release/net10.0/Paradigm.Enterprise.Data.PostgreSql.dll",
             "Paradigm.Enterprise.Providers/bin/Release/net10.0/Paradigm.Enterprise.Providers.dll",
