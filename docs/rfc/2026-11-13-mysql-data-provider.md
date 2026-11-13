@@ -15,7 +15,7 @@ Add `Paradigm.Enterprise.Data.MySql` as a sibling of the SQL Server and PostgreS
 
 MDPE-12 targets runtime adapter parity: named connections, EF Core registration, CRUD and search through shared repositories, auditing, transactions, typed procedure parameters, and one through sixteen procedure result sets. It includes semantic-check support, packaging, documentation, and real MySQL integration tests. This document proposes the implementation; this initial change creates documentation only.
 
-Provider selection is an implementation gate. The checkout targets .NET 10 and EF Core 10.0.15. The preferred MIT dependency stack, Pomelo plus MySqlConnector, does not currently document a released EF Core 10-compatible version. The RFC therefore records that preference conditionally rather than declaring an incompatible package ready to use.
+Use Oracle's `MySql.EntityFrameworkCore` **10.0.12**, the latest stable release verified on 2026-11-13, with its matching `MySql.Data` **26.10.0** driver. The provider includes a `net10.0` dependency group requiring EF Core and Relational >= 10.0.12, which admits the checkout's centrally pinned 10.0.15. The provider choice and version are decided; restore, security auditing, and runtime compatibility tests remain implementation gates.
 
 ## Motivation
 
@@ -52,8 +52,8 @@ No deployed MySQL version, schema, workload, cardinalities, or production enviro
 flowchart TD
     App[Application Data] --> MySql[Data.MySql]
     MySql --> Core[Abstract Data library]
-    MySql --> EF[Selected MySQL EF provider]
-    MySql --> Driver[Matching ADO.NET driver]
+    MySql --> EF[Oracle MySql.EntityFrameworkCore]
+    MySql --> Driver[Oracle MySql.Data]
     EF --> Driver
     Core --> Domain[Domain contracts]
     Domain --> Interfaces[Interfaces]
@@ -72,21 +72,23 @@ The new project belongs at `src/Paradigm.Enterprise.Data.MySql` and directly ref
 
 MDPE-12 includes runtime adapter parity and the supporting checks, tests, package integration, and documentation. Database-first EF scaffolding should be exercised as a provider compatibility smoke test. Automatic Paradigm MySQL parameter-mapper generation, database schema publishing, Aspire hosting/bootstrap packages, Visual Studio template changes, MariaDB certification, and managed-cloud authentication recipes are separate follow-up work. Their absence must be stated in the release documentation. Existing SQL Server/PostgreSQL consumers keep their current behavior.
 
-### Provider Decision and Compatibility Gate
+### Selected Provider and Compatibility Validation
 
 As checked on 2026-11-13:
 
-| Candidate | Evidence | Proposed disposition |
+| Component | Selected version | Evidence |
 | --- | --- | --- |
-| `Pomelo.EntityFrameworkCore.MySql` with `MySqlConnector` | Both are MIT licensed. Pomelo's [compatibility table](https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql#compatibility) lists release 9.0.0 for EF Core 9.0.x. Its [EF Core 10 tracking issue](https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/issues/2007) is the place to recheck progress. | Preferred when an acceptable EF Core 10-compatible release is available and verified. The published EF9 release cannot satisfy this checkout. |
-| Oracle `MySql.EntityFrameworkCore` with `MySql.Data` | Oracle's [support matrix](https://dev.mysql.com/doc/connector-net/en/connector-net-entityframework-core.html) lists an EF Core 10 target for Connector/NET 26.10.0, and also describes preview EF11 packaging. Its [source license](https://github.com/mysql/mysql-connector-net/blob/9.x/LICENSE) contains GPLv2 terms and the Universal FOSS Exception. | Alternative requiring exact stable-package/TFM/dependency verification, distribution-license assessment, and explicit dependency approval. The documentation matrix alone is insufficient to select a package. |
-| A maintained fork | Could offer EF10 earlier. | Reconsider only after reviewing its license, release provenance, maintenance, security, and compatibility evidence. No fork is selected by this RFC. |
+| Oracle `MySql.EntityFrameworkCore` | **10.0.12** | [Versioned NuGet metadata](https://www.nuget.org/packages/MySql.EntityFrameworkCore/10.0.12) lists a stable release with a `net10.0` group requiring EF Core/Relational >= 10.0.12 and `MySql.Data` >= 26.10.0. |
+| Oracle `MySql.Data` | **26.10.0** | [Versioned driver metadata](https://www.nuget.org/packages/MySql.Data/26.10.0) supplies the matching Connector/NET release and its `net10.0` dependencies. |
+| Shared EF Core and Relational | **10.0.15**, unchanged | The existing central versions satisfy the selected provider's declared lower bounds. Restore and integration tests must establish actual compatibility. |
 
-The conditional MySQL API below uses the preferred driver's type names. Oracle and MySqlConnector types are distinct even when their short names match. Use one coherent EF/ADO.NET stack so that contexts, connections, parameters, and transactions are compatible. A switch of driver must update the RFC's public type choices before implementation.
+The user selected Oracle's provider and the latest stable version. Pin 10.0.12 explicitly in central package management rather than using a floating version or the 11.0.0 preview. Recheck the latest stable release when implementation starts; if it has advanced, document and validate the exact replacement before updating the pin.
+
+All ADO.NET types in the proposed API come from `MySql.Data.MySqlClient`, including `MySqlConnection`, `MySqlCommand`, `MySqlParameter`, `MySqlTransaction`, and `MySqlDbType`. EF registration uses Oracle's `UseMySQL` extension. Use this coherent stack for contexts, connections, parameters, and transactions. Pomelo and MySqlConnector are not dependencies of the new adapter.
 
 Do not downgrade shared EF packages, suppress dependency-bound warnings, use nightly packages by default, or introduce a private EF9 dependency island. ADO.NET-only support would leave EF CRUD and auditing parity incomplete.
 
-Before adding package references, record exact versions and transitive dependencies; run the repository's all-dependency vulnerability audit; evaluate maintenance/release evidence; and obtain dependency approval under the [common dependency policy](../../.agents/skills/paradigm-common-guidance/references/good-coding-practices.md#dependencies). No new package reference is introduced by this documentation change. If a suitable stack is unavailable, the implementation remains pending this gate; the draft RFC can still be reviewed.
+Oracle publishes the selected packages as open source under `GPL-2.0-only WITH Universal-FOSS-exception-1.0`; see the package license metadata and [official source license](https://github.com/mysql/mysql-connector-net/blob/trunk/LICENSE). The framework's own shared MIT metadata does not replace dependency terms. Record the applicable distribution terms during implementation alongside the transitive inventory and all-dependency vulnerability audit required by the [common dependency policy](../../.agents/skills/paradigm-common-guidance/references/good-coding-practices.md#dependencies). The user's Oracle/version selection is recorded here; no repeat provider-choice approval is needed. No new package reference is introduced by this documentation change, and no completed restore, license assessment, or security audit is claimed.
 
 ### Capability Parity
 
@@ -108,11 +110,11 @@ All new types live under `Paradigm.Enterprise.Data.MySql`:
 
 | Namespace | Proposed type / API |
 | --- | --- |
-| `Context` | `MySqlDbConnectionProvider : DbContextConnectionProvider`, constructor accepting `IConfiguration`, named indexer returning the selected driver's `MySqlConnection`, overridden disposal. |
+| `Context` | `MySqlDbConnectionProvider : DbContextConnectionProvider`, constructor accepting `IConfiguration`, named indexer returning `MySql.Data.MySqlClient.MySqlConnection`, overridden disposal. |
 | `Extensions` | `ServiceCollectionExtensions.RegisterContext<TContext>(IServiceCollection services, string connectionStringName) where TContext : DbContext`. |
 | `StoredProcedures` | Abstract `StoredProcedureBase` and `StoredProcedureBase<TParameters>`, retaining the existing `ExecuteAsync(DbConnection, ..., IUnitOfWork? = null)` pattern, `StoredProcedureName`, and nullable `ExecutionTimeout` extension points. |
 | `StoredProcedures` | Abstract `ResultStoredProcedureBase<TParameters, TResult1>` through `ResultStoredProcedureBase<TParameters, TResult1, ..., TResult16>`, with the matching single/tuple task returns. |
-| `StoredProcedures.Mappers` | `IMySqlParameterMapper : IDisposable`, with `MySqlParameter[] Map(object parameters)`; abstract `MySqlParameterMapperBase` for typed parameter construction. |
+| `StoredProcedures.Mappers` | `IMySqlParameterMapper : IDisposable`, with `MySqlParameter[] Map(object parameters)` using Oracle's `MySql.Data.MySqlClient.MySqlParameter`; abstract `MySqlParameterMapperBase` for typed parameter construction. |
 | `StoredProcedures` | `MySqlParameterMapperFactory` with `RegisterMapper<T>`, `GetMapper<T>`, `GetMapper(Type)`, and `AddCustomMapper<T>`, following concurrent, first-registration-wins factory behavior. |
 
 Preserve the routine base's useful protected execution/mapping hooks as well as its public overloads. Split generic arities into separate files and follow current XML documentation/member-layout guidance. Do not create new engine-specific repository, Unit of Work, audit, or domain-contract variants. A future shared routine-execution abstraction would require a separate reviewed refactor; MDPE-12 does not need it.
@@ -121,7 +123,7 @@ Preserve the routine base's useful protected execution/mapping hooks as well as 
 
 The named provider lazily creates one connection per configured name per scope and disposes its owned connections on scope disposal. Validate absent/blank connection configuration with an error naming only the configuration key. Connections and contexts are scoped, used sequentially, and never shared across requests or used concurrently. ADO.NET pooling remains the driver's responsibility.
 
-Keep the two-argument `RegisterContext` convenience signature. If the selected EF provider requires a server version, use the approved MySQL 8.4 baseline explicitly for that convenience path and add a documented configuration overload for an explicitly supplied supported version. Do not connect to the database merely to auto-detect a version during DI registration. The exact overload's provider-specific option type must be finalized with provider selection. Pass the provider-owned connection to EF without transferring disposal ownership.
+Keep the two-argument `RegisterContext` signature and configure the scoped options with `builder.UseMySQL(connection)`. Oracle's [options extension](https://github.com/mysql/mysql-connector-net/blob/9.x/EFCore/src/Extensions/MySQLDbContextOptionsExtensions.cs) accepts a `DbConnection` without a server-version argument or auto-detection step. It delegates connection ownership to EF's [relational options](https://github.com/dotnet/efcore/blob/v10.0.0/src/EFCore.Relational/Infrastructure/RelationalOptionsExtension.cs), whose default is caller-owned. Keep ownership with the named connection provider and verify that lifetime against package 10.0.12 in integration tests. No server-version configuration overload is required by this design, and DI registration must not open a connection.
 
 An intended application registration, after the adapter exists, is:
 
@@ -172,7 +174,7 @@ These are compatibility tests and documented mappings, not an application schema
 
 InnoDB is required for the transactional parity fixture. Match the existing transaction contract: the application workflow creates the transaction, saves staged changes, and explicitly commits or rolls back. A routine called inside it must not start, commit, or roll back an independent transaction. MySQL [implicit-commit statements](https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html) prevent treating DDL as rollback-safe application work. Schema deployment stays outside runtime Unit of Work operations.
 
-Preserve the selected engine's documented isolation behavior; InnoDB [defaults to REPEATABLE READ](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html). Do not claim identical lock behavior to SQL Server/PostgreSQL. Same-connection enlistment is mandatory; test mismatched connections failing rather than silently executing outside the transaction. With MySqlConnector, set the active command transaction through the existing Unit of Work hook rather than disabling its [transaction consistency checks](https://mysqlconnector.net/troubleshooting/transaction-usage/).
+Preserve the selected engine's documented isolation behavior; InnoDB [defaults to REPEATABLE READ](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html). Do not claim identical lock behavior to SQL Server/PostgreSQL. Attach the active Oracle `MySqlTransaction` to each `MySqlCommand` through the existing Unit of Work hook. Same-connection enlistment is mandatory; test mismatched connections failing rather than silently executing outside the transaction, and add adapter validation if the driver does not enforce this itself.
 
 Do not enable automatic retries by default or retry individual writes inside a larger application transaction. Deadlocks, lock timeouts, command timeouts, constraint failures, and connection failures propagate; the caller owns whole-use-case retry/idempotency decisions. Existing routine APIs lack cancellation tokens; adding them across adapters is a separate compatible API design, while EF retains its existing token support.
 
@@ -194,6 +196,7 @@ The solution-wide packaging scripts discover member packages already. Verify the
 
 | Alternative | Advantages | Why it is not the current proposal / reconsideration trigger |
 | --- | --- | --- |
+| Pomelo plus MySqlConnector | MIT licensing and an established EF provider ecosystem. | The user selected Oracle's stable EF10 provider. Pomelo's currently documented release targets EF9. Reconsider only if the selected Oracle stack fails qualification and the provider decision is revisited explicitly. |
 | ADO.NET-only MySQL package | Avoids EF provider dependency initially. | Does not deliver shared EF repository/audit parity. Reconsider only if explicitly offered as a smaller feature. |
 | Copy a sibling adapter wholesale | Quickly reproduces surface area. | Carries engine assumptions and failure-cleanup defects. Reuse contracts/shared classes and implement MySQL mechanics deliberately. |
 | Put MySQL dependencies in abstract Data | Fewer projects. | Couples every consumer to a concrete engine. Keep engine-specific dependencies in the new package. |
@@ -227,8 +230,8 @@ For this initial documentation change, validate source references, relative link
 
 ## Rollout Plan
 
-1. Review this draft under the [RFC process](README.md), including its normal discussion period and recorded maintainer consensus. Resolve provider and support-baseline questions before coding.
-2. Qualify an EF10-compatible dependency stack, inspect licensing/transitives/security, obtain package approval, and prove same-connection EF/routine transaction behavior in a minimal integration fixture.
+1. Review this draft under the [RFC process](README.md), including its normal discussion period and recorded maintainer consensus. Confirm the support baseline before coding; Oracle provider selection and version 10.0.12 are already decided.
+2. Qualify Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0 with the existing EF Core 10.0.15 pins, inspect licensing/transitives/security, and prove same-connection EF/routine transaction behavior in a minimal integration fixture.
 3. Add the MySQL package and test project; implement named connection/EF registration, parameter mapping, and the full result family using shared Data behavior. Keep existing providers and public contracts compatible.
 4. Add semantic checks, CLI guidance, explicit database CI execution, packed-consumer validation, API documentation, and usage examples.
 5. Release the opt-in NuGet package with the framework's shared version and documented support matrix. A feature flag is unnecessary because applications select the adapter explicitly.
@@ -237,15 +240,14 @@ Existing SQL Server/PostgreSQL applications do not need migration. An applicatio
 
 ## Dependencies
 
-The implementation depends on an approved EF Core 10-compatible MySQL stack, a qualified MySQL test image, a CI execution environment, and maintainers agreeing on the support matrix and public signatures. It does not depend on accepting another RFC or implementing new Aspire/database-publishing packages.
+The implementation uses Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0, with shared EF Core/Relational 10.0.15. Add both Oracle references explicitly because the adapter directly consumes both EF and ADO.NET APIs, with versions owned by central package management. It also requires a qualified MySQL test image, a CI execution environment, and maintainers agreeing on the support matrix and public signatures. It does not depend on accepting another RFC or implementing new Aspire/database-publishing packages.
 
-[Pomelo's official repository](https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql) and [MIT license](https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/blob/main/LICENSE), and [MySqlConnector's official repository](https://github.com/mysql-net/MySqlConnector) and [MIT license](https://github.com/mysql-net/MySqlConnector/blob/master/LICENSE), document the preferred stack's provenance. Oracle's alternative source and license are linked in the decision table. Exact versions, final driver namespace, complete transitive inventory, and vulnerability findings remain pending; this RFC is not a dependency approval or a completed security audit.
+[Oracle's official Connector/NET repository](https://github.com/mysql/mysql-connector-net), [source license](https://github.com/mysql/mysql-connector-net/blob/trunk/LICENSE), and [EF support guide](https://dev.mysql.com/doc/connector-net/en/connector-net-entityframework-core.html) document the selected stack's provenance. The driver includes cryptography, protobuf, compression, configuration, and permissions dependencies, so the implementation audit must cover the full resolved graph rather than only EF. Exact pins and the public driver namespace are decided; the complete restored transitive inventory, distribution assessment, and vulnerability findings remain pending. Stable package metadata confirms declared framework compatibility, not successful runtime qualification.
 
 ## Open Questions
 
-- Which exact released EF Core 10 provider/driver versions pass qualification? If Pomelo remains unavailable, should MDPE-12 wait or proceed with a reviewed Oracle/fork alternative?
+- Do the selected Oracle provider 10.0.12 and driver 26.10.0 pass restore, audit, and the complete runtime parity suite with EF Core 10.0.15?
 - Is MySQL 8.4/InnoDB the accepted initial matrix, and which patch/image digest should CI pin? Broader engine/version support requires separate evidence.
-- What exact provider-specific configuration overload is needed while keeping the two-argument registration path deterministic and free of connection attempts?
 - Which Guid and temporal storage mappings should the initial documented sample certify? Existing application representations must remain explicit.
 - Does product scope require automatic MySQL parameter generation or Aspire/database publishing in a later linked ticket? This RFC excludes those deliverables from runtime parity.
 
@@ -255,7 +257,7 @@ The implementation depends on an approved EF Core 10-compatible MySQL stack, a q
 | --- | --- | --- |
 | Reuse Data and existing Domain/Interfaces contracts | User requirement, current source, architecture rules | PROPOSED |
 | Keep routine execution provider-specific initially | Current adapter boundary and bounded scope | PROPOSED |
-| Conditional MIT provider preference; retain EF10 | Dependency governance and verified upstream compatibility | PENDING VALIDATION |
+| Oracle provider 10.0.12 / driver 26.10.0; retain EF10 | Explicit user selection and verified stable package dependency groups | DECIDED; restore/audit/runtime validation pending |
 | Initial MySQL 8.4/InnoDB matrix | Reasoned proposal; no user deployment version supplied | PENDING VALIDATION |
 | Transaction/lifetime/type semantics and integration coverage | Shared contracts, MySQL technical guidance, upstream manuals | PROPOSED; runtime evidence pending |
 | RFC and MDPE-12 working branch | This preparation change | IMPLEMENTED |
