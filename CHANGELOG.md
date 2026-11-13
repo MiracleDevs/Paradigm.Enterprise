@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+Version `1.1.1`
+
+- Updated dependencies.
+
 Version `1.1.0`
 
 - Added installable Agent Skills for guided application design, implementation, security, and review.

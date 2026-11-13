@@ -50,6 +50,8 @@ dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 
 This is the fast developer loop. Run `bash build/quality.sh` for the complete repository suite, including integration tests that consume the prepared CLI package and installed executable.
 
+When running all tests directly with `dotnet test` or Visual Studio Test Explorer, the packed CLI tests are reported as skipped (inconclusive) if neither `PARADIGM_CLI_INTEGRATION_PACKAGE` nor `PARADIGM_CLI_INTEGRATION_EXECUTABLE` is configured. The quality script and PR workflow supply these paths and execute the tests. Once either variable is configured, missing required paths, relative paths, and nonexistent files still fail the tests.
+
 The checked-in example solution references the current source projects. Build and test it separately to validate the documented application patterns as well as the framework solution:
 
 ```powershell

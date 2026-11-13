@@ -1,6 +1,5 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Diagnostics;
 using System.Text.Json;
 
 namespace Paradigm.Enterprise.Checks.CSharp;
@@ -20,39 +19,15 @@ internal sealed record EvaluatedProject(
     public static EvaluatedProject Load(string project, string framework)
     {
         var targetFramework = framework.Split('/')[0];
-        using var process = new Process
-        {
-            StartInfo = new()
-            {
-                FileName = "dotnet",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8,
-                StandardErrorEncoding = System.Text.Encoding.UTF8,
-                CreateNoWindow = true,
-                ArgumentList =
-                {
-                    "msbuild",
-                    project,
-                    "-nologo",
-                    "-target:ResolveReferences",
-                    "-getItem:Compile,ReferencePath,Analyzer",
-                    "-getProperty:DefineConstants,LangVersion,Nullable,OutputType,AllowUnsafeBlocks",
-                    "-property:Configuration=Release",
-                    $"-property:TargetFramework={targetFramework}"
-                }
-            }
-        };
-        process.Start();
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-        process.WaitForExit();
-        if (process.ExitCode != 0)
-            throw new InvalidOperationException(
-                $"Could not evaluate Compile items for '{project}': {error.GetAwaiter().GetResult()}");
-
-        using var document = JsonDocument.Parse(output.GetAwaiter().GetResult());
+        var output = MsBuildProcess.Run([
+            project,
+            "-target:ResolveReferences",
+            "-getItem:Compile,ReferencePath,Analyzer",
+            "-getProperty:DefineConstants,LangVersion,Nullable,OutputType,AllowUnsafeBlocks",
+            "-property:Configuration=Release",
+            $"-property:TargetFramework={targetFramework}"
+        ]);
+        using var document = JsonDocument.Parse(output);
         var root = document.RootElement;
         var properties = root.GetProperty("Properties");
         var files = Items(root, "Compile");

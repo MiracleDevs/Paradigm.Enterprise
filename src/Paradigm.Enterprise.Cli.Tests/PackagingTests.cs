@@ -30,6 +30,10 @@ public class PackagingTests
 
     private static string RequiredFile(string variable)
     {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PARADIGM_CLI_INTEGRATION_PACKAGE")) &&
+            string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PARADIGM_CLI_INTEGRATION_EXECUTABLE")))
+            Assert.Inconclusive("Packed CLI artifacts are not configured. Run build/quality.sh to prepare and execute these integration tests.");
+
         var path = Environment.GetEnvironmentVariable(variable);
         Assert.IsFalse(string.IsNullOrWhiteSpace(path), $"Set {variable} to the absolute package path prepared by build/quality.sh or the PR quality workflow before running Integration tests.");
         Assert.IsTrue(Path.IsPathFullyQualified(path), $"{variable} must contain an absolute path, but was '{path}'.");

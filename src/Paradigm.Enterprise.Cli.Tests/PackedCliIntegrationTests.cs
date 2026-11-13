@@ -33,12 +33,12 @@ public class PackedCliIntegrationTests
     [ClassInitialize]
     public static void Initialize(TestContext _)
     {
+        executable = RequiredFile("PARADIGM_CLI_INTEGRATION_EXECUTABLE");
         repository = FindRepositoryRoot();
         temporary = Path.Combine(Path.GetTempPath(), $"paradigm-packed-cli-{Guid.NewGuid():N}");
         Directory.CreateDirectory(temporary);
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
         version = CentralVersion(repository);
-        executable = RequiredFile("PARADIGM_CLI_INTEGRATION_EXECUTABLE");
         providerProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Providers", "Paradigm.Enterprise.Providers.csproj");
         metadataProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Tests", "Paradigm.Enterprise.Tests.csproj");
         auditProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli.Tests", "Paradigm.Enterprise.Cli.Tests.csproj");
@@ -150,17 +150,18 @@ public class PackedCliIntegrationTests
             foreach (var (name, value) in environment)
                 process.StartInfo.Environment[name] = value;
         process.Start();
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(90));
+        var output = process.StandardOutput.ReadToEndAsync(timeout.Token);
+        var error = process.StandardError.ReadToEndAsync(timeout.Token);
         try
         {
-            await process.WaitForExitAsync(timeout.Token);
+            await Task.WhenAll(process.WaitForExitAsync(timeout.Token), output, error);
         }
         catch (OperationCanceledException)
         {
             if (!process.HasExited)
                 process.Kill(entireProcessTree: true);
+            Assert.Fail($"Timed out after 90 seconds running '{processName} {string.Join(' ', arguments)}'.{Environment.NewLine}stdout:{Environment.NewLine}{(output.IsCompletedSuccessfully ? output.Result : "<incomplete>")}{Environment.NewLine}stderr:{Environment.NewLine}{(error.IsCompletedSuccessfully ? error.Result : "<incomplete>")}");
             throw;
         }
 
@@ -177,6 +178,10 @@ public class PackedCliIntegrationTests
 
     private static string RequiredFile(string variable)
     {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PARADIGM_CLI_INTEGRATION_PACKAGE")) &&
+            string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PARADIGM_CLI_INTEGRATION_EXECUTABLE")))
+            Assert.Inconclusive("Packed CLI artifacts are not configured. Run build/quality.sh to prepare and execute these integration tests.");
+
         var path = Environment.GetEnvironmentVariable(variable);
         Assert.IsFalse(string.IsNullOrWhiteSpace(path), $"Set {variable} to the absolute path prepared by build/quality.sh or the PR quality workflow before running Integration tests.");
         Assert.IsTrue(Path.IsPathFullyQualified(path), $"{variable} must contain an absolute path, but was '{path}'.");
