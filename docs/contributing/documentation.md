@@ -30,6 +30,8 @@ bash build/serve.documentation.sh 8090
 
 Set `DOCS_HOST` when the server must bind to a hostname other than `localhost`. Generated API metadata and `_site` output are ignored by Git.
 
+Oracle API metadata uses `metadata/OracleApi.csproj`, a documentation-only project that compiles the adapter's actual source with the SDK's nullable and implicit-using settings. Its direct assembly references come from the Release adapter output; build the source solution with `--property:CopyLocalLockFileAssemblies=true` first, and retain that property when packing. This avoids Docfx traversing optional ODP.NET authentication plugins or its incompatible transitive project-reference metadata path. The project has no package or project references and is neither packaged nor published; do not add handwritten copies of the adapter APIs or relax documentation warnings to maintain it.
+
 ## Review
 
 Check links in both Docfx and GitHub rendering. Verify code against the current source. Search the changed documentation for obsolete type names, copied project identifiers, em dashes, emojis, mojibake, and separator-only lines.

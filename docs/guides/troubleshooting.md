@@ -20,6 +20,8 @@ Reflection-based serialization is probably disabled and a type is absent from re
 
 Compare result-set order, nullability, and column types with the current database procedure. Confirm the corresponding data-reader and parameter mapper implementations are registered before execution. Select the matching `--database-provider` when generating mappers; omission selects SQL Server. For handwritten PostgreSQL mappers, register `INpgsqlParameterMapper` through `NpgsqlParameterMapperFactory`; for MySQL, use `IMySqlParameterMapper` and `MySqlParameterMapperFactory`. MySQL primitive scalars must match the actual returned CLR type; string, decimal, date, Guid, and list-element results require registered reader mappers.
 
+For Oracle Database, generate with `--database-provider oracle` or register handwritten `IOracleParameterMapper` implementations through `OracleParameterMapperFactory`. Confirm output cursor names match `p_result1` through `p_result16`, or override `GetResultParameterName` to match the actual routine. Every cursor must be opened, including zero-row results. Check NUMBER precision, RAW(16) Guid byte order, empty-string-as-null behavior, and the exact shared connection when a Unit of Work transaction is active.
+
 ## A base-controller action is visible unexpectedly
 
 Endpoint exposure filtering is opt-in. Confirm `AddEndpointExposureControl` was added to MVC. Then check that only intended actions carry `ExposeEndpoint`.

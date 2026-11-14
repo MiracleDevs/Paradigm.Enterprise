@@ -63,6 +63,7 @@ public class CommandLineTests
     [DataRow("sqlserver", "SqlServer")]
     [DataRow("postgresql", "PostgreSql")]
     [DataRow("MySQL", "MySql")]
+    [DataRow("ORACLE", "Oracle")]
     public void Mapper_generation_selects_a_supported_database_provider(string provider, string expected)
     {
         Assert.IsTrue(CommandLine.TryParse(

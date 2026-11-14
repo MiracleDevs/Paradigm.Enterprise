@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "suppressions": [
+    {
+      "code": "PE3105",
+      "location": "StoredProcedureBase.cs",
+      "reason": "Keep the generic and nongeneric procedure family together, matching the user's MySQL consolidation and the existing SQL Server/PostgreSQL adapters.",
+      "expires": "2027-11-14"
+    },
+    {
+      "code": "PE3105",
+      "location": "ResultStoredProcedureBase.cs",
+      "reason": "Explicit user request keeps all result arities together, matching the SQL Server, PostgreSQL, and MySQL adapters.",
+      "expires": "2027-11-14"
+    }
+  ]
+}

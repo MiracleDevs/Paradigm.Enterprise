@@ -7,6 +7,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data.Oracle\Paradigm.Enterprise.Data.Oracle.csproj" />
     <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data\Paradigm.Enterprise.Data.csproj" />
     <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data.SqlServer\Paradigm.Enterprise.Data.SqlServer.csproj" />
     <ProjectReference Include="..\..\..\Paradigm.Enterprise.Data.MySql\Paradigm.Enterprise.Data.MySql.csproj" />

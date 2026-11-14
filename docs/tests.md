@@ -56,7 +56,16 @@ MySQL tests have their own explicit database run. Set `PARADIGM_MYSQL_TEST_CONNE
 dotnet test src/Paradigm.Enterprise.Data.MySql.Tests/Paradigm.Enterprise.Data.MySql.Tests.csproj --configuration Release --filter "TestCategory=Integration"
 ```
 
-The integration fixture creates an isolated database and removes it afterward. Use synthetic data and a dedicated test server. The tests fail when selected without a connection string; they never fall back to application configuration. The PR workflow runs this command in a separate job against the pinned MySQL 8.4.13 image. The fast solution filter and packed CLI integration command do not execute these database tests; run the command above separately from `build/quality.sh` for full MySQL validation. See [Database providers](data-providers.md) for Oracle setup and mapping boundaries.
+The integration fixture creates an isolated database and removes it afterward. Use synthetic data and a dedicated test server. The tests fail when selected without a connection string; they never fall back to application configuration. The PR workflow runs this command in a separate job against the pinned MySQL 8.4.13 image. The fast solution filter and packed CLI integration command do not execute these database tests; run the command above separately from `build/quality.sh` for full MySQL validation. See [Database providers](data-providers.md) for setup and mapping boundaries.
+
+Oracle Database uses a separate explicit run. Set `PARADIGM_ORACLE_TEST_CONNECTION_STRING` to an administrator connection within a disposable PDB, for example SYSTEM on `host:1521/FREEPDB1`, with permission to create/drop fixture users and grant their session, table, procedure, and tablespace quota privileges. Never point it at a production database. The fixture creates a uniquely named schema/user and drops only that schema during cleanup.
+
+```powershell
+dotnet test src/Paradigm.Enterprise.Data.Oracle.Tests/Paradigm.Enterprise.Data.Oracle.Tests.csproj --configuration Release --filter "TestCategory=Integration"
+dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --filter "TestCategory=OracleIntegration"
+```
+
+The second command compiles generated Oracle mappers and exercises their parameters and reader conversions against actual ODP.NET results. It uses the same connection variable and reports inconclusive when that optional variable is absent; the adapter integration suite fails if explicitly selected without configuration. Neither command silently reads application settings. The Oracle CI job supplies the variable for both commands and pins the official `container-registry.oracle.com/database/free:23.26.0.0-lite` image by digest. This fixture targets Oracle AI Database Free 26ai; package compatibility alone does not certify older servers or production editions. Run both commands separately from the fast loop and `build/quality.sh` to qualify Oracle changes.
 
 When running all tests directly with `dotnet test` or Visual Studio Test Explorer, the packed CLI tests are reported as skipped (inconclusive) if neither `PARADIGM_CLI_INTEGRATION_PACKAGE` nor `PARADIGM_CLI_INTEGRATION_EXECUTABLE` is configured. The quality script and PR workflow supply these paths and execute the tests. Once either variable is configured, missing required paths, relative paths, and nonexistent files still fail the tests.
 

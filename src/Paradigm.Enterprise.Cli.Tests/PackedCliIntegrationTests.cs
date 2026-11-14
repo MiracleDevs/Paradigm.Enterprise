@@ -114,13 +114,15 @@ public class PackedCliIntegrationTests
 
     [TestMethod]
     [Timeout(180_000)]
-    public async Task Packed_cli_mysql_mapper_generation_compiles_and_preserves_existing_sources()
+    [DataRow("mysql")]
+    [DataRow("oracle")]
+    public async Task Packed_cli_mapper_generation_compiles_and_preserves_existing_sources(string provider)
     {
         var fixture = MapperGenerationAssertions.FixtureAssembly(repository);
-        var output = Path.Combine(temporary, "mysql-mappers");
-        var arguments = new[] { "generate", "mappers", "--project-name", "MapperFixture", "--assembly", fixture, "--output", output, "--database-provider", "mysql", "--format", "json" };
+        var output = Path.Combine(temporary, provider + "-mappers");
+        var arguments = new[] { "generate", "mappers", "--project-name", "MapperFixture", "--assembly", fixture, "--output", output, "--database-provider", provider, "--format", "json" };
         using var first = AssertJson(await Run(arguments), "generate mappers");
-        await MapperGenerationAssertions.AssertCompilesAndMapsAsync(fixture, output, "mysql");
+        await MapperGenerationAssertions.AssertCompilesAndMapsAsync(fixture, output, provider);
         var handwritten = Path.Combine(output, "Mappers", "DataReaders", "Handwritten.partial.cs");
         File.WriteAllText(handwritten, "// retained packed consumer partial");
         var snapshot = MapperGenerationAssertions.Snapshot(output);
@@ -130,7 +132,7 @@ public class PackedCliIntegrationTests
         MapperGenerationAssertions.AssertSameFiles(snapshot, output);
         CollectionAssert.AreEqual(manifestBefore, File.ReadAllBytes(manifest));
 
-        var rejectedOutput = Path.Combine(temporary, "invalid-mysql-mappers");
+        var rejectedOutput = Path.Combine(temporary, "invalid-" + provider + "-mappers");
         var invalid = await Run("generate", "mappers", "--project-name", "MapperFixture", "--assembly", fixture, "--output", rejectedOutput, "--database-provider", "unsupported");
         Assert.AreEqual(2, invalid.ExitCode);
         Assert.IsFalse(Directory.Exists(rejectedOutput));

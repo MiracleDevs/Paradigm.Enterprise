@@ -35,12 +35,13 @@ internal static class MapperGenerationAssertions
         {
             "mysql" => "Input",
             "postgresql" => "PostgreSqlInput",
+            "oracle" => "OracleInput",
             _ => "SqlServerInput"
         };
         var parameterFile = Path.Combine(output, "Mappers", "SqlParameters", inputName + "Mapper.cs");
         Assert.IsTrue(File.Exists(parameterFile), parameterFile);
         Assert.IsTrue(File.Exists(Path.Combine(output, "Mappers", "DataReaders", "ReportRowDataReaderMapper.cs")));
-        foreach (var excluded in new[] { "Input", "SqlServerInput", "PostgreSqlInput" }.Where(name => name != inputName))
+        foreach (var excluded in new[] { "Input", "SqlServerInput", "PostgreSqlInput", "OracleInput" }.Where(name => name != inputName))
             Assert.IsFalse(File.Exists(Path.Combine(output, "Mappers", "SqlParameters", excluded + "Mapper.cs")), "Generation crossed the selected provider boundary.");
 
         var generated = Snapshot(output).Where(file => !file.Key.EndsWith("Handwritten.partial.cs", StringComparison.Ordinal)).ToArray();
@@ -58,8 +59,8 @@ internal static class MapperGenerationAssertions
         var registerer = assembly.GetType("MapperFixture.Data.Mappers.StoreProcedureMappersRegisterer", throwOnError: true)!;
         registerer.GetMethod("RegisterMappers")!.Invoke(null, null);
 
-        var adapter = provider switch { "mysql" => "MySql", "postgresql" => "PostgreSql", _ => "SqlServer" };
-        var factoryName = provider switch { "mysql" => "MySqlParameterMapperFactory", "postgresql" => "NpgsqlParameterMapperFactory", _ => "SqlParameterMapperFactory" };
+        var adapter = provider switch { "mysql" => "MySql", "postgresql" => "PostgreSql", "oracle" => "Oracle", _ => "SqlServer" };
+        var factoryName = provider switch { "mysql" => "MySqlParameterMapperFactory", "postgresql" => "NpgsqlParameterMapperFactory", "oracle" => "OracleParameterMapperFactory", _ => "SqlParameterMapperFactory" };
         var adapterAssembly = Assembly.LoadFrom(Path.Combine(fixtureDirectory, "Paradigm.Enterprise.Data." + adapter + ".dll"));
         var factory = adapterAssembly.GetType("Paradigm.Enterprise.Data." + adapter + ".StoredProcedures." + factoryName, throwOnError: true)!;
         var inputType = fixture.GetType("MapperFixture." + inputName, throwOnError: true)!;
@@ -68,6 +69,14 @@ internal static class MapperGenerationAssertions
         inputType.GetProperty("Name")!.SetValue(input, null);
         var token = Guid.NewGuid();
         inputType.GetProperty("Token")?.SetValue(input, token);
+        var offset = new DateTimeOffset(2026, 11, 14, 12, 30, 0, TimeSpan.FromHours(5.5));
+        if (provider == "oracle")
+        {
+            inputType.GetProperty("Enabled")!.SetValue(input, true);
+            inputType.GetProperty("Offset")!.SetValue(input, offset);
+            inputType.GetProperty("Duration")!.SetValue(input, TimeSpan.FromMinutes(12));
+            inputType.GetProperty("Letter")!.SetValue(input, 'Ω');
+        }
         using (var registered = (IDisposable)factory.GetMethod("GetMapper", [typeof(Type)])!.Invoke(null, [inputType])!)
         {
             Assert.AreEqual(inputName + "Mapper", registered.GetType().Name);
@@ -84,19 +93,37 @@ internal static class MapperGenerationAssertions
                 Assert.AreEqual(DBNull.Value, parameters.Single(parameter => parameter.ParameterName == "@Amount").Value);
                 Assert.AreEqual(DBNull.Value, parameters.Single(parameter => parameter.ParameterName == "@SinceUtc").Value);
             }
+            if (provider == "oracle")
+            {
+                Assert.IsTrue(parameters.All(parameter => !parameter.ParameterName.StartsWith('@') && !parameter.ParameterName.StartsWith(':')));
+                CollectionAssert.AreEqual(token.ToByteArray(), (byte[])parameters.Single(parameter => parameter.ParameterName == "Token").Value!);
+                Assert.AreEqual((short)1, parameters.Single(parameter => parameter.ParameterName == "Enabled").Value);
+                Assert.AreEqual(DBNull.Value, parameters.Single(parameter => parameter.ParameterName == "OptionalEnabled").Value);
+                Assert.AreEqual(DBNull.Value, parameters.Single(parameter => parameter.ParameterName == "OptionalToken").Value);
+                Assert.AreEqual(offset, parameters.Single(parameter => parameter.ParameterName == "Offset").Value);
+                Assert.AreEqual(TimeSpan.FromMinutes(12), parameters.Single(parameter => parameter.ParameterName == "Duration").Value);
+                Assert.AreEqual("Ω", parameters.Single(parameter => parameter.ParameterName == "Letter").Value);
+                Assert.AreEqual(DBNull.Value, parameters.Single(parameter => parameter.ParameterName == "OptionalLetter").Value);
+                foreach (var (name, expected) in new[] { ("Name", "NVarchar2"), ("Token", "Raw"), ("Enabled", "Int16"), ("Offset", "TimeStampTZ"), ("Duration", "IntervalDS"), ("Payload", "Blob") })
+                {
+                    var parameter = parameters.Single(item => item.ParameterName == name);
+                    Assert.AreEqual(expected, parameter.GetType().GetProperty("OracleDbType")!.GetValue(parameter)!.ToString(), name);
+                }
+                Assert.IsTrue(parameters.All(parameter => parameter.Direction == ParameterDirection.Input), "The runtime owns result cursor parameters.");
+            }
         }
 
         var readerMapper = Activator.CreateInstance(assembly.GetType("MapperFixture.Data.Mappers.DataReaders.ReportRowDataReaderMapper", throwOnError: true)!)!;
         using var table = new DataTable();
         table.Columns.Add("Id", typeof(int));
-        table.Columns.Add("Token", typeof(Guid));
+        table.Columns.Add("Token", provider == "oracle" ? typeof(byte[]) : typeof(Guid));
         table.Columns.Add("Name", typeof(string));
         table.Columns.Add("Amount", typeof(decimal));
         table.Columns.Add("OccurredAt", typeof(DateTime));
         table.Columns.Add("Enabled", typeof(bool));
         table.Columns.Add("Payload", typeof(byte[]));
         var date = new DateTime(2026, 11, 13, 12, 0, 0, DateTimeKind.Utc);
-        table.Rows.Add(7, token, DBNull.Value, 12.3456m, date, true, new byte[] { 0, 128, 255 });
+        table.Rows.Add(7, provider == "oracle" ? token.ToByteArray() : token, DBNull.Value, 12.3456m, date, true, new byte[] { 0, 128, 255 });
         using var reader = table.CreateDataReader();
         Assert.IsTrue(reader.Read());
         var result = readerMapper.GetType().GetMethod("Map")!.Invoke(readerMapper, [reader])!;
@@ -107,6 +134,39 @@ internal static class MapperGenerationAssertions
         Assert.AreEqual(date, result.GetType().GetProperty("OccurredAt")!.GetValue(result));
         Assert.AreEqual(true, result.GetType().GetProperty("Enabled")!.GetValue(result));
         CollectionAssert.AreEqual(new byte[] { 0, 128, 255 }, (byte[])result.GetType().GetProperty("Payload")!.GetValue(result)!);
+
+        if (provider == "oracle")
+        {
+            var guidMapper = Activator.CreateInstance(assembly.GetType("MapperFixture.Data.Mappers.DataReaders.GuidDataReaderMapper", throwOnError: true)!)!;
+            using var guidTable = new DataTable();
+            guidTable.Columns.Add("Value", typeof(byte[]));
+            guidTable.Rows.Add([token.ToByteArray()]);
+            using var guidReader = guidTable.CreateDataReader();
+            Assert.IsTrue(guidReader.Read());
+            Assert.AreEqual(token, guidMapper.GetType().GetMethod("Map")!.Invoke(guidMapper, [guidReader]));
+            Assert.IsTrue(File.Exists(Path.Combine(output, "Mappers", "DataReaders", "DateTimeOffsetDataReaderMapper.cs")));
+            Assert.IsTrue(File.Exists(Path.Combine(output, "Mappers", "DataReaders", "TimeSpanDataReaderMapper.cs")));
+            Assert.IsTrue(File.Exists(Path.Combine(output, "Mappers", "DataReaders", "DecimalDataReaderMapper.cs")), "The sixteenth result type must participate in generation.");
+            foreach (var text in new[] { "Ω", "ab" })
+            {
+                var typesMapper = Activator.CreateInstance(assembly.GetType("MapperFixture.Data.Mappers.DataReaders.OracleTypesRowDataReaderMapper", throwOnError: true)!)!;
+                using var charTable = new DataTable();
+                charTable.Columns.Add("Letter", typeof(string));
+                charTable.Rows.Add(text);
+                using var charReader = charTable.CreateDataReader();
+                Assert.IsTrue(charReader.Read());
+                if (text.Length == 1)
+                {
+                    var mapped = typesMapper.GetType().GetMethod("Map")!.Invoke(typesMapper, [charReader])!;
+                    Assert.AreEqual('Ω', mapped.GetType().GetProperty("Letter")!.GetValue(mapped));
+                }
+                else
+                {
+                    var invalid = Assert.Throws<TargetInvocationException>(() => typesMapper.GetType().GetMethod("Map")!.Invoke(typesMapper, [charReader]));
+                    Assert.IsInstanceOfType<FormatException>(invalid.InnerException);
+                }
+            }
+        }
 
         if (provider == "mysql")
         {
@@ -198,10 +258,19 @@ internal static class MapperGenerationAssertions
             references[Path.GetFileName(path)] = path;
         foreach (var path in Directory.EnumerateFiles(Path.GetDirectoryName(fixtureAssembly)!, "*.dll"))
             references[Path.GetFileName(path)] = path;
+        // Match Microsoft.NET.Sdk.CSharp.props' default NoWarn=1701;1702 for framework-reference
+        // unification. ODP.NET's net8.0 asset is supported by this net10.0 consumer; retain every
+        // other warning so generated source is held to the same standard as an SDK compilation.
+        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable)
+            .WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>
+            {
+                ["CS1701"] = ReportDiagnostic.Suppress,
+                ["CS1702"] = ReportDiagnostic.Suppress
+            });
         var compilation = CSharpCompilation.Create(
             "GeneratedMapperContract" + Guid.NewGuid().ToString("N"), trees,
             references.Values.Select(path => MetadataReference.CreateFromFile(path)),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
+            options);
         using var image = new MemoryStream();
         var emitted = compilation.Emit(image);
         Assert.IsTrue(emitted.Success, string.Join(Environment.NewLine, emitted.Diagnostics));

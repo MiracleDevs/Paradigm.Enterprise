@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/01.Data/">
     <Project Path="Paradigm.Enterprise.Data.MySql/Paradigm.Enterprise.Data.MySql.csproj" />
+    <Project Path="Paradigm.Enterprise.Data.Oracle/Paradigm.Enterprise.Data.Oracle.csproj" />
     <Project Path="Paradigm.Enterprise.Data.PostgreSql/Paradigm.Enterprise.Data.PostgreSql.csproj" />
     <Project Path="Paradigm.Enterprise.Data.SqlServer/Paradigm.Enterprise.Data.SqlServer.csproj" />
     <Project Path="Paradigm.Enterprise.Data/Paradigm.Enterprise.Data.csproj" />
@@ -33,6 +34,7 @@
   </Folder>
   <Folder Name="/06.Tests/">
     <Project Path="Paradigm.Enterprise.Data.MySql.Tests/Paradigm.Enterprise.Data.MySql.Tests.csproj" />
+    <Project Path="Paradigm.Enterprise.Data.Oracle.Tests/Paradigm.Enterprise.Data.Oracle.Tests.csproj" />
     <Project Path="Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer.Tests/Paradigm.Enterprise.Aspire.DatabaseBootstrap.SqlServer.Tests.csproj" />
     <Project Path="Paradigm.Enterprise.Aspire.Hosting.Tests/Paradigm.Enterprise.Aspire.Hosting.Tests.csproj" />
     <Project Path="Paradigm.Enterprise.Cli.Tests/Fixtures/DotNetAuditFixture/DotNetAuditFixture.csproj" />

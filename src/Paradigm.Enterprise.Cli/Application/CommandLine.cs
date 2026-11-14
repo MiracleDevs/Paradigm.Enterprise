@@ -19,7 +19,7 @@ internal static class CommandLine
           paradigm checks list [--format text|json]
           paradigm checks run [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
           paradigm generate json --project-name <name> --assembly <dll> --output <directory> [--settings <json>] [--format text|json]
-          paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--database-provider sqlserver|postgresql|mysql] [--settings <json>] [--format text|json]
+          paradigm generate mappers --project-name <name> --assembly <dll> --output <directory> [--database-provider sqlserver|postgresql|mysql|oracle] [--settings <json>] [--format text|json]
           paradigm generate client --document <url> --output <directory> [--settings <json>] [--format text|json]
           paradigm packages check [--project <path>] [--framework <tfm>] [--config <path>] [--format text|json]
           paradigm packages audit [--project <path>] [--framework <tfm>] [--config <path>] [--warnings-as-errors] [--format text|json]
@@ -159,10 +159,11 @@ internal static class CommandLine
                         "sqlserver" => CodeGenerationDatabaseProvider.SqlServer,
                         "postgresql" => CodeGenerationDatabaseProvider.PostgreSql,
                         "mysql" => CodeGenerationDatabaseProvider.MySql,
+                        "oracle" => CodeGenerationDatabaseProvider.Oracle,
                         _ => (CodeGenerationDatabaseProvider)(-1)
                     };
                     if (!Enum.IsDefined(databaseProvider))
-                        return Fail("--database-provider must be sqlserver, postgresql, or mysql.", out error);
+                        return Fail("--database-provider must be sqlserver, postgresql, mysql, or oracle.", out error);
                     break;
                 default:
                     return Fail($"Option '{option}' is not valid for '{name}'.", out error);

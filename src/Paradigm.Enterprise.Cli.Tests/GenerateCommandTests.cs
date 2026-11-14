@@ -31,6 +31,7 @@ public class GenerateCommandTests
     [DataRow("sqlserver")]
     [DataRow("postgresql")]
     [DataRow("mysql")]
+    [DataRow("oracle")]
     public async Task Mapper_generation_is_provider_specific_compilable_and_repeatable(string provider)
     {
         var assembly = MapperGenerationAssertions.FixtureAssembly(FindRepositoryRoot());
@@ -123,18 +124,23 @@ public class GenerateCommandTests
     }
 
     [TestMethod]
-    [DataRow("offset")]
-    [DataRow("collection")]
-    [DataRow("array-result")]
-    [DataRow("nested-generic")]
-    [DataRow("required-field")]
-    public async Task Unsupported_mysql_shapes_fail_before_writing_any_generated_source(string shape)
+    [DataRow("mysql", "offset")]
+    [DataRow("mysql", "collection")]
+    [DataRow("mysql", "array-result")]
+    [DataRow("mysql", "nested-generic")]
+    [DataRow("mysql", "required-field")]
+    [DataRow("oracle", "collection")]
+    [DataRow("oracle", "array-result")]
+    [DataRow("oracle", "nested-generic")]
+    [DataRow("oracle", "required-field")]
+    [DataRow("oracle", "unsigned")]
+    public async Task Unsupported_provider_shapes_fail_before_writing_any_generated_source(string provider, string shape)
     {
         var reference = MapperGenerationAssertions.FixtureAssembly(FindRepositoryRoot());
         var temporary = Path.Combine(Path.GetTempPath(), $"paradigm-unsupported-shape-{Guid.NewGuid():N}");
         try
         {
-            var type = shape == "offset" ? "System.DateTimeOffset" : "System.Collections.Generic.List<int>";
+            var type = shape switch { "offset" => "System.DateTimeOffset", "unsigned" => "System.UInt64", _ => "System.Collections.Generic.List<int>" };
             var source = shape switch
             {
                 "array-result" => """
@@ -169,11 +175,13 @@ public class GenerateCommandTests
                 }
                 """
             };
+            if (provider == "oracle")
+                source = source.Replace("Data.MySql", "Data.Oracle", StringComparison.Ordinal);
             var assembly = MapperGenerationAssertions.WriteFixture(reference, Path.Combine(temporary, "fixture"), source);
             var output = Path.Combine(temporary, "output");
             using var writer = new StringWriter();
             var exit = await TestCliApplication.RunAsync(
-                ["generate", "mappers", "--project-name", "MapperFixture", "--assembly", assembly, "--output", output, "--database-provider", "mysql", "--format", "json"],
+                ["generate", "mappers", "--project-name", "MapperFixture", "--assembly", assembly, "--output", output, "--database-provider", provider, "--format", "json"],
                 writer, TextWriter.Null);
 
             Assert.AreEqual(1, exit, writer.ToString());

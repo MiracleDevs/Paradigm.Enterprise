@@ -22,6 +22,7 @@ internal static class ParameterMapperSourceGenerator
             CodeGenerationDatabaseProvider.SqlServer => "Sql",
             CodeGenerationDatabaseProvider.PostgreSql => "Npgsql",
             CodeGenerationDatabaseProvider.MySql => "MySql",
+            CodeGenerationDatabaseProvider.Oracle => "Oracle",
             _ => throw new ArgumentOutOfRangeException(nameof(provider))
         };
         var method = provider == CodeGenerationDatabaseProvider.PostgreSql ? "AddNpgsqlParameter" : $"Add{prefix}Parameters";
@@ -68,6 +69,27 @@ internal static class ParameterMapperSourceGenerator
                 $"MySQL parameter property '{property.DeclaringType}.{property.Name}' requires an explicit custom mapper; arrays, composite values, and offset dates are not inferred.");
             return $$"""
                         AddMySqlParameter(new global::MySql.Data.MySqlClient.MySqlParameter("@{{property.Name}}", global::MySql.Data.MySqlClient.MySqlDbType.{{dbType}})
+                        {
+                            Value = (object?){{value}} ?? global::System.DBNull.Value
+                        });
+                """;
+        }
+        if (provider == CodeGenerationDatabaseProvider.Oracle)
+        {
+            var dbType = OracleType(type) ?? throw new NotSupportedException(
+                $"Oracle parameter property '{property.DeclaringType}.{property.Name}' requires an explicit custom mapper; unsigned/signed-byte numerics, arrays, and composite values are not inferred.");
+            if (type == typeof(Guid))
+                value = Nullable.GetUnderlyingType(property.PropertyType) is not null
+                    ? $"instance.@{property.Name}?.ToByteArray()" : $"instance.@{property.Name}.ToByteArray()";
+            else if (type == typeof(bool))
+                value = Nullable.GetUnderlyingType(property.PropertyType) is not null
+                    ? $"(instance.@{property.Name}.HasValue ? (object)(short)(instance.@{property.Name}.Value ? 1 : 0) : null)"
+                    : $"(short)(instance.@{property.Name} ? 1 : 0)";
+            else if (type == typeof(char))
+                value = Nullable.GetUnderlyingType(property.PropertyType) is not null
+                    ? $"instance.@{property.Name}?.ToString()" : $"instance.@{property.Name}.ToString()";
+            return $$"""
+                        AddOracleParameter(new global::Oracle.ManagedDataAccess.Client.OracleParameter("{{property.Name}}", global::Oracle.ManagedDataAccess.Client.OracleDbType.{{dbType}})
                         {
                             Value = (object?){{value}} ?? global::System.DBNull.Value
                         });
@@ -131,6 +153,15 @@ internal static class ParameterMapperSourceGenerator
         type == typeof(double) ? "Double" : type == typeof(float) ? "Float" :
         type == typeof(Guid) ? "Guid" : type == typeof(DateTime) ? "DateTime" :
         type == typeof(TimeSpan) ? "Time" : type == typeof(byte[]) ? "Blob" : null;
+
+    private static string? OracleType(Type type) =>
+        type == typeof(string) || type == typeof(char) ? "NVarchar2" :
+        type == typeof(int) ? "Int32" : type == typeof(long) ? "Int64" :
+        type == typeof(short) || type == typeof(bool) ? "Int16" : type == typeof(byte) ? "Byte" :
+        type == typeof(decimal) ? "Decimal" : type == typeof(double) ? "BinaryDouble" :
+        type == typeof(float) ? "BinaryFloat" : type == typeof(Guid) ? "Raw" :
+        type == typeof(DateTime) ? "TimeStamp" : type == typeof(DateTimeOffset) ? "TimeStampTZ" :
+        type == typeof(TimeSpan) ? "IntervalDS" : type == typeof(byte[]) ? "Blob" : null;
 
     #endregion
 }

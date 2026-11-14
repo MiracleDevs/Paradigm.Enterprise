@@ -464,7 +464,8 @@ internal static class CSharpChecks
             return definition.Name is "StoredProcedureBase" or "ResultStoredProcedureBase" &&
                    providerNamespace is "Paradigm.Enterprise.Data.SqlServer.StoredProcedures" or
                        "Paradigm.Enterprise.Data.PostgreSql.StoredProcedures" or
-                       "Paradigm.Enterprise.Data.MySql.StoredProcedures";
+                       "Paradigm.Enterprise.Data.MySql.StoredProcedures" or
+                       "Paradigm.Enterprise.Data.Oracle.StoredProcedures";
         });
 
     private static IEnumerable<INamedTypeSymbol> Hierarchy(INamedTypeSymbol? type)

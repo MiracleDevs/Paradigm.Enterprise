@@ -10,6 +10,7 @@ Choose packages by the layer or infrastructure capability that consumes them. Th
 | `Paradigm.Enterprise.Data.SqlServer` | `net10.0` | SQL Server context registration and stored-procedure support |
 | `Paradigm.Enterprise.Data.PostgreSql` | `net10.0` | PostgreSQL context registration and stored-procedure support |
 | `Paradigm.Enterprise.Data.MySql` | `net10.0` | Oracle MySQL context registration and stored-procedure support |
+| `Paradigm.Enterprise.Data.Oracle` | `net10.0` | Oracle Database context registration and typed REF CURSOR procedures |
 | `Paradigm.Enterprise.Providers` | `net10.0` | Application provider contracts and read/edit base workflows |
 | `Paradigm.Enterprise.WebApi` | `net10.0` | Controller bases, filters, middleware, and dependency discovery |
 | `Paradigm.Enterprise.Aspire.Hosting` | `net10.0` | Reusable .NET Aspire hosting recipes for Paradigm applications |

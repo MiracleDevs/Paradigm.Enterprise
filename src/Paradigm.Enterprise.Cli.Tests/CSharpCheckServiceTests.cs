@@ -48,11 +48,13 @@ public class CSharpCheckServiceTests
     }
 
     [TestMethod]
-    public void MySql_routine_boundary_is_recognized_without_exempting_mixed_ef_pagination()
+    [DataRow("MySql")]
+    [DataRow("Oracle")]
+    public void Provider_routine_boundary_is_recognized_without_exempting_mixed_ef_pagination(string provider)
     {
         var diagnostics = semanticDiagnostics.Value
             .Where(diagnostic => diagnostic.Code == "PE3103" &&
-                                 diagnostic.Message.Contains("MySqlOrderRepository.", StringComparison.Ordinal))
+                                 diagnostic.Message.Contains(provider + "OrderRepository.", StringComparison.Ordinal))
             .ToArray();
 
         Assert.HasCount(3, diagnostics);

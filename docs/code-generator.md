@@ -27,7 +27,7 @@ Build the Providers project first. The generator inspects public Provider method
 
 ## Stored-procedure mappers
 
-Build the Data project first. The generator writes mapper sources beneath `Mappers` in the supplied source output. Select `--database-provider mysql` for Oracle MySQL, `postgresql` for Npgsql, or `sqlserver` for SQL Server. Omitting the option retains SQL Server as the default. The option is accepted only by `generate mappers`; invalid values fail before generation starts.
+Build the Data project first. The generator writes mapper sources beneath `Mappers` in the supplied source output. Select `--database-provider mysql` for Oracle MySQL, `oracle` for Oracle Database/ODP.NET, `postgresql` for Npgsql, or `sqlserver` for SQL Server. Omitting the option retains SQL Server as the default. The option is accepted only by `generate mappers`; invalid values fail before generation starts.
 
 Input assemblies must have their runtime dependencies available alongside them. For a class library whose normal build does not copy those dependencies, build with `--property:CopyLocalLockFileAssemblies=true` or supply the assembly from the consuming host's build output. The generator loads the trusted assembly to find the selected provider's typed routine bases; it does not query the live database or infer column types from a connection string.
 
@@ -36,6 +36,8 @@ Generated parameter mappers and their registration use the selected provider's f
 Generation validates the complete mapper set before writing files and refuses to replace handwritten source. `Mappers/.paradigm-mappers.json` records the exact files it owns. Later runs remove only stale files listed in that manifest that still carry this generator's ownership markers; handwritten partials and unrelated files remain untouched. Older output without a manifest needs manual review when removing obsolete mapper files. The tool never recursively deletes a mixed handwritten directory.
 
 Scalar results and concrete `List<T>` results use the shared mapping rules. Object results need an accessible parameterless constructor and supported writable properties; ordinary property/constructor defaults survive missing or database-null fields. Unmappable required members, arrays used as result sets, and nested generic result types are rejected before output mutation. MySQL offset-preserving dates and composite/collection parameters require explicit application mappings rather than guessed conversions.
+
+Oracle generation emits unprefixed input parameter names, explicit `OracleDbType` values, and the Oracle mapper factory. REF CURSOR output parameters are supplied by the runtime result base (`p_result1` through `p_result16`); override its result-name hook for an existing database signature. Review Oracle NUMBER conversions, NUMBER(1) Boolean representation, RAW(16) Guid byte order, and timestamp types against the real procedure. Collection/UDT input parameters require handwritten mappings. See [Oracle setup](data-providers.md#oracle-database-with-odpnet).
 
 ## OpenAPI client
 

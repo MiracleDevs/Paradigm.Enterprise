@@ -1,16 +1,18 @@
-# RFC: MySQL Data Provider
+# RFC: MySQL and Oracle Database Providers
 
 - **RFC ID**: 2026-11-13-mysql-data-provider
 - **Jira**: MDPE-12
-- **Status**: Implemented
+- **Status**: Implemented (MySQL and Oracle)
 - **Author(s)**: Paradigm maintainers, prepared with Codex
 - **Created**: 2026-11-13
-- **Last Updated**: 2026-11-13
+- **Last Updated**: 2026-11-14
 - **Working branch**: `codex/MDPE-12-mysql-support`
 - **Analysis baseline**: local `main` at `1bf9e8c`
 - **Implementation authorization**: user approved proceeding on 2026-11-13 with the selected Oracle stack. Use MySQL 8.4/InnoDB for the initial integration baseline, `char(36)` Guid storage, and explicit UTC `datetime(6)` mappings in the test fixture; broader mappings remain application-owned.
 
 ## Summary
+
+The [Oracle extension](#oracle-database-extension-2026-11-14) adds `Paradigm.Enterprise.Data.Oracle` using Oracle's official EF Core provider. The original MySQL decisions and MDPE-12 implementation record below remain historical evidence for that adapter. Oracle Database is a separate engine and package from Oracle's MySQL Connector/NET. No Oracle Jira identifier has been supplied; MDPE-12 identifies the original MySQL work.
 
 Add `Paradigm.Enterprise.Data.MySql` as a sibling of the SQL Server and PostgreSQL packages. It will reference `Paradigm.Enterprise.Data` and use its existing context, repository, Unit of Work, transaction, and reader-mapping infrastructure. Applications will retain their existing Domain and Interfaces contracts and select MySQL at the persistence and registration boundaries.
 
@@ -278,6 +280,102 @@ Implementation and local validation completed on 2026-11-13:
 | RFC and MDPE-12 working branch | This preparation change | IMPLEMENTED |
 
 No `docs/rules/database` directory exists at the baseline. Applicable guidance is the repository's [architecture rules](../rules/01-architecture.md), [pattern rules](../rules/03-patterns.md), [common coding practices](../../.agents/skills/paradigm-common-guidance/references/good-coding-practices.md), [database governance](../../.agents/skills/database-skills/governance/DATABASE-GOVERNANCE.md), and [MySQL engine profile](../../.agents/skills/database-skills/engines/mysql/database-engine.md). Baseline observations are source-backed; proposed mappings and compatibility claims still require the tests above.
+
+## Oracle Database Extension (2026-11-14)
+
+### Authorization and Baseline
+
+The user requested equivalent Oracle Database support, extension of this RFC, and the official `Oracle.EntityFrameworkCore` **10.23.26400** package on 2026-11-14. Work proceeds on `codex/oracle-database-support`, based on MySQL implementation commit `a1cd080`. Existing uncommitted MySQL procedure-file consolidation belongs to the user and is preserved separately.
+
+The new `Paradigm.Enterprise.Data.Oracle` project directly consumes `Paradigm.Enterprise.Data`; the abstract library, Domain, Interfaces, repositories, audit model, and Unit of Work contracts remain engine-neutral. Shared reader translation remains the result-mapping boundary. Routine execution remains provider-specific, as in the three existing adapters. No shared routine-execution base currently exists to inherit.
+
+### Dependencies and Licensing
+
+| Component | Selected version and evidence |
+| --- | --- |
+| `Oracle.EntityFrameworkCore` | **10.23.26400**, [official versioned NuGet metadata](https://www.nuget.org/packages/Oracle.EntityFrameworkCore/10.23.26400); targets .NET 10, EF Core Relational >= 10.0.0 and < 11.0.0. |
+| `Oracle.ManagedDataAccess.Core` | **23.26.400**, [official ODP.NET metadata](https://www.nuget.org/packages/Oracle.ManagedDataAccess.Core/23.26.400); satisfies the EF provider's >= 23.26.400 and < 24.0.0 dependency. |
+| Shared EF Core/Relational | **10.0.15**, retained; package bounds admit this version, with restore, build, audit, and runtime tests required. |
+| `System.Security.Cryptography.Pkcs` | **10.0.15**, centrally pinned to replace the driver's vulnerable 8.0.1 minimum; the resulting Oracle package promotes this patched dependency for consumers. |
+
+Oracle publishes these binary packages under the [Oracle Free Distribution, Hosting, and Use Terms and Conditions](https://www.nuget.org/packages/Oracle.EntityFrameworkCore/10.23.26400/License). These are proprietary distribution terms, distinct from the framework's MIT license and from MySQL's GPL/FOSS exception. The official [Oracle .NET samples repository](https://github.com/oracle/dotnet-db-samples) contains examples, not an open-source implementation of the provider. The user's explicit official-package selection authorizes this dependency despite the common guidance's open-source preference; do not claim it is MIT or that provider source is available for modification. Preserve dependency license notices in distributions.
+
+Use one coherent ODP.NET stack: `OracleConnection`, `OracleCommand`, `OracleTransaction`, `OracleParameter`, and `OracleDbType` from `Oracle.ManagedDataAccess.Client`. Third-party EF providers and unmanaged Oracle Client installations are not required. Central package management pins both selected versions; no floating versions, EF downgrade, or dependency-warning suppression is introduced.
+
+### Public Surface and Ownership
+
+| Namespace within `Paradigm.Enterprise.Data.Oracle` | API |
+| --- | --- |
+| `Context` | `OracleDbConnectionProvider : DbContextConnectionProvider`, lazy named scoped `OracleConnection` instances, configuration-key-only errors, disposal of all owned connections. |
+| `Extensions` | `RegisterContext<TContext>(IServiceCollection, string connectionStringName)` configuring `UseOracle` with the named caller-owned connection; registration performs no network I/O. |
+| `StoredProcedures` | `StoredProcedureBase`, `StoredProcedureBase<TParameters>`, and `ResultStoredProcedureBase<TParameters, TResult1, ...>` for one through sixteen results using existing task/tuple and optional Unit of Work shapes. |
+| `StoredProcedures.Mappers` | `IOracleParameterMapper` and `OracleParameterMapperBase`, returning fresh `OracleParameter[]` with explicit type, direction, size, precision, and scale support. |
+| `StoredProcedures` | `OracleParameterMapperFactory`, matching existing registration, first-registration-wins, and fresh-mapper-per-invocation behavior. |
+
+All sixteen result arities remain in one `ResultStoredProcedureBase.cs`, carrying forward the user's explicit layout requirement. The generic and nongeneric `StoredProcedureBase` family also stays together, matching the user's MySQL consolidation and existing peer adapters. Exact file-specific PE3105 suppressions document these exceptions, with review expiry 2027-11-14. Other handwritten types follow the canonical file and member-region conventions. Do not duplicate Oracle repository/UoW/entity abstractions or change sibling adapter behavior.
+
+### Procedure Results and Parameters
+
+Oracle procedure results use explicit `OUT SYS_REFCURSOR` parameters. The adapter appends one output parameter per typed result, named `p_result1` through `p_result16` in tuple order. A protected virtual `GetResultParameterName(int resultIndex)` hook accepts a one-based position and permits existing routine signatures to supply their actual names. Validate blank/duplicate names and collisions with input parameters before opening the connection. Application parameter mappers supply the inputs; they must not duplicate these result parameters. This explicit convention is part of the Oracle adapter API, rather than inferred database metadata.
+
+ODP.NET [REF CURSOR documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/odpnt/featRefCursor.html) specifies `ExecuteReader` and `NextResult` access in parameter binding order. The integration suite must verify the async equivalents and an opened, zero-row middle cursor. A NULL/unopened cursor is not an empty result and is outside the ordered-result contract. Implicit `DBMS_SQL.RETURN_RESULT` results are not the initial supported path for the managed/Core driver.
+
+Set `OracleCommand.BindByName = true` on each command, independent of application-wide driver defaults. Generated input parameter names are unprefixed (`Name`, not `@Name` or `:Name`); the driver binds values separately from the trusted procedure identifier. Support schema/package-qualified routine names through `CommandType.StoredProcedure`. Package procedures and quoted identifiers must match their real database signatures.
+
+Map null inputs to `DBNull.Value`; clone metadata parameters so a mapper's disposal or a subsequent command cannot invalidate them. The existing typed API has no general OUT/INOUT-to-application-object contract; REF CURSOR reader results do not imply scalar output binding. Advanced associative arrays, UDTs, collection parameters, and function-return binding remain explicit application extensions.
+
+Result tuples preserve cursor/result order, including an empty middle cursor. Reuse shared reader mappers and the existing primitive-only scalar shortcut. `string`, `decimal`, `DateTime`, `Guid`, nullable scalars, and list elements need the corresponding registered mapper. Preserve missing/empty result behavior and avoid imposing new strict result-count rules on shared contracts.
+
+The Oracle adapter normalizes primitive numeric results because NUMBER values can arrive as `decimal`; it rejects fractional integral values and overflow rather than rounding or narrowing. Numeric Boolean scalars must be exactly zero or one. Generated object readers use Oracle-compatible getters, with exact single-character conversion from strings and Boolean support for both NUMBER and native BOOLEAN. Alias result columns to exactly match CLR property casing because shared optional-field validation compares schema names case-sensitively.
+
+### Lifetime, Transactions, and Errors
+
+The connection provider owns its lazy per-name connections and disposes every cached instance even if one disposal fails. Contexts and routine helpers borrow them. Routine execution never disposes a caller's connection. After execution starts, close nontransactional connections on success or failure, including connections open on entry. Leave active Unit of Work connections open. Parameter-mapping failures occur before execution and preserve the entry connection state.
+
+The shared transaction hook supplies the active `OracleTransaction`; reject a transaction belonging to another connection before execution. ODP.NET's [command Transaction documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/odpnt/CommandTransaction.html) states that its `IDbCommand.Transaction` setter is non-operational. Capture the transaction supplied through the existing Unit of Work hook in an adapter-local command proxy, validate its provider and exact connection, then use Oracle's connection-local transaction semantics. Do not rely on the ignored setter to enforce enlistment. Test EF writes from multiple contexts and a procedure in one commit/rollback. Use application-owned transactions: routines must not commit, roll back, execute DDL, or use autonomous transactions when their writes must belong to the Unit of Work. Oracle DDL commits implicitly and is schema-deployment work.
+
+Use ODP.NET's documented command-timeout behavior and qualify it with a real long-running-command test. Oracle timeout exceptions and cancellation behavior are provider-specific; do not copy the Connector/NET watchdog solely because it was necessary for MySQL. Preserve the original execution/mapping exception if cleanup also fails. Dispose readers/commands and detach parameters before connection reuse. No automatic retries, public cancellation-token API changes, or cross-provider exception equivalence is introduced.
+
+### Oracle Compatibility Decisions
+
+The qualified integration target is Oracle AI Database 26ai Free, reporting release/version **23.26.0.0.0**, from official image `container-registry.oracle.com/database/free:23.26.0.0-lite@sha256:ec92fdc8d687c12d6501d5ad1a5827838f1ef5026c997ac878009491b167b2a1`. CI uses the same pinned image. Production editions and older database releases are not certified by an EF package's target framework. Set/document SQL compatibility deliberately for application models targeting older servers; the default registration targets the selected provider's default.
+
+| Concern | Required boundary |
+| --- | --- |
+| Identifiers and schemas | Oracle unquoted names fold to uppercase; schemas correspond to users. Configure mappings explicitly; avoid carrying over `dbo`, PostgreSQL case assumptions, or MySQL database/schema interchangeability. |
+| Integers and decimals | Use explicit NUMBER precision/scale and typed conversions; ODP.NET result CLR numeric types can differ from generic CLR primitive expectations. Test real result values rather than casting assumed types. |
+| Boolean | Native SQL BOOLEAN support depends on server/SQL compatibility. Establish the test representation explicitly; older databases commonly need NUMBER(1) conversion. |
+| Strings and nulls | Oracle treats empty character strings as null. Document this observable engine behavior; do not promise empty-string preservation. Match VARCHAR2/NVARCHAR2 types and lengths to routine declarations. |
+| Guid | Test an explicit RAW(16) representation consistently between EF and procedure parameters, including byte order. Do not apply MySQL char(36) settings. |
+| Time | Test TIMESTAMP precision and application UTC policy. DATE is not a timezone-preserving instant. TIMESTAMP WITH TIME ZONE/DateTimeOffset need deliberate mappings. Oracle EF does not support DateOnly/TimeOnly in the selected release. |
+| Binary and large values | Exercise RAW/BLOB round trips and returned CLR values; no automatic LOB streaming contract is added. |
+| Transactions | Default READ COMMITTED and Oracle lock/constraint errors remain engine-specific. No claim of identical MySQL isolation or lock behavior. |
+
+### Generator and Delivery Integration
+
+`generate mappers --database-provider oracle` must discover only the Oracle typed routine hierarchy, generate `OracleParameterMapperBase`/`OracleParameterMapperFactory` output and shared reader mappers, and preserve SQL Server as the default. Map supported scalar CLR parameters to explicit `OracleDbType` values without narrowing unsigned integers. Unsupported composite, collection, or ambiguous type shapes must fail before output mutation. REF CURSOR output signatures remain handwritten when metadata cannot be inferred from CLR input contracts.
+
+Preserve the exact owned-file manifest, path validation, handwritten-file protection, byte-stable regeneration, constructor/property defaults, and generated ownership markers. Compile and execute generated Oracle mappings, test mixed-provider selection and all supported result arities, and exercise the installed packed CLI. Extend exact typed-boundary recognition and API guidance; do not invent a PE3107 rule absent from the checkout.
+
+Add the runtime and test projects to the canonical source solution, API documentation metadata, package matrix, provider guide, and quality checks. A dedicated Oracle CI service/job executes opt-in real database tests; the fast solution loop excludes the Integration category. Oracle database publishing, Aspire hosting/bootstrap, schema generation, bulk/array binding, and production authentication recipes are follow-up capabilities.
+
+### Acceptance and Validation Record
+
+Required checks: .NET 10 restore/build; fast solution tests; real Oracle CRUD/audit, pagination, no-input and typed procedures, one/two/sixteen results with an empty middle result, EF-plus-procedure transactions, mismatched transaction, failure cleanup, timeout and connection reuse; generated mapper compilation/execution and packed CLI integration; direct/transitive dependency audit; package inspection; framework C# checks; version consistency; and DocFX with warnings as errors.
+
+Local validation on 2026-11-14:
+
+- Release source solution build passed with zero warnings/errors on the final incremental build; the initial full build reported four pre-existing warnings in unchanged general tests.
+- All **248 fast solution tests** passed, including **12 offline Oracle tests**. All **24 Oracle adapter tests** passed when selected together, including **12 tests against the pinned real Oracle database**.
+- Real database coverage proved shared repository CRUD/audit, integer and RAW(16) Guid identifiers, decimal/null/UTC representations, named binding, parameterless commands, ordered one/empty-middle/sixteen/custom cursors, pagination, two EF contexts plus procedure commit/rollback, mismatched-connection rejection, checked primitive conversions, constraint/mapping cleanup, timeout, and connection reuse.
+- Oracle native asynchronous timeout raised `OperationCanceledException` with an inner `OracleException` carrying error 1013, rather than a MySQL-style `TimeoutException`. The fixture verifies this actual behavior and subsequent connection reuse. No adapter watchdog or exception substitution was introduced.
+- Generated Oracle mappers passed an actual ODP.NET round trip for RAW(16) Guid byte order, numeric/native Boolean, nulls, Unicode characters, decimal, timestamp, timestamp-with-time-zone offsets, multi-day intervals, binary values, and connection reuse. All **18 installed packed CLI integration tests** passed, including Oracle generation and generated-source compilation; the packed CLI works without an Oracle database for generation.
+- Runtime and delivery reviews corrected unsupported character getters, Boolean getter assumptions, null parameter constructor behavior, exact result aliases, test compiler settings matching SDK defaults, and Oracle CI check coverage. Real database execution corrected fixture assumptions about the Free Lite default tablespace, identity-sequence privileges, and native timeout exception wrapping.
+- Oracle direct/transitive vulnerability auditing reported no known vulnerable dependencies after pinning Pkcs 10.0.15. Package inspection verified net10 DLL/XML/icon, reference to abstract Data, selected Oracle dependencies, and the promoted patched crypto dependency. Version metadata remains aligned at 1.1.1. Installed CLI package consistency and solution doctor checks passed.
+- The complete source-solution dependency audit finished successfully with no vulnerability errors. It retains existing update/deprecation warnings, including the older test-platform build package and available .NET 11/Roslyn updates. These are outside this Oracle/.NET 10 change; no audit or dependency-bound warnings were suppressed. Audit results are a point-in-time snapshot.
+- The test fixture created unique synthetic schemas/users, confirmed all were removed, and removed its disposable container. No production Oracle schema, deployment, performance target, or Oracle Jira identifier was supplied. Oracle CI definitions were validated locally; the GitHub-hosted workflow has not been run from this branch.
+
+DocFX metadata and the site build passed with **zero warnings/errors**, with warnings treated as errors. Oracle API extraction uses a documentation-only SDK project compiling the actual adapter source with copied assembly references. This preserves SDK nullable/compiler settings and avoids traversing optional ODP.NET authentication plugins; it adds no runtime dependencies or broad warning suppressions. API inspection confirmed all sixteen result arities, accurate assembly/source references, and merged navigation. Packing retains `CopyLocalLockFileAssemblies=true` so it preserves documentation references. Installed CLI checks for the Oracle adapter, generator, CLI, CLI tests, and C# analyzer passed; local Markdown links and version metadata checks passed. Independent runtime and delivery reviews closed their code findings after the qualified tests.
 
 ## References
 

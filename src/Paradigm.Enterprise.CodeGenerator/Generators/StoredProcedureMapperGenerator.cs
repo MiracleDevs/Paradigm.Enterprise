@@ -225,6 +225,17 @@ internal sealed class StoredProcedureMapperGenerator
             var underlying = ReaderExpression(Enum.GetUnderlyingType(value), field);
             return underlying is null ? null : $"({TypeName(value)}){underlying}";
         }
+        if (_provider == CodeGenerationDatabaseProvider.Oracle)
+        {
+            if (value == typeof(bool))
+                return $"reader.GetBoolean(reader.GetOrdinal({field}))";
+            if (value == typeof(Guid))
+                return $"new global::System.Guid(GetBytes(reader, {field}))";
+            if (value == typeof(char))
+                return $"global::System.Convert.ToChar(GetString(reader, {field}), global::System.Globalization.CultureInfo.InvariantCulture)";
+            if (value == typeof(DateTimeOffset) || value == typeof(TimeSpan))
+                return $"((global::Oracle.ManagedDataAccess.Client.OracleDataReader)reader).{(value == typeof(DateTimeOffset) ? "GetDateTimeOffset" : "GetTimeSpan")}(reader.GetOrdinal({field}))";
+        }
         var method = value == typeof(string) ? "GetString" :
             value == typeof(int) ? "GetInt32" : value == typeof(long) ? "GetInt64" :
             value == typeof(short) ? "GetInt16" : value == typeof(byte) ? "GetByte" :
@@ -246,6 +257,7 @@ internal sealed class StoredProcedureMapperGenerator
             CodeGenerationDatabaseProvider.SqlServer => "SqlParameterMapperFactory",
             CodeGenerationDatabaseProvider.PostgreSql => "NpgsqlParameterMapperFactory",
             CodeGenerationDatabaseProvider.MySql => "MySqlParameterMapperFactory",
+            CodeGenerationDatabaseProvider.Oracle => "OracleParameterMapperFactory",
             _ => throw new ArgumentOutOfRangeException(nameof(_provider))
         };
         foreach (var parameter in parameters)

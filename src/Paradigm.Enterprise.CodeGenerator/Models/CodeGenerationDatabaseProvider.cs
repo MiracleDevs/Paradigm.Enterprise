@@ -5,5 +5,6 @@ internal enum CodeGenerationDatabaseProvider
 {
     SqlServer,
     PostgreSql,
-    MySql
+    MySql,
+    Oracle
 }
