@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Xml.Linq;
 
 namespace Paradigm.Enterprise.Cli.Tests;
 
@@ -8,6 +9,19 @@ namespace Paradigm.Enterprise.Cli.Tests;
 public class PackagingTests
 {
     #region Public Methods
+
+    [TestMethod]
+    public void Prepared_cli_package_uses_the_current_release_version()
+    {
+        using var archive = ZipFile.OpenRead(RequiredFile("PARADIGM_CLI_INTEGRATION_PACKAGE"));
+        var manifest = archive.GetEntry("Paradigm.Enterprise.Cli.nuspec");
+        Assert.IsNotNull(manifest);
+        using var stream = manifest.Open();
+        var document = XDocument.Load(stream);
+        var ns = document.Root!.Name.Namespace;
+
+        Assert.AreEqual(TestReleaseVersion.PackageVersion, document.Root.Element(ns + "metadata")!.Element(ns + "version")!.Value);
+    }
 
     [TestMethod]
     public void Prepared_solution_package_never_emits_test_fixture_packages()

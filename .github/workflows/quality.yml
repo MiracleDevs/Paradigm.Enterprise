@@ -12,6 +12,8 @@ jobs:
   oracle:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      PARADIGM_REQUIRE_DATABASE_TESTS: 'true'
     services:
       oracle:
         image: container-registry.oracle.com/database/free:23.26.0.0-lite@sha256:ec92fdc8d687c12d6501d5ad1a5827838f1ef5026c997ac878009491b167b2a1
@@ -47,6 +49,8 @@ jobs:
   mysql:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PARADIGM_REQUIRE_DATABASE_TESTS: 'true'
     services:
       mysql:
         image: mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902

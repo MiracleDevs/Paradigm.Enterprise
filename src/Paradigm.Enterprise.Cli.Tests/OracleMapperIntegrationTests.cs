@@ -17,7 +17,12 @@ public sealed class OracleMapperIntegrationTests
     {
         var connectionString = Environment.GetEnvironmentVariable("PARADIGM_ORACLE_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
-            Assert.Inconclusive("Set PARADIGM_ORACLE_TEST_CONNECTION_STRING to opt in to the Oracle integration fixture.");
+        {
+            const string message = "Set PARADIGM_ORACLE_TEST_CONNECTION_STRING to run Oracle mapper integration tests. See docs/tests.md.";
+            if (string.Equals(Environment.GetEnvironmentVariable("PARADIGM_REQUIRE_DATABASE_TESTS"), "true", StringComparison.OrdinalIgnoreCase))
+                Assert.Fail(message);
+            Assert.Inconclusive(message);
+        }
 
         var fixture = MapperGenerationAssertions.FixtureAssembly(FindRepositoryRoot());
         var temporary = Path.Combine(Path.GetTempPath(), $"paradigm-oracle-mapper-{Guid.NewGuid():N}");

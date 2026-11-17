@@ -343,8 +343,13 @@ public sealed class MySqlIntegrationTests
     public async Task CreateIsolatedDatabaseAsync()
     {
         var configured = Environment.GetEnvironmentVariable("PARADIGM_MYSQL_TEST_CONNECTION_STRING");
-        Assert.IsFalse(string.IsNullOrWhiteSpace(configured),
-            "Integration tests require PARADIGM_MYSQL_TEST_CONNECTION_STRING targeting a disposable MySQL 8.4 server with CREATE/DROP DATABASE privileges.");
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            const string message = "Set PARADIGM_MYSQL_TEST_CONNECTION_STRING to run integration tests against a disposable MySQL 8.4 server with CREATE/DROP DATABASE privileges. See docs/tests.md.";
+            if (string.Equals(Environment.GetEnvironmentVariable("PARADIGM_REQUIRE_DATABASE_TESTS"), "true", StringComparison.OrdinalIgnoreCase))
+                Assert.Fail(message);
+            Assert.Inconclusive(message);
+        }
         var admin = new MySqlConnectionStringBuilder(configured) { Database = string.Empty, ConnectionTimeout = 10, DefaultCommandTimeout = 15, OldGuids = false };
         _adminConnectionString = admin.ConnectionString;
         await using var connection = new MySqlConnection(_adminConnectionString);

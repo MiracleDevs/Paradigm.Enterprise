@@ -23,6 +23,7 @@
     <ProjectReference Include="Fixtures\GeneratorFixtures\GeneratorFixtures.csproj" ReferenceOutputAssembly="false" AdditionalProperties="Configuration=$(Configuration)" />
   </ItemGroup>
   <ItemGroup>
+    <AssemblyMetadata Include="ParadigmEnterpriseVersion" Value="$(ParadigmEnterpriseVersion)" />
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,7 @@
 - **Status**: Implemented (MySQL and Oracle)
 - **Author(s)**: Paradigm maintainers, prepared with Codex
 - **Created**: 2026-11-13
-- **Last Updated**: 2026-11-14
+- **Last Updated**: 2026-11-17
 - **Working branch**: `codex/MDPE-12-mysql-support`
 - **Analysis baseline**: local `main` at `1bf9e8c`
 - **Implementation authorization**: user approved proceeding on 2026-11-13 with the selected Oracle stack. Use MySQL 8.4/InnoDB for the initial integration baseline, `char(36)` Guid storage, and explicit UTC `datetime(6)` mappings in the test fixture; broader mappings remain application-owned.
@@ -376,6 +376,14 @@ Local validation on 2026-11-14:
 - The test fixture created unique synthetic schemas/users, confirmed all were removed, and removed its disposable container. No production Oracle schema, deployment, performance target, or Oracle Jira identifier was supplied. Oracle CI definitions were validated locally; the GitHub-hosted workflow has not been run from this branch.
 
 DocFX metadata and the site build passed with **zero warnings/errors**, with warnings treated as errors. Oracle API extraction uses a documentation-only SDK project compiling the actual adapter source with copied assembly references. This preserves SDK nullable/compiler settings and avoids traversing optional ODP.NET authentication plugins; it adds no runtime dependencies or broad warning suppressions. API inspection confirmed all sixteen result arities, accurate assembly/source references, and merged navigation. Packing retains `CopyLocalLockFileAssemblies=true` so it preserves documentation references. Installed CLI checks for the Oracle adapter, generator, CLI, CLI tests, and C# analyzer passed; local Markdown links and version metadata checks passed. Independent runtime and delivery reviews closed their code findings after the qualified tests.
+
+### Manual Test Execution Update (2026-11-17)
+
+MySQL, Oracle, and generated Oracle mapper integration tests now report skipped/inconclusive during manual runs when their explicit database connection-string variable is absent or blank. Offline tests still run. Supplying a connection string opts into actual execution; configuration, connection, privilege, and assertion errors remain failures. No application configuration or default database is used.
+
+The database CI jobs set `PARADIGM_REQUIRE_DATABASE_TESTS=true`, which makes missing configuration fail instead of skipping. Developers can set the same flag when deliberately qualifying integration changes. See [test setup](../tests.md) for the required variables. This changes only unconfigured test execution; the real-database validation evidence above remains historical qualification of the adapters.
+
+Validation of this update: an unconfigured solution run passed 260 tests and reported 35 skipped tests. The MySQL project passed 11 offline tests and skipped 15 database tests; Oracle passed 12 offline tests and skipped 12 database tests. Separate process-level probes verified that missing configuration fails in strict mode for both adapters and generated Oracle mappers, and that configured-but-unreachable MySQL/Oracle databases still produce failures. Build, formatting, C# checks, version consistency, and warning-as-error documentation validation passed.
 
 ## References
 

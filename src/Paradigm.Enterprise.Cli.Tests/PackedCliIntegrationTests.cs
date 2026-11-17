@@ -24,7 +24,6 @@ public class PackedCliIntegrationTests
     private static string metadataProject = null!;
     private static string auditProject = null!;
     private static string auditShimDirectory = null!;
-    private static string version = null!;
 
     #endregion
 
@@ -38,7 +37,6 @@ public class PackedCliIntegrationTests
         temporary = Path.Combine(Path.GetTempPath(), $"paradigm-packed-cli-{Guid.NewGuid():N}");
         Directory.CreateDirectory(temporary);
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
-        version = CentralVersion(repository);
         providerProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Providers", "Paradigm.Enterprise.Providers.csproj");
         metadataProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Tests", "Paradigm.Enterprise.Tests.csproj");
         auditProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli.Tests", "Paradigm.Enterprise.Cli.Tests.csproj");
@@ -68,7 +66,7 @@ public class PackedCliIntegrationTests
         StringAssert.StartsWith(help.Output, "Paradigm.Enterprise CLI");
         var release = await Run("--version");
         Assert.AreEqual(0, release.ExitCode, release.Error);
-        Assert.AreEqual(version, release.Output.Trim());
+        Assert.AreEqual(TestReleaseVersion.CliVersion, release.Output.Trim());
         var doctor = await Run("doctor", "--project", providerProject, "--format", "json");
         AssertJson(doctor, "doctor");
     }
@@ -192,14 +190,6 @@ public class PackedCliIntegrationTests
         }
 
         return new(process.ExitCode, await output, await error);
-    }
-
-    private static string CentralVersion(string root)
-    {
-        var text = File.ReadAllText(Path.Combine(root, "build", "Paradigm.Version.props"));
-        const string start = "<ParadigmEnterpriseVersion>";
-        var index = text.IndexOf(start, StringComparison.Ordinal) + start.Length;
-        return text[index..text.IndexOf("</ParadigmEnterpriseVersion>", index, StringComparison.Ordinal)];
     }
 
     private static string RequiredFile(string variable)

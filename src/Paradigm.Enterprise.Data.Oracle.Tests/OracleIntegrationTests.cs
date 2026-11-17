@@ -284,8 +284,13 @@ public sealed class OracleIntegrationTests
     public async Task CreateOwnedSchemaAsync()
     {
         var configured = Environment.GetEnvironmentVariable("PARADIGM_ORACLE_TEST_CONNECTION_STRING");
-        Assert.IsFalse(string.IsNullOrWhiteSpace(configured),
-            "Oracle integration tests require PARADIGM_ORACLE_TEST_CONNECTION_STRING targeting a disposable Oracle Free PDB with CREATE/DROP USER and GRANT privileges; application configuration is never used.");
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            const string message = "Set PARADIGM_ORACLE_TEST_CONNECTION_STRING to run integration tests against a disposable Oracle Free PDB with CREATE/DROP USER and GRANT privileges. Application configuration is never used. See docs/tests.md.";
+            if (string.Equals(Environment.GetEnvironmentVariable("PARADIGM_REQUIRE_DATABASE_TESTS"), "true", StringComparison.OrdinalIgnoreCase))
+                Assert.Fail(message);
+            Assert.Inconclusive(message);
+        }
         var admin = new OracleConnectionStringBuilder(configured) { Pooling = false, ConnectionTimeout = 10 };
         _adminConnectionString = admin.ConnectionString;
         await using var connection = new OracleConnection(_adminConnectionString);
