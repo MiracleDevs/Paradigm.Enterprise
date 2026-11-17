@@ -30,6 +30,8 @@ bash build/serve.documentation.sh 8090
 
 Set `DOCS_HOST` when the server must bind to a hostname other than `localhost`. Generated API metadata and `_site` output are ignored by Git.
 
+MySQL and Oracle API metadata use `metadata/MySqlApi.csproj` and `metadata/OracleApi.csproj`, documentation-only projects that compile the adapters' actual source with the SDK's nullable and implicit-using settings. `metadata/Directory.Build.targets` asks each runtime project to resolve its compiler references through MSBuild, using restored package assets and built project references rather than copied dependency DLLs in `bin`. Restore and build the source solution before running Docfx; the metadata projects continue working after quality steps remove optional dependency copies. Source extraction avoids MySQL's unused Linux `System.Windows.Extensions` reference to `System.Drawing.Common`, Oracle's optional ODP.NET authentication plugins, and Docfx's incompatible transitive project-reference metadata path. `metadata/Directory.Build.props` gives each metadata project separate intermediate and output directories so their restore and compiler caches cannot collide. These projects have no package or project references and are neither packaged nor published; do not add handwritten copies of the adapter APIs or relax documentation warnings to maintain them. Other binary metadata inputs still require `--property:CopyLocalLockFileAssemblies=true` when building and packing the source solution.
+
 ## Review
 
 Check links in both Docfx and GitHub rendering. Verify code against the current source. Search the changed documentation for obsolete type names, copied project identifiers, em dashes, emojis, mojibake, and separator-only lines.

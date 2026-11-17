@@ -24,7 +24,6 @@ public class PackedCliIntegrationTests
     private static string metadataProject = null!;
     private static string auditProject = null!;
     private static string auditShimDirectory = null!;
-    private static string version = null!;
 
     #endregion
 
@@ -38,7 +37,6 @@ public class PackedCliIntegrationTests
         temporary = Path.Combine(Path.GetTempPath(), $"paradigm-packed-cli-{Guid.NewGuid():N}");
         Directory.CreateDirectory(temporary);
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
-        version = CentralVersion(repository);
         providerProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Providers", "Paradigm.Enterprise.Providers.csproj");
         metadataProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Tests", "Paradigm.Enterprise.Tests.csproj");
         auditProject = Path.Combine(repository, "src", "Paradigm.Enterprise.Cli.Tests", "Paradigm.Enterprise.Cli.Tests.csproj");
@@ -68,7 +66,7 @@ public class PackedCliIntegrationTests
         StringAssert.StartsWith(help.Output, "Paradigm.Enterprise CLI");
         var release = await Run("--version");
         Assert.AreEqual(0, release.ExitCode, release.Error);
-        Assert.AreEqual(version, release.Output.Trim());
+        Assert.AreEqual(TestReleaseVersion.CliVersion, release.Output.Trim());
         var doctor = await Run("doctor", "--project", providerProject, "--format", "json");
         AssertJson(doctor, "doctor");
     }
@@ -110,6 +108,32 @@ public class PackedCliIntegrationTests
         Assert.IsTrue(packageCheck.RootElement.GetProperty("results").GetArrayLength() > 0);
         using var packageAudit = AssertJson(await Run(new Dictionary<string, string?> { ["PATH"] = auditShimDirectory + Path.PathSeparator + Environment.GetEnvironmentVariable("PATH") }, "packages", "audit", "--project", auditProject, "--format", "json"), "packages audit");
         Assert.AreEqual(0, packageAudit.RootElement.GetProperty("diagnostics").GetArrayLength());
+    }
+
+    [TestMethod]
+    [Timeout(180_000)]
+    [DataRow("mysql")]
+    [DataRow("oracle")]
+    public async Task Packed_cli_mapper_generation_compiles_and_preserves_existing_sources(string provider)
+    {
+        var fixture = MapperGenerationAssertions.FixtureAssembly(repository);
+        var output = Path.Combine(temporary, provider + "-mappers");
+        var arguments = new[] { "generate", "mappers", "--project-name", "MapperFixture", "--assembly", fixture, "--output", output, "--database-provider", provider, "--format", "json" };
+        using var first = AssertJson(await Run(arguments), "generate mappers");
+        await MapperGenerationAssertions.AssertCompilesAndMapsAsync(fixture, output, provider);
+        var handwritten = Path.Combine(output, "Mappers", "DataReaders", "Handwritten.partial.cs");
+        File.WriteAllText(handwritten, "// retained packed consumer partial");
+        var snapshot = MapperGenerationAssertions.Snapshot(output);
+        var manifest = Path.Combine(output, "Mappers", ".paradigm-mappers.json");
+        var manifestBefore = File.ReadAllBytes(manifest);
+        using var second = AssertJson(await Run(arguments), "generate mappers");
+        MapperGenerationAssertions.AssertSameFiles(snapshot, output);
+        CollectionAssert.AreEqual(manifestBefore, File.ReadAllBytes(manifest));
+
+        var rejectedOutput = Path.Combine(temporary, "invalid-" + provider + "-mappers");
+        var invalid = await Run("generate", "mappers", "--project-name", "MapperFixture", "--assembly", fixture, "--output", rejectedOutput, "--database-provider", "unsupported");
+        Assert.AreEqual(2, invalid.ExitCode);
+        Assert.IsFalse(Directory.Exists(rejectedOutput));
     }
 
     #endregion
@@ -166,14 +190,6 @@ public class PackedCliIntegrationTests
         }
 
         return new(process.ExitCode, await output, await error);
-    }
-
-    private static string CentralVersion(string root)
-    {
-        var text = File.ReadAllText(Path.Combine(root, "build", "Paradigm.Version.props"));
-        const string start = "<ParadigmEnterpriseVersion>";
-        var index = text.IndexOf(start, StringComparison.Ordinal) + start.Length;
-        return text[index..text.IndexOf("</ParadigmEnterpriseVersion>", index, StringComparison.Ordinal)];
     }
 
     private static string RequiredFile(string variable)

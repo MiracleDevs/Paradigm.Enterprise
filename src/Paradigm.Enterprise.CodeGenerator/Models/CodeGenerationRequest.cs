@@ -6,4 +6,5 @@ internal sealed record CodeGenerationRequest(
     string? AssemblyPath,
     string OutputPath,
     string? Document,
-    string? SettingsPath);
+    string? SettingsPath,
+    CodeGenerationDatabaseProvider DatabaseProvider = CodeGenerationDatabaseProvider.SqlServer);

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../build/Paradigm.Version.props" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Paradigm.Enterprise.Data.MySql</AssemblyName>
+    <Version>$(ParadigmEnterpriseVersion)</Version>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+  <!-- Compile the actual adapter source without traversing MySQL's platform-specific
+       System.Windows.Extensions metadata and its unused System.Drawing.Common reference. -->
+  <ItemGroup>
+    <Compile Include="../../src/Paradigm.Enterprise.Data.MySql/**/*.cs"
+             Exclude="../../src/Paradigm.Enterprise.Data.MySql/bin/**;../../src/Paradigm.Enterprise.Data.MySql/obj/**" />
+  </ItemGroup>
+</Project>

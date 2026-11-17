@@ -50,6 +50,33 @@ dotnet test src/Paradigm.Enterprise.slnx --filter "TestCategory!=Integration"
 
 This is the fast developer loop. Run `bash build/quality.sh` for the complete repository suite, including integration tests that consume the prepared CLI package and installed executable.
 
+MySQL tests have their own explicit database run. Set `PARADIGM_MYSQL_TEST_CONNECTION_STRING` to a disposable MySQL 8.4/InnoDB server with permission to create and drop fixture databases, then run:
+
+```powershell
+dotnet test src/Paradigm.Enterprise.Data.MySql.Tests/Paradigm.Enterprise.Data.MySql.Tests.csproj --configuration Release --filter "TestCategory=Integration"
+```
+
+The integration fixture creates an isolated database and removes it afterward. Use synthetic data and a dedicated test server. Without a connection string, manual runs report database tests as skipped (inconclusive) with a setup message; they never fall back to application configuration. Set `PARADIGM_REQUIRE_DATABASE_TESTS=true` to fail instead when database configuration is missing. A supplied connection string always opts in: invalid configuration, unreachable databases, missing privileges, and test failures remain failures. Database integration tests run manually; there is no dedicated MySQL CI job. The fast solution filter and packed CLI integration command do not execute these database tests; run the command above separately from `build/quality.sh` for full MySQL validation. See [Database providers](data-providers.md) for setup and mapping boundaries.
+
+Oracle Database uses a separate explicit run. Set `PARADIGM_ORACLE_TEST_CONNECTION_STRING` to an administrator connection within a disposable PDB, for example SYSTEM on `host:1521/FREEPDB1`, with permission to create/drop fixture users and grant their session, table, procedure, and tablespace quota privileges. Never point it at a production database. The fixture creates a uniquely named schema/user and drops only that schema during cleanup.
+
+```powershell
+dotnet test src/Paradigm.Enterprise.Data.Oracle.Tests/Paradigm.Enterprise.Data.Oracle.Tests.csproj --configuration Release --filter "TestCategory=Integration"
+dotnet test src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj --configuration Release --filter "TestCategory=OracleIntegration"
+```
+
+The second command compiles generated Oracle mappers and exercises their parameters and reader conversions against actual ODP.NET results. Both commands use the same connection variable and report skipped (inconclusive) when it is absent during manual runs. Neither command silently reads application settings or skips a configured database failure. There is no dedicated Oracle CI job; supply the connection string and set `PARADIGM_REQUIRE_DATABASE_TESTS=true` when deliberately qualifying these tests. This fixture targets Oracle AI Database Free 26ai; package compatibility alone does not certify older servers or production editions. Run both commands separately from the fast loop and `build/quality.sh` to qualify Oracle changes.
+
+For example, after starting disposable local database servers, configure the test process before running either project:
+
+```powershell
+$env:PARADIGM_MYSQL_TEST_CONNECTION_STRING = "Server=127.0.0.1;Port=3306;User ID=root;Password=<test-password>;SslMode=Disabled;AllowPublicKeyRetrieval=True"
+$env:PARADIGM_ORACLE_TEST_CONNECTION_STRING = "Data Source=127.0.0.1:1521/FREEPDB1;User ID=SYSTEM;Password=<test-password>;Pooling=false"
+$env:PARADIGM_REQUIRE_DATABASE_TESTS = "true"
+```
+
+Use actual mapped ports and dedicated test credentials. For Visual Studio Test Explorer, start Visual Studio from the configured shell or provide the variables through your local test run settings so the test process inherits them. An unconfigured project run executes its offline tests and reports the database tests as skipped; that result does not certify database integration.
+
 When running all tests directly with `dotnet test` or Visual Studio Test Explorer, the packed CLI tests are reported as skipped (inconclusive) if neither `PARADIGM_CLI_INTEGRATION_PACKAGE` nor `PARADIGM_CLI_INTEGRATION_EXECUTABLE` is configured. The quality script and PR workflow supply these paths and execute the tests. Once either variable is configured, missing required paths, relative paths, and nonexistent files still fail the tests.
 
 The checked-in example solution references the current source projects. Build and test it separately to validate the documented application patterns as well as the framework solution:

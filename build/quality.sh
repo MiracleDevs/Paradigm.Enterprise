@@ -57,11 +57,11 @@ dotnet tool restore
 dotnet restore src/Paradigm.Enterprise.slnx
 
 step "Build and test source"
-dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore
+dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore --property:CopyLocalLockFileAssemblies=true
 dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --filter "TestCategory!=Integration"
 
 step "Pack current release and build example"
-dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --output "$ARTIFACTS_DIRECTORY"
+dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --property:CopyLocalLockFileAssemblies=true --output "$ARTIFACTS_DIRECTORY"
 dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources="$ARTIFACTS_DIRECTORY"
 dotnet build example/ExampleApp.sln --configuration Release --no-restore
 dotnet test example/ExampleApp.sln --configuration Release --no-build
@@ -89,6 +89,8 @@ step "Deterministic quality checks"
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.Cli.Tests/Paradigm.Enterprise.Cli.Tests.csproj
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.Checks.CSharp/Paradigm.Enterprise.Checks.CSharp.csproj
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.CodeGenerator/Paradigm.Enterprise.CodeGenerator.csproj
+"$PARADIGM" checks run --project src/Paradigm.Enterprise.Data.MySql/Paradigm.Enterprise.Data.MySql.csproj
+"$PARADIGM" checks run --project src/Paradigm.Enterprise.Data.Oracle/Paradigm.Enterprise.Data.Oracle.csproj
 "$PARADIGM" validate --project example/ExampleApp.sln
 "$PARADIGM" checks run --project example/ExampleApp.sln
 "$POWERSHELL" -NoProfile -NonInteractive -File build/verify-version.ps1

@@ -27,6 +27,7 @@ internal static class CodeGenerationService
             ["ProvidersOutputPath"] = request.Mode == CodeGenerationMode.Json ? request.OutputPath : null,
             ["DataAssemblyPath"] = request.Mode == CodeGenerationMode.Mappers ? request.AssemblyPath : null,
             ["DataOutputPath"] = request.Mode == CodeGenerationMode.Mappers ? request.OutputPath : null,
+            ["DatabaseProvider"] = request.DatabaseProvider.ToString(),
             ["ProxiesOutput"] = request.Mode == CodeGenerationMode.Client ? request.OutputPath : null,
             ["SwaggerUrl"] = request.Mode == CodeGenerationMode.Client ? request.Document : null
         });
@@ -59,6 +60,10 @@ internal static class CodeGenerationService
 
     private static void Validate(CodeGenerationRequest request)
     {
+        if (!Enum.IsDefined(request.DatabaseProvider))
+            throw new ArgumentOutOfRangeException(nameof(request.DatabaseProvider), request.DatabaseProvider, "Unknown database provider.");
+        if (request.Mode != CodeGenerationMode.Mappers && request.DatabaseProvider != CodeGenerationDatabaseProvider.SqlServer)
+            throw new ArgumentException("Database provider selection applies only to mapper generation.");
         if (string.IsNullOrWhiteSpace(request.OutputPath))
             throw new ArgumentException("Generation requires an output path.");
         if (request.Mode is CodeGenerationMode.Json or CodeGenerationMode.Mappers)

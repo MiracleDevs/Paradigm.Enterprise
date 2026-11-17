@@ -1,0 +1,15 @@
+<Project>
+  <!-- Use the runtime project's resolved compiler inputs, not optional copies in its bin folder. -->
+  <Target Name="ResolveDocumentationReferences" BeforeTargets="ResolveAssemblyReferences">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)../../src/$(AssemblyName)/$(AssemblyName).csproj"
+             Targets="ResolveReferences;ResolveAssemblyReferences"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);BuildProjectReferences=false">
+      <Output TaskParameter="TargetOutputs" ItemName="_DocumentationReferences" />
+    </MSBuild>
+    <Error Condition="'@(_DocumentationReferences)' == ''"
+           Text="No compiler references were resolved for $(AssemblyName). Restore and build the source solution before generating documentation." />
+    <ItemGroup>
+      <Reference Include="@(_DocumentationReferences)" KeepMetadata="Identity" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../build/Paradigm.Version.props" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Paradigm.Enterprise.Data.Oracle</AssemblyName>
+    <Version>$(ParadigmEnterpriseVersion)</Version>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+  <!-- Compile the actual adapter source with SDK options. Direct metadata references avoid
+       traversing optional ODP.NET authentication plugins that the adapter does not consume. -->
+  <ItemGroup>
+    <Compile Include="../../src/Paradigm.Enterprise.Data.Oracle/**/*.cs"
+             Exclude="../../src/Paradigm.Enterprise.Data.Oracle/bin/**;../../src/Paradigm.Enterprise.Data.Oracle/obj/**" />
+  </ItemGroup>
+</Project>
