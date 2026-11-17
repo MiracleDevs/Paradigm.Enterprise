@@ -156,7 +156,7 @@ Use shared `TranslateAsync`/`TranslateAndMoveAsync` for declared row-bearing res
 
 ### MySQL Compatibility Boundaries
 
-MySQL 8.4/InnoDB is the initial support target; CI pins the qualified patch/image digest recorded below. Do not advertise MariaDB, MySQL 5.7/8.0, or innovation releases without a separate tested matrix.
+MySQL 8.4/InnoDB is the initial support target; the qualified patch/image digest for manual validation is recorded below. Do not advertise MariaDB, MySQL 5.7/8.0, or innovation releases without a separate tested matrix.
 
 MySQL's [schema name is a database name](https://dev.mysql.com/doc/refman/8.4/en/create-database.html); SQL Server `dbo` and PostgreSQL schemas cannot be copied mechanically. Use unqualified names within the configured database or deliberate database qualification. EF schema annotations need a documented mapping strategy for the chosen provider. Test identifier casing on Linux; use the exact object names and provider quoting rather than assuming Windows casing behavior.
 
@@ -211,7 +211,7 @@ The solution-wide packaging scripts discover member packages already. Verify the
 
 Use a dedicated `Paradigm.Enterprise.Data.MySql.Tests` project and the established MSTest stack where possible. Mocked/unit tests cover configuration validation, mapper/factory behavior, type metadata/null handling, timeout assignment, and cleanup paths. Do not add a new test dependency if the current stack suffices.
 
-Real integration tests use an ephemeral MySQL 8.4/InnoDB service, pinned after qualification, with readiness checks, a bounded timeout, isolated synthetic fixtures, and cleanup. Credentials come from CI configuration; the fixture must never default to a developer's or external production database.
+Real integration tests use an ephemeral MySQL 8.4/InnoDB service, pinned after qualification, with readiness checks, a bounded timeout, isolated synthetic fixtures, and cleanup. Credentials come from explicit test-process configuration; the fixture must never default to a developer's or external production database.
 
 | Test area | Required evidence |
 | --- | --- |
@@ -225,7 +225,7 @@ Real integration tests use an ephemeral MySQL 8.4/InnoDB service, pinned after q
 | Tooling | MySQL typed routines receive the same PE3103 boundary recognition as peers; mixed EF pagination still warns and lookalike namespaces are not recognized; existing provider fixtures remain valid; CLI guidance recognizes MySQL. |
 | Delivery | Clean restore/build/pack; no mixed EF majors or suppressed dependency warnings; NuGet audit; inspect metadata/dependencies/XML docs/symbols; a minimal consumer can install the packed package and execute EF plus a typed routine. |
 
-The current quality workflow excludes solution tests marked `Integration`, then runs only packed CLI integration tests. Add an explicit MySQL-backed CI job or step and local command; merely adding integration tests would leave them unexecuted. Fast tests stay database-independent. Run relevant existing shared Data and adapter regressions and the documentation build after implementation.
+The current quality workflow excludes solution tests marked `Integration`, then runs only packed CLI integration tests. Run the documented MySQL-backed local command when qualifying database changes; there is no dedicated database CI job. Fast tests stay database-independent. Run relevant existing shared Data and adapter regressions and the documentation build after implementation.
 
 Measure representative CRUD and two-result pagination operations for obvious round-trip or connection-lifetime regressions. Establish a baseline before setting numeric budgets; do not claim performance gains from this design analysis. A provider EF reverse-engineering smoke test should establish the supported database-first mapping recipe without promising a new Paradigm generator.
 
@@ -236,20 +236,20 @@ For this initial documentation change, validate source references, relative link
 1. Review this draft under the [RFC process](README.md), including its normal discussion period and recorded maintainer consensus. Confirm the support baseline before coding; Oracle provider selection and version 10.0.12 are already decided.
 2. Qualify Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0 with the existing EF Core 10.0.15 pins, inspect licensing/transitives/security, and prove same-connection EF/routine transaction behavior in a minimal integration fixture.
 3. Add the MySQL package and test project; implement named connection/EF registration, parameter mapping, and the full result family using shared Data behavior. Keep existing providers and public contracts compatible.
-4. Add semantic checks, CLI guidance, explicit database CI execution, packed-consumer validation, API documentation, and usage examples.
+4. Add semantic checks, CLI guidance, explicit database integration execution, packed-consumer validation, API documentation, and usage examples.
 5. Release the opt-in NuGet package with the framework's shared version and documented support matrix. A feature flag is unnecessary because applications select the adapter explicitly.
 
 Existing SQL Server/PostgreSQL applications do not need migration. An application moving its data to MySQL must separately port its schema, routines, EF model annotations, and value representations; this package does not perform data migration. Rollback for an existing consumer is to retain its existing provider/version; a MySQL consumer can revert to its last compatible package release. Database rollback and data recovery remain application deployment responsibilities.
 
 ## Dependencies
 
-The implementation uses Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0, with shared EF Core/Relational 10.0.15. Add both Oracle references explicitly because the adapter directly consumes both EF and ADO.NET APIs, with versions owned by central package management. It also requires a qualified MySQL test image, a CI execution environment, and maintainers agreeing on the support matrix and public signatures. It does not depend on accepting another RFC or implementing new Aspire/database-publishing packages.
+The implementation uses Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0, with shared EF Core/Relational 10.0.15. Add both Oracle references explicitly because the adapter directly consumes both EF and ADO.NET APIs, with versions owned by central package management. It also requires a qualified MySQL test image, a disposable integration-test environment, and maintainers agreeing on the support matrix and public signatures. It does not depend on accepting another RFC or implementing new Aspire/database-publishing packages.
 
 [Oracle's official Connector/NET repository](https://github.com/mysql/mysql-connector-net), [source license](https://github.com/mysql/mysql-connector-net/blob/trunk/LICENSE), and [EF support guide](https://dev.mysql.com/doc/connector-net/en/connector-net-entityframework-core.html) document the selected stack's provenance. The driver includes cryptography, protobuf, compression, configuration, and permissions dependencies, so the implementation audit covers the full resolved graph rather than only EF. Exact pins, license metadata, and the public driver namespace were verified; restore, audit, and runtime evidence are recorded below. Package metadata alone was not treated as runtime qualification.
 
 ## Resolved Decisions and Follow-up
 
-The selected Oracle stack restores and builds with EF Core 10.0.15 and passes the MySQL integration suite. CI pins MySQL 8.4.13 at `sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902`. The initial fixture certifies native Guid `char(36)` with `OldGuids=false`, explicit UTC `datetime(6)`, and the documented Boolean/numeric/string/binary mappings. Oracle's native Guid mapping must not also receive `HasConversion<string>()` for that store type.
+The selected Oracle stack restores and builds with EF Core 10.0.15 and passes the MySQL integration suite. The qualified MySQL 8.4.13 image is pinned at `sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902`. The initial fixture certifies native Guid `char(36)` with `OldGuids=false`, explicit UTC `datetime(6)`, and the documented Boolean/numeric/string/binary mappings. Oracle's native Guid mapping must not also receive `HasConversion<string>()` for that store type.
 
 Provider-aware parameter and reader generation is included through the CLI, with SQL Server as the unchanged default selection. Aspire/database publishing, additional MySQL/MariaDB versions, and other application-specific value representations remain separate work. No further definition blocks the adapter delivered here. The explicit deadline fallback and cancellation-failure limitation are documented above.
 
@@ -338,7 +338,7 @@ Use ODP.NET's documented command-timeout behavior and qualify it with a real lon
 
 ### Oracle Compatibility Decisions
 
-The qualified integration target is Oracle AI Database 26ai Free, reporting release/version **23.26.0.0.0**, from official image `container-registry.oracle.com/database/free:23.26.0.0-lite@sha256:ec92fdc8d687c12d6501d5ad1a5827838f1ef5026c997ac878009491b167b2a1`. CI uses the same pinned image. Production editions and older database releases are not certified by an EF package's target framework. Set/document SQL compatibility deliberately for application models targeting older servers; the default registration targets the selected provider's default.
+The qualified integration target is Oracle AI Database 26ai Free, reporting release/version **23.26.0.0.0**, from official image `container-registry.oracle.com/database/free:23.26.0.0-lite@sha256:ec92fdc8d687c12d6501d5ad1a5827838f1ef5026c997ac878009491b167b2a1`. Use the same pinned image for manual qualification; the dedicated CI job has been removed. Production editions and older database releases are not certified by an EF package's target framework. Set/document SQL compatibility deliberately for application models targeting older servers; the default registration targets the selected provider's default.
 
 | Concern | Required boundary |
 | --- | --- |
@@ -357,7 +357,7 @@ The qualified integration target is Oracle AI Database 26ai Free, reporting rele
 
 Preserve the exact owned-file manifest, path validation, handwritten-file protection, byte-stable regeneration, constructor/property defaults, and generated ownership markers. Compile and execute generated Oracle mappings, test mixed-provider selection and all supported result arities, and exercise the installed packed CLI. Extend exact typed-boundary recognition and API guidance; do not invent a PE3107 rule absent from the checkout.
 
-Add the runtime and test projects to the canonical source solution, API documentation metadata, package matrix, provider guide, and quality checks. A dedicated Oracle CI service/job executes opt-in real database tests; the fast solution loop excludes the Integration category. Oracle database publishing, Aspire hosting/bootstrap, schema generation, bulk/array binding, and production authentication recipes are follow-up capabilities.
+Add the runtime and test projects to the canonical source solution, API documentation metadata, package matrix, provider guide, and quality checks. Real database integration tests run manually; dedicated MySQL and Oracle CI jobs were removed at the user's request on 2026-11-17. The fast solution loop excludes the Integration category. Oracle database publishing, Aspire hosting/bootstrap, schema generation, bulk/array binding, and production authentication recipes are follow-up capabilities.
 
 ### Acceptance and Validation Record
 
@@ -381,7 +381,7 @@ DocFX metadata and the site build passed with **zero warnings/errors**, with war
 
 MySQL, Oracle, and generated Oracle mapper integration tests now report skipped/inconclusive during manual runs when their explicit database connection-string variable is absent or blank. Offline tests still run. Supplying a connection string opts into actual execution; configuration, connection, privilege, and assertion errors remain failures. No application configuration or default database is used.
 
-The database CI jobs set `PARADIGM_REQUIRE_DATABASE_TESTS=true`, which makes missing configuration fail instead of skipping. Developers can set the same flag when deliberately qualifying integration changes. See [test setup](../tests.md) for the required variables. This changes only unconfigured test execution; the real-database validation evidence above remains historical qualification of the adapters.
+Set `PARADIGM_REQUIRE_DATABASE_TESTS=true` when deliberately qualifying integration changes to make missing configuration fail instead of skipping. The dedicated database CI jobs were subsequently removed at the user's request; the main verification and documentation jobs remain. See [test setup](../tests.md) for the required variables. This changes only test execution configuration; the real-database validation evidence above remains historical qualification of the adapters.
 
 Validation of this update: an unconfigured solution run passed 260 tests and reported 35 skipped tests. The MySQL project passed 11 offline tests and skipped 15 database tests; Oracle passed 12 offline tests and skipped 12 database tests. Separate process-level probes verified that missing configuration fails in strict mode for both adapters and generated Oracle mappers, and that configured-but-unreachable MySQL/Oracle databases still produce failures. Build, formatting, C# checks, version consistency, and warning-as-error documentation validation passed.
 
