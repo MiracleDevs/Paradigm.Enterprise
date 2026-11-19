@@ -1,0 +1,87 @@
+name: Publish NuGet packages
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nuget-publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'MiracleDevs/Paradigm.Enterprise'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Validate release version
+        shell: pwsh
+        run: |
+          ./build/verify-version.ps1
+          $version = ([xml](Get-Content -Raw build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
+          if ($env:GITHUB_REF_NAME -cne "v$version") {
+            throw "Release tag '$env:GITHUB_REF_NAME' must match v$version from build/Paradigm.Version.props."
+          }
+
+      - name: Restore
+        run: dotnet restore src/Paradigm.Enterprise.slnx
+
+      - name: Build and test
+        run: |
+          dotnet build src/Paradigm.Enterprise.slnx --configuration Release --no-restore --property:CopyLocalLockFileAssemblies=true
+          dotnet test src/Paradigm.Enterprise.slnx --configuration Release --no-build --filter "TestCategory!=Integration"
+
+      - name: Pack release
+        run: dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --property:CopyLocalLockFileAssemblies=true --output artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: nuget-packages
+          path: artifacts
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push packages and symbols
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

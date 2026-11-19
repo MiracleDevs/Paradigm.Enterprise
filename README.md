@@ -80,4 +80,6 @@ Read the [contribution guide](.github/CONTRIBUTING.md), [documentation guide](do
 
 ## Release history and license
 
+See the [publishing guide](docs/contributing/publishing.md) for GitHub Actions trusted publishing setup and tag-based releases.
+
 See [CHANGELOG.md](CHANGELOG.md) for package history. The project is licensed under the [MIT License](LICENSE).
