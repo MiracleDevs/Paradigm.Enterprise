@@ -20,7 +20,15 @@ jobs:
       - name: Check out release
         uses: actions/checkout@v7
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Require release commit on main
+        run: |
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "Release tags must point to a commit on main."
+            exit 1
+          fi
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
@@ -54,6 +62,8 @@ jobs:
           path: |
             artifacts/*.nupkg
             artifacts/*.snupkg
+            !artifacts/Paradigm.Enterprise.Cli.*.nupkg
+            !artifacts/Paradigm.Enterprise.Cli.*.snupkg
           if-no-files-found: error
 
   publish:
