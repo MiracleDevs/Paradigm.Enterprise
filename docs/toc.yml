@@ -76,6 +76,8 @@ items:
         href: contributing/documentation.md
       - name: CLI development
         href: contributing/cli-development.md
+      - name: Publishing packages
+        href: contributing/publishing.md
       - name: Visual Studio template
         href: contributing/template-maintenance.md
       - name: RFC process
