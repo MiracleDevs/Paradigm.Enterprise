@@ -1,6 +1,6 @@
 # Publish NuGet packages
 
-The [publish workflow](../../.github/workflows/publish.yml) replaces the local API-key-based publisher. It builds, tests, and packs the solution when a `v<version>` tag is pushed, requiring the tagged commit to be on `main`. It excludes `Paradigm.Enterprise.Cli` from publishing. A separate job publishes the remaining packages with [NuGet trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing), using GitHub OIDC to obtain a temporary API key immediately before the push.
+The [publish workflow](https://github.com/MiracleDevs/Paradigm.Enterprise/blob/main/.github/workflows/publish.yml) replaces the local API-key-based publisher. It builds, tests, and packs the solution when a `v<version>` tag is pushed, requiring the tagged commit to be on `main`. It excludes `Paradigm.Enterprise.Cli` from publishing. A separate job publishes the remaining packages with [NuGet trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing), using GitHub OIDC to obtain a temporary API key immediately before the push.
 
 ## One-time setup
 
