@@ -15,6 +15,36 @@ function Assert-Failure([scriptblock]$Action, [string]$ExpectedMessage) {
 }
 
 try {
+    # Load only the enumerator, without running the end-to-end validator.
+    $validationScript = Join-Path $repositoryRoot 'build/templates/verify-templates.ps1'
+    $validationAst = [Management.Automation.Language.Parser]::ParseFile($validationScript, [ref]$null, [ref]$null)
+    $enumerator = $validationAst.Find({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-SourceFiles'
+    }, $false)
+    Assert-True ($null -ne $enumerator) 'Template source enumerator is missing.'
+    . ([scriptblock]::Create($enumerator.Extent.Text))
+
+    $inventoryRoot = [IO.Directory]::CreateDirectory((Join-Path $fixtureRoot 'source-inventory')).FullName
+    $metadataRoot = [IO.Directory]::CreateDirectory((Join-Path $inventoryRoot '.template.config')).FullName
+    foreach ($name in 'template.json', 'icon.png') {
+        Copy-Item -LiteralPath (Join-Path $repositoryRoot "templates/web-api/src/.template.config/$name") -Destination (Join-Path $metadataRoot $name)
+    }
+    if ($IsWindows) {
+        # Unix dot directories are already hidden; reproduce that on Windows.
+        [IO.File]::SetAttributes($metadataRoot, [IO.File]::GetAttributes($metadataRoot) -bor [IO.FileAttributes]::Hidden)
+    }
+    [IO.File]::WriteAllText((Join-Path $inventoryRoot 'Program.cs'), '// fixture')
+    foreach ($relative in @('bin/ignored.cs', 'obj/ignored.cs', '.vs/ignored', 'project.user', 'project.suo')) {
+        $path = Join-Path $inventoryRoot $relative
+        $null = [IO.Directory]::CreateDirectory((Split-Path -Parent $path))
+        [IO.File]::WriteAllText($path, 'excluded')
+    }
+    $inventory = @(Get-SourceFiles $inventoryRoot | ForEach-Object { [IO.Path]::GetRelativePath($inventoryRoot, $_.FullName).Replace('\', '/') })
+    $expectedInventory = @('Program.cs', '.template.config/template.json', '.template.config/icon.png')
+    Assert-True ($inventory.Count -eq $expectedInventory.Count -and @(Compare-Object $expectedInventory $inventory -CaseSensitive).Count -eq 0) "Source inventory must retain hidden template metadata and exclude build/IDE files. Actual: $($inventory -join ', ')"
+    Write-Output 'PASS: source inventory includes hidden native template metadata and excludes build/IDE artifacts.'
+
     $relativeFiles = @(
         'build/templates/update-templates.ps1', 'build/set-version.ps1', 'build/verify-version.ps1',
         'build/Paradigm.Version.props', 'src/Directory.Packages.props',

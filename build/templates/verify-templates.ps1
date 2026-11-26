@@ -24,7 +24,9 @@ function Invoke-DotNet([string[]]$CommandArguments) {
 }
 
 function Get-SourceFiles([string]$Root) {
-    Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object {
+    # Dot directories such as .template.config are hidden on Unix. They are part
+    # of the package payload and must also participate in copying and validation.
+    Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Where-Object {
         [IO.Path]::GetRelativePath($Root, $_.FullName) -notmatch '(^|[\\/])(bin|obj|\.vs)([\\/]|$)' -and
         $_.Extension -notin '.user', '.suo'
     }
@@ -98,8 +100,12 @@ try {
     try {
         $content = @($archive.Entries | Where-Object { $_.FullName.StartsWith('content/') -and -not $_.FullName.EndsWith('/') })
         $expectedFiles = @(Get-SourceFiles $sourceRoot)
-        if ($content.Count -ne $expectedFiles.Count -or $content.FullName -match '/(bin|obj|\.vs)/') {
-            throw 'Template package source inventory does not match the canonical source.'
+        $expectedEntries = @($expectedFiles | ForEach-Object { 'content/' + [IO.Path]::GetRelativePath($sourceRoot, $_.FullName).Replace('\', '/') })
+        $actualEntries = @($content | ForEach-Object { $_.FullName })
+        $missingEntries = @($expectedEntries | Where-Object { $_ -cnotin $actualEntries })
+        $unexpectedEntries = @($actualEntries | Where-Object { $_ -cnotin $expectedEntries })
+        if ($content.Count -ne $expectedFiles.Count -or $missingEntries.Count -gt 0 -or $unexpectedEntries.Count -gt 0 -or $actualEntries -match '/(bin|obj|\.vs)/') {
+            throw "Template package source inventory does not match the canonical source. Expected $($expectedFiles.Count) files, found $($content.Count). Missing: [$($missingEntries -join ', ')]. Unexpected: [$($unexpectedEntries -join ', ')]."
         }
         foreach ($file in $expectedFiles) {
             $entryName = 'content/' + [IO.Path]::GetRelativePath($sourceRoot, $file.FullName).Replace('\', '/')
