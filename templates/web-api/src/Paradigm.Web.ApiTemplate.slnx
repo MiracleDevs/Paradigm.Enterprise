@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/00.SolutionItems/">
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/01.Shared/">
+    <Project Path="Paradigm.Web.ApiTemplate.HealthChecks/Paradigm.Web.ApiTemplate.HealthChecks.csproj" />
+  </Folder>
+  <Folder Name="/02.Modules/">
+    <Project Path="Paradigm.Web.ApiTemplate.Data/Paradigm.Web.ApiTemplate.Data.csproj" />
+    <Project Path="Paradigm.Web.ApiTemplate.Domain/Paradigm.Web.ApiTemplate.Domain.csproj" />
+    <Project Path="Paradigm.Web.ApiTemplate.Providers/Paradigm.Web.ApiTemplate.Providers.csproj" />
+    <Project Path="Paradigm.Web.ApiTemplate.Interfaces/Paradigm.Web.ApiTemplate.Interfaces.csproj" />
+  </Folder>
+  <Folder Name="/03.Hosts/">
+    <Project Path="Paradigm.Web.ApiTemplate.WebApi/Paradigm.Web.ApiTemplate.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/04.Tools/">
+    <Project Path="Paradigm.Web.ApiTemplate.CodeGenerator/Paradigm.Web.ApiTemplate.CodeGenerator.csproj" />
+  </Folder>
+  <Folder Name="/05.Tests/" />
+</Solution>

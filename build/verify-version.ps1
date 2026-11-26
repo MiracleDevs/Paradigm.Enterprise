@@ -7,6 +7,8 @@ if ([string]::IsNullOrWhiteSpace($version)) {
     throw "ParadigmEnterpriseVersion is missing from build/Paradigm.Version.props."
 }
 
+& (Join-Path $PSScriptRoot 'templates/update-templates.ps1') -Check
+
 $expectedText = @{
     (Join-Path $repositoryRoot ".codex-plugin/plugin.json") = "`"version`": `"$version`""
     (Join-Path $repositoryRoot "CHANGELOG.md") = "Version ``$version``"

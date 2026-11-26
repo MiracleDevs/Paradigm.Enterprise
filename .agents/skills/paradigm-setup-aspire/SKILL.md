@@ -10,7 +10,7 @@ Load `$paradigm-common-guidance` before changing source, dependencies, configura
 ## Establish the topology
 
 1. Inspect the solution, hosts, databases, external services, deployment target, existing `.env`, and startup scripts. Preserve intentional ports and resource names.
-2. For a new solution, use `$paradigm-setup-project` first. Put `<Solution>.AppHost` and `<Solution>.ServiceDefaults` under `src`, and put `aspire.config.json` at the repository root.
+2. For a new solution, use `$paradigm-setup-project` first. Put `<Solution>.AppHost`, `<Solution>.ServiceDefaults`, and any `<Solution>.DatabaseBootstrap` under `src/api`, as siblings of the API-layer projects and the canonical `.slnx`. Keep `aspire.config.json`, `.env`, and `start.sh` at the repository root. Preserve an established layout unless reorganization is requested.
 3. Ask the user to approve every new package after reporting its purpose, alternatives, license, official repository, maintenance/security posture, and important transitive dependencies.
 4. Install or refresh Microsoft's Aspire workflow skills instead of copying them into the Paradigm plugin:
 
@@ -43,7 +43,7 @@ Read [AppHost patterns](references/apphost-patterns.md) before writing the AppHo
 
 ## Preserve the starter workflow
 
-Create a root `start.sh` for new Aspire solutions. `$paradigm-setup-project` generates the canonical script; when adding Aspire to an existing solution, preserve its intentional commands and bring it to the same contract:
+Create a root `start.sh` when adding Aspire after `$paradigm-setup-project`; the Web API template itself does not generate this script. When an existing starter is present, preserve its intentional commands and bring it to the same contract:
 
 - support `./start.sh start`, `./start.sh stop`, `./start.sh doctor`, and `./start.sh help`, with `start` as the default; run `start` in the foreground and target the checkout's explicit AppHost path for both start and stop;
 - require an installed .NET 10 SDK rather than merely a `dotnet` command, create a repository-local tool manifest when absent, and install missing `Paradigm.Enterprise.Cli` and `Aspire.Cli` tools locally rather than globally;

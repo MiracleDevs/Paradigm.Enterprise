@@ -28,10 +28,8 @@ done
 
 if command -v pwsh >/dev/null 2>&1; then
     POWERSHELL="pwsh"
-elif command -v powershell.exe >/dev/null 2>&1; then
-    POWERSHELL="powershell.exe"
 else
-    echo "Required command 'pwsh' or 'powershell.exe' was not found on PATH." >&2
+    echo "PowerShell 7 (pwsh) is required for release and template validation." >&2
     exit 1
 fi
 
@@ -52,6 +50,9 @@ step() {
 
 cd "$REPOSITORY_ROOT"
 
+step "Validate release and template versions"
+"$POWERSHELL" -NoProfile -NonInteractive -File build/verify-version.ps1
+
 step "Restore"
 dotnet tool restore
 dotnet restore src/Paradigm.Enterprise.slnx
@@ -65,6 +66,10 @@ dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --pr
 dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources="$ARTIFACTS_DIRECTORY"
 dotnet build example/ExampleApp.sln --configuration Release --no-restore
 dotnet test example/ExampleApp.sln --configuration Release --no-build
+
+step "Validate and pack the Web API template"
+"$POWERSHELL" -NoProfile -NonInteractive -File build/templates/verify-templates.ps1 -FrameworkPackages "$ARTIFACTS_DIRECTORY" -PackageOutputDirectory "$ARTIFACTS_DIRECTORY"
+"$POWERSHELL" -NoProfile -NonInteractive -File build/templates/tests/template-maintenance.tests.ps1
 
 step "Install and test the packed Paradigm CLI"
 VERSION="$("$POWERSHELL" -NoProfile -NonInteractive -Command '([xml](Get-Content -Raw "build/Paradigm.Version.props")).Project.PropertyGroup.ParadigmEnterpriseVersion')"
@@ -93,7 +98,6 @@ step "Deterministic quality checks"
 "$PARADIGM" checks run --project src/Paradigm.Enterprise.Data.Oracle/Paradigm.Enterprise.Data.Oracle.csproj
 "$PARADIGM" validate --project example/ExampleApp.sln
 "$PARADIGM" checks run --project example/ExampleApp.sln
-"$POWERSHELL" -NoProfile -NonInteractive -File build/verify-version.ps1
 
 step "Validate skills and plugin"
 python .github/scripts/validate-skills.py

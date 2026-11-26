@@ -17,7 +17,7 @@ public interface ICatalogItem : IEntity<Guid>
 
 ## Generated application interfaces
 
-The Visual Studio template includes an analyzer project that inspects domain entities and generates application interfaces. The Domain project references that generator as an analyzer, which explains the unusual dependency from Domain toward the Interfaces project.
+The Web API template includes an analyzer project that inspects domain entities and generates application interfaces. The Domain project references that generator as an analyzer, which explains the unusual dependency from Domain toward the Interfaces project.
 
 Generated interfaces reduce repetitive contracts but make generation rules part of the development model. Entity names, base types, scalar properties, navigation collections, and identifier types influence the generated result. Do not edit generated output. Add behavior and mapping in partial classes, then regenerate from the authoritative domain and database model.
 

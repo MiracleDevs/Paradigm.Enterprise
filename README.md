@@ -60,7 +60,7 @@ AI coding agents can use the concise workflows under [`.agents/skills`](.agents/
 
 ## Start a new API
 
-The [Visual Studio template](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, and host composition root. Use the installable `paradigm generate` commands for application source generation. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
+The [Web API template](templates/web-api/README.md) creates the expected project boundaries, database-first scaffolding, generated interface analyzer, host composition root, and solution-root NuGet Central Package Management file. Its source and native `dotnet new` packaging project live under `templates/web-api`. Use the installable `paradigm generate` commands for application source generation. Follow [Create a solution](docs/tutorials/create-solution.md) before applying production security and configuration.
 
 The repository's [example](example/README.md) targets the current package line and demonstrates the generic identifier and behavior-owned entity patterns used by the current APIs.
 

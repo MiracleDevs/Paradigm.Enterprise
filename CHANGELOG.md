@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Version `1.1.2`
 
+- Updated consuming-application skills to scaffold the Web API template into `src/api`, keep Aspire projects beside the API layers, use containing module folders and one application Data project, and require actual EF Core Power Tools generation of Domain database-first entities/views plus verified analyzer-generated interfaces. Explicitly prohibited manual or scripted substitute scaffolds and temporary stubs. Clarified typed SQL Server procedure callers and table-valued parameter support.
 - Added `Paradigm.Enterprise.Data.Oracle` using Oracle EF Core 10.23.26400 and ODP.NET Core 23.26.400, with shared repository/audit/Unit of Work support, named connections, typed parameters, and one through sixteen explicit REF CURSOR results.
 - Added `Paradigm.Enterprise.Data.MySql` using Oracle `MySql.EntityFrameworkCore` 10.0.12 and `MySql.Data` 26.10.0, with named scoped connections, existing EF repository/audit/Unit of Work support, typed parameter mappers, and one through sixteen stored-procedure results.
 - Extended typed-routine checks and CLI guidance for MySQL, with dedicated MySQL integration coverage. Added provider-aware mapper generation through `generate mappers --database-provider sqlserver|postgresql|mysql|oracle`, preserving SQL Server as the default. MySQL schema publishing and Aspire bootstrap remain separate capabilities.

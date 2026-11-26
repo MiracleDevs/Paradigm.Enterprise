@@ -33,6 +33,12 @@ Use `--strict` for a new project. Apply the database practices from `$paradigm-c
 
 When solution metadata changes, verify the canonical responsibility folders, unique membership, curated solution items, one solution source of truth, and the separate managed-application/database validation boundaries from the solution layout in `$paradigm-common-guidance`. Do not demand physical project moves solely to mirror solution folders.
 
+For a new consuming API, verify the physical `src/api` solution/project placement, sibling Aspire projects, one application Data project, and containing folders in each layer. Check the actual EFPT-generated Domain entity/view pair and compiled analyzer contract using [database-first models](../paradigm-common-guidance/references/database-first-models.md). Reject handwritten POCO/record substitutes for that generated boundary, concrete database views placed in Interfaces, and unverified assertions that typed routine callers cannot accept SQL Server table parameters. Preserve intentional existing layouts during unrelated maintenance.
+
+Database-first Domain entity and database-view scaffolds MUST originate from EF Core Power Tools with the reviewed T4 templates. Treat manual substitutes, scripted replicas, alternate-scaffolder fallbacks, and temporary stubs as review failures. Verify actual generation configuration/source objects and output evidence; filenames, `EntityBase`, ownership headers, and `GeneratedCodeAttribute` alone do not prove provenance. Handwritten companion partials may add behavior to generated types, not recreate their persisted shape. Missing prerequisites leave the dependent work incomplete; they never justify a manual scaffold.
+
+Apply that provenance rule only to database-first scaffold types. Allow separate handwritten Domain classes unrelated to database elements, such as value objects, policies, specifications, calculators, and non-persistence models. Do not reject them for lacking EFPT output, generated-code markers, `EntityBase`, or a database object; verify that they are not substitutes for database-derived entities/views.
+
 Run the built-in C# checks against consuming application projects. Framework source and test internals may intentionally exercise patterns those checks reject. Apply the repository's review policy to warnings even when the CLI exits `0`.
 
 Use `dotnet tool run paradigm api show/search` only to resolve an exact signature; do not load broad API documentation.

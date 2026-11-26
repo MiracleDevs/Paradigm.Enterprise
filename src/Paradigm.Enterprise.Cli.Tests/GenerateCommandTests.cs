@@ -134,6 +134,7 @@ public class GenerateCommandTests
     [DataRow("oracle", "nested-generic")]
     [DataRow("oracle", "required-field")]
     [DataRow("oracle", "unsigned")]
+    [DataRow("sqlserver", "nested-table")]
     public async Task Unsupported_provider_shapes_fail_before_writing_any_generated_source(string provider, string shape)
     {
         var reference = MapperGenerationAssertions.FixtureAssembly(FindRepositoryRoot());
@@ -143,6 +144,15 @@ public class GenerateCommandTests
             var type = shape switch { "offset" => "System.DateTimeOffset", "unsigned" => "System.UInt64", _ => "System.Collections.Generic.List<int>" };
             var source = shape switch
             {
+                "nested-table" => """
+                namespace FocusedFixture;
+                public sealed class Row { public int[] Values { get; set; } = null!; }
+                public sealed class Input { public System.Collections.Generic.IEnumerable<Row> Rows { get; set; } = null!; }
+                public sealed class Unsupported : Paradigm.Enterprise.Data.MySql.StoredProcedures.StoredProcedureBase<Input>
+                {
+                    protected override string StoredProcedureName => "Unsupported";
+                }
+                """,
                 "array-result" => """
                 namespace FocusedFixture;
                 public sealed class Unsupported : Paradigm.Enterprise.Data.MySql.StoredProcedures.ResultStoredProcedureBase<object?, int[]>
@@ -177,6 +187,8 @@ public class GenerateCommandTests
             };
             if (provider == "oracle")
                 source = source.Replace("Data.MySql", "Data.Oracle", StringComparison.Ordinal);
+            else if (provider == "sqlserver")
+                source = source.Replace("Data.MySql", "Data.SqlServer", StringComparison.Ordinal);
             var assembly = MapperGenerationAssertions.WriteFixture(reference, Path.Combine(temporary, "fixture"), source);
             var output = Path.Combine(temporary, "output");
             using var writer = new StringWriter();

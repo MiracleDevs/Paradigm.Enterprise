@@ -17,6 +17,8 @@ Read [controller patterns](references/controller-patterns.md) before selecting a
 
 ## Keep controllers thin
 
+Place controllers under containing controller/module folders, transport models under their appropriate model folders, and host integration helpers under their responsibility folders from the common solution layout. Keep `Program.cs` as the composition root; do not place every feature file beside it.
+
 Own routing, binding, transport validation, authorization metadata, cancellation, response status, and exception-to-response integration. Call Providers for use cases. Never resolve a repository or `DbContext`; never duplicate domain rules.
 
 Expose only required actions. `ExposeEndpoint` plus `AddEndpointExposureControl` limits route exposure but is not authentication or authorization.

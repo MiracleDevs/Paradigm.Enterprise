@@ -16,6 +16,9 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+      - name: Validate release and template versions
+        shell: pwsh
+        run: ./build/verify-version.ps1
       - name: Restore
         run: |
           dotnet tool restore
@@ -30,6 +33,13 @@ jobs:
           dotnet restore example/ExampleApp.sln --property:RestoreAdditionalProjectSources=${{ github.workspace }}/artifacts
           dotnet build example/ExampleApp.sln --configuration Release --no-restore
           dotnet test example/ExampleApp.sln --configuration Release --no-build
+      - name: Validate and pack the Web API template
+        timeout-minutes: 10
+        shell: pwsh
+        run: ./build/templates/verify-templates.ps1 -FrameworkPackages artifacts -PackageOutputDirectory artifacts
+      - name: Test version and template maintenance
+        shell: pwsh
+        run: ./build/templates/tests/template-maintenance.tests.ps1
       - name: Install and test the packed Paradigm CLI
         timeout-minutes: 6
         shell: pwsh
@@ -53,7 +63,6 @@ jobs:
           .paradigm/tools/paradigm checks run --project src/Paradigm.Enterprise.Data.Oracle/Paradigm.Enterprise.Data.Oracle.csproj
           .paradigm/tools/paradigm validate --project example/ExampleApp.sln
           .paradigm/tools/paradigm checks run --project example/ExampleApp.sln
-          pwsh build/verify-version.ps1
       - name: Validate skills and plugin
         run: |
           python .github/scripts/validate-skills.py

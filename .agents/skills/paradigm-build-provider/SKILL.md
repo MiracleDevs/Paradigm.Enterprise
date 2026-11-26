@@ -23,6 +23,8 @@ dotnet tool run paradigm api show ProviderBase --project <solution>
 
 ## Implement for discovery
 
+Place provider classes, their application interfaces, and focused input models in the containing module/responsibility folders from the common solution layout. Use the generated Domain view as the canonical read shape; keep database view classes in Domain, not as records in Interfaces.
+
 A provider must be public, concrete, implement `IProvider`, and implement the exact-name application interface: `CheckoutProvider` implements `ICheckoutProvider`. That interface should inherit the typed Enterprise provider contract where applicable.
 
 Constructor-inject stable application collaborators. `ProviderBase` supplies only `ServiceProvider` and `GetProvider<TProvider>()`; `ReadProviderBase` resolves its view repository, and `EditProviderBase` resolves its repositories and `IUnitOfWork`. A custom provider that needs `IUnitOfWork` must constructor-inject it. Do not treat the service provider as a general locator.

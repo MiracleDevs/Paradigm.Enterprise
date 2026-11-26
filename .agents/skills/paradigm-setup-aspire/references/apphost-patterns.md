@@ -32,17 +32,21 @@ aspire.config.json
 .env.example
 start.sh
 src/
-  Product.AppHost/
-  Product.ServiceDefaults/
-  Product.DatabaseBootstrap/
-    Dockerfile
-    Dockerfile.dockerignore
+  api/
+    Product.slnx
+    Directory.Packages.props
+    Product.WebApi/
+    Product.AppHost/
+    Product.ServiceDefaults/
+    Product.DatabaseBootstrap/
+      Dockerfile
+      Dockerfile.dockerignore
   database/
 ```
 
 Reference `Paradigm.Enterprise.Aspire.ServiceDefaults` from each hosted .NET service. Add `AddParadigmServiceDefaults()` before building the app and `MapParadigmServiceDefaultsEndpoints()` after middleware configuration. Keep readiness dependency-aware and liveness process-only.
 
-Keep `start.sh` at this root and make it a thin, noninteractive Aspire wrapper after prerequisite checks. Its `start` command runs Aspire in the foreground; `stop` uses the explicit AppHost project path so it cannot select another checkout's process. The script may install missing repository-local Paradigm and Aspire development tools before AppHost starts, but it must not install or inspect SQLCMD or SqlPackage. Install those database tools during the bootstrap image build, never from the running resource.
+Keep `start.sh` at this root and make it a thin, noninteractive Aspire wrapper after prerequisite checks. Its `start` command runs Aspire in the foreground; `stop` uses the explicit `src/api/<Product>.AppHost` project path so it cannot select another checkout's process. The script may install missing repository-local Paradigm and Aspire development tools before AppHost starts, but it must not install or inspect SQLCMD or SqlPackage. Install those database tools during the bootstrap image build, never from the running resource.
 
 Use `/health` for readiness and `/alive` for liveness unless the existing solution has a documented compatible contract. Do not expose dependency details or configuration values in either response.
 
