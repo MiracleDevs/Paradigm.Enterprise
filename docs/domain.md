@@ -211,7 +211,7 @@ Use the helpers only when the convention makes the model clearer. Persist the st
 
 ## Database-first models and generated code
 
-The Visual Studio template uses database-first generation because the database is an important integration contract for these applications. Reverse engineering creates persistence-shaped entity and context files. The interface analyzer derives application interfaces from recognized entity shapes. Neither process supplies domain meaning.
+The Web API template uses database-first generation because the database is an important integration contract for these applications. Reverse engineering creates persistence-shaped entity and context files. The interface analyzer derives application interfaces from recognized entity shapes. Neither process supplies domain meaning.
 
 Generated files are replaceable output. Add mapping, validation, computed behavior, navigation helpers, and state transitions in partial classes that survive regeneration. Do not edit generated interfaces or entity files. When the generated shape makes an invariant difficult to protect, document the compromise and consider a hand-written domain model or a clearer mapping boundary for that area.
 

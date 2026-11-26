@@ -1,27 +1,50 @@
-# Maintain the Visual Studio template
+# Maintain the Web API template
 
-The [Visual Studio template repository](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate) owns the project-group archive used to start new APIs. Template maintenance is separate from application development and from Enterprise package releases.
+The [Web API template](https://github.com/MiracleDevs/Paradigm.Enterprise/tree/main/templates/web-api)
+lives in `templates/web-api`. Its canonical source is a normal buildable solution
+under `src`, with central package versions in `src/Directory.Packages.props` and
+native template metadata in `src/.template.config/template.json`.
 
-The build script can synchronize the authoring source into the template folder, replace the root namespace with Visual Studio parameters, generate per-project template manifests, create the archive, and install it locally.
+The native template engine creates solution-root files as well as projects. This
+allows `Directory.Packages.props` to be generated before the first restore.
+Project files contain versionless package references; update package versions in
+the central file and keep every Paradigm reference tied to its
+`ParadigmEnterpriseVersion` property.
 
-Run the script from a shell supported by the repository:
+## Build the package
 
-```bash
-./build/build-template.sh --no-install
+From the Paradigm.Enterprise repository root:
+
+```powershell
+dotnet pack templates/web-api/Paradigm.Enterprise.Templates.WebApi.csproj --configuration Release --output templates/web-api/artifacts/packages
 ```
 
-Use `--sync-only` to refresh template content without packaging, or `--install-only` to install an existing archive. Close Visual Studio before installation because template caches and files may be in use.
+The Bash wrapper supports `--no-install` for packaging and `--install-only` for
+installation of an existing package. The old synchronization step and Visual
+Studio ZIP installation have been replaced by native NuGet template packaging.
+The package includes the source template and excludes build artifacts and IDE
+state. Packaging inherits the framework version; release synchronization of the
+template's dependency versions is not yet automated.
 
-## Review generated structure
+## Validate generation
 
-The root project-group manifest is the authority for the solution users receive. Confirm that each project appears in the intended solution folder and that project references point inward through Interfaces, Domain, Data, Providers, and WebApi.
+Restore and build `templates/web-api/src/Paradigm.Web.ApiTemplate.slnx` before
+packaging. Install the resulting `.nupkg` with `dotnet new install`, inspect a
+`dotnet new paradigm-webapi --dry-run`, and generate a fresh named solution.
+Verify that exactly one `Directory.Packages.props` exists at its root, all project
+references resolve, every package reference gets a central version, and the
+canonical solution includes the central file under `00.SolutionItems`.
 
-The authoring solution can differ from the generated solution. Validate the archive by creating a new solution through Visual Studio rather than assuming the authoring `.slnx` proves the package is correct.
+Restore and build the generated solution as well as the authoring source. When
+checking an unpublished framework version, restore against packages packed from
+the same framework checkout. Compare resolved package versions before and after
+packaging to verify CPM discovery and preserve dependency compatibility.
 
-## Validate the generated solution
+Add a local connection string, reverse engineer a minimal database selection,
+build generated interfaces, and run the host. Check Scalar and OpenAPI routes in
+Development and their absence in Production. Install the Paradigm CLI through a
+local manifest and exercise generation modes after their input assemblies exist.
 
-Create a solution with a neutral test name. Restore and build it. Add a local connection string, reverse engineer a minimal database selection, build generated interfaces, and run the host. Install the Paradigm CLI through a local manifest and exercise each required `paradigm generate` mode only after its input assemblies exist.
-
-Review host defaults before publishing a new template version. CORS, Swagger, authentication scaffolding, health output, JSON reflection settings, and middleware order are application policy and must be safe starting points.
-
-Remove application-local generator scaffolds from new template output. Client projects should use the single installable CLI so fixes, command names, and generation settings have one owner. Keep any temporary migration shim explicit and do not publish it as a second tool.
+Review host defaults before publishing a template version. CORS, Scalar/OpenAPI
+documentation, authentication scaffolding, health output, JSON reflection
+settings, and middleware order are application policy.

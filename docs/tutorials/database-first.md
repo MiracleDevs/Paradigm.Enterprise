@@ -1,6 +1,6 @@
 # Scaffold from a database
 
-The Visual Studio template is designed for database-first development with EF Core Power Tools. Reverse engineering creates the context and persistence-shaped domain types. Partial classes then add behavior without modifying generated files.
+The Web API template is designed for database-first development with EF Core Power Tools. Reverse engineering creates the context and persistence-shaped domain types. Partial classes then add behavior without modifying generated files.
 
 ```mermaid
 flowchart LR

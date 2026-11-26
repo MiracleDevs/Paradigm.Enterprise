@@ -10,7 +10,7 @@ The [Domain model](domain.md) guide explains how generated entities, hand-writte
 
 ## What the framework does not decide
 
-Paradigm.Enterprise does not provide an authentication system, choose authorization rules, create database schemas, or make permissive host settings safe for production. The Visual Studio template contains integration points and development defaults, but those are starting points for an application team to review.
+Paradigm.Enterprise does not provide an authentication system, choose authorization rules, create database schemas, or make permissive host settings safe for production. The Web API template contains integration points and development defaults, but those are starting points for an application team to review.
 
 The generated [API reference](reference/api.md) describes the current public surface. These guides explain why the surface exists and how the pieces work together.
 
@@ -18,4 +18,4 @@ Production readiness extends beyond package APIs. [Secure host configuration](gu
 
 ## Documentation sources
 
-The library source is the authority for signatures and runtime behavior. The Visual Studio template is the authority for generated project structure and scaffolding workflow. The examples and training material are used only to understand recurring practices. Their names, domain logic, and project-specific policies are not part of this documentation.
+The library source is the authority for signatures and runtime behavior. The Web API template is the authority for generated project structure and scaffolding workflow. The examples and training material are used only to understand recurring practices. Their names, domain logic, and project-specific policies are not part of this documentation.

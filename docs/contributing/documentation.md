@@ -2,7 +2,7 @@
 
 Documentation should explain the framework to a colleague who needs to make a correct change, not merely repeat type names. Begin with the reason a concept exists, describe how it behaves, and then show the smallest useful example.
 
-The current source is authoritative for API signatures and runtime behavior. The Visual Studio template is authoritative for generated structure and scaffolding. Historical RFCs explain decisions at a point in time but can describe work that was never implemented. Example applications and training documents show usage patterns, not current contracts.
+The current source is authoritative for API signatures and runtime behavior. The Web API template is authoritative for generated structure and scaffolding. Historical RFCs explain decisions at a point in time but can describe work that was never implemented. Example applications and training documents show usage patterns, not current contracts.
 
 ## Writing style
 

@@ -1,34 +1,53 @@
-# Create a solution from the Visual Studio template
+# Create a solution from the Web API template
 
-The Visual Studio template creates the expected project boundaries, references the Enterprise packages, and includes the database-first and code-generation tools used by the team. Starting from the template is safer than assembling the layers from memory.
+The Paradigm Web API template creates the project boundaries, Enterprise package
+references, database-first scaffolding, interface generator, and host composition
+root. It uses NuGet Central Package Management from the first restore.
 
-The template targets Visual Studio 2022 or later and .NET 10. Install the current .NET 10 SDK and make sure it is visible to Visual Studio before creating a solution.
+Install the .NET 10 SDK before creating a solution.
 
 ## Install the template
 
-Download or build `Paradigm.Web.ApiTemplate.zip` from the [template repository](https://github.com/MiracleDevs/Paradigm.Web.ApiTemplate). Close Visual Studio before installing or replacing a project template. Copy the archive to the user project-template directory for the installed Visual Studio version, then restart Visual Studio.
+The [Web API template](https://github.com/MiracleDevs/Paradigm.Enterprise/tree/main/templates/web-api)
+is packaged as a native .NET template. Build and install it from a reviewed
+Paradigm.Enterprise checkout:
 
-```text
-%USERPROFILE%\Documents\Visual Studio 2022\Templates\ProjectTemplates
+```powershell
+dotnet pack templates/web-api/Paradigm.Enterprise.Templates.WebApi.csproj --configuration Release --output templates/web-api/artifacts/packages
+dotnet new install templates/web-api/artifacts/packages/Paradigm.Enterprise.Templates.WebApi.1.1.2.nupkg --force
 ```
 
-Template maintainers can use the repository's installation script instead. Application developers should normally install a reviewed archive rather than build a template from an arbitrary branch.
+Use the package filename printed by the build if the framework version differs.
+Maintainers can also run `bash templates/web-api/build/build-template.sh` to build
+and install the package for the current framework version.
 
 ## Create the solution
 
-Open the Create a new project dialog, search for `Paradigm WebApi`, and choose the project-group template. Select a neutral solution name that represents the product or bounded context rather than a technical layer. The template appends layer names to that root.
-
-After creation, restore and build before adding features:
+Choose a solution name that represents the product or bounded context. The
+template appends layer names to that root.
 
 ```powershell
-dotnet restore
-dotnet build
+dotnet new paradigm-webapi --name Company.Product --output ../Company.Product --dry-run
+dotnet new paradigm-webapi --name Company.Product --output ../Company.Product
+dotnet restore ../Company.Product/Company.Product.slnx
+dotnet build ../Company.Product/Company.Product.slnx
 ```
 
-A new template is a scaffold, not a production-ready host. Add a connection string through user secrets or environment variables, review CORS and health output, select authentication and authorization, and verify middleware ordering before deployment.
+Open the generated `Company.Product.slnx` in Visual Studio. The solution-root
+`Directory.Packages.props` contains all package versions and appears under
+`00.SolutionItems`; individual projects use versionless package references.
+Change versions in the central file, including its `ParadigmEnterpriseVersion`
+property when upgrading the Paradigm package set.
 
-Continue with [Understand the generated solution](generated-solution.md), then [Scaffold from a database](database-first.md).
+In Development, open `/scalar/v1` for the interactive API reference. Scalar uses
+the OpenAPI document at `/openapi/v1.json`; `/swagger/v1/swagger.json` remains
+available for client generation. These documentation routes are disabled outside
+Development.
 
-## If the template is unavailable
+A new template is a scaffold, not a production-ready host. Add a connection string
+through user secrets or environment variables, review CORS and health output,
+select authentication and authorization, and verify middleware ordering before
+deployment.
 
-Create separate Interfaces, Domain, Data, Providers, and WebApi projects with the dependency direction shown in [Architecture](../architecture.md). This manual path is useful for an existing solution, but it does not reproduce the analyzer, T4, and generator setup automatically.
+Continue with [Understand the generated solution](generated-solution.md), then
+[Scaffold from a database](database-first.md).

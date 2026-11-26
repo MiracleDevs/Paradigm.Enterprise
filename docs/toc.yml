@@ -78,7 +78,7 @@ items:
         href: contributing/cli-development.md
       - name: Publishing packages
         href: contributing/publishing.md
-      - name: Visual Studio template
+      - name: Web API template
         href: contributing/template-maintenance.md
       - name: RFC process
         href: https://github.com/MiracleDevs/Paradigm.Enterprise/tree/main/docs/rfc

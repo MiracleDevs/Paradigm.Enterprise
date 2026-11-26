@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../build/Paradigm.Version.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Version>$(ParadigmEnterpriseVersion)</Version>
+    <PackageId>Paradigm.Enterprise.Templates.WebApi</PackageId>
+    <PackageType>Template</PackageType>
+    <Authors>Miracle Devs</Authors>
+    <Description>A layered Paradigm.Enterprise Web API solution with NuGet Central Package Management and Scalar API documentation.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/MiracleDevs/Paradigm.Enterprise</RepositoryUrl>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <NoBuild>true</NoBuild>
+    <!-- A template package contains source files rather than runtime assemblies. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="src/**/*"
+             Exclude="src/**/bin/**;src/**/obj/**;src/**/.vs/**;src/**/*.user;src/**/*.suo"
+             PackagePath="content/" />
+    <None Include="src/.template.config/icon.png" Pack="true" PackagePath="/" />
+    <None Include="LICENSE" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
