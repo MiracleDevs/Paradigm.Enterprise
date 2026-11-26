@@ -121,6 +121,7 @@ try {
         }
     } finally { $archive.Dispose() }
 
+    & (Join-Path $PSScriptRoot 'tests/template-installation.tests.ps1') -TemplatePackage $packageFile
     Invoke-DotNet @('new', '--debug:custom-hive', $hive, 'install', $packageFile)
     Invoke-DotNet @('new', '--debug:custom-hive', $hive, $metadata.shortName, '--name', $applicationName, '--output', $generatedRoot, '--dry-run')
     if (Test-Path -LiteralPath $generatedRoot) { throw 'Template dry run wrote the output directory.' }
@@ -186,7 +187,7 @@ try {
     $null = [IO.Directory]::CreateDirectory($packageOutput)
     Copy-Item -LiteralPath $packageFile -Destination (Join-Path $packageOutput ([IO.Path]::GetFileName($packageFile))) -Force
     $completed = $true
-    Write-Output "Template $packageId $version validated: source build, package payload, native generation, CPM, generated build, no application NuGet packages, and $($verifiedFrameworkIds.Count) exact local framework packages."
+    Write-Output "Template $packageId $version validated: source build, package payload, installation lifecycle, native generation, CPM, generated build, no application NuGet packages, and $($verifiedFrameworkIds.Count) exact local framework packages."
     Write-Output "Validated package: $(Join-Path $packageOutput ([IO.Path]::GetFileName($packageFile)))"
 } finally {
     if ($completed -and -not $KeepWorkDirectory) {

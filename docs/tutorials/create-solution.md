@@ -9,19 +9,25 @@ Install the .NET 10 SDK before creating a solution.
 ## Install the template
 
 The [Web API template](https://github.com/MiracleDevs/Paradigm.Enterprise/tree/main/templates/web-api)
-is packaged as a native .NET template. Build and install it from a reviewed
-Paradigm.Enterprise checkout:
+is distributed as the native .NET template package
+`Paradigm.Enterprise.Templates.WebApi`. Choose a published package version and
+replace `<released-version>` below with that version:
 
 ```powershell
-dotnet pack templates/web-api/Paradigm.Enterprise.Templates.WebApi.csproj --configuration Release --output templates/web-api/artifacts/packages
-$version = ([xml](Get-Content build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
-dotnet new install "templates/web-api/artifacts/packages/Paradigm.Enterprise.Templates.WebApi.$version.nupkg" --force
+$templateVersion = '<released-version>'
+dotnet new install "Paradigm.Enterprise.Templates.WebApi@$templateVersion"
 ```
 
-Maintainer packaging commands require PowerShell 7. Generated applications require
-the .NET SDK without a PowerShell dependency.
-Maintainers can also run `bash templates/web-api/build/build-template.sh` to build
-and install the package for the current framework version.
+Installing the published package requires the .NET SDK and access to the package
+feed. No framework checkout or local packaging is needed. Pinning the version
+makes the selected template reproducible. See
+[dotnet new install](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-new-install)
+for package-source options.
+
+For an unreleased version, or before the first template package is published,
+follow the [maintainer build and installation instructions](https://github.com/MiracleDevs/Paradigm.Enterprise/blob/main/templates/web-api/README.md#maintainers-build-and-install-from-source)
+in a reviewed Paradigm.Enterprise checkout. Those commands require PowerShell 7;
+the build/install wrappers also require Bash.
 
 ## Create the solution
 
