@@ -9,6 +9,10 @@ Load `$paradigm-common-guidance` before creating or editing source.
 
 ## Plan the slice
 
+For a new API, run `$paradigm-setup-project` first and use the native template in `src/api`; do not assemble layer projects manually as a shortcut. Follow the common containing-folder layout from the first feature. Before database-backed feature implementation, verify EF Core Power Tools entity/view output and analyzer-generated interfaces using [database-first models](../paradigm-common-guidance/references/database-first-models.md).
+
+Database-first Domain entities and views MUST be actual EF Core Power Tools output. Never create their scaffold files manually to unblock the slice. When generation prerequisites are missing, stop the dependent slice, report what is missing, and continue only independent work.
+
 Before editing, inspect adjacent working code and run:
 
 ```powershell

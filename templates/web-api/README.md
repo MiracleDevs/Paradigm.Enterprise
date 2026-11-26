@@ -29,13 +29,14 @@ for package-source options.
 
 ## Create a solution
 
-Review the file inventory before creating the solution:
+From the application's repository root, review the file inventory before creating
+the solution under `src/api`:
 
 ```powershell
-dotnet new paradigm-webapi --name Company.Product --output ../Company.Product --dry-run
-dotnet new paradigm-webapi --name Company.Product --output ../Company.Product
-dotnet restore ../Company.Product/Company.Product.slnx
-dotnet build ../Company.Product/Company.Product.slnx
+dotnet new paradigm-webapi --name Company.Product --output ./src/api --dry-run
+dotnet new paradigm-webapi --name Company.Product --output ./src/api
+dotnet restore ./src/api/Company.Product.slnx
+dotnet build ./src/api/Company.Product.slnx
 ```
 
 The generated solution has seven projects, the six canonical solution folders,

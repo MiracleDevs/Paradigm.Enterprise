@@ -45,7 +45,7 @@ try {
     $packageStage = [IO.Directory]::CreateDirectory((Join-Path $workRoot 'package')).FullName
     $packageCache = Join-Path $workRoot 'packages'
     $hive = Join-Path $workRoot 'hive'
-    $generatedRoot = Join-Path $workRoot 'generated'
+    $generatedRoot = Join-Path $workRoot 'generated/src/api'
     $applicationName = 'TemplateValidation.Application'
 
     # A fresh cache and source mapping force every Paradigm dependency to the

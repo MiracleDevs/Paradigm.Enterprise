@@ -113,6 +113,9 @@ internal static class MapperGenerationAssertions
             }
         }
 
+        if (provider == "sqlserver")
+            AssertSqlServerTableParameters(fixture, factory, inputType, input);
+
         var readerMapper = Activator.CreateInstance(assembly.GetType("MapperFixture.Data.Mappers.DataReaders.ReportRowDataReaderMapper", throwOnError: true)!)!;
         using var table = new DataTable();
         table.Columns.Add("Id", typeof(int));
@@ -235,6 +238,44 @@ internal static class MapperGenerationAssertions
     #endregion
 
     #region Private Methods
+
+    private static void AssertSqlServerTableParameters(Assembly fixture, Type factory, Type inputType, object input)
+    {
+        var rowType = fixture.GetType("MapperFixture.SqlServerInputRow", throwOnError: true)!;
+        var rows = Array.CreateInstance(rowType, 2);
+        for (var index = 0; index < rows.Length; index++)
+        {
+            var row = Activator.CreateInstance(rowType)!;
+            rowType.GetProperty("ItemId")!.SetValue(row, index + 7);
+            rowType.GetProperty("Label")!.SetValue(row, index == 0 ? "first" : null);
+            rows.SetValue(row, index);
+        }
+
+        foreach (var values in new[] { rows, Array.CreateInstance(rowType, 0) })
+        {
+            inputType.GetProperty("Rows")!.SetValue(input, values);
+            DbParameter[] parameters;
+            using (var mapper = (IDisposable)factory.GetMethod("GetMapper", [typeof(Type)])!.Invoke(null, [inputType])!)
+                parameters = ((Array)mapper.GetType().GetMethod("Map")!.Invoke(mapper, [input])!).Cast<DbParameter>().ToArray();
+
+            // The caller disposes its mapper before attaching parameters to the command.
+            // Table values must therefore remain usable after mapper disposal.
+            var parameter = parameters.Single(item => item.ParameterName.EndsWith("Rows", StringComparison.Ordinal));
+            Assert.AreEqual("Structured", parameter.GetType().GetProperty("SqlDbType")!.GetValue(parameter)!.ToString());
+            using var table = (DataTable)parameter.Value!;
+            CollectionAssert.AreEqual(new[] { "ItemId", "Label" }, table.Columns.Cast<DataColumn>().Select(column => column.ColumnName).ToArray());
+            Assert.AreEqual(typeof(int), table.Columns[0].DataType);
+            Assert.AreEqual(typeof(string), table.Columns[1].DataType);
+            Assert.AreEqual(values.Length, table.Rows.Count);
+            if (values.Length > 0)
+            {
+                Assert.AreEqual(7, table.Rows[0]["ItemId"]);
+                Assert.AreEqual("first", table.Rows[0]["Label"]);
+                Assert.AreEqual(8, table.Rows[1]["ItemId"]);
+                Assert.AreEqual(DBNull.Value, table.Rows[1]["Label"]);
+            }
+        }
+    }
 
     private static void LoadFixtureDependencies(string fixtureAssembly)
     {

@@ -1,6 +1,50 @@
 # Paradigm Solution Layout
 
-Use one canonical application solution, preferably at the application or repository root. Preserve the template's `.sln` or `.slnx` format; do not add a compatibility solution or a separate database-only solution that can drift.
+For a new consuming Web API repository, put the canonical application solution at `src/api/<Product>.slnx`. Generate the native template directly into `src/api`; its solution root and `Directory.Packages.props` belong there. Preserve the template's solution format. Keep the database project under repository-root `src/database` and reference it from this same application solution; do not add a root-level compatibility solution or a separate database-only solution.
+
+This is the default for new consuming applications, not a migration instruction for the Paradigm.Enterprise framework repository or an established application. Preserve an existing layout unless the user requests its reorganization, and validate references and root discovery when moving it.
+
+## Physical project and source layout
+
+All API-layer projects and their Aspire companions are siblings under `src/api`:
+
+```text
+<repository>/
+  aspire.config.json          # when Aspire is requested
+  start.sh                   # when Aspire is requested
+  .env.example               # when Aspire is requested; .env stays untracked
+  src/
+    api/
+      Product.slnx
+      Directory.Packages.props
+      Product.Interfaces/
+      Product.Domain/
+      Product.Data/
+      Product.Providers/
+      Product.WebApi/
+      Product.HealthChecks/
+      Product.CodeGenerator/
+      Product.AppHost/        # when Aspire is requested
+      Product.ServiceDefaults/
+      Product.DatabaseBootstrap/  # when database bootstrap is requested
+    database/
+```
+
+Repository orchestration configuration, environment files, and `start.sh` stay at the repository root. Use explicit `src/api/...` project paths in those entry points. Solution-folder classification below does not change these physical paths.
+
+Keep the consuming application's persistence implementation in its single `<Product>.Data` project. Reference the selected framework adapter package there, for example `Paradigm.Enterprise.Data.SqlServer`. The framework's separate adapter packages are not a reason to split an application into `<Product>.Data` and `<Product>.Data.SqlServer` projects.
+
+Put business code in containing folders from the first feature. Follow the template's module grouping and add responsibility folders as needed; for a `Catalog` module:
+
+| Project | Example containing folders |
+| --- | --- |
+| `WebApi` | `Controllers/Catalog`, `Models/Catalog`, `JsonSerializerContexts`, `Exceptions/Handlers`, `Middlewares` |
+| `Data` | `Catalog/Context`, `Catalog/Repositories`, `Catalog/StoredProcedures`, `Catalog/StoredProcedures/Parameters`, `Mappers` |
+| `Domain` | `Catalog/Entities` for generated entities, database views, and their partials; `Catalog/Validation` for focused validation helpers |
+| `Interfaces` | Module folders for genuine handwritten shared contracts/enums; retain the template's interface generator and its generated namespace mapping |
+| `Providers` | `Catalog/Providers`, `Catalog/Models` for use-case-specific inputs when needed |
+
+Match namespaces to ownership and folders. Populate only folders needed by the feature. Keep `Program.cs`, configuration, project files, and generator entry points at their natural project roots; do not flatten controllers, contexts, entities, repositories, providers, and their contracts into project roots. Database views remain Domain classes, not records placed in Interfaces. See [database-first models](database-first-models.md) for the generation contract.
 
 ## Canonical solution folders
 
@@ -33,4 +77,4 @@ Restore, build, and test the canonical mixed solution so all members remain oper
 
 ## Review invariants
 
-For a new or reorganized solution, verify the exact six folder names, responsibility mapping, unique project membership, project-file existence, curated solution items, database-project ownership, and absence of a competing legacy solution. Prefer semantic `.slnx` XML assertions over line counts, element ordering, or project-GUID text checks.
+For a new or reorganized consuming solution, verify `src/api` placement, sibling Aspire projects, a single application Data project, containing folders/namespaces, the exact six solution-folder names, responsibility mapping, unique project membership, project-file existence, curated solution items, database-project ownership, and absence of a competing legacy solution. Check physical paths separately from logical solution folders. Prefer semantic `.slnx` XML assertions over line counts, element ordering, or project-GUID text checks.

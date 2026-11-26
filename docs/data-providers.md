@@ -38,6 +38,12 @@ The mapper generator selects SQL Server by default. Use `--database-provider pos
 
 Use stored procedures when the database contract or query characteristics justify them. A simple Entity Framework query does not need to be converted merely because the package supports procedures.
 
+### SQL Server table-valued inputs
+
+The SQL Server typed procedure callers support table-valued parameters. The mapper generator builds `DataTable` values for supported `IEnumerable<TRow>` properties and single-row objects with scalar properties. Review generated column order against the database table type; unsupported collection or nested shapes need an explicit mapping decision.
+
+For explicit structured-parameter metadata, an application-owned `ISqlParameterMapper` can return `SqlParameter` instances with `SqlDbType.Structured`, the matching schema-qualified `TypeName`, and a `DataTable` value. Register it once through `SqlParameterMapperFactory` and retain the typed procedure caller. Keep its row sources usable after mapper disposal. An empty table must retain its columns; do not use `DBNull.Value` for a TVP. See [SqlClient parameter guidance](https://learn.microsoft.com/en-us/sql/connect/ado-net/configure-parameters).
+
 ## MySQL with Oracle Connector/NET
 
 `Paradigm.Enterprise.Data.MySql` targets .NET 10 and uses Oracle `MySql.EntityFrameworkCore` 10.0.12 with `MySql.Data` 26.10.0. The initial integration baseline is MySQL 8.4/InnoDB. Keep Oracle's `MySql.Data.MySqlClient` connection, parameter, and transaction types together; the adapter's public surface uses those types.

@@ -32,16 +32,16 @@ the build/install wrappers also require Bash.
 ## Create the solution
 
 Choose a solution name that represents the product or bounded context. The
-template appends layer names to that root.
+template appends layer names to that root. Run these commands from the application repository root; the solution and layer projects are created together under `src/api`.
 
 ```powershell
-dotnet new paradigm-webapi --name Company.Product --output ../Company.Product --dry-run
-dotnet new paradigm-webapi --name Company.Product --output ../Company.Product
-dotnet restore ../Company.Product/Company.Product.slnx
-dotnet build ../Company.Product/Company.Product.slnx
+dotnet new paradigm-webapi --name Company.Product --output ./src/api --dry-run
+dotnet new paradigm-webapi --name Company.Product --output ./src/api
+dotnet restore ./src/api/Company.Product.slnx
+dotnet build ./src/api/Company.Product.slnx
 ```
 
-Open the generated `Company.Product.slnx` in Visual Studio. The solution-root
+Open the generated `src/api/Company.Product.slnx` in Visual Studio. The API solution-root
 `Directory.Packages.props` contains all package versions and appears under
 `00.SolutionItems`; individual projects use versionless package references.
 Change versions in the central file, including its `ParadigmEnterpriseVersion`
