@@ -44,6 +44,13 @@ $projects = @(Get-ChildItem -LiteralPath $templateRoot -Recurse -Filter '*.cspro
 if ($projects.Count -eq 0) { throw 'No template projects found.' }
 foreach ($projectFile in $projects) {
     [xml]$project = Get-Content -LiteralPath $projectFile.FullName -Raw
+    foreach ($propertyName in 'IsPackable', 'GeneratePackageOnBuild') {
+        $properties = $project.SelectNodes("/Project/PropertyGroup/$propertyName")
+        if ($properties.Count -ne 1 -or $properties[0].InnerText -cne 'false' -or
+            $properties[0].HasAttribute('Condition') -or $properties[0].ParentNode.HasAttribute('Condition')) {
+            throw "Template application projects must disable NuGet packaging: $($projectFile.FullName) must declare unconditional ${propertyName}=false."
+        }
+    }
     foreach ($reference in $project.SelectNodes('//PackageReference')) {
         $id = $reference.GetAttribute('Include')
         if ($reference.HasAttribute('Version') -or $reference.HasAttribute('VersionOverride') -or

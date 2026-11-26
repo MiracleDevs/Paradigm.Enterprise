@@ -61,6 +61,11 @@ must match the version and exact package bytes built by the current checkout.
 The generated API must serve Scalar and OpenAPI in Development and disable its
 documentation routes in Production.
 
+Application projects must explicitly disable `IsPackable` and
+`GeneratePackageOnBuild`. Validation builds and packs both the authoring and
+generated solutions and rejects any emitted `.nupkg` or `.snupkg`. Only the
+dedicated template packaging project produces a NuGet package.
+
 The generated app restores into a fresh cache with Paradigm packages restricted
 to the supplied local feed. This prevents a previously cached package of the same
 version from hiding a compatibility failure. Successful runs remove their scratch

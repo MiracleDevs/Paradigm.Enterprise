@@ -30,6 +30,11 @@ function Get-SourceFiles([string]$Root) {
     }
 }
 
+function Assert-NoApplicationPackages([string]$Root) {
+    $packages = @(Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object { $_.Extension -in '.nupkg', '.snupkg' })
+    if ($packages.Count -gt 0) { throw "Application projects emitted NuGet packages: $($packages.FullName -join ', ')" }
+}
+
 try {
     & (Join-Path $PSScriptRoot 'update-templates.ps1') -Check
     [xml]$release = Get-Content -LiteralPath (Join-Path $repositoryRoot 'build/Paradigm.Version.props') -Raw
@@ -84,6 +89,8 @@ try {
     $authoringSolution = Join-Path $authoringRoot $metadata.primaryOutputs[0].path
     Invoke-DotNet (@('restore', $authoringSolution) + $restoreArguments)
     Invoke-DotNet @('build', $authoringSolution, '--configuration', 'Release', '--no-restore', '--disable-build-servers', '--maxcpucount:1', '--warnaserror')
+    Invoke-DotNet @('pack', $authoringSolution, '--configuration', 'Release', '--no-build', '--no-restore', '--disable-build-servers', '--maxcpucount:1')
+    Assert-NoApplicationPackages $authoringRoot
     Invoke-DotNet @('pack', (Join-Path $templateRoot 'Paradigm.Enterprise.Templates.WebApi.csproj'), '--configuration', 'Release', '--output', $packageStage, '--disable-build-servers')
     $packageFile = Join-Path $packageStage "$packageId.$version.nupkg"
 
@@ -142,9 +149,17 @@ try {
         if ($project.SelectNodes('//PackageReference[@Version or @VersionOverride or Version or VersionOverride]').Count -gt 0) {
             throw "Generated project has per-project package versions: $projectPath."
         }
+        foreach ($propertyName in 'IsPackable', 'GeneratePackageOnBuild') {
+            $properties = $project.SelectNodes("/Project/PropertyGroup/$propertyName")
+            if ($properties.Count -ne 1 -or $properties[0].InnerText -cne 'false') {
+                throw "Generated application must disable ${propertyName}: $projectPath."
+            }
+        }
     }
     Invoke-DotNet (@('restore', $generatedSolution) + $restoreArguments)
     Invoke-DotNet @('build', $generatedSolution, '--configuration', 'Release', '--no-restore', '--disable-build-servers', '--maxcpucount:1', '--warnaserror')
+    Invoke-DotNet @('pack', $generatedSolution, '--configuration', 'Release', '--no-build', '--no-restore', '--disable-build-servers', '--maxcpucount:1')
+    Assert-NoApplicationPackages $generatedRoot
     & (Join-Path $PSScriptRoot 'test-host.ps1') -SolutionDirectory $generatedRoot -ProjectName $applicationName
 
     $localPackages = @(Get-ChildItem -LiteralPath $frameworkFeed -Filter '*.nupkg' -File)
@@ -171,7 +186,7 @@ try {
     $null = [IO.Directory]::CreateDirectory($packageOutput)
     Copy-Item -LiteralPath $packageFile -Destination (Join-Path $packageOutput ([IO.Path]::GetFileName($packageFile))) -Force
     $completed = $true
-    Write-Output "Template $packageId $version validated: source build, package payload, native generation, CPM, generated build, and $($verifiedFrameworkIds.Count) exact local framework packages."
+    Write-Output "Template $packageId $version validated: source build, package payload, native generation, CPM, generated build, no application NuGet packages, and $($verifiedFrameworkIds.Count) exact local framework packages."
     Write-Output "Validated package: $(Join-Path $packageOutput ([IO.Path]::GetFileName($packageFile)))"
 } finally {
     if ($completed -and -not $KeepWorkDirectory) {

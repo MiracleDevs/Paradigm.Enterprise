@@ -97,6 +97,15 @@ try {
     $null = & $updateScript -Check
     Write-Output 'PASS: per-project version overrides are rejected; failed release preparation preserves all original metadata.'
 
+    foreach ($packagingProperty in 'IsPackable', 'GeneratePackageOnBuild') {
+        [xml]$packableProject = Get-Content -LiteralPath $projectPath -Raw
+        $packableProject.SelectSingleNode("/Project/PropertyGroup/$packagingProperty").InnerText = 'true'
+        $packableProject.Save($projectPath)
+        Assert-Failure { & $updateScript -Check } 'must disable NuGet packaging'
+        [IO.File]::WriteAllBytes($projectPath, $projectBytes)
+    }
+    Write-Output 'PASS: enabling application packing or package-on-build is rejected.'
+
     foreach ($relative in @(
         'templates/web-api/Paradigm.Enterprise.Templates.WebApi.csproj',
         'templates/web-api/README.md', 'templates/web-api/LICENSE',

@@ -55,6 +55,11 @@ The generated solution has seven projects, the six canonical solution folders,
 and `Directory.Packages.props` listed under `00.SolutionItems`. The source template
 uses concrete names; the template engine replaces them in paths and file contents.
 
+Every application project explicitly sets `IsPackable=false` and
+`GeneratePackageOnBuild=false`. Building or packing the generated solution emits
+no NuGet packages. The dedicated `Paradigm.Enterprise.Templates.WebApi.csproj`
+packages the template itself; it is outside the generated application solution.
+
 ## Central Package Management
 
 All package versions are owned by the generated solution's root
