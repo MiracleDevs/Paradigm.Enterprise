@@ -14,10 +14,12 @@ Paradigm.Enterprise checkout:
 
 ```powershell
 dotnet pack templates/web-api/Paradigm.Enterprise.Templates.WebApi.csproj --configuration Release --output templates/web-api/artifacts/packages
-dotnet new install templates/web-api/artifacts/packages/Paradigm.Enterprise.Templates.WebApi.1.1.2.nupkg --force
+$version = ([xml](Get-Content build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
+dotnet new install "templates/web-api/artifacts/packages/Paradigm.Enterprise.Templates.WebApi.$version.nupkg" --force
 ```
 
-Use the package filename printed by the build if the framework version differs.
+Maintainer packaging commands require PowerShell 7. Generated applications require
+the .NET SDK without a PowerShell dependency.
 Maintainers can also run `bash templates/web-api/build/build-template.sh` to build
 and install the package for the current framework version.
 

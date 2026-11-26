@@ -23,7 +23,7 @@ The workflow needs no stored NuGet API key. Only the publish job has `id-token: 
 
 ## Release
 
-1. Set the intended version in `build/Paradigm.Version.props` and align the changelog and plugin version. Run `pwsh build/verify-version.ps1` and the repository quality checks.
+1. Add a changelog entry and release notes for the intended version, using the existing heading format in `CHANGELOG.md`, then run `pwsh build/set-version.ps1 -Version <new-version>`. This updates `build/Paradigm.Version.props`, plugin metadata, and the template's central package versions. Run `pwsh build/verify-version.ps1` and the repository quality checks. The existing `bash build/increment.version.sh <old-version> <new-version>` command delegates to the same release-preparation script.
 2. Merge the reviewed release changes into `main` and tag that commit. For example, when the shared version is `1.1.2`:
 
    ```bash
@@ -37,7 +37,9 @@ The workflow needs no stored NuGet API key. Only the publish job has `id-token: 
 
 The tag must exactly match `v` followed by the shared version, and its commit must be reachable from `origin/main`; either a mismatch or a tag on an unmerged branch fails before packaging or authentication. Tags on earlier commits in `main` remain eligible. The workflow fetches the full history to validate this ancestry because GitHub tag triggers do not identify a source branch.
 
-The build job runs the non-integration source tests and packs all packable solution projects. The artifact upload excludes `Paradigm.Enterprise.Cli.*.nupkg` and `Paradigm.Enterprise.Cli.*.snupkg`. The remaining `.nupkg` and `.snupkg` files are retained in the run's `nuget-packages` artifact. The publish job downloads this artifact without rebuilding, then `dotnet nuget push` uploads packages and their accompanying symbol packages to nuget.org. The CLI is still built and tested locally and in CI; this workflow does not publish it.
+The build job runs the non-integration source tests and packs all packable solution projects. It also builds and validates `Paradigm.Enterprise.Templates.WebApi`: the source template and a solution created by the actual `dotnet new` engine must build against framework packages from the same checkout. The generated solution must discover CPM, resolve the release version, match local package hashes, and pass Development and Production host checks. Version drift or a failed template check stops the release before artifact upload and publishing.
+
+The artifact upload includes the validated template package and excludes `Paradigm.Enterprise.Cli.*.nupkg` and `Paradigm.Enterprise.Cli.*.snupkg`. The remaining `.nupkg` and `.snupkg` files are retained in the run's `nuget-packages` artifact. The publish job downloads this artifact without rebuilding, then `dotnet nuget push` uploads packages and their accompanying symbol packages to nuget.org. The CLI is still built and tested locally and in CI; this workflow does not publish it.
 
 ### Tags created on feature branches
 

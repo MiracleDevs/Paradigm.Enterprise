@@ -1,17 +1,16 @@
-#!/bin/bash
-. _include.sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-#------------------------------------------------
-# INIT VARS
-#------------------------------------------------
-oldVersion=$1
-newVersion=$2
+SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ $# -ne 2 ]]; then
+    echo "Usage: bash build/increment.version.sh <old-version> <new-version>" >&2
+    echo "Add the new release's CHANGELOG.md entry before running this command." >&2
+    exit 2
+fi
+if ! command -v pwsh >/dev/null 2>&1; then
+    echo "PowerShell 7 (pwsh) is required to update release metadata and templates." >&2
+    exit 1
+fi
 
-if [[ "$oldVersion" == "" ]]; then error "Missing old version number." ; buildFailed ; fi
-if [[ "$newVersion" == "" ]]; then error "Missing new version number." ; buildFailed ; fi
-
-findVersion="<Version>$oldVersion<\/Version>"
-replaceVersion="<Version>$newVersion<\/Version>"
-
-block "$index - Incrementing solution version from $oldVersion to $newVersion"
-execute "sed -i -e s/$findVersion/$replaceVersion/g ../src/**/*.csproj"
+pwsh -NoProfile -NonInteractive -File "$SCRIPT_DIRECTORY/set-version.ps1" \
+    -ExpectedVersion "$1" -Version "$2"

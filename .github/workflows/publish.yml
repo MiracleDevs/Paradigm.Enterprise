@@ -55,6 +55,11 @@ jobs:
       - name: Pack release
         run: dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --no-build --property:CopyLocalLockFileAssemblies=true --output artifacts
 
+      - name: Validate and pack the Web API template
+        timeout-minutes: 10
+        shell: pwsh
+        run: ./build/templates/verify-templates.ps1 -FrameworkPackages artifacts -PackageOutputDirectory artifacts
+
       - name: Upload packages
         uses: actions/upload-artifact@v7
         with:

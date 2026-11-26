@@ -29,4 +29,8 @@
     <None Include="LICENSE" Pack="true" PackagePath="/" />
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
+
+  <Target Name="VerifyTemplateVersions" BeforeTargets="GenerateNuspec">
+    <Exec Command="pwsh -NoProfile -NonInteractive -File &quot;$(MSBuildThisFileDirectory)../../build/templates/update-templates.ps1&quot; -Check" />
+  </Target>
 </Project>

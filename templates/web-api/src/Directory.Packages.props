@@ -8,13 +8,13 @@
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.15" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.13.2" />
-    <PackageVersion Include="NSwag.CodeGeneration.TypeScript" Version="14.7.1" />
+    <PackageVersion Include="NSwag.CodeGeneration.TypeScript" Version="14.8.0" />
     <PackageVersion Include="Paradigm.Enterprise.Data.SqlServer" Version="$(ParadigmEnterpriseVersion)" />
     <PackageVersion Include="Paradigm.Enterprise.Domain" Version="$(ParadigmEnterpriseVersion)" />
     <PackageVersion Include="Paradigm.Enterprise.Interfaces" Version="$(ParadigmEnterpriseVersion)" />

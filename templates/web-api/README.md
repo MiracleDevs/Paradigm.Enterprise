@@ -18,15 +18,17 @@ Studio after creating the solution.
 
 ## Build and install
 
-Use the .NET 10 SDK. From the Paradigm.Enterprise repository root:
+Use the .NET 10 SDK and PowerShell 7 for maintainer commands. From the
+Paradigm.Enterprise repository root:
 
 ```powershell
 dotnet pack templates/web-api/Paradigm.Enterprise.Templates.WebApi.csproj --configuration Release --output templates/web-api/artifacts/packages
-dotnet new install templates/web-api/artifacts/packages/Paradigm.Enterprise.Templates.WebApi.1.1.2.nupkg --force
+$version = ([xml](Get-Content build/Paradigm.Version.props)).Project.PropertyGroup.ParadigmEnterpriseVersion
+dotnet new install "templates/web-api/artifacts/packages/Paradigm.Enterprise.Templates.WebApi.$version.nupkg" --force
 ```
 
-The package version follows `build/Paradigm.Version.props`; use the actual package
-filename printed by `dotnet pack` when building a different framework version.
+The package version follows `build/Paradigm.Version.props`. Packaging checks that
+the template's central versions are aligned before creating the package.
 
 The Bash wrapper builds and installs the package for the current version:
 
@@ -61,13 +63,43 @@ items and preserve their analyzer and asset metadata. Update the central file to
 change package versions. Its `ParadigmEnterpriseVersion` property keeps all
 Paradigm package versions aligned.
 
-The current baseline is Paradigm.Enterprise `1.1.2`. The application targets .NET
-10; the interface generator targets .NET Standard 2.0. The template source can
+The application targets .NET 10; the interface generator targets .NET Standard
+2.0. The template source can
 also be restored and built directly through `src/Paradigm.Web.ApiTemplate.slnx`.
+
+## Release maintenance
+
+After adding the new release's changelog entry, run
+`pwsh build/set-version.ps1 -Version <new-version>`. It updates framework and
+plugin metadata and synchronizes the template's central versions. The existing
+`bash build/increment.version.sh <old-version> <new-version>` entry point uses the
+same command.
+
+For dependency changes without a release-version change:
+
+```powershell
+pwsh build/templates/update-templates.ps1
+pwsh build/templates/update-templates.ps1 -Check
+```
+
+Synchronization copies shared package versions from `src/Directory.Packages.props`,
+aligns all Paradigm references through `ParadigmEnterpriseVersion`, and preserves
+template-only package pins. To validate against packages built from this checkout:
+
+```powershell
+dotnet pack src/Paradigm.Enterprise.slnx --configuration Release --output artifacts
+pwsh build/templates/verify-templates.ps1 -FrameworkPackages artifacts
+```
+
+Validation builds the source and a freshly generated solution, checks package
+contents and CPM discovery, verifies exact local framework package hashes, and
+checks the Development and Production documentation routes. It uses an isolated
+template hive and package cache. Add `-KeepWorkDirectory` to retain a successful
+run's generated solution; failed runs retain their work directory automatically.
 
 ## API documentation
 
-In Development, Scalar `2.18.3` serves the API reference at `/scalar/v1`, using the
+In Development, Scalar serves the API reference at `/scalar/v1`, using the
 OpenAPI document at `/openapi/v1.json`. Swashbuckle also exposes
 `/swagger/v1/swagger.json` for client generation. These documentation endpoints
 are enabled only in Development.
